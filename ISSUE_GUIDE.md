@@ -1,46 +1,117 @@
-# 📋 คู่มือการแบ่งงานและพัฒนาแบบแยกส่วน (Module Development Guide)
+# 📋 คู่มือการแบ่งงานและแผนพัฒนาแบบแยกส่วน (Master Issue & Development Guide)
 
-คู่มือนี้จัดทำขึ้นเพื่อช่วยให้นักพัฒนาในทีมสามารถแบ่งงานและทำงานขนานกัน (Parallel Development) ได้โดยไม่เกิด Code Conflict หรือต้องรอให้อีกคนทำงานเสร็จก่อน (Blocker)
+คู่มือนี้คือ **Master Source of Truth** ที่ผ่านการวิเคราะห์จากระบบ Figma แบบเจาะลึก 100% (ครอบคลุมทั้ง 8 Sections บน Canvas และ Design Tokens จาก MCP API) เพื่อให้นักพัฒนาทุกคนเห็นภาพรวมและรายละเอียดของทุก Issue อย่างครบถ้วน
 
-โปรเจกต์ TCG Store Frontend ถูกแบ่งออกเป็น **5 Modules หลัก** ที่มีความเป็นอิสระต่อกัน สมาชิกในทีมสามารถเลือกหยิบกลุ่ม Issue ใน Module ที่สนใจไปพัฒนาได้เลย โดยไม่จำเป็นต้องทำเรียงตามหมายเลข Issue เสมอไป
+---
+
+## 🎨 Design Tokens & Shared Rules (ข้อตกลงร่วมกัน)
+- **Colors:** 
+  - พื้นหลังหลัก (Main Bg): `#0B141F`
+  - พื้นหลังการ์ด/กล่อง: `#1B2336`, `#212B42`
+  - พื้นหลังการ์ดสินค้า (Product Slab): **`#FFFFFF` (บังคับใช้สีขาวเท่านั้น)**
+  - สีเน้น (Accent/Gold): `#EAB308`
+  - สีปุ่มหลัก (Primary Button): `#72A8FF`
+- **Typography:** `IBM Plex Sans Thai` สำหรับหัวข้อ, `Inter` สำหรับรายละเอียด
+- **Layout:** ความกว้าง Content สูงสุด `1440px` (Max-width)
 
 ---
 
 ## 🏗️ 1. Foundation & Design System Module (ระบบพื้นฐาน)
-**หมวดนี้คือโครงสร้างพื้นฐานที่ทุกคนต้องใช้ร่วมกัน** ควรให้คนใดคนหนึ่งรับผิดชอบทำให้เสร็จก่อน หรือทำไปพร้อมๆ กันตอนเริ่มโปรเจกต์ เพื่อเป็นฐานให้คนอื่นเรียกใช้
-- **เป้าหมาย:** สร้าง Core UI Components (Button, Input, Modal, Toast), ตั้งค่า Tailwind Theme และระบบ CI/CD Pipeline
-- **Issues ที่เกี่ยวข้อง:** `#1`, `#2`, `#3`, `#4`, `#5`, `#6`
-- **ทักษะที่ใช้:** DevOps, CSS/Tailwind, React Component Design
+**อ้างอิงจาก Figma Section:** `Design System & Iteration Scratch`
+*หมวดนี้คือการสร้างชิ้นส่วนพื้นฐานให้เสร็จก่อนเริ่มทำหน้าเว็บอื่นๆ*
 
-## 👤 2. Auth & User Management Module (ระบบจัดการผู้ใช้)
-**หมวดนี้จะโฟกัสที่ระบบสมาชิกและการจัดการ Profile ของผู้ใช้**
-- **เป้าหมาย:** ทำหน้า Login/Register, ระบบจัดการ Authentication ด้วย Zustand, หน้า Profile เพื่อจัดการที่อยู่ และหน้าประวัติคำสั่งซื้อ (My Orders)
-- **Issues ที่เกี่ยวข้อง:** `#7`, `#15`, `#16`
-- **ทักษะที่ใช้:** Form Validation, State Management, JWT Integration (Mock)
-
-## 🛍️ 3. Storefront & Catalog Module (ระบบหน้าร้านและค้นหาสินค้า)
-**หมวดนี้จะโฟกัสที่ฝั่งผู้ซื้อ (Customer) ในการเลือกดูสินค้าและการนำเสนอสินค้า**
-- **เป้าหมาย:** พัฒนาหน้า Homepage (Hero Banner, Trending Cards), หน้า Browse (ระบบค้นหา, Filter Sidebar), และหน้ารายละเอียดสินค้า (Product Detail)
-- **Issues ที่เกี่ยวข้อง:** `#8`, `#9`, `#10`
-- **ทักษะที่ใช้:** UI/UX Design, React Router (URL Params), Debounce Search
-
-## 🛒 4. Cart & Checkout Module (ระบบตะกร้าและชำระเงิน)
-**หมวดนี้จะเน้นเรื่อง State Management และ Business Logic เป็นหลัก**
-- **เป้าหมาย:** พัฒนาระบบ Zustand Cart Store, Add-to-cart Toast, หน้าตะกร้าสินค้า (แก้ไขจำนวนและลบ), และหน้า Checkout ยืนยันการสั่งซื้อพร้อมตัดสต็อก
-- **Issues ที่เกี่ยวข้อง:** `#11`, `#12`, `#13`, `#14`
-- **ทักษะที่ใช้:** Zustand, Complex Form State, Data Calculation
-
-## 🛠️ 5. Admin Backoffice Module (ระบบหลังบ้าน)
-**หมวดนี้แยกไปเขียน Layout ของ Admin และระบบจัดการข้อมูลเชิงลึกโดยเฉพาะ**
-- **เป้าหมาย:** สร้าง Admin Dashboard, ตารางจัดการสินค้า (Add/Edit/Delete), ระบบคำนวณกำไร/Margin แบบ Real-time, และระบบอัปเดตสถานะการจัดส่ง (Fulfillment)
-- **Issues ที่เกี่ยวข้อง:** `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#32`
-- **ทักษะที่ใช้:** Data Table, CRUD Operations, Business Logic Guards (Miro Constraints)
+- **Issue #1: Setup Tailwind & Design Tokens**
+  - นำค่าสี (Hex codes) และ Typography ข้างต้นไปตั้งค่าใน `tailwind.config.js`
+- **Issue #2: Core UI Components**
+  - สร้าง `Button.tsx` (Primary Blue, Secondary Outline, Gold)
+  - สร้าง `Input.tsx` (พื้นหลัง `#18202B`, ขอบมน)
+  - สร้าง `Badge.tsx` (สถานะราคาขึ้นสีเขียว `#16A34A` พื้นหลัง `#DCFCE7`)
+- **Issue #3: Global Layout (Navbar & Footer)**
+  - **Navbar:** พื้นหลัง `#151B2B` โลโก้ M (แถบยาว) ซ้าย, ช่องค้นหาตรงกลาง, ปุ่ม Login ขวา
+  - **Footer:** พื้นหลัง `#0B111A` โลโก้ Mythic TCG ซ้าย + 3 คอลัมน์ลิงก์ (Policy, Service, Company)
 
 ---
 
-## 💡 ข้อแนะนำสำหรับการทำงานแยก Module
+## 👤 2. Auth & User Management Module (ระบบบัญชีผู้ใช้)
+**อ้างอิงจาก Figma Section:** `auth` & `profile`
+*ระบบเข้าสู่ระบบและจัดการโปรไฟล์ส่วนตัว*
 
-1. **ตกลง Data Type ก่อน:** ให้ทีมตกลงโครงสร้างข้อมูล (TypeScript Interfaces) ในไฟล์ `src/types/index.ts` ให้ตรงกันก่อนเริ่มงาน เช่น โครงสร้างของ `Product` หรือ `Order` จะหน้าตาเป็นอย่างไร
-2. **ใช้ Mock API ไปก่อน:** ถ้า Backend ยังไม่เสร็จ แต่ละ Module สามารถเขียน Mock Data จำลอง Response จาก API ของตัวเองในโฟลเดอร์ `src/api/` เพื่อให้ทำงานต่อได้เลย
-3. **แบ่ง Branch ตามฟีเจอร์:** ให้ทีมแตก Branch ออกจาก `main` ตามฟีเจอร์ เช่น `feature/auth-login`, `feature/cart-checkout` แล้วค่อยเปิด Pull Request กลับมา
-4. **สื่อสารกันในทีม:** หากต้องแก้ไข Shared Component เช่น `Button.tsx` ให้แจ้งทีมใน Discord หรือ Group Line เสมอเพื่อป้องกัน Conflict
+- **Issue #4: Authentication Flow**
+  - หน้า Login / Register (แบบ Card พื้นหลังมืด)
+  - หน้า Forgot Password / Reset Password
+  - Modal "Log in to continue" (Popup ดักผู้ใช้ที่ยังไม่ล็อกอินตอนกดปุ่มสำคัญ)
+- **Issue #5: User Profile Management**
+  - หน้าแก้ไขข้อมูลส่วนตัว (Personal Details)
+  - หน้าการจัดการที่อยู่จัดส่ง (Address Book)
+  - หน้าการตั้งค่าความปลอดภัยเปลี่ยนรหัสผ่าน (Security)
+- **Issue #6: Buyer Dashboard (My Orders)**
+  - หน้ารายการประวัติคำสั่งซื้อทั้งหมดของลูกค้า พร้อมป้ายสถานะ (Pending, Shipped, Delivered)
+
+---
+
+## 🛍️ 3. Storefront & Catalog Module (ระบบหน้าร้าน)
+**อ้างอิงจาก Figma Section:** `Shop & Browse` & `Product Detail Scratch`
+*หน้าเว็บหลักสำหรับลูกค้าเลือกซื้อการ์ด*
+
+- **Issue #7: Homepage Reconstruction**
+  - **Hero:** ภาพปราสาทมืดกว้างเต็มจอ + โลโก้ MYTHIC MARKET
+  - **Expensive Cards 2025:** ภาพการ์ดเอียงฝั่งซ้าย + ข้อความสีทองฝั่งขวา
+  - **What's New!:** แบนเนอร์สไลเดอร์แนวนอน (Carousel) 
+  - **10 Most Expensive / Collection:** Grid แสดงการ์ด 4-5 คอลัมน์แนวตั้ง และแนวนอน
+- **Issue #8: Browse Catalog Page**
+  - หน้าแสดงรายการสินค้าทั้งหมด พร้อมแถบ Filter ด้านบน (Search, Game, Price, Condition, QC)
+  - แสดงผลลัพธ์เป็น Grid ของ `ProductCard` แนวตั้งสีขาว
+- **Issue #9: Product Detail Page & Actions**
+  - หน้าแสดงรายละเอียดการ์ด: ฝั่งซ้ายโชว์รูป Slab ใหญ่, ฝั่งขวาแสดงชื่อ/ราคา/ข้อมูล
+  - ปุ่ม `Add to Cart` (กดแล้วโชว์ Toast สีเขียวมุมขวา)
+  - แสดงประวัติกราฟราคา (ถ้ามีในดีไซน์)
+
+---
+
+## 🛒 4. Cart & Checkout Module (ระบบตะกร้าและชำระเงิน)
+**อ้างอิงจาก Figma Section:** `Buyer Account & ...`
+*ระบบการซื้อขายและการทำธุรกรรม*
+
+- **Issue #10: Shopping Cart State**
+  - การจัดการ State (Zustand) สำหรับตะกร้าสินค้า 
+  - หน้ารายการสินค้าในตะกร้า, ปุ่มเพิ่ม/ลดจำนวน, ปุ่มลบ, คำนวณราคารวม
+- **Issue #11: Checkout Flow**
+  - ฟอร์มเลือกที่อยู่จัดส่ง (ดึงจาก Profile)
+  - ตัวเลือกวิธีการชำระเงิน (QR Code, Credit Card, Escrow)
+  - สรุปยอดเงิน (Order Summary) ก่อนยืนยัน
+- **Issue #12: Order Confirmation & Tracking**
+  - หน้าจอความสำเร็จ (Success) หลังชำระเงิน
+  - หน้าจอติดตามพัสดุ (Order Tracking Timeline)
+
+---
+
+## 🛠️ 5. Admin & Seller Backoffice (ระบบหลังบ้าน)
+**อ้างอิงจาก Figma Section:** `platform-admin` & `seller`
+*ระบบจัดการสำหรับเจ้าของแพลตฟอร์มและผู้ขาย*
+
+### ฝั่ง Platform Admin
+- **Issue #13: Admin Dashboard & User Management**
+  - หน้า Overview ภาพรวมรายได้และสถิติเว็บ
+  - ระบบจัดการสิทธิ์และ แบนผู้ใช้ (User Management)
+- **Issue #14: QC Hub & Dispute Resolution**
+  - ระบบตรวจสอบสภาพการ์ด (QC Inspection) เทียบกับรูปภาพ
+  - ระบบจัดการข้อพิพาท (Disputes) ระหว่างผู้ซื้อและผู้ขาย
+- **Issue #15: Financial & Payout Management**
+  - อนุมัติการถอนเงิน (Payouts) ให้กับผู้ขาย
+
+### ฝั่ง Seller (ผู้ขาย)
+- **Issue #16: Seller Dashboard & Inventory**
+  - หน้าแรกสรุปยอดขายของร้าน
+  - ตารางจัดการสต็อกสินค้า (Active Listings)
+- **Issue #17: Add / Edit Listing Form**
+  - ฟอร์มลงขายการ์ด (อัปโหลดรูป, กรอกชื่อ, เลือกหมวดหมู่, ใส่ราคา, เกรด, สภาพ)
+- **Issue #18: Order Fulfillment & Earnings**
+  - หน้าจัดการจัดส่งสินค้า (พิมพ์ใบปะหน้า, อัปเดตเลขแทร็ก)
+  - หน้าสรุปรายได้และกดปุ่มขอถอนเงิน (Request Payout)
+
+---
+
+## 📝 กฎการพัฒนา
+1. **Pixel-Perfect UI:** อ้างอิง Layout และระยะห่างตามรูปภาพใน Figma ให้เหมือนที่สุด 
+2. **Component Reuse:** พยายามดึง `Button`, `Input`, `ProductCard` ใน Design System มาใช้เสมอ ห้ามสร้างใหม่พร่ำเพรื่อ
+3. **Data Type First:** ตกลง Type Interface (`src/types/`) ของ Product, Order, User ให้จบก่อนเริ่มต่อ API

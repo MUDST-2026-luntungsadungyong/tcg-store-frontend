@@ -4,16 +4,16 @@ import { Footer } from '@/components/layout/Footer';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 
 // Module 3 Pages
-import { HomePage } from '@/pages/customer/HomePage';
-import { BrowsePage } from '@/pages/customer/BrowsePage';
-import { ProductDetailPage } from '@/pages/customer/ProductDetailPage';
+import { HomePage } from '@/pages/HomePage';
+import { BrowsePage } from '@/pages/BrowsePage';
+import { ProductDetailPage } from '@/pages/ProductDetailPage';
 
 // Base layout for customer-facing pages
 function StoreLayout() {
   return (
-    <div className="min-h-screen flex flex-col bg-bg-base">
+    <div className="min-h-screen flex flex-col bg-bg-base text-white">
       <Navbar />
-      <main className="flex-1 max-w-[1440px] w-full mx-auto py-7 px-8">
+      <main className="flex-1 w-full">
         <Outlet />
       </main>
       <Footer />

@@ -21,3 +21,23 @@
     @apply bg-bg-elevated/90 backdrop-blur-[16px] border border-white/10 shadow-xl;
   }
 }
+
+@layer utilities {
+  /* Minimal custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(55, 65, 81, 0.3); /* Lighter gray-700 track */
+    border-radius: 9999px;
+    margin: 0 16px; /* Adds margin to the track to make it shorter horizontally */
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 9999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 1);
+  }
+}

@@ -13,11 +13,11 @@
    - ไม่สร้าง class แบบ arbitrary ในไฟล์ css อื่น
 2. **เรียกใช้ Color Palette จาก Theme**:
    - พื้นหลังหลัก: `bg-bg-base`
-   - การ์ดสินค้า: `bg-bg-card`
+   - การ์ดสินค้า Slab: `bg-white` (สำคัญ!)
    - การ์ดยกระดับ / Modal: `bg-bg-elevated`
    - อินพุต: `bg-bg-input`
    - สีฟ้าหลัก: `text-brand-blue` / `bg-brand-blue`
-   - สีทองไฮไลท์: `text-brand-gold` / `bg-brand-gold`
+   - สีทองไฮไลท์: `text-brand-gold` (`#EAB308`)
 3. **ใช้งาน Reusable Components**:
    - ปุ่ม: ใช้ `<Button variant="primary | secondary | gold | danger" />` จาก `@/components/common/Button`
    - อินพุต: ใช้ `<Input label="..." error="..." />` จาก `@/components/common/Input`

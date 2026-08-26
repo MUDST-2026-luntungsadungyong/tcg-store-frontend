@@ -1,87 +1,51 @@
 import { Link } from 'react-router-dom';
-import { Search, ShoppingCart, User, LogOut, Package } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 import { Button } from '@/components/common/Button';
-import { Input } from '@/components/common/Input';
-import { Badge } from '@/components/common/Badge';
 
 export function Navbar() {
-  // TODO: Replace with Zustand auth state
-  const isLoggedIn = false;
-  // TODO: Replace with Zustand cart state
-  const cartItemCount = 2;
-
   return (
-    <nav className="sticky top-0 z-40 w-full glass-card border-b border-white/10 rounded-none bg-bg-surface/80 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <nav className="sticky top-0 z-40 w-full bg-[#151B2B] border-b border-white/5">
+      <div className="max-w-[1440px] mx-auto px-8">
+        <div className="flex items-center justify-between h-20">
           
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="flex items-center gap-2 group">
-              <Package className="h-8 w-8 text-brand-blue group-hover:text-brand-gold transition-colors" />
-              <span className="font-bold text-xl text-white tracking-tight">
-                Mythix<span className="text-brand-blue">TCG</span>
-              </span>
+            <Link to="/" className="flex items-center gap-2 group h-8">
+              {/* Since the downloaded logo might be large, we constrain its height */}
+              <img src="/assets/logo_76_29.png" alt="Mythic Market" className="h-8 object-contain" />
             </Link>
           </div>
 
           {/* Search Bar */}
           <div className="flex-1 max-w-lg mx-8 hidden md:block">
-            <Input 
-              icon={Search} 
-              placeholder="Search for cards, sets, or games..." 
-              className="bg-bg-input/50"
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search..."
+                className="block w-full pl-10 pr-3 py-2 border border-transparent rounded-full leading-5 bg-[#1E2536] text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold sm:text-sm transition-colors"
+              />
+            </div>
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4">
-            
-            {/* Cart Button */}
-            <Link to="/cart" className="relative p-2 text-gray-300 hover:text-white transition-colors">
-              <ShoppingCart className="h-6 w-6" />
-              {cartItemCount > 0 && (
-                <Badge variant="danger" className="absolute -top-1 -right-1 px-1.5 min-w-[20px] justify-center">
-                  {cartItemCount}
-                </Badge>
-              )}
+          <div className="flex items-center gap-6 text-sm font-semibold text-gray-300">
+            <Link to="/" className="hover:text-white transition-colors">
+              Home
             </Link>
-
-            {/* Auth/Profile */}
-            {isLoggedIn ? (
-              <div className="flex items-center gap-3">
-                <Link to="/profile">
-                  <Button variant="ghost" size="sm" className="gap-2 hidden sm:flex">
-                    <User size={18} />
-                    <span>Profile</span>
-                  </Button>
-                </Link>
-                <Button variant="secondary" size="sm" className="gap-2">
-                  <LogOut size={18} />
-                  <span className="hidden sm:inline">Logout</span>
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">Login</Button>
-                </Link>
-                <Link to="/register">
-                  <Button variant="primary" size="sm">Sign Up</Button>
-                </Link>
-              </div>
-            )}
             
+            <button className="relative text-gray-300 hover:text-white transition-colors">
+              <Bell className="h-5 w-5" />
+            </button>
+
+            <Link to="/login">
+              <Button variant="primary" size="sm" className="bg-white hover:bg-gray-100 text-[#151B2B] rounded-full px-6 py-1.5 font-bold">
+                Login
+              </Button>
+            </Link>
           </div>
-        </div>
-        
-        {/* Mobile Search */}
-        <div className="pb-3 md:hidden">
-          <Input 
-            icon={Search} 
-            placeholder="Search cards..." 
-            className="bg-bg-input/50"
-          />
         </div>
       </div>
     </nav>

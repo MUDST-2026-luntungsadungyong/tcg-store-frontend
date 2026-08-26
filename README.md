@@ -49,14 +49,15 @@
 | ชื่อ Token ใน Tailwind | รหัสสี HEX | การใช้งาน | ตัวอย่าง Class |
 |---|---|---|---|
 | `bg-bg-base` | `#0B141F` | สีพื้นหลังหลักของเว็บไซต์ (Main Background) | `className="bg-bg-base"` |
-| `bg-bg-surface` | `#131D2D` | สีพื้นหลังส่วน Section / Header | `className="bg-bg-surface"` |
-| `bg-bg-card` | `#1B2336` | สีพื้นหลังการ์ดสินค้า / กล่อง Content | `className="bg-bg-card"` |
+| `bg-bg-surface` | `#151B2B` | สีพื้นหลังส่วน Section / Navbar / Footer | `className="bg-bg-surface"` |
+| `bg-bg-card` | `#1B2336` | สีพื้นหลังการ์ด / กล่อง Content | `className="bg-bg-card"` |
+| `bg-white` | `#FFFFFF` | **สีพื้นหลังของการ์ดสินค้า (Product Slab)** | `className="bg-white"` |
 | `bg-bg-elevated` | `#212B42` | สีพื้นหลัง Modal / Dropdown / Hover Card | `className="bg-bg-elevated"` |
-| `bg-bg-input` | `#18202B` | สีพื้นหลัง Input Field / Textarea | `className="bg-bg-input"` |
+| `bg-bg-input` | `#18202B` | สีพื้นหลัง Input Field / Search | `className="bg-bg-input"` |
 | `text-brand-blue` | `#72A8FF` | สีหลัก Accent Blue (ปุ่ม Primary, ลิงก์เด่น) | `className="text-brand-blue"` |
-| `text-brand-gold` | `#BFA659` | สีทอง Accent Gold (ป้าย QC, เกรด Mint) | `className="text-brand-gold"` |
-| `text-status-success` | `#99D9AD` | สีเขียวสถานะสำเร็จ / กำไร | `className="text-status-success"` |
-| `text-status-danger` | `#FFA5A5` | สีแดงสถานะยกเลิก / ขาดทุน / ลบ | `className="text-status-danger"` |
+| `text-brand-gold` | `#EAB308` | สีทอง Accent Gold (หัวข้อสำคัญ) | `className="text-brand-gold"` |
+| `text-status-success` | `#16A34A` | สีเขียวสถานะหุ้น / ราคาขึ้น | `className="text-status-success"` |
+| `text-status-danger` | `#FF8A8A` | สีแดง (ปุ่มกด / สถานะยกเลิก) | `className="text-status-danger"` |
 | `text-status-warning` | `#FFEAAB` | สีเหลืองสถานะรอตรวจสอบ / Pending | `className="text-status-warning"` |
 
 ### 3. Glassmorphism Utilities
@@ -222,14 +223,14 @@ npm run dev
 
 ## 📅 แผนงานพัฒนาตาม Sprint & Checkpoint Timeline
 
-| Sprint | ช่วงเวลา | Milestone / สิ่งที่ต้องส่งมอบ | จำนวน Issues |
+| Sprint | ช่วงเวลา | Milestone / สิ่งที่ต้องส่งมอบ | จำนวน Issues (รวม 18) |
 |---|---|---|---|
-| **Sprint 1** | 25 ส.ค. - 29 ส.ค. | **Checkpoint 2** (Figma + Architecture + Code in Repo) | 7 Issues (`#1` - `#7`) |
-| **Sprint 2** | 1 ก.ย. - 5 ก.ย. | Storefront, Browse, Filters & Shopping Cart | 5 Issues (`#8` - `#12`) |
-| **Sprint 3** | 8 ก.ย. - 12 ก.ย. | **Checkpoint 3** (Checkout, Profile, Unit Tests & CI Ready) | 6 Issues (`#13` - `#18`) |
-| **Sprint 4** | 15 ก.ย. - 26 ก.ย. | **Checkpoint 4** (Admin Panel, Profit Calculator & Dockerfile) | 8 Issues (`#19` - `#26`) |
-| **Sprint 5** | 29 ก.ย. - 17 ต.ค. | **Checkpoint 5** (Kubernetes Deployment & Phase 1 Presentation) | 4 Issues (`#27` - `#30`) |
-| **Sprint 6** | 17 ต.ค. - 14 พ.ย. | **Checkpoint 6 & 7** (Responsive Polish, E2E Tests & Final Deliverable) | 5 Issues (`#31` - `#35`) |
+| **Sprint 1** | 25 ส.ค. - 29 ส.ค. | **Checkpoint 2** (Figma + Architecture + Code in Repo) | 3 Issues (`#1` - `#3`) |
+| **Sprint 2** | 1 ก.ย. - 5 ก.ย. | Storefront, Browse, Auth & Profiles | 6 Issues (`#4` - `#9`) |
+| **Sprint 3** | 8 ก.ย. - 12 ก.ย. | **Checkpoint 3** (Cart, Checkout & Order Tracking) | 3 Issues (`#10` - `#12`) |
+| **Sprint 4** | 15 ก.ย. - 26 ก.ย. | **Checkpoint 4** (Admin Panel, QC Hub & Sellers) | 6 Issues (`#13` - `#18`) |
+| **Sprint 5** | 29 ก.ย. - 17 ต.ค. | **Checkpoint 5** (Kubernetes Deployment) | Deployment |
+| **Sprint 6** | 17 ต.ค. - 14 พ.ย. | **Checkpoint 6 & 7** (Testing & Final Deliverable) | Polish & E2E Tests |
 
 ---
 

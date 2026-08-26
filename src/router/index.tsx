@@ -3,12 +3,17 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 
+// Module 3 Pages
+import { HomePage } from '@/pages/customer/HomePage';
+import { BrowsePage } from '@/pages/customer/BrowsePage';
+import { ProductDetailPage } from '@/pages/customer/ProductDetailPage';
+
 // Base layout for customer-facing pages
 function StoreLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-bg-base">
       <Navbar />
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:px-6 lg:px-8">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto py-7 px-8">
         <Outlet />
       </main>
       <Footer />
@@ -31,9 +36,9 @@ export const router = createBrowserRouter([
     path: '/',
     element: <StoreLayout />,
     children: [
-      { index: true, element: <PlaceholderPage title="Home Page" /> },
-      { path: 'browse', element: <PlaceholderPage title="Browse Products" /> },
-      { path: 'products/:id', element: <PlaceholderPage title="Product Details" /> },
+      { index: true, element: <HomePage /> },
+      { path: 'browse', element: <BrowsePage /> },
+      { path: 'products/:id', element: <ProductDetailPage /> },
       { path: 'cart', element: <PlaceholderPage title="Shopping Cart" /> },
       { path: 'checkout', element: <PlaceholderPage title="Checkout" /> },
       { path: 'login', element: <PlaceholderPage title="Login" /> },

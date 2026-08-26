@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tcg-frontend-config
+  labels:
+    app: tcg-frontend
+data:
+  VITE_API_BASE_URL: "http://tcg-backend-service:8080/api"
+  VITE_ENABLE_MOCK_API: "false"
+  VITE_APP_TITLE: "Mythix TCG Store"

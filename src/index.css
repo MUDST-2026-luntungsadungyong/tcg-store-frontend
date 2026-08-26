@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg-base text-gray-100 antialiased selection:bg-brand-blue/30;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Utilities */
+  .glass-card {
+    @apply bg-bg-card/80 backdrop-blur-[12px] border border-white/5 shadow-lg;
+  }
+  
+  .glass-elevated {
+    @apply bg-bg-elevated/90 backdrop-blur-[16px] border border-white/10 shadow-xl;
+  }
+}

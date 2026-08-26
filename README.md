@@ -233,11 +233,13 @@ npm run dev
 
 ---
 
-## 🔌 การเชื่อมต่อ Backend (Spring Boot Integration & Mock Mode)
+## 🔌 การเชื่อมต่อ Backend (Spring Boot Integration & Dual Repository)
 
-โปรเจกต์ถูกออกแบบเป็น **API-Ready Architecture**:
-- เมื่อ `VITE_ENABLE_MOCK_API=true`: ระบบจะใช้ Local Mock Layer พร้อมบันทึกข้อมูลใน `localStorage` ช่วยให้ทีม Frontend พัฒนาและทดสอบได้ทันทีโดยไม่ต้องรอเปิด Backend
-- เมื่อ `VITE_ENABLE_MOCK_API=false`: Axios Client ใน `src/api/client.ts` จะยิง Request ตรงไปยัง Spring Boot Backend ตาม URL ที่ระบุใน `VITE_API_BASE_URL`
+โปรเจกต์นี้ทำงานแยก Repository จาก **`tcg-store-backend`** โดยสมบูรณ์ (Dual-Repository Architecture):
+- **Standalone Frontend**: พัฒนา บิวด์ และปรับใช้แยกต่างหาก
+- **API Connection**: สื่อสารผ่าน REST API ของ `tcg-store-backend` ที่ระบุใน `VITE_API_BASE_URL` (ใน `src/api/client.ts`)
+- **Vite Dev Proxy**: รองรับการส่งต่อ `/api` ไปยัง `http://localhost:8080` เพื่อหลีกเลี่ยงปัญหา CORS ขณะพัฒนา
+- **Mock Mode**: เมื่อ `VITE_ENABLE_MOCK_API=true` ระบบจะใช้ Local Mock Layer ช่วยให้พัฒนาหน้าจอได้ล่วงหน้าโดยไม่ต้องรัน Backend real-time
 
 ### บัญชีทดสอบใน Mock Mode:
 - **ลูกค้าทั่วไป (Customer):** `user@mythix.com` / รหัสผ่าน: `password123`

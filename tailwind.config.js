@@ -19,7 +19,8 @@ export default {
         'status-warning': '#FFEAAB',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Inter', 'IBM Plex Sans Thai', 'sans-serif'],
+        thai: ['IBM Plex Sans Thai', 'sans-serif'],
       },
       boxShadow: {
         'glow-blue': '0 0 15px rgba(114, 168, 255, 0.4)',

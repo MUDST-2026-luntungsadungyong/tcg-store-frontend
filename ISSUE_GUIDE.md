@@ -1,117 +1,78 @@
-# 📋 คู่มือการแบ่งงานและแผนพัฒนาแบบแยกส่วน (Master Issue & Development Guide)
+# 📋 Master Issue Guide & Development Plan (Revised with Detailed TODOs)
 
-คู่มือนี้คือ **Master Source of Truth** ที่ผ่านการวิเคราะห์จากระบบ Figma แบบเจาะลึก 100% (ครอบคลุมทั้ง 8 Sections บน Canvas และ Design Tokens จาก MCP API) เพื่อให้นักพัฒนาทุกคนเห็นภาพรวมและรายละเอียดของทุก Issue อย่างครบถ้วน
-
----
-
-## 🎨 Design Tokens & Shared Rules (ข้อตกลงร่วมกัน)
-- **Colors:** 
-  - พื้นหลังหลัก (Main Bg): `#0B141F`
-  - พื้นหลังการ์ด/กล่อง: `#1B2336`, `#212B42`
-  - พื้นหลังการ์ดสินค้า (Product Slab): **`#FFFFFF` (บังคับใช้สีขาวเท่านั้น)**
-  - สีเน้น (Accent/Gold): `#EAB308`
-  - สีปุ่มหลัก (Primary Button): `#72A8FF`
-- **Typography:** `IBM Plex Sans Thai` สำหรับหัวข้อ, `Inter` สำหรับรายละเอียด
-- **Layout:** ความกว้าง Content สูงสุด `1440px` (Max-width)
+คู่มือนี้คือ **Single Source of Truth** ที่ผสานระหว่าง:
+1. **User Stories (Functional):** อิงจากเอกสาร `DevOps_User Flow.csv` (US-01 ถึง US-09)
+2. **Figma UI (Visual & Flow):** อิงจากการแมปใน `.agents/miro-userflows.md` (Seller / Platform Admin / Buyer)
+3. **Course Checkpoints (Timeline):** อิงจากกติกา CP1-CP7
 
 ---
 
-## 🏗️ 1. Foundation & Design System Module (ระบบพื้นฐาน)
-**อ้างอิงจาก Figma Section:** `Design System & Iteration Scratch`
-*หมวดนี้คือการสร้างชิ้นส่วนพื้นฐานให้เสร็จก่อนเริ่มทำหน้าเว็บอื่นๆ*
+## 🎯 Sprint 1: CP3 - Runnable Code & Core Flows (Target: 12 ก.ย.)
+*เป้าหมาย: ระบบหลักรันได้ (Auth, Browse, Cart, CRUD พื้นฐาน)*
 
-- **Issue #1: Setup Tailwind & Design Tokens**
-  - นำค่าสี (Hex codes) และ Typography ข้างต้นไปตั้งค่าใน `tailwind.config.js`
-- **Issue #2: Core UI Components**
-  - สร้าง `Button.tsx` (Primary Blue, Secondary Outline, Gold)
-  - สร้าง `Input.tsx` (พื้นหลัง `#18202B`, ขอบมน)
-  - สร้าง `Badge.tsx` (สถานะราคาขึ้นสีเขียว `#16A34A` พื้นหลัง `#DCFCE7`)
-- **Issue #3: Global Layout (Navbar & Footer)**
-  - **Navbar:** พื้นหลัง `#151B2B` โลโก้ M (แถบยาว) ซ้าย, ช่องค้นหาตรงกลาง, ปุ่ม Login ขวา
-  - **Footer:** พื้นหลัง `#0B111A` โลโก้ Mythic TCG ซ้าย + 3 คอลัมน์ลิงก์ (Policy, Service, Company)
+### Issue #1: [US-01] ระบบ Registration & Login
+- [ ] **UI:** สร้าง `LoginPage` (อิงดีไซน์ Card พื้นหลังมืด) พร้อมฟอร์ม Email/Password
+- [ ] **UI:** สร้าง `RegisterPage` พร้อม Validation (เช็ค Email format, Password length)
+- [ ] **UI:** สร้าง Component `ContextualLoginModal` เป็น Popup สำหรับดักผู้ใช้ Guest (reusable)
+- [ ] **Logic/State:** ติดตั้ง Zustand/Redux สำหรับเก็บ `auth_token`, `user_role`, และ `user_id`
+- [ ] **Integration:** ผูก API `POST /api/auth/login` เก็บ JWT token ลง LocalStorage/Cookie
+- [ ] **Integration:** ผูก API `POST /api/auth/register`
+- [ ] **Routing:** ทำ Protected Route (บังคับ redirect ไปหน้า Login หากไม่มี Token)
 
----
+### Issue #2: [US-02 & US-03] ระบบ Browse Products และ Shopping Cart
+- [ ] **UI:** สร้างหน้า `HomePage` ดึง Component Card สินค้ามาแสดง
+- [ ] **UI:** สร้าง `FilterBar` (Search text, Min/Max Price, Rarity, Game)
+- [ ] **UI:** สร้างหน้า `ProductDetailPage` แสดงรูปใหญ่ฝั่งซ้าย ข้อมูลฝั่งขวา พร้อมป้าย Stock
+- [ ] **UI:** สร้างปุ่ม `AddToCartButton` พร้อมระบบ Toast Notification เวลาเพิ่มสำเร็จ
+- [ ] **UI:** สร้างหน้า `CartPage` แสดงรายการสินค้า, ราคารวม
+- [ ] **Logic:** ระบบตะกร้า (Cart State): ฟังก์ชัน Increase (+), Decrease (-), Remove (x)
+- [ ] **Logic:** Validation: ไม่สามารถกด Add to Cart หรือ + สินค้าเกินจำนวน Stock ได้
+- [ ] **Integration:** ผูก API `GET /api/products` (พร้อม Query parameters สำหรับ Filter)
 
-## 👤 2. Auth & User Management Module (ระบบบัญชีผู้ใช้)
-**อ้างอิงจาก Figma Section:** `auth` & `profile`
-*ระบบเข้าสู่ระบบและจัดการโปรไฟล์ส่วนตัว*
-
-- **Issue #4: Authentication Flow**
-  - หน้า Login / Register (แบบ Card พื้นหลังมืด)
-  - หน้า Forgot Password / Reset Password
-  - Modal "Log in to continue" (Popup ดักผู้ใช้ที่ยังไม่ล็อกอินตอนกดปุ่มสำคัญ)
-- **Issue #5: User Profile Management**
-  - หน้าแก้ไขข้อมูลส่วนตัว (Personal Details)
-  - หน้าการจัดการที่อยู่จัดส่ง (Address Book)
-  - หน้าการตั้งค่าความปลอดภัยเปลี่ยนรหัสผ่าน (Security)
-- **Issue #6: Buyer Dashboard (My Orders)**
-  - หน้ารายการประวัติคำสั่งซื้อทั้งหมดของลูกค้า พร้อมป้ายสถานะ (Pending, Shipped, Delivered)
-
----
-
-## 🛍️ 3. Storefront & Catalog Module (ระบบหน้าร้าน)
-**อ้างอิงจาก Figma Section:** `Shop & Browse` & `Product Detail Scratch`
-*หน้าเว็บหลักสำหรับลูกค้าเลือกซื้อการ์ด*
-
-- **Issue #7: Homepage Reconstruction**
-  - **Hero:** ภาพปราสาทมืดกว้างเต็มจอ + โลโก้ MYTHIC MARKET
-  - **Expensive Cards 2025:** ภาพการ์ดเอียงฝั่งซ้าย + ข้อความสีทองฝั่งขวา
-  - **What's New!:** แบนเนอร์สไลเดอร์แนวนอน (Carousel) 
-  - **10 Most Expensive / Collection:** Grid แสดงการ์ด 4-5 คอลัมน์แนวตั้ง และแนวนอน
-- **Issue #8: Browse Catalog Page**
-  - หน้าแสดงรายการสินค้าทั้งหมด พร้อมแถบ Filter ด้านบน (Search, Game, Price, Condition, QC)
-  - แสดงผลลัพธ์เป็น Grid ของ `ProductCard` แนวตั้งสีขาว
-- **Issue #9: Product Detail Page & Actions**
-  - หน้าแสดงรายละเอียดการ์ด: ฝั่งซ้ายโชว์รูป Slab ใหญ่, ฝั่งขวาแสดงชื่อ/ราคา/ข้อมูล
-  - ปุ่ม `Add to Cart` (กดแล้วโชว์ Toast สีเขียวมุมขวา)
-  - แสดงประวัติกราฟราคา (ถ้ามีในดีไซน์)
+### Issue #3: [US-05] ระบบ Inventory Management (ฝั่ง Seller)
+- [ ] **UI:** สร้าง Layout พื้นฐานของ `SellerDashboard` (Sidebar nav 5 รายการ)
+- [ ] **UI:** สร้างตาราง `ProductManagementTable` แสดงรายการการ์ดที่ลงขาย
+- [ ] **UI:** สร้าง `AddEditProductModal` (ฟอร์มอัปโหลดรูป, ชื่อ, ราคา, ต้นทุน, สต็อก)
+- [ ] **UI:** เพิ่ม Toggle Switch สำหรับเปลี่ยนสถานะ (Show / Hide)
+- [ ] **Logic:** เช็คเงื่อนไขก่อนการ Delete (ห้ามลบหากมี Active Order อยู่) -> แสดง Error Toast
+- [ ] **Integration:** ผูก API `POST /api/seller/products`, `PUT /api/seller/products/{id}`, `DELETE`
 
 ---
 
-## 🛒 4. Cart & Checkout Module (ระบบตะกร้าและชำระเงิน)
-**อ้างอิงจาก Figma Section:** `Buyer Account & ...`
-*ระบบการซื้อขายและการทำธุรกรรม*
+## 🎯 Sprint 2: CP5 - Marketplace & K8s Deploy (Target: 17 ต.ค.)
+*เป้าหมาย: ระบบ Marketplace, QC Hub และ Escrow ทำงานได้ครบ (2-leg shipping)*
 
-- **Issue #10: Shopping Cart State**
-  - การจัดการ State (Zustand) สำหรับตะกร้าสินค้า 
-  - หน้ารายการสินค้าในตะกร้า, ปุ่มเพิ่ม/ลดจำนวน, ปุ่มลบ, คำนวณราคารวม
-- **Issue #11: Checkout Flow**
-  - ฟอร์มเลือกที่อยู่จัดส่ง (ดึงจาก Profile)
-  - ตัวเลือกวิธีการชำระเงิน (QR Code, Credit Card, Escrow)
-  - สรุปยอดเงิน (Order Summary) ก่อนยืนยัน
-- **Issue #12: Order Confirmation & Tracking**
-  - หน้าจอความสำเร็จ (Success) หลังชำระเงิน
-  - หน้าจอติดตามพัสดุ (Order Tracking Timeline)
+### Issue #4: [US-04] ระบบ Place Order & Checkout
+- [ ] **UI:** สร้างหน้า `OrderReviewPage` แสดงรายการสรุป (Summary Card)
+- [ ] **UI:** สร้างกล่องแสดง `ShippingAddress` (ดึงจาก Profile มาแสดง)
+- [ ] **UI:** สร้าง Toggle Option: `QC Protection (+Fee)` สำหรับเปิดใช้ 2-leg shipping
+- [ ] **UI:** สร้างหน้า `OrderConfirmationPage` (Success State)
+- [ ] **Logic:** ตรวจสอบ Stock-lock (ส่ง Request ไปกันสต็อกชั่วคราว) ถ้าไม่ได้ให้เด้ง Error Modal
+- [ ] **Integration:** ผูก API `POST /api/orders/checkout` (แปลงของใน Cart เป็น Order -> Status: Pending)
 
----
+### Issue #5: [US-07] ระบบ Order Management & QC Hub (Platform Admin)
+- [ ] **UI:** สร้างตาราง `QCQueueTable` (แสดงของที่ Seller ส่งมาถึง Hub)
+- [ ] **UI:** สร้างหน้า `QCDetailScreen` สำหรับกด Pass / Fail พร้อมเช็กลิสต์สภาพการ์ด
+- [ ] **UI:** สร้างตาราง `OrderShipmentMonitor` ดูภาพรวมสถานะ (1-leg vs 2-leg)
+- [ ] **Logic:** การกด Pass -> เปลี่ยนสถานะเป็น `QC_PASSED` และเข้าคิว Pack & Ship
+- [ ] **Logic:** การกด Fail -> เปลี่ยนสถานะเป็น `QC_FAILED` และโยนเข้าคิว Refund Buyer
+- [ ] **Integration:** ผูก API เปลี่ยนสถานะ Order (`PUT /api/admin/orders/{id}/status`) พร้อมเก็บบันทึก Audit Log (Timestamp)
 
-## 🛠️ 5. Admin & Seller Backoffice (ระบบหลังบ้าน)
-**อ้างอิงจาก Figma Section:** `platform-admin` & `seller`
-*ระบบจัดการสำหรับเจ้าของแพลตฟอร์มและผู้ขาย*
-
-### ฝั่ง Platform Admin
-- **Issue #13: Admin Dashboard & User Management**
-  - หน้า Overview ภาพรวมรายได้และสถิติเว็บ
-  - ระบบจัดการสิทธิ์และ แบนผู้ใช้ (User Management)
-- **Issue #14: QC Hub & Dispute Resolution**
-  - ระบบตรวจสอบสภาพการ์ด (QC Inspection) เทียบกับรูปภาพ
-  - ระบบจัดการข้อพิพาท (Disputes) ระหว่างผู้ซื้อและผู้ขาย
-- **Issue #15: Financial & Payout Management**
-  - อนุมัติการถอนเงิน (Payouts) ให้กับผู้ขาย
-
-### ฝั่ง Seller (ผู้ขาย)
-- **Issue #16: Seller Dashboard & Inventory**
-  - หน้าแรกสรุปยอดขายของร้าน
-  - ตารางจัดการสต็อกสินค้า (Active Listings)
-- **Issue #17: Add / Edit Listing Form**
-  - ฟอร์มลงขายการ์ด (อัปโหลดรูป, กรอกชื่อ, เลือกหมวดหมู่, ใส่ราคา, เกรด, สภาพ)
-- **Issue #18: Order Fulfillment & Earnings**
-  - หน้าจัดการจัดส่งสินค้า (พิมพ์ใบปะหน้า, อัปเดตเลขแทร็ก)
-  - หน้าสรุปรายได้และกดปุ่มขอถอนเงิน (Request Payout)
+### Issue #6: [US-08 & US-09] ระบบ User Profile & Order History
+- [ ] **UI:** สร้างหน้า `ProfileSettingsPage` (ฟอร์มแก้ไขชื่อ, เบอร์โทร)
+- [ ] **UI:** สร้างหน้า `AddressBookPage` (ปุ่ม Add New Address / Edit Address)
+- [ ] **UI:** สร้างหน้า `MyOrdersPage` สำหรับ Buyer แสดงรายการคำสั่งซื้อ
+- [ ] **Logic:** เพิ่ม Tabs filter สถานะในหน้า My Orders (All, Pending, Shipped, Completed)
+- [ ] **Integration:** ผูก API `PUT /api/users/profile`, `GET /api/users/orders`
 
 ---
 
-## 📝 กฎการพัฒนา
-1. **Pixel-Perfect UI:** อ้างอิง Layout และระยะห่างตามรูปภาพใน Figma ให้เหมือนที่สุด 
-2. **Component Reuse:** พยายามดึง `Button`, `Input`, `ProductCard` ใน Design System มาใช้เสมอ ห้ามสร้างใหม่พร่ำเพรื่อ
-3. **Data Type First:** ตกลง Type Interface (`src/types/`) ของ Product, Order, User ให้จบก่อนเริ่มต่อ API
+## 🎯 Sprint 3: CP6 & CP7 - Final Delivery (Target: 14 พ.ย.)
+*เป้าหมาย: ระบบหลังบ้านแอดมิน, สรุปบัญชี Escrow, และเก็บตกงานทั้งหมด*
+
+### Issue #7: [US-06] Platform Admin Dashboard & Payouts
+- [ ] **UI:** สร้างตารางสรุปบัญชี `EscrowLedgerTable` (Double-entry: Debit/Credit, Running Balance)
+- [ ] **UI:** สร้างตาราง `PayoutQueue` สรุปยอดเงินที่ต้องโอนให้ Seller
+- [ ] **UI:** สร้างหน้า `RefundQueue` สำหรับ Order ที่ QC ไม่ผ่าน
+- [ ] **Logic:** ปุ่ม "Pay All" หรือ Pay ทีละบรรทัด พร้อม Confirm Modal ป้องกันการกดผิด
+- [ ] **Integration:** ผูก API `GET /api/admin/escrow/ledger`, `POST /api/admin/payouts/process`

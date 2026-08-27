@@ -23,6 +23,37 @@ export const authApi = {
     return response.data;
   },
   
+  register: async (name: string, email: string, password: string): Promise<{ token: string; user: User }> => {
+    if (ENV.ENABLE_MOCK_API) {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const users = storage.getUsers();
+      if (users.some(u => u.email === email)) {
+        throw new Error('Email already in use');
+      }
+      const user: User = { id: crypto.randomUUID(), name, email, role: 'CUSTOMER' };
+      storage.setUsers([...users, user]);
+      return { token: 'mock-jwt-token-customer', user };
+    }
+    const response = await apiClient.post('/auth/register', { name, email, password });
+    return response.data;
+  },
+
+  forgotPassword: async (email: string): Promise<void> => {
+    if (ENV.ENABLE_MOCK_API) {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return;
+    }
+    await apiClient.post('/auth/forgot-password', { email });
+  },
+
+  resetPassword: async (newPassword: string): Promise<void> => {
+    if (ENV.ENABLE_MOCK_API) {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return;
+    }
+    await apiClient.post('/auth/reset-password', { newPassword });
+  },
+
   getProfile: async (): Promise<User> => {
       if (ENV.ENABLE_MOCK_API) {
           await new Promise(resolve => setTimeout(resolve, 300));

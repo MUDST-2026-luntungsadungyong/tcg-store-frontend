@@ -7,6 +7,12 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { HomePage } from '@/pages/customer/HomePage';
 import { BrowsePage } from '@/pages/customer/BrowsePage';
 import { ProductDetailPage } from '@/pages/customer/ProductDetailPage';
+import { LoginPage } from '@/pages/customer/LoginPage';
+import { SignUpPage } from '@/pages/customer/SignUpPage';
+import { ForgotPasswordPage } from '@/pages/customer/ForgotPasswordPage';
+import { CheckEmailPage } from '@/pages/customer/CheckEmailPage';
+import { ResetPasswordPage } from '@/pages/customer/ResetPasswordPage';
+import { ResetSuccessPage } from '@/pages/customer/ResetSuccessPage';
 
 // Base layout for customer-facing pages
 function StoreLayout() {
@@ -41,8 +47,12 @@ export const router = createBrowserRouter([
       { path: 'products/:id', element: <ProductDetailPage /> },
       { path: 'cart', element: <PlaceholderPage title="Shopping Cart" /> },
       { path: 'checkout', element: <PlaceholderPage title="Checkout" /> },
-      { path: 'login', element: <PlaceholderPage title="Login" /> },
-      { path: 'register', element: <PlaceholderPage title="Register" /> },
+      { path: 'login', element: <LoginPage /> },
+      { path: 'register', element: <SignUpPage /> },
+      { path: 'forgot-password', element: <ForgotPasswordPage /> },
+      { path: 'check-email', element: <CheckEmailPage /> },
+      { path: 'reset-password', element: <ResetPasswordPage /> },
+      { path: 'reset-success', element: <ResetSuccessPage /> },
       { path: 'profile', element: <PlaceholderPage title="My Profile" /> },
       { path: 'orders', element: <PlaceholderPage title="My Orders" /> },
     ],

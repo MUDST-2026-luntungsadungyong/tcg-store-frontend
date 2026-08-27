@@ -30,9 +30,9 @@
 - **`main`**: Production-ready code (Protected branch — ห้าม push ตรงเด็ดขาด)
 - **`develop`**: Integration branch สำหรับรวบรวมฟีเจอร์ของแต่ละ Sprint
 - **Feature / Fix branches**:
-  - `feat/s1-01-project-init`
-  - `feat/s2-02-product-filters`
-  - `fix/s2-04-cart-quantity`
+  - `feat/us-01-login`
+  - `feat/us-02-browse`
+  - `fix/us-03-cart-quantity`
 
 ---
 
@@ -58,5 +58,5 @@
 - [ ] รัน `npm run lint` ผ่าน 100% (ไม่มี Type errors)
 - [ ] รัน `npm run test` ผ่านครบทุก Test Cases
 - [ ] ตั้งชื่อ PR ตาม Conventional Commits (เช่น `feat: add shopping cart page`)
-- [ ] ใส่หมายเลข Issue ใน Description (เช่น `Closes #11`)
+- [ ] ใส่หมายเลข Issue ใน Description (เช่น `Closes #2`)
 - [ ] ตรวจสอบว่า UI สอดคล้องกับ Figma และรองรับ Responsive

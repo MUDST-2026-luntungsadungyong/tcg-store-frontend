@@ -1,7 +1,8 @@
 import { createBrowserRouter, Outlet } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { AdminLayout } from '@/components/layout/AdminLayout';
+import { SellerLayout } from '@/components/layout/SellerLayout';
+import { PlatformAdminLayout } from '@/components/layout/PlatformAdminLayout';
 
 // Module 3 Pages
 import { HomePage } from '@/pages/HomePage';
@@ -48,14 +49,25 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    path: '/admin',
-    element: <AdminLayout />,
+    path: '/seller',
+    element: <SellerLayout />,
     children: [
-      { index: true, element: <PlaceholderPage title="Admin Dashboard" /> },
-      { path: 'dashboard', element: <PlaceholderPage title="Admin Dashboard" /> },
-      { path: 'products', element: <PlaceholderPage title="Manage Products" /> },
-      { path: 'orders', element: <PlaceholderPage title="Manage Orders" /> },
-      { path: 'settings', element: <PlaceholderPage title="Settings" /> },
+      { index: true, element: <PlaceholderPage title="Seller Dashboard" /> },
+      { path: 'dashboard', element: <PlaceholderPage title="Seller Dashboard" /> },
+      { path: 'listings', element: <PlaceholderPage title="Manage Listings" /> },
+      { path: 'inventory', element: <PlaceholderPage title="Inventory Management" /> },
+      { path: 'payouts', element: <PlaceholderPage title="Payouts" /> },
+    ],
+  },
+  {
+    path: '/platform-admin',
+    element: <PlatformAdminLayout />,
+    children: [
+      { index: true, element: <PlaceholderPage title="Platform Admin" /> },
+      { path: 'dashboard', element: <PlaceholderPage title="Platform Admin" /> },
+      { path: 'users', element: <PlaceholderPage title="Manage Users" /> },
+      { path: 'qc-hub', element: <PlaceholderPage title="QC Hub" /> },
+      { path: 'escrow', element: <PlaceholderPage title="Escrow Management" /> },
     ],
   },
 ]);

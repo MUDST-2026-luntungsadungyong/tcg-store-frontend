@@ -3,22 +3,22 @@ import { cn } from '@/utils';
 import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 
-const adminLinks = [
-  { name: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
-  { name: 'Products', to: '/admin/products', icon: Package },
-  { name: 'Orders', to: '/admin/orders', icon: ShoppingBag },
-  { name: 'Settings', to: '/admin/settings', icon: Settings },
+const platformLinks = [
+  { name: 'Dashboard', to: '/platform-admin/dashboard', icon: LayoutDashboard },
+  { name: 'Users', to: '/platform-admin/users', icon: Package },
+  { name: 'QC Hub', to: '/platform-admin/qc-hub', icon: ShoppingBag },
+  { name: 'Escrow', to: '/platform-admin/escrow', icon: Settings },
 ];
 
-export function AdminSidebar() {
+export function PlatformAdminSidebar() {
   return (
     <aside className="w-64 flex-shrink-0 bg-bg-surface border-r border-white/5 hidden md:flex flex-col min-h-[calc(100vh-4rem)]">
       <div className="p-6">
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
-          Admin Portal
+          Platform Admin
         </h2>
         <nav className="space-y-1">
-          {adminLinks.map((link) => {
+          {platformLinks.map((link) => {
             const Icon = link.icon;
             return (
               <NavLink

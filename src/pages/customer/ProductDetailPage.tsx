@@ -40,7 +40,7 @@ export function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="py-8">
+      <div className="max-w-[1440px] mx-auto px-8 py-8 w-full">
         <div className="flex gap-2 mb-6">
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-4 w-4" />
@@ -61,7 +61,7 @@ export function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="py-32 text-center flex flex-col items-center">
+      <div className="max-w-[1440px] mx-auto px-8 py-32 w-full text-center flex flex-col items-center">
         <h2 className="text-3xl font-bold text-white mb-4">Product Not Found</h2>
         <p className="text-gray-400 mb-8">The card you are looking for does not exist or has been removed.</p>
         <Link to="/browse">
@@ -72,8 +72,8 @@ export function ProductDetailPage() {
   }
 
   return (
-    <div className="py-8 pb-20">
-      
+    <div className="max-w-[1440px] mx-auto px-8 py-8 pb-20 w-full">
+
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-400 mb-8">
         <Link to="/" className="hover:text-white transition-colors">Home</Link>

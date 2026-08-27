@@ -14,7 +14,7 @@
 5. [คำสั่งพัฒนาและทดสอบ (Development Commands)](#-คำสั่งพัฒนาและทดสอบ-development-commands)
 6. [Git Workflow & ข้อตกลงการตั้งชื่อ Commit (Conventional Commits)](#-git-workflow--conventional-commits)
 7. [แผนงานพัฒนาตาม Sprint & Checkpoint Timeline](#-แผนงานพัฒนาตาม-sprint--checkpoint-timeline)
-8. [คู่มือการแบ่งงานและพัฒนาแบบแยกส่วน (Module Development Guide)](ISSUE_GUIDE.md)
+8. [คู่มือการพัฒนาและรายการ Issues (Master Issue Guide)](ISSUE_GUIDE.md)
 9. [การเชื่อมต่อ Backend (Spring Boot Integration & Mock Mode)](#-การเชื่อมต่อ-backend-spring-boot-integration--mock-mode)
 10. [Docker & Kubernetes Deployment](#-docker--kubernetes-deployment)
 
@@ -204,8 +204,8 @@ npm run dev
 1. **เลือก Issue จาก GitHub Issues** ที่ต้องการทำ
 2. **สร้าง Git Branch ใหม่** จาก `main` (หรือ `develop`):
    ```bash
-   # ตัวอย่าง: feat/s1-05-shared-components
-   git checkout -b feat/s1-05-shared-components
+   # ตัวอย่าง: feat/us-01-login
+   git checkout -b feat/us-01-login
    ```
 3. **เขียนโค้ดและทดสอบ** (`npm run lint` และ `npm run test`)
 4. **Commit โค้ด** ด้วย Conventional Commits:
@@ -223,14 +223,11 @@ npm run dev
 
 ## 📅 แผนงานพัฒนาตาม Sprint & Checkpoint Timeline
 
-| Sprint | ช่วงเวลา | Milestone / สิ่งที่ต้องส่งมอบ | จำนวน Issues (รวม 18) |
+| Sprint | ช่วงเวลา | Milestone / สิ่งที่ต้องส่งมอบ | จำนวน Issues |
 |---|---|---|---|
-| **Sprint 1** | 25 ส.ค. - 29 ส.ค. | **Checkpoint 2** (Figma + Architecture + Code in Repo) | 3 Issues (`#1` - `#3`) |
-| **Sprint 2** | 1 ก.ย. - 5 ก.ย. | Storefront, Browse, Auth & Profiles | 6 Issues (`#4` - `#9`) |
-| **Sprint 3** | 8 ก.ย. - 12 ก.ย. | **Checkpoint 3** (Cart, Checkout & Order Tracking) | 3 Issues (`#10` - `#12`) |
-| **Sprint 4** | 15 ก.ย. - 26 ก.ย. | **Checkpoint 4** (Admin Panel, QC Hub & Sellers) | 6 Issues (`#13` - `#18`) |
-| **Sprint 5** | 29 ก.ย. - 17 ต.ค. | **Checkpoint 5** (Kubernetes Deployment) | Deployment |
-| **Sprint 6** | 17 ต.ค. - 14 พ.ย. | **Checkpoint 6 & 7** (Testing & Final Deliverable) | Polish & E2E Tests |
+| **Sprint 1** | ถึง 12 ก.ย. | **Checkpoint 3** (Runnable Code & Core Flows) | 3 Issues (`#1` - `#3`) |
+| **Sprint 2** | ถึง 17 ต.ค. | **Checkpoint 5** (Marketplace, Hub & K8s Deploy) | 3 Issues (`#4` - `#6`) |
+| **Sprint 3** | ถึง 14 พ.ย. | **Checkpoint 6 & 7** (Testing, Admin Payouts & Final) | 1 Issue (`#7`) |
 
 ---
 
@@ -243,8 +240,9 @@ npm run dev
 - **Mock Mode**: เมื่อ `VITE_ENABLE_MOCK_API=true` ระบบจะใช้ Local Mock Layer ช่วยให้พัฒนาหน้าจอได้ล่วงหน้าโดยไม่ต้องรัน Backend real-time
 
 ### บัญชีทดสอบใน Mock Mode:
-- **ลูกค้าทั่วไป (Customer):** `user@mythix.com` / รหัสผ่าน: `password123`
-- **ผู้ดูแลระบบ (Admin):** `admin@mythix.com` / รหัสผ่าน: `admin123`
+- **ลูกค้าทั่วไป (Customer/Buyer):** `user@mythix.com` / รหัสผ่าน: `password123`
+- **ผู้ขาย (Seller):** `seller@mythix.com` / รหัสผ่าน: `seller123`
+- **ผู้ดูแลระบบ (Platform Admin):** `admin@mythix.com` / รหัสผ่าน: `admin123`
 
 ---
 
@@ -273,7 +271,7 @@ kubectl get svc tcg-frontend-service
 ---
 
 ## 👥 รายชื่อทีมพัฒนา (Team Members)
-- **ChampZa** — Authentication, User Management & Routing
-- **yoyaho** — Product Browsing, Filter System & Storefront
-- **ssun** — Shopping Cart & Real-time Stock Verification
-- **ไกด์** — Checkout Flow, Order Placement & Fulfillment
+- **ChampZa** — [US-01] Auth & [US-08, 09] User Profile (Issue #1, #6)
+- **yoyaho** — [US-02, 03] Browse & Cart (Issue #2)
+- **ssun** — [US-05] Seller Inventory & [US-04] Checkout (Issue #3, #4)
+- **ไกด์** — [US-07] QC Hub & [US-06] Platform Admin (Issue #5, #7)

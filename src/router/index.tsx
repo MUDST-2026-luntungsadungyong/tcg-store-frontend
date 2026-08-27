@@ -5,9 +5,9 @@ import { SellerLayout } from '@/components/layout/SellerLayout';
 import { PlatformAdminLayout } from '@/components/layout/PlatformAdminLayout';
 
 // Module 3 Pages
-import { HomePage } from '@/pages/HomePage';
-import { BrowsePage } from '@/pages/BrowsePage';
-import { ProductDetailPage } from '@/pages/ProductDetailPage';
+import { HomePage } from '@/pages/customer/HomePage';
+import { BrowsePage } from '@/pages/customer/BrowsePage';
+import { ProductDetailPage } from '@/pages/customer/ProductDetailPage';
 
 // Base layout for customer-facing pages
 function StoreLayout() {

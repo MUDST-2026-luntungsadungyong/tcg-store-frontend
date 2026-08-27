@@ -1,42 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, ChevronsDown } from 'lucide-react';
-import { productsApi } from '@/api/products';
-import type { Product } from '@/types';
+import { ChevronRight } from 'lucide-react';
 
-import { Skeleton } from '@/components/common/Skeleton';
 
-// Horizontal card for "The Pokémon Cards Collection"
-function HorizontalProductCard({ product }: { product: Product }) {
-  return (
-    <Link 
-      to={`/products/${product.id}`}
-      className="flex bg-white rounded-[16px] overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 group h-[120px]"
-    >
-      <div className="w-[100px] h-full bg-[#F8F9FA] p-3 flex items-center justify-center shrink-0">
-        <img 
-          src={product.image} 
-          alt={product.name}
-          className="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-500"
-        />
-      </div>
-      <div className="p-4 flex flex-col justify-center flex-1">
-        <h3 className="text-[12px] font-semibold text-[#374151] line-clamp-2 leading-snug mb-1">
-          {product.name}
-        </h3>
-        <div className="text-[10px] text-gray-500 mb-2">Graded PSA 10</div>
-        <div className="text-[18px] font-bold text-[#111827] mb-1">
-          ฿{product.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </div>
-        <div className="flex items-center">
-          <span className="text-[10px] font-bold text-[#16A34A]">
-            + $5.00 (+2.50%)
-          </span>
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 // Auto-sliding Infinite Seamless Loop Banner Carousel (3s interval)
 function ExpensiveCardsCarousel() {
@@ -137,22 +103,6 @@ function ExpensiveCardsCarousel() {
 }
 
 export function HomePage() {
-  const [trending, setTrending] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchTrending() {
-      try {
-        const data = await productsApi.getProducts();
-        setTrending(data);
-      } catch (error) {
-        console.error('Failed to fetch trending products', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchTrending();
-  }, []);
 
   const scrollToContent = () => {
     document.getElementById('explore-section')?.scrollIntoView({ behavior: 'smooth' });

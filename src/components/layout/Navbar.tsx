@@ -4,15 +4,14 @@ import { Button } from '@/components/common/Button';
 
 export function Navbar() {
   return (
-    <nav className="sticky top-0 z-40 w-full bg-[#151B2B] border-b border-white/5">
+    <nav className="sticky top-0 z-40 w-full bg-[#1b2336] border-b border-[rgba(143,179,226,0.2)]">
       <div className="max-w-[1440px] mx-auto px-8">
-        <div className="flex items-center justify-between h-20">
-          
+        <div className="flex items-center justify-between h-16 overflow-visible">
+
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="flex items-center gap-2 group h-8">
-              {/* Since the downloaded logo might be large, we constrain its height */}
-              <img src="/assets/logo_76_29.png" alt="Mythic Market" className="h-8 object-contain" />
+            <Link to="/" className="flex items-center gap-2 group size-[86px]">
+              <img src="/assets/mythix_logo_white_v3.png" alt="Mythic Market" className="size-full object-cover pointer-events-none" />
             </Link>
           </div>
 
@@ -24,8 +23,8 @@ export function Navbar() {
               </div>
               <input
                 type="text"
-                placeholder="Search..."
-                className="block w-full pl-10 pr-3 py-2 border border-transparent rounded-full leading-5 bg-[#1E2536] text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold sm:text-sm transition-colors"
+                placeholder="Search cards..."
+                className="block w-[320px] h-[40px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] rounded-[20px] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors"
               />
             </div>
           </div>

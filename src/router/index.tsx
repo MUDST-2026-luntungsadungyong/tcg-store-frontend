@@ -13,7 +13,7 @@ function StoreLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-bg-base">
       <Navbar />
-      <main className="flex-1 max-w-[1440px] w-full mx-auto py-7 px-8">
+      <main className="flex-1 w-full">
         <Outlet />
       </main>
       <Footer />
@@ -24,7 +24,7 @@ function StoreLayout() {
 // Temporary placeholder component
 function PlaceholderPage({ title }: { title: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
+    <div className="max-w-[1440px] mx-auto px-8 py-7 w-full flex flex-col items-center justify-center py-20 text-center">
       <h1 className="text-3xl font-bold text-white mb-4">{title}</h1>
       <p className="text-gray-400">This page is under construction.</p>
     </div>

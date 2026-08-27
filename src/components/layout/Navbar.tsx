@@ -24,7 +24,7 @@ export function Navbar() {
               <input
                 type="text"
                 placeholder="Search cards..."
-                className="block w-[320px] h-[40px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] rounded-[20px] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors"
+                className="block w-[320px] h-[44px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] rounded-[22px] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors"
               />
             </div>
           </div>

@@ -59,13 +59,62 @@ export function HomePage() {
   return (
     <div className="flex flex-col pb-20 w-full overflow-hidden">
       
-      {/* 1. Hero Section */}
-      <section className="w-full relative bg-[#151B2B]">
-        <img 
-          src="/assets/component_232_864.png" 
-          alt="Mythic Market Hero" 
-          className="w-full h-auto object-cover"
+      {/* 1. Hero Section — matched to Figma node 147:144 group (image30/MYTHIC/logo/MARKET/Start!/chevron) */}
+      <section className="relative w-full bg-bg-base overflow-hidden h-[calc(100dvh-64px)] min-h-[560px]">
+        <img
+          src="/assets/hero_castle_bg.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
         />
+
+        {/* MYTHIC (upper-left, faded) */}
+        <span
+          className="absolute font-bold uppercase text-[rgba(255,255,255,0.3)] whitespace-nowrap select-none"
+          style={{ left: '10.9%', top: '25.7%', fontSize: 'clamp(28px,8.9vw,128px)', fontFamily: "'IBM Plex Sans Thai', sans-serif" }}
+          aria-hidden="true"
+        >
+          MYTHIC
+        </span>
+
+        {/* MARKET (lower-right, more faded) */}
+        <span
+          className="absolute font-bold uppercase text-[rgba(255,255,255,0.1)] whitespace-nowrap select-none"
+          style={{ left: '54.9%', top: '50%', fontSize: 'clamp(28px,8.9vw,128px)', fontFamily: "'IBM Plex Sans Thai', sans-serif" }}
+          aria-hidden="true"
+        >
+          MARKET
+        </span>
+
+        {/* Logo lockup, centered — width scales with viewport, height follows via aspect-ratio so it never distorts/crops on resize */}
+        <div
+          className="absolute overflow-hidden pointer-events-none"
+          style={{
+            left: '50%',
+            top: '35%',
+            width: 'clamp(180px, 36vw, 883px)',
+            aspectRatio: '883 / 632',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <img
+            src="/assets/mythix_logo_white_v2.png"
+            alt="Mythic Market"
+            className="absolute top-0 left-0 w-full h-[140%] object-cover"
+          />
+        </div>
+
+        {/* Start! + scroll cue */}
+        <Link
+          to="/browse"
+          className="absolute flex flex-col items-center gap-2 text-[#dbe3f3] hover:text-brand-gold transition-colors duration-200"
+          style={{ left: '47.4%', top: '78.8%', transform: 'translateX(-50%)' }}
+        >
+          <span className="text-[20px] md:text-[32px] font-bold" style={{ fontFamily: "'IBM Plex Sans Thai', sans-serif" }}>
+            Start!
+          </span>
+          <img src="/assets/chevron_double_down.svg" alt="" aria-hidden="true" className="w-6 h-6 md:w-8 md:h-8 animate-pulse" />
+        </Link>
       </section>
 
       <div className="max-w-[1440px] mx-auto px-8 w-full">

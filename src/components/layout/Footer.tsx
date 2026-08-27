@@ -7,8 +7,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           {/* Logo Section */}
           <div className="col-span-1">
-            <Link to="/" className="inline-block mb-2">
-              <img src="/assets/logo_76_30.png" alt="Mythic TCG" className="h-16 object-contain" />
+            <Link to="/" className="inline-block mb-2 h-16 w-16 overflow-hidden">
+              <img src="/assets/component_293_629.png" alt="Mythic TCG" className="h-16 w-16 object-cover scale-[2.2]" />
             </Link>
             <p className="text-[#EAB308] text-sm font-semibold mt-2">
               Mythic TCG website

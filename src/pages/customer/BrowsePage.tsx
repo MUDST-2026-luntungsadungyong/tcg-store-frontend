@@ -60,7 +60,7 @@ export function BrowsePage() {
   }, [products, searchQuery, game, condition, priceRange, qcOnly]);
 
   return (
-    <div className="py-8 flex flex-col md:flex-row gap-8">
+    <div className="max-w-[1440px] mx-auto px-8 py-8 w-full flex flex-col md:flex-row gap-8">
       
       {/* Mobile Filter Toggle */}
       <div className="md:hidden flex gap-4">

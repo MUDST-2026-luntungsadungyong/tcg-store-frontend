@@ -4,21 +4,28 @@ import type { User } from '@/types';
 interface AuthStore {
   token: string | null;
   user: User | null;
+  isHydrating: boolean;
   login: (token: string, user: User) => void;
+  completeHydration: (user: User) => void;
   logout: () => void;
 }
 
+const storedToken = localStorage.getItem('token');
+
 export const useAuthStore = create<AuthStore>((set) => ({
-  token: localStorage.getItem('token'),
+  token: storedToken,
   user: null,
+  isHydrating: Boolean(storedToken),
 
   login: (token, user) => {
     localStorage.setItem('token', token);
-    set({ token, user });
+    set({ token, user, isHydrating: false });
   },
+
+  completeHydration: (user) => set({ user, isHydrating: false }),
 
   logout: () => {
     localStorage.removeItem('token');
-    set({ token: null, user: null });
+    set({ token: null, user: null, isHydrating: false });
   },
 }));

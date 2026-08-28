@@ -23,7 +23,12 @@ export function LoginPage() {
     try {
       const { token, user } = await authApi.login(email, password);
       login(token, user);
-      navigate(user.role === 'ADMIN' ? '/admin' : '/');
+      const destination = {
+        CUSTOMER: '/',
+        SELLER: '/seller/inventory',
+        ADMIN: '/platform-admin',
+      }[user.role];
+      navigate(destination);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

@@ -15,6 +15,13 @@ export const mockUsers: User[] = [
     role: 'ADMIN',
     phone: '0898765432',
   },
+  {
+    id: 'usr-3',
+    name: 'Seller Demo',
+    email: 'seller@mythix.com',
+    role: 'SELLER',
+    phone: '0865432109',
+  },
 ];
 
 export const mockProducts: Product[] = [

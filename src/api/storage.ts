@@ -3,7 +3,7 @@ import { mockProducts, mockUsers, mockOrders } from './mock/data';
 
 const STORAGE_KEYS = {
   PRODUCTS: 'mythix_mock_products_v3',
-  USERS: 'mythix_mock_users_v3',
+  USERS: 'mythix_mock_users_v4',
   ORDERS: 'mythix_mock_orders_v3',
 };
 

@@ -9,6 +9,7 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { HomePage } from '@/pages/customer/HomePage';
 import { BrowsePage } from '@/pages/customer/BrowsePage';
 import { ProductDetailPage } from '@/pages/customer/ProductDetailPage';
+import { CartPage } from '@/pages/customer/CartPage';
 import { LoginPage } from '@/pages/customer/LoginPage';
 import { SignUpPage } from '@/pages/customer/SignUpPage';
 import { ForgotPasswordPage } from '@/pages/customer/ForgotPasswordPage';
@@ -51,7 +52,7 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'browse', element: <BrowsePage /> },
       { path: 'products/:id', element: <ProductDetailPage /> },
-      { path: 'cart', element: <PlaceholderPage title="Shopping Cart" /> },
+      { path: 'cart', element: <CartPage /> },
       { path: 'checkout', element: <PlaceholderPage title="Checkout" /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <SignUpPage /> },

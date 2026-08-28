@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Bell, LogOut, User as UserIcon, Package, ChevronDown } from 'lucide-react';
+import { Search, Bell, ShoppingCart, LogOut, User as UserIcon, Package, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useCartStore } from '@/store/useCartStore';
 
 export function Navbar() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const totalItems = useCartStore((s) => s.getTotalItems());
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +64,15 @@ export function Navbar() {
               Cards
             </Link>
             
+            <Link to="/cart" className="relative text-gray-300 hover:text-white transition-colors" title="Shopping Cart">
+              <ShoppingCart className="h-5 w-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-2 -right-2 bg-brand-blue text-bg-base text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-md">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+            </Link>
+
             <button className="relative text-gray-300 hover:text-white transition-colors">
               <Bell className="h-5 w-5" />
             </button>

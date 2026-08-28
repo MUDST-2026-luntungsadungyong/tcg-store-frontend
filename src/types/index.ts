@@ -35,6 +35,13 @@ export interface Product {
   stage?: string;
   marketPrice?: number;
   subtitle?: string;
+  cardNumber?: string;
+  cardText?: string;
+  gradingCompany?: string;
+  grade?: string;
+  year?: string | number;
+  tournament?: string;
+  certNumber?: string;
 }
 
 export interface CartItem {

@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type FocusEvent } from 'react';
+import { useRef, useState, type FormEvent, type FocusEvent, type ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, User, Mail, Phone as PhoneIcon, Camera, Trash2 } from 'lucide-react';
 import { Input } from '@/components/common/Input';
@@ -39,7 +39,7 @@ export function EditPersonalInfoPage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // ponytail: no real upload endpoint — reads the file client-side and stores it as a data URL, same as any other profile field
-  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleAvatarChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;

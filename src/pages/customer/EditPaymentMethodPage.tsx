@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type FocusEvent } from 'react';
+import { useRef, useState, type FormEvent, type FocusEvent, type RefObject } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, CreditCard, User, Calendar, Lock } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
@@ -119,7 +119,7 @@ export function EditPaymentMethodPage() {
     ? (props: LucideProps) => <BrandIcon brand={cardBrand} {...props} />
     : CreditCard;
 
-  const refs: Record<FieldName, React.RefObject<HTMLInputElement | null>> = {
+  const refs: Record<FieldName, RefObject<HTMLInputElement | null>> = {
     cardNumber: useRef<HTMLInputElement>(null),
     name: useRef<HTMLInputElement>(null),
     expiry: useRef<HTMLInputElement>(null),
@@ -145,16 +145,17 @@ export function EditPaymentMethodPage() {
 
     const values: Record<FieldName, string> = { cardNumber, name, expiry, cvv };
     const errors: Partial<Record<FieldName, string>> = {};
-    let firstInvalid: FieldName | null = null;
-    (Object.keys(validators) as FieldName[]).forEach((field) => {
+    const fieldNames = Object.keys(validators) as FieldName[];
+    let firstInvalid: FieldName | undefined;
+    for (const field of fieldNames) {
       const message = validators[field](values[field]);
       if (message) {
         errors[field] = message;
-        firstInvalid ??= field;
+        if (!firstInvalid) firstInvalid = field;
       }
-    });
+    }
 
-    if (firstInvalid) {
+    if (firstInvalid !== undefined) {
       setFieldErrors(errors);
       refs[firstInvalid].current?.focus();
       return;

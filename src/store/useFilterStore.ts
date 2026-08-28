@@ -7,6 +7,8 @@ export interface FilterState {
   priceRange: [number, number]; // [min, max]
   qcOnly: boolean;
   rating: number; // 0-5 stars
+  rarity: string[];
+  stage: string[];
 }
 
 interface FilterStore extends FilterState {
@@ -16,6 +18,8 @@ interface FilterStore extends FilterState {
   setPriceRange: (min: number, max: number) => void;
   toggleQcOnly: () => void;
   setRating: (rating: number) => void;
+  toggleRarity: (rarityName: string) => void;
+  toggleStage: (stageName: string) => void;
   resetFilters: () => void;
 }
 
@@ -26,6 +30,8 @@ const initialState: FilterState = {
   priceRange: [0, 9999999],
   qcOnly: false,
   rating: 0,
+  rarity: [],
+  stage: [],
 };
 
 export const useFilterStore = create<FilterStore>((set) => ({
@@ -51,5 +57,17 @@ export const useFilterStore = create<FilterStore>((set) => ({
   
   setRating: (rating) => set({ rating }),
   
+  toggleRarity: (rarityName) => set((state) => ({
+    rarity: state.rarity.includes(rarityName)
+      ? state.rarity.filter(r => r !== rarityName)
+      : [...state.rarity, rarityName]
+  })),
+
+  toggleStage: (stageName) => set((state) => ({
+    stage: state.stage.includes(stageName)
+      ? state.stage.filter(s => s !== stageName)
+      : [...state.stage, stageName]
+  })),
+
   resetFilters: () => set(initialState),
 }));

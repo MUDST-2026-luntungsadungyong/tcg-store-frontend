@@ -20,22 +20,63 @@
 - [ ] **Routing:** ทำ Protected Route (บังคับ redirect ไปหน้า Login หากไม่มี Token)
 
 ### Issue #2: [US-02 & US-03] ระบบ Browse Products และ Shopping Cart
-- [ ] **UI:** สร้างหน้า `HomePage` ดึง Component Card สินค้ามาแสดง
-- [ ] **UI:** สร้าง `FilterBar` (Search text, Min/Max Price, Rarity, Game)
-- [ ] **UI:** สร้างหน้า `ProductDetailPage` แสดงรูปใหญ่ฝั่งซ้าย ข้อมูลฝั่งขวา พร้อมป้าย Stock
-- [ ] **UI:** สร้างปุ่ม `AddToCartButton` พร้อมระบบ Toast Notification เวลาเพิ่มสำเร็จ
-- [ ] **UI:** สร้างหน้า `CartPage` แสดงรายการสินค้า, ราคารวม
-- [ ] **Logic:** ระบบตะกร้า (Cart State): ฟังก์ชัน Increase (+), Decrease (-), Remove (x)
-- [ ] **Logic:** Validation: ไม่สามารถกด Add to Cart หรือ + สินค้าเกินจำนวน Stock ได้
-- [ ] **Integration:** ผูก API `GET /api/products` (พร้อม Query parameters สำหรับ Filter)
+- [x] **Page 1: `HomePage` (`src/pages/customer/HomePage.tsx` - เสร็จแล้ว 100%):**
+  - [x] Hero Cover Section (ภาพปราสาท + โลโก้ Mythic Market + ปุ่ม Start! เลื่อนลง)
+  - [x] Hero Feature Carousel ("The 10 Most Expensive..." สไลด์อัตโนมัติ 3 วินาที)
+  - [x] Section "What's new!" (การ์ดข่าวสาร 30th Celebration + ปุ่ม More)
+  - [x] Section "The 10 Most Expensive Cards" (การ์ดขาวขอบมน เอียง 3D พร้อมเงาเด้งตอน Hover)
+  - [x] Section "The Pokémon Cards Collection" (การ์ดแนวนอนพร้อมป้าย IN STOCK)
+- [ ] **Page 2: `BrowsePage` (`src/pages/customer/BrowsePage.tsx` - หน้ารวมแคตตาล็อก `/browse`):**
+  - [ ] **UI:** หัวข้อหน้า "The Pokémon Cards Collection"
+  - [ ] **UI:** แถบ Top Filter Toolbar (ช่องค้นหา Search, ปุ่มตัวกรองหมวดหมู่เกม, ช่องกรอก Min-Max Price พร้อมปุ่ม Apply)
+  - [ ] **UI:** Grid แสดงการ์ดสินค้า 3 คอลัมน์ (การ์ด Slab พื้นขาว `#FFFFFF` ขอบมนตาม Figma)
+  - [ ] **UI & Logic (Edge States):**
+    - [ ] `Empty Filter State`: แสดงหน้าจอและข้อความเมื่อค้นหา/กรองแล้วไม่พบสินค้า
+    - [ ] `Invalid Price Filter State`: แจ้งเตือนขอบสีแดงพร้อมข้อความเตือนเมื่อกรอกราคาผิด (เช่น Min > Max หรือติดลบ)
+  - [ ] **Integration:** ดึงข้อมูลจาก `productsApi.getProducts()` เชื่อมกับ `useFilterStore`
+- [ ] **Page 3: `ProductDetailPage` (`src/pages/customer/ProductDetailPage.tsx` - หน้ารายละเอียดการ์ด `/products/:id`):**
+  - [ ] **UI:** แถบ Breadcrumbs นำทาง (`Home > Pokémon Cards > [Card Name]`)
+  - [ ] **UI (ฝั่งซ้าย):** รูปภาพการ์ด Slab ขนาดใหญ่ (PSA 10 Graded) พร้อมเอฟเฟกต์ Drop Shadow
+  - [ ] **UI (ฝั่งขวา):** ชื่อการ์ด, ป้ายกำกับเกรด/สภาพ, ราคาบาทตัวโต (`฿2000.00`), ป้ายสถานะสต็อกคงเหลือ, ข้อมูลผู้ขาย (Seller Info)
+  - [ ] **UI:** ตัวเลือกปรับจำนวนสินค้า (Quantity Selector), ปุ่ม `Add to Cart` (สีน้ำเงิน), และปุ่ม `Buy Now`
+  - [ ] **Interactive Feedback:** แสดง Toast Notification สีเขียวมุมขวาบนเมื่อกดเพิ่มสินค้าลงตะกร้าสำเร็จ
+  - [ ] **Guest Guard Modal (`ContextualLoginModal`):** แสดง Popup บังคับเข้าสู่ระบบ ("Log in to continue") ทันทีหากผู้ใช้ที่เป็น Guest พยายามกดซื้อหรือกดใส่ตะกร้า
+- [ ] **Page 4: `CartPage` (`src/pages/customer/CartPage.tsx` - หน้าตะกร้าสินค้า `/cart`):**
+  - [ ] **UI:** ตารางสรุปรายการสินค้าในตะกร้า (รูปภาพ, ชื่อ, ราคาต่อหน่วย, ตัวปรับจำนวน, ปุ่มลบออกจากตะกร้า)
+  - [ ] **UI:** การ์ดสรุปยอดชำระรวม (Subtotal, Tax, Shipping, Total Amount) พร้อมปุ่ม "Proceed to Checkout"
+  - [ ] **UI:** Empty Cart State (เมื่อไม่มีของในตะกร้า พร้อมปุ่มกลับไปเลือกซื้อสินค้า)
+  - [ ] **Logic (`useCartStore`):** ฟังก์ชัน `addItem`, `removeItem`, `updateQuantity`, `clearCart`
+  - [ ] **Validation:** ดักจับไม่ให้กดเพิ่มจำนวนเกินสต็อกคงเหลือที่มีอยู่จริง (`maxStock`)
+- [ ] **Integration & Routes:** อัปเดต `src/router/index.tsx` รองรับ Route `/browse`, `/products/:id`, `/cart`
 
-### Issue #3: [US-05] ระบบ Inventory Management (ฝั่ง Seller)
-- [ ] **UI:** สร้าง Layout พื้นฐานของ `SellerDashboard` (Sidebar nav 5 รายการ)
-- [ ] **UI:** สร้างตาราง `ProductManagementTable` แสดงรายการการ์ดที่ลงขาย
-- [ ] **UI:** สร้าง `AddEditProductModal` (ฟอร์มอัปโหลดรูป, ชื่อ, ราคา, ต้นทุน, สต็อก)
-- [ ] **UI:** เพิ่ม Toggle Switch สำหรับเปลี่ยนสถานะ (Show / Hide)
-- [ ] **Logic:** เช็คเงื่อนไขก่อนการ Delete (ห้ามลบหากมี Active Order อยู่) -> แสดง Error Toast
-- [ ] **Integration:** ผูก API `POST /api/seller/products`, `PUT /api/seller/products/{id}`, `DELETE`
+### Issue #3: [US-05] ระบบ Inventory Management & CRUD (ฝั่ง Seller)
+- [ ] **UI (Layout & Shell):**
+  - [ ] ใช้งาน `SellerLayout` และ `SellerSidebar` (เมนู: Dashboard, Add/Edit Listing, Inventory, Payouts)
+  - [ ] จัดโครงสร้างหน้า `ProductManagementPage` (`/seller/inventory`) รองรับ Responsive & Dark Theme
+- [ ] **UI (Product Management Views):**
+  - [ ] สร้างแถบเครื่องมือบนสุด: ช่อง Search ครอบคลุมทุกฟิลด์, ปุ่ม Filter หมวดหมู่เกม, ปุ่ม `+ Add Product`, และปุ่มสลับ Grid View / Table View
+  - [ ] สร้างมุมมอง **Grid View (`ProductInventoryGrid`):** การ์ดแสดงรูปภาพ, ชื่อการ์ด, ป้ายเกม, ราคา (฿), ต้นทุน (฿), สต็อก, ป้ายสถานะ Show/Hide, และ Action Dropdown
+  - [ ] สร้างมุมมอง **Table View (`ProductManagementTable`):** ตารางแสดงรูป Thumbnail, ชื่อ, หมวดหมู่เกม, ราคาขาย, ต้นทุน, กำไรสุทธิ/Margin (สีเขียว), จำนวนสต็อก, สวิตช์เปิด/ปิดสถานะ, ปุ่ม Edit (ดินสอ), ปุ่ม Delete (ถังขยะ)
+- [ ] **UI (Add / Edit Product Modal & Form):**
+  - [ ] สร้าง Component `AddEditProductModal` (Modal พื้นหลังเข้ม `#1B2336` ขอบมนตาม Figma)
+  - [ ] กล่องอัปโหลดรูปภาพ (Image Dropzone): รองรับ Drag & Drop, JPG/PNG, แสดงภาพตัวอย่าง Preview และปุ่มลบภาพ
+  - [ ] ฟอร์มกรอกข้อมูลการ์ด: ชื่อการ์ด (Card Name), หมวดหมู่เกม (Game / Category Select), สภาพการ์ด/เกรด (Condition / PSA Grade)
+  - [ ] ฟอร์มกรอกตัวเลข: ราคาขาย (Selling Price ฿), ต้นทุน (Acquisition Cost ฿), จำนวนสต็อก (Stock Quantity)
+  - [ ] **ระบบคำนวณกำไรเรียลไทม์ (Course Req #6):** คำนวณ Estimated Profit (`Price - Cost`) และ Margin % อัตโนมัติทันทีที่พิมพ์ตัวเลข พร้อมแสดงตัวอักษรสีเขียว/แดง
+  - [ ] Form Validation & Error States: ตรวจสอบช่อง Required, ตัวเลขติดลบ, สต็อกไม่ถูกต้อง แสดงขอบแดงและ Error Hint ชัดเจน
+- [ ] **UI & Logic (Status Toggle & Delete Guard):**
+  - [ ] **Show / Hide Toggle Switch:** สลับสถานะได้ทันทีจากหน้าตาราง โดยสินค้าที่ `Hide` จะถูกซ่อนออกจากหน้าลูกค้า (`BrowsePage` และ `HomePage`)
+  - [ ] **Delete Confirmation Modal:** Popup ยืนยันการลบสินค้า
+  - [ ] **Business Rule Validation Guard (กฎการลบ):**
+    - [ ] ตรวจสอบว่าสินค้ามีคำสั่งซื้อที่ค้างดำเนินการอยู่ (`Active Orders`) หรือไม่? หากมี -> บล็อกการลบและแจ้งเตือน Error Toast/Modal
+    - [ ] บังคับให้ต้องเปลี่ยนสถานะสินค้าเป็น `Hide` ก่อน ถึงจะยอมให้กดปุ่มลบได้
+- [ ] **Integration & State Management:**
+  - [ ] สร้าง `useSellerInventoryStore` (Zustand) สำหรับจัดการ State รายการสินค้า, Search/Filter, และ Pagination/View toggle
+  - [ ] ผูก API `GET /api/seller/products` (ดึงรายการการ์ดของผู้ขาย พร้อม Search & Filter Query)
+  - [ ] ผูก API `POST /api/seller/products` (สร้าง Listing สินค้าใหม่)
+  - [ ] ผูก API `PUT /api/seller/products/{id}` (อัปเดตข้อมูลการ์ด)
+  - [ ] ผูก API `PATCH /api/seller/products/{id}/status` (เปลี่ยนสถานะ Show / Hide)
+  - [ ] ผูก API `DELETE /api/seller/products/{id}` (ลบสินค้า)
 
 ---
 

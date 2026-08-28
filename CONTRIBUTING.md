@@ -55,8 +55,8 @@
 ## 📋 4. PR Checklist ก่อนส่ง Review
 
 ก่อนเปิด Pull Request และขอให้เพื่อน Review:
-- [ ] รัน `npm run lint` ผ่าน 100% (ไม่มี Type errors)
-- [ ] รัน `npm run test` ผ่านครบทุก Test Cases
+- [ ] รัน `npm run lint` ผ่าน (ตรวจ static lint ด้วย Oxlint)
+- [ ] รัน `npm run build` ผ่าน (ตรวจ TypeScript types และ production bundle)
 - [ ] ตั้งชื่อ PR ตาม Conventional Commits (เช่น `feat: add shopping cart page`)
 - [ ] ใส่หมายเลข Issue ใน Description (เช่น `Closes #2`)
 - [ ] ตรวจสอบว่า UI สอดคล้องกับ Figma และรองรับ Responsive

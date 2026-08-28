@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { SellerLayout } from '@/components/layout/SellerLayout';
@@ -20,7 +20,7 @@ import { ProfileSettingsPage } from '@/pages/customer/ProfileSettingsPage';
 import { EditPersonalInfoPage } from '@/pages/customer/EditPersonalInfoPage';
 import { EditShippingAddressPage } from '@/pages/customer/EditShippingAddressPage';
 import { EditPaymentMethodPage } from '@/pages/customer/EditPaymentMethodPage';
-
+import { ProductManagementPage } from '@/pages/seller/ProductManagementPage';
 // Base layout for customer-facing pages
 function StoreLayout() {
   return (
@@ -79,11 +79,29 @@ export const router = createBrowserRouter([
       {
         element: <SellerLayout />,
         children: [
-          { index: true, element: <PlaceholderPage title="Seller Dashboard" /> },
-          { path: 'dashboard', element: <PlaceholderPage title="Seller Dashboard" /> },
-          { path: 'listings', element: <PlaceholderPage title="Manage Listings" /> },
-          { path: 'inventory', element: <PlaceholderPage title="Inventory Management" /> },
+          { index: true, element: <Navigate to="inventory" replace /> },
+          {
+            path: 'dashboard',
+            element: <PlaceholderPage title="Seller Dashboard" />,
+          },
+          { path: 'inventory', element: <ProductManagementPage /> },
+          {
+            path: 'products',
+            element: <Navigate to="/seller/inventory" replace />,
+          },
+          {
+            path: 'listings',
+            element: <Navigate to="/seller/inventory" replace />,
+          },
+          {
+            path: 'orders',
+            element: <PlaceholderPage title="Seller Orders" />,
+          },
           { path: 'payouts', element: <PlaceholderPage title="Payouts" /> },
+          {
+            path: 'store-profile',
+            element: <PlaceholderPage title="Store Profile" />,
+          },
         ],
       },
     ],

@@ -15,7 +15,7 @@ function App() {
     const token = useAuthStore.getState().token;
     if (token) {
       authApi.getProfile()
-        .then((user) => useAuthStore.setState({ user }))
+        .then((user) => useAuthStore.getState().completeHydration(user))
         .catch(() => useAuthStore.getState().logout());
     }
   }, []);

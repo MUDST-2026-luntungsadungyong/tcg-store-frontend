@@ -17,6 +17,9 @@ export const authApi = {
       if (user && password === 'admin123' && user.role === 'ADMIN') {
          return { token: 'mock-jwt-token-admin', user };
       }
+      if (user && password === 'seller123' && user.role === 'SELLER') {
+         return { token: 'mock-jwt-token-seller', user };
+      }
       throw new Error('Invalid credentials');
     }
     const response = await apiClient.post('/auth/login', { email, password });
@@ -64,6 +67,9 @@ export const authApi = {
           const users = storage.getUsers();
           if(token.includes('admin')){
              return users.find(u => u.role === 'ADMIN')!;
+          }
+          if(token.includes('seller')){
+             return users.find(u => u.role === 'SELLER')!;
           }
           return users.find(u => u.role === 'CUSTOMER')!;
       }

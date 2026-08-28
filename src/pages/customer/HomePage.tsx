@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+import { productsApi } from '@/api/products';
+import type { Product } from '@/types';
 
 
 
@@ -103,6 +105,24 @@ function ExpensiveCardsCarousel() {
 }
 
 export function HomePage() {
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void productsApi
+      .getProducts()
+      .then((products) => {
+        if (!cancelled) setFeaturedProducts(products.slice(0, 5));
+      })
+      .catch(() => {
+        if (!cancelled) setFeaturedProducts([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const scrollToContent = () => {
     document.getElementById('explore-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -332,70 +352,28 @@ export function HomePage() {
           <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-[28px] font-bold text-white">The Pokémon Cards Collection</h2>
-              <Link to="/collection" className="text-gray-300 hover:text-white flex items-center gap-1 text-[15px] font-semibold transition-colors">
+              <Link to="/browse" className="text-gray-300 hover:text-white flex items-center gap-1 text-[15px] font-semibold transition-colors">
                 Watch More <ChevronRight size={20} />
               </Link>
             </div>
             
             <div className="flex gap-4 md:gap-6 overflow-x-auto pb-8 snap-x custom-scrollbar">
-              {[
-                {
-                  id: 1,
-                  img: '/assets/expensive_card_1.png',
-                  price: '2000.00',
-                  marketPrice: '199.00',
-                  title: 'Trophy Pikachu - #3',
-                  desc: '1998 P.M. Japanese Promo\n\nBronze 3rd-2nd Tournament',
-                  inStock: true,
-                },
-                {
-                  id: 2,
-                  img: '/assets/expensive_card_2.png',
-                  price: '20.00',
-                  marketPrice: '5.00',
-                  title: 'Pokemon Illustrator',
-                  desc: '1998 P.M. Japanese\n\nIllustration Contest',
-                  inStock: true,
-                },
-                {
-                  id: 3,
-                  img: '/assets/expensive_card_3.png',
-                  price: '5.00',
-                  marketPrice: '100.00',
-                  title: 'P.M. SM BLACK STAR',
-                  desc: 'TSUNEKAZU ISHIHARA\n\nISHEHARA GX-PROMO',
-                  inStock: true,
-                },
-                {
-                  id: 4,
-                  img: '/assets/expensive_card_1.png',
-                  price: '2000.00',
-                  marketPrice: '199.00',
-                  title: 'Trophy Pikachu - #3',
-                  desc: '1998 P.M. Japanese Promo\n\nBronze 3rd-2nd Tournament',
-                  inStock: true,
-                },
-                {
-                  id: 5,
-                  img: '/assets/expensive_card_2.png',
-                  price: '20.00',
-                  marketPrice: '5.00',
-                  title: 'Pokemon Illustrator',
-                  desc: '1998 P.M. Japanese\n\nIllustration Contest',
-                  inStock: true,
-                }
-              ].map((item, idx) => (
-                <div key={item.id + '-' + idx} className="bg-white rounded-[16px] p-4 flex gap-4 min-w-[320px] md:min-w-[400px] h-[180px] md:h-[200px] snap-start shrink-0 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-[#8B5CF6]">
+              {featuredProducts.map((item) => (
+                <Link
+                  key={item.id}
+                  to={`/products/${item.id}`}
+                  className="bg-white rounded-[16px] p-4 flex gap-4 min-w-[320px] md:min-w-[400px] h-[180px] md:h-[200px] snap-start shrink-0 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-[#8B5CF6]"
+                >
                   {/* Left Image */}
                   <div className="relative w-[110px] md:w-[130px] h-full shrink-0 flex items-center justify-center rounded-lg">
-                    {item.inStock && (
+                    {item.stock > 0 && (
                       <span className="absolute top-2 right-1 bg-[#16A34A] text-white text-[9px] font-bold px-2 py-0.5 rounded z-10 tracking-wide">
                         IN STOCK
                       </span>
                     )}
                     <img 
-                      src={item.img} 
-                      alt={item.title} 
+                      src={item.image}
+                      alt={item.name}
                       className="w-full h-full object-contain drop-shadow-md" 
                     />
                   </div>
@@ -403,22 +381,27 @@ export function HomePage() {
                   {/* Right Content */}
                   <div className="flex flex-col flex-1 py-1">
                     <h3 className="text-black font-bold text-[15px] md:text-[17px] leading-tight mb-2">
-                      {item.title}
+                      {item.name}
                     </h3>
                     <p className="text-gray-400 text-[11px] md:text-[12px] leading-snug whitespace-pre-wrap mb-auto">
-                      {item.desc}
+                      {item.set || item.game}
+                      {'\n\n'}
+                      {item.condition || item.rarity || ''}
                     </p>
                     
                     <div className="mt-2">
                       <div className="text-black font-black text-[22px] md:text-[28px] leading-none mb-1">
-                        ฿{item.price}
+                        ฿{item.price.toFixed(2)}
                       </div>
                       <div className="text-gray-400 text-[11px] md:text-[12px] font-medium">
-                        Market Price: <span className="text-[#16A34A] font-bold">฿{item.marketPrice}</span>
+                        Market Price:{' '}
+                        <span className="text-[#16A34A] font-bold">
+                          ฿{(item.marketPrice ?? item.price).toFixed(2)}
+                        </span>
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

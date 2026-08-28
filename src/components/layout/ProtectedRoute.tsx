@@ -6,12 +6,29 @@ export function ProtectedRoute({ requiredRole }: { requiredRole?: Role }) {
   const location = useLocation();
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
+  const isHydrating = useAuthStore((s) => s.isHydrating);
 
   if (!token) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (requiredRole && user && user.role !== requiredRole) {
+  if (isHydrating) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex min-h-screen items-center justify-center bg-bg-base text-gray-400"
+      >
+        Checking your session...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  if (requiredRole && user.role !== requiredRole) {
     return <Navigate to="/" replace />;
   }
 

@@ -2,7 +2,7 @@
 
 > **ITDS323 Practical DevOps and Applications** — Mahidol University DST  
 > **Repository:** `https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend`  
-> **Frontend Stack:** React 18 + Vite + TypeScript + Tailwind CSS (v3) + Zustand + Axios
+> **Frontend Stack:** React 19 + Vite + TypeScript + Tailwind CSS (v3) + Zustand + Axios
 
 ---
 
@@ -24,14 +24,14 @@
 
 | หมวดหมู่ | เทคโนโลยีที่ใช้ | วัตถุประสงค์ / หมายเหตุ |
 |---|---|---|
-| **Core Framework** | React 18 + Vite (TypeScript) | ความเร็วในการโหลดสูง, Hot Module Replacement รวดเร็ว |
+| **Core Framework** | React 19 + Vite (TypeScript) | ความเร็วในการโหลดสูง, Hot Module Replacement รวดเร็ว |
 | **CSS Framework** | **Tailwind CSS (v3)** + PostCSS | **มาตรฐานหลักของทีม** ป้องกันปัญหา CSS ชนกัน |
 | **Design Tokens** | CSS Variables + Figma Tokens | กำหนด Color Palette และ Typography ให้ตรงกับ Figma |
 | **State Management**| Zustand | จัดการ Cart, Auth และ Global UI State ได้กระชับ |
-| **Routing** | React Router v6 | รองรับ SPA Navigation, Protected Routes และ Admin Guards |
+| **Routing** | React Router v7 | รองรับ SPA Navigation, Protected Routes และ Admin Guards |
 | **HTTP Client** | Axios | มี Interceptors สำหรับแนบ JWT Token อัตโนมัติ |
 | **Icons & Helpers** | Lucide React / clsx / tailwind-merge | ไอคอนคมชัด และฟังก์ชันผสาน Tailwind Class |
-| **Unit Testing** | Vitest + React Testing Library | รันชุดทดสอบความถูกต้องของ Component และ State |
+| **Automated Checks** | Oxlint + TypeScript + Vite | ตรวจ static lint, types และ production bundle ตาม CI |
 
 ---
 
@@ -82,7 +82,7 @@ tcg-store-frontend/
 ├── .github/
 │   └── workflows/
 │       ├── pr-title-check.yml   # ตรวจสอบชื่อ PR (Conventional Commits)
-│       └── ci.yml               # CI Pipeline (Build, Lint, Unit Test)
+│       └── ci.yml               # CI Pipeline (Build และ Lint)
 ├── k8s/                         # Kubernetes Manifests (Deployment, Service, ConfigMap)
 ├── src/
 │   ├── api/                     # รวม API Calls & Data Layer
@@ -113,10 +113,9 @@ tcg-store-frontend/
 │   │   ├── ProfilePage.tsx      # หน้าจัดการโปรไฟล์และที่อยู่
 │   │   ├── MyOrdersPage.tsx     # หน้าประวัติการสั่งซื้อของฉัน
 │   │   └── admin/               # โซนสำหรับ Admin (Dashboard, Products, Orders)
-│   ├── router/                  # React Router v6 Configuration & Guards
+│   ├── router/                  # React Router v7 Configuration & Guards
 │   ├── store/                   # Zustand Stores (authStore, cartStore, toastStore)
 │   ├── styles/                  # Tailwind & Global Styles (tokens.css, index.css)
-│   ├── test/                    # Test Setup & Unit Test Suites
 │   ├── types/                   # TypeScript Interfaces ตรงกับ Spring Boot DTOs
 │   └── utils/                   # Helper functions (cn, formatPrice, calculateProfit)
 ├── .env.example                 # ตัวอย่างค่า Environment Variables
@@ -176,11 +175,11 @@ npm run dev
 | คำสั่ง | รายละเอียด |
 |---|---|
 | `npm run dev` | รัน Vite Development Server พร้อม Hot Module Replacement |
-| `npm run lint` | ตรวจสอบ TypeScript Types และ Syntax Error ทั้งหมด |
-| `npm run test` | รันชุด Unit Tests ด้วย Vitest แบบ One-shot |
-| `npm run test:watch` | รัน Unit Tests แบบ Watch Mode (Auto re-run เมื่อแก้โค้ด) |
-| `npm run build` | ทำการ Compile TypeScript และ Bundle โค้ดลงในโฟลเดอร์ `dist/` |
+| `npm run lint` | ตรวจ static lint ด้วย Oxlint |
+| `npm run build` | ตรวจ TypeScript types และ Bundle โค้ดลงในโฟลเดอร์ `dist/` |
 | `npm run preview` | พรีวิวไฟล์ Build จาก `dist/` ในเครื่อง Local |
+
+> ปัจจุบัน repository ยังไม่ได้ตั้งค่า unit-test runner หรือ `npm run test`; ชุดตรวจอัตโนมัติใน CI คือ lint และ build
 
 ---
 
@@ -207,7 +206,7 @@ npm run dev
    # ตัวอย่าง: feat/us-01-login
    git checkout -b feat/us-01-login
    ```
-3. **เขียนโค้ดและทดสอบ** (`npm run lint` และ `npm run test`)
+3. **เขียนโค้ดและตรวจสอบ** (`npm run lint` และ `npm run build`)
 4. **Commit โค้ด** ด้วย Conventional Commits:
    ```bash
    git add .

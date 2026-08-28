@@ -8,6 +8,7 @@ export interface User {
   email: string;
   role: Role;
   phone?: string;
+  avatarUrl?: string;
 }
 
 export interface Product {

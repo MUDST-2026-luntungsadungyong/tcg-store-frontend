@@ -72,9 +72,17 @@ export function Navbar() {
                   aria-expanded={menuOpen}
                   className={`flex items-center gap-2 rounded-full transition-colors focus:outline-none ${menuOpen ? 'text-white' : 'hover:text-white'}`}
                 >
-                  <span className="flex size-8 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/40">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt=""
+                      className="size-8 rounded-full object-cover ring-1 ring-white/10"
+                    />
+                  ) : (
+                    <span className="flex size-8 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/40">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                   <span className="hidden lg:inline">{user.name}</span>
                   <ChevronDown size={16} className={`transition-transform ${menuOpen ? 'rotate-180 text-white' : ''}`} />
                 </button>

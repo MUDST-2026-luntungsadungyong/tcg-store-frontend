@@ -48,9 +48,17 @@ export function ProfileSettingsPage() {
       <section className="glass-card rounded-2xl">
         <div className="flex items-start justify-between gap-6 px-8 py-7">
           <div className="flex items-center gap-4">
-            <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand-blue/20 text-xl font-bold text-brand-blue ring-1 ring-brand-blue/40">
-              {displayName.charAt(0).toUpperCase()}
-            </span>
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt=""
+                className="size-14 shrink-0 rounded-full object-cover ring-1 ring-white/10"
+              />
+            ) : (
+              <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand-blue/20 text-xl font-bold text-brand-blue ring-1 ring-brand-blue/40">
+                {displayName.charAt(0).toUpperCase()}
+              </span>
+            )}
             <div>
               <h2 className="text-2xl font-bold text-white">{displayName}</h2>
               <div className="mt-1.5 space-y-1 text-gray-300">

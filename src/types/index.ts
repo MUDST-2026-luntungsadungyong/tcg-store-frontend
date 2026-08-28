@@ -9,6 +9,11 @@ export interface User {
   role: Role;
   phone?: string;
   avatarUrl?: string;
+  addressLine?: string;
+  postalCode?: string;
+  subDistrict?: string;
+  district?: string;
+  province?: string;
 }
 
 export interface Product {

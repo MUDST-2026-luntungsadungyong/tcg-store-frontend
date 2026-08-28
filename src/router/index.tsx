@@ -17,6 +17,7 @@ import { ResetPasswordPage } from '@/pages/customer/ResetPasswordPage';
 import { ResetSuccessPage } from '@/pages/customer/ResetSuccessPage';
 import { ProfileSettingsPage } from '@/pages/customer/ProfileSettingsPage';
 import { EditPersonalInfoPage } from '@/pages/customer/EditPersonalInfoPage';
+import { EditShippingAddressPage } from '@/pages/customer/EditShippingAddressPage';
 
 // Base layout for customer-facing pages
 function StoreLayout() {
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
         children: [
           { path: 'profile', element: <ProfileSettingsPage /> },
           { path: 'profile/edit/personal', element: <EditPersonalInfoPage /> },
+          { path: 'profile/edit/address', element: <EditShippingAddressPage /> },
           { path: 'orders', element: <PlaceholderPage title="My Orders" /> },
         ],
       },

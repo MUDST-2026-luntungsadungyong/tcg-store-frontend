@@ -35,8 +35,8 @@ function ProfileRow({ icon: Icon, title, editHref, children }: ProfileRowProps) 
 export function ProfileSettingsPage() {
   const user = useAuthStore((s) => s.user);
 
-  // ponytail: address/payment aren't on the User model yet — mock display until backend fields exist
-  const shippingAddress = { line1: '1 Pallet Town Road', line2: 'Kanto Region, Kanto 12345' };
+  // ponytail: payment isn't on the User model yet — mock display until backend fields exist
+  const hasAddress = user?.addressLine && user?.province;
   const paymentMethod = { last4: '3456', holder: user?.name ?? 'Jane Doe', expiry: '12/28' };
   const displayName = user?.name ?? 'Jane Doe';
 
@@ -84,8 +84,14 @@ export function ProfileSettingsPage() {
 
         <div className="divide-y divide-white/5 border-t border-white/5">
           <ProfileRow icon={MapPin} title="Shipping Address" editHref="/profile/edit/address">
-            <p className="text-base font-medium text-white">{shippingAddress.line1}</p>
-            <p className="text-sm">{shippingAddress.line2}</p>
+            {hasAddress ? (
+              <>
+                <p className="text-base font-medium text-white">{user?.addressLine}</p>
+                <p className="text-sm">{user?.subDistrict}, {user?.district}, {user?.province} {user?.postalCode}</p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">No address on file yet</p>
+            )}
           </ProfileRow>
 
           <ProfileRow icon={CreditCard} title="Payment Method" editHref="/profile/edit/payment">

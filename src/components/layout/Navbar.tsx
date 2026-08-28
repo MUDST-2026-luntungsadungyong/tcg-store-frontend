@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/common/Button';
+import { useCartStore } from '@/store/useCartStore';
 
 export function Navbar() {
+  const totalItems = useCartStore(state => state.getTotalItems());
   return (
     <nav className="sticky top-0 z-40 w-full bg-[#1b2336] border-b border-[rgba(143,179,226,0.2)]">
       <div className="max-w-[1440px] mx-auto px-8">
@@ -38,6 +40,15 @@ export function Navbar() {
               Cards
             </Link>
             
+            <Link to="/cart" className="relative text-gray-300 hover:text-white transition-colors" title="Shopping Cart">
+              <ShoppingCart className="h-5 w-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-2 -right-2 bg-brand-blue text-bg-base text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-md">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+            </Link>
+
             <button className="relative text-gray-300 hover:text-white transition-colors">
               <Bell className="h-5 w-5" />
             </button>

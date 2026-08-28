@@ -1,119 +1,261 @@
-# 📋 Master Issue Guide & Development Plan (Revised with Detailed TODOs)
+# 📋 Mythix Frontend Issue Guide & Delivery Plan
 
-คู่มือนี้คือ **Single Source of Truth** ที่ผสานระหว่าง:
-1. **User Stories (Functional):** อิงจากเอกสาร `DevOps_User Flow.csv` (US-01 ถึง US-09)
-2. **Figma UI (Visual & Flow):** อิงจากการแมปใน `.agents/miro-userflows.md` (Seller / Platform Admin / Buyer)
-3. **Course Checkpoints (Timeline):** อิงจากกติกา CP1-CP7
+> Last updated: 29 สิงหาคม 2026
 
----
+เอกสารนี้เป็น **Single Source of Truth สำหรับแผนงาน Frontend** โดยอ้างอิงจาก:
 
-## 🎯 Sprint 1: CP3 - Runnable Code & Core Flows (Target: 12 ก.ย.)
-*เป้าหมาย: ระบบหลักรันได้ (Auth, Browse, Cart, CRUD พื้นฐาน)*
+1. **[Miro User Stories](https://miro.com/app/board/uXjVHyqYJNg=/?share_link_id=544445592582):** US-01 ถึง US-09
+2. **[Figma](https://www.figma.com/design/X2UPaqQCjGuMtijIgtZ3Aq/TCG-DevOp-Project?node-id=0-1&p=f&t=SUyh6jEOjI70TqQO-0):** 60 production frames ใน 9 sections
+3. **GitHub Issues:** ใช้เลข GitHub จริงและ acceptance criteria ใน issue body
+4. **Course Checkpoints:** CP1-CP7 และกำหนดส่งของแต่ละ Sprint
 
-### Issue #1: [US-01] ระบบ Registration & Login
-- [ ] **UI:** สร้าง `LoginPage` (อิงดีไซน์ Card พื้นหลังมืด) พร้อมฟอร์ม Email/Password
-- [ ] **UI:** สร้าง `RegisterPage` พร้อม Validation (เช็ค Email format, Password length)
-- [ ] **UI:** สร้าง Component `ContextualLoginModal` เป็น Popup สำหรับดักผู้ใช้ Guest (reusable)
-- [ ] **Logic/State:** ติดตั้ง Zustand/Redux สำหรับเก็บ `auth_token`, `user_role`, และ `user_id`
-- [ ] **Integration:** ผูก API `POST /api/auth/login` เก็บ JWT token ลง LocalStorage/Cookie
-- [ ] **Integration:** ผูก API `POST /api/auth/register`
-- [ ] **Routing:** ทำ Protected Route (บังคับ redirect ไปหน้า Login หากไม่มี Token)
+> Notion ยังไม่ถูกนำมาเป็น requirement source เพราะ connector ปัจจุบันยังไม่มีสิทธิ์อ่านหน้า Mythix Workspace
 
-### Issue #2: [US-02 & US-03] ระบบ Browse Products และ Shopping Cart
-- [x] **Page 1: `HomePage` (`src/pages/customer/HomePage.tsx` - เสร็จแล้ว 100%):**
-  - [x] Hero Cover Section (ภาพปราสาท + โลโก้ Mythic Market + ปุ่ม Start! เลื่อนลง)
-  - [x] Hero Feature Carousel ("The 10 Most Expensive..." สไลด์อัตโนมัติ 3 วินาที)
-  - [x] Section "What's new!" (การ์ดข่าวสาร 30th Celebration + ปุ่ม More)
-  - [x] Section "The 10 Most Expensive Cards" (การ์ดขาวขอบมน เอียง 3D พร้อมเงาเด้งตอน Hover)
-  - [x] Section "The Pokémon Cards Collection" (การ์ดแนวนอนพร้อมป้าย IN STOCK)
-- [ ] **Page 2: `BrowsePage` (`src/pages/customer/BrowsePage.tsx` - หน้ารวมแคตตาล็อก `/browse`):**
-  - [ ] **UI:** หัวข้อหน้า "The Pokémon Cards Collection"
-  - [ ] **UI:** แถบ Top Filter Toolbar (ช่องค้นหา Search, ปุ่มตัวกรองหมวดหมู่เกม, ช่องกรอก Min-Max Price พร้อมปุ่ม Apply)
-  - [ ] **UI:** Grid แสดงการ์ดสินค้า 3 คอลัมน์ (การ์ด Slab พื้นขาว `#FFFFFF` ขอบมนตาม Figma)
-  - [ ] **UI & Logic (Edge States):**
-    - [ ] `Empty Filter State`: แสดงหน้าจอและข้อความเมื่อค้นหา/กรองแล้วไม่พบสินค้า
-    - [ ] `Invalid Price Filter State`: แจ้งเตือนขอบสีแดงพร้อมข้อความเตือนเมื่อกรอกราคาผิด (เช่น Min > Max หรือติดลบ)
-  - [ ] **Integration:** ดึงข้อมูลจาก `productsApi.getProducts()` เชื่อมกับ `useFilterStore`
-- [ ] **Page 3: `ProductDetailPage` (`src/pages/customer/ProductDetailPage.tsx` - หน้ารายละเอียดการ์ด `/products/:id`):**
-  - [ ] **UI:** แถบ Breadcrumbs นำทาง (`Home > Pokémon Cards > [Card Name]`)
-  - [ ] **UI (ฝั่งซ้าย):** รูปภาพการ์ด Slab ขนาดใหญ่ (PSA 10 Graded) พร้อมเอฟเฟกต์ Drop Shadow
-  - [ ] **UI (ฝั่งขวา):** ชื่อการ์ด, ป้ายกำกับเกรด/สภาพ, ราคาบาทตัวโต (`฿2000.00`), ป้ายสถานะสต็อกคงเหลือ, ข้อมูลผู้ขาย (Seller Info)
-  - [ ] **UI:** ตัวเลือกปรับจำนวนสินค้า (Quantity Selector), ปุ่ม `Add to Cart` (สีน้ำเงิน), และปุ่ม `Buy Now`
-  - [ ] **Interactive Feedback:** แสดง Toast Notification สีเขียวมุมขวาบนเมื่อกดเพิ่มสินค้าลงตะกร้าสำเร็จ
-  - [ ] **Guest Guard Modal (`ContextualLoginModal`):** แสดง Popup บังคับเข้าสู่ระบบ ("Log in to continue") ทันทีหากผู้ใช้ที่เป็น Guest พยายามกดซื้อหรือกดใส่ตะกร้า
-- [ ] **Page 4: `CartPage` (`src/pages/customer/CartPage.tsx` - หน้าตะกร้าสินค้า `/cart`):**
-  - [ ] **UI:** ตารางสรุปรายการสินค้าในตะกร้า (รูปภาพ, ชื่อ, ราคาต่อหน่วย, ตัวปรับจำนวน, ปุ่มลบออกจากตะกร้า)
-  - [ ] **UI:** การ์ดสรุปยอดชำระรวม (Subtotal, Tax, Shipping, Total Amount) พร้อมปุ่ม "Proceed to Checkout"
-  - [ ] **UI:** Empty Cart State (เมื่อไม่มีของในตะกร้า พร้อมปุ่มกลับไปเลือกซื้อสินค้า)
-  - [ ] **Logic (`useCartStore`):** ฟังก์ชัน `addItem`, `removeItem`, `updateQuantity`, `clearCart`
-  - [ ] **Validation:** ดักจับไม่ให้กดเพิ่มจำนวนเกินสต็อกคงเหลือที่มีอยู่จริง (`maxStock`)
-- [ ] **Integration & Routes:** อัปเดต `src/router/index.tsx` รองรับ Route `/browse`, `/products/:id`, `/cart`
+## หลักการจัดการ Issue
 
-### Issue #3: [US-05] ระบบ Inventory Management & CRUD (ฝั่ง Seller)
-- [ ] **UI (Layout & Shell):**
-  - [ ] ใช้งาน `SellerLayout` และ `SellerSidebar` (เมนู: Dashboard, Add/Edit Listing, Inventory, Payouts)
-  - [ ] จัดโครงสร้างหน้า `ProductManagementPage` (`/seller/inventory`) รองรับ Responsive & Dark Theme
-- [ ] **UI (Product Management Views):**
-  - [ ] สร้างแถบเครื่องมือบนสุด: ช่อง Search ครอบคลุมทุกฟิลด์, ปุ่ม Filter หมวดหมู่เกม, ปุ่ม `+ Add Product`, และปุ่มสลับ Grid View / Table View
-  - [ ] สร้างมุมมอง **Grid View (`ProductInventoryGrid`):** การ์ดแสดงรูปภาพ, ชื่อการ์ด, ป้ายเกม, ราคา (฿), ต้นทุน (฿), สต็อก, ป้ายสถานะ Show/Hide, และ Action Dropdown
-  - [ ] สร้างมุมมอง **Table View (`ProductManagementTable`):** ตารางแสดงรูป Thumbnail, ชื่อ, หมวดหมู่เกม, ราคาขาย, ต้นทุน, กำไรสุทธิ/Margin (สีเขียว), จำนวนสต็อก, สวิตช์เปิด/ปิดสถานะ, ปุ่ม Edit (ดินสอ), ปุ่ม Delete (ถังขยะ)
-- [ ] **UI (Add / Edit Product Modal & Form):**
-  - [ ] สร้าง Component `AddEditProductModal` (Modal พื้นหลังเข้ม `#1B2336` ขอบมนตาม Figma)
-  - [ ] กล่องอัปโหลดรูปภาพ (Image Dropzone): รองรับ Drag & Drop, JPG/PNG, แสดงภาพตัวอย่าง Preview และปุ่มลบภาพ
-  - [ ] ฟอร์มกรอกข้อมูลการ์ด: ชื่อการ์ด (Card Name), หมวดหมู่เกม (Game / Category Select), สภาพการ์ด/เกรด (Condition / PSA Grade)
-  - [ ] ฟอร์มกรอกตัวเลข: ราคาขาย (Selling Price ฿), ต้นทุน (Acquisition Cost ฿), จำนวนสต็อก (Stock Quantity)
-  - [ ] **ระบบคำนวณกำไรเรียลไทม์ (Course Req #6):** คำนวณ Estimated Profit (`Price - Cost`) และ Margin % อัตโนมัติทันทีที่พิมพ์ตัวเลข พร้อมแสดงตัวอักษรสีเขียว/แดง
-  - [ ] Form Validation & Error States: ตรวจสอบช่อง Required, ตัวเลขติดลบ, สต็อกไม่ถูกต้อง แสดงขอบแดงและ Error Hint ชัดเจน
-- [ ] **UI & Logic (Status Toggle & Delete Guard):**
-  - [ ] **Show / Hide Toggle Switch:** สลับสถานะได้ทันทีจากหน้าตาราง โดยสินค้าที่ `Hide` จะถูกซ่อนออกจากหน้าลูกค้า (`BrowsePage` และ `HomePage`)
-  - [ ] **Delete Confirmation Modal:** Popup ยืนยันการลบสินค้า
-  - [ ] **Business Rule Validation Guard (กฎการลบ):**
-    - [ ] ตรวจสอบว่าสินค้ามีคำสั่งซื้อที่ค้างดำเนินการอยู่ (`Active Orders`) หรือไม่? หากมี -> บล็อกการลบและแจ้งเตือน Error Toast/Modal
-    - [ ] บังคับให้ต้องเปลี่ยนสถานะสินค้าเป็น `Hide` ก่อน ถึงจะยอมให้กดปุ่มลบได้
-- [ ] **Integration & State Management:**
-  - [ ] สร้าง `useSellerInventoryStore` (Zustand) สำหรับจัดการ State รายการสินค้า, Search/Filter, และ Pagination/View toggle
-  - [ ] ผูก API `GET /api/seller/products` (ดึงรายการการ์ดของผู้ขาย พร้อม Search & Filter Query)
-  - [ ] ผูก API `POST /api/seller/products` (สร้าง Listing สินค้าใหม่)
-  - [ ] ผูก API `PUT /api/seller/products/{id}` (อัปเดตข้อมูลการ์ด)
-  - [ ] ผูก API `PATCH /api/seller/products/{id}/status` (เปลี่ยนสถานะ Show / Hide)
-  - [ ] ผูก API `DELETE /api/seller/products/{id}` (ลบสินค้า)
+- ใช้หมายเลข GitHub จริง เช่น `#45` ไม่ใช้เลขภายในแบบ “Issue #4”
+- ทุก active issue ต้องอยู่ใน Milestone และมี label ของ Sprint
+- Feature issue ต้องระบุ route/Figma scope, states, API contract, permission, tests และ dependencies
+- PR ต้องอ้างอิง issue และใช้ `Closes #...` เมื่อ scope เสร็จครบจริง
+- งานที่ยังติด backend ให้คง issue เปิดไว้หรือแยก follow-up ชัดเจน ห้ามปิดแล้วปล่อย requirement หาย
 
 ---
 
-## 🎯 Sprint 2: CP5 - Marketplace & K8s Deploy (Target: 17 ต.ค.)
-*เป้าหมาย: ระบบ Marketplace, QC Hub และ Escrow ทำงานได้ครบ (2-leg shipping)*
+## ✅ Sprint 1 Baseline — Core UI & Seller Inventory
 
-### Issue #4: [US-04] ระบบ Place Order & Checkout
-- [ ] **UI:** สร้างหน้า `OrderReviewPage` แสดงรายการสรุป (Summary Card)
-- [ ] **UI:** สร้างกล่องแสดง `ShippingAddress` (ดึงจาก Profile มาแสดง)
-- [ ] **UI:** สร้าง Toggle Option: `QC Protection (+Fee)` สำหรับเปิดใช้ 2-leg shipping
-- [ ] **UI:** สร้างหน้า `OrderConfirmationPage` (Success State)
-- [ ] **Logic:** ตรวจสอบ Stock-lock (ส่ง Request ไปกันสต็อกชั่วคราว) ถ้าไม่ได้ให้เด้ง Error Modal
-- [ ] **Integration:** ผูก API `POST /api/orders/checkout` (แปลงของใน Cart เป็น Order -> Status: Pending)
+Sprint 1 ส่งมอบ UI/mock flow หลักแล้ว แต่ Auth และ Browse/Cart ยังมี acceptance gaps ที่ย้ายเป็น Sprint 2 carryover
 
-### Issue #5: [US-07] ระบบ Order Management & QC Hub (Platform Admin)
-- [ ] **UI:** สร้างตาราง `QCQueueTable` (แสดงของที่ Seller ส่งมาถึง Hub)
-- [ ] **UI:** สร้างหน้า `QCDetailScreen` สำหรับกด Pass / Fail พร้อมเช็กลิสต์สภาพการ์ด
-- [ ] **UI:** สร้างตาราง `OrderShipmentMonitor` ดูภาพรวมสถานะ (1-leg vs 2-leg)
-- [ ] **Logic:** การกด Pass -> เปลี่ยนสถานะเป็น `QC_PASSED` และเข้าคิว Pack & Ship
-- [ ] **Logic:** การกด Fail -> เปลี่ยนสถานะเป็น `QC_FAILED` และโยนเข้าคิว Refund Buyer
-- [ ] **Integration:** ผูก API เปลี่ยนสถานะ Order (`PUT /api/admin/orders/{id}/status`) พร้อมเก็บบันทึก Audit Log (Timestamp)
+### [#42 — Registration & Login System](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/42) — Carryover to Sprint 2
 
-### Issue #6: [US-08 & US-09] ระบบ User Profile & Order History
-- [ ] **UI:** สร้างหน้า `ProfileSettingsPage` (ฟอร์มแก้ไขชื่อ, เบอร์โทร)
-- [ ] **UI:** สร้างหน้า `AddressBookPage` (ปุ่ม Add New Address / Edit Address)
-- [ ] **UI:** สร้างหน้า `MyOrdersPage` สำหรับ Buyer แสดงรายการคำสั่งซื้อ
-- [ ] **Logic:** เพิ่ม Tabs filter สถานะในหน้า My Orders (All, Pending, Shipped, Completed)
-- [ ] **Integration:** ผูก API `PUT /api/users/profile`, `GET /api/users/orders`
+- [x] Login, Sign Up และ password-reset UI
+- [x] Contextual Login Modal
+- [x] Zustand auth store และ token persistence
+- [x] Protected routes สำหรับ Buyer, Seller และ Platform Admin
+- [ ] Real auth/password-reset API integration
+- [ ] Session expiry และ `401`/`403` state synchronization
+- [ ] Redirect/resume action หลัง Login
+- [ ] Automated auth tests
+
+### [#43 — Browse Products & Shopping Cart](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/43) — Carryover to Sprint 2
+
+- [x] Homepage
+- [x] Browse/Product List UI
+- [x] Product Detail และ Add to Cart
+- [x] Cart, quantity controls และ empty state
+- [ ] Working search และ filter semantics ที่ตรง Miro/Figma
+- [ ] Invalid price, API error/Retry และ out-of-stock feedback
+- [ ] Live stock reconciliation และ cart ownership ต่อผู้ใช้
+- [ ] Automated Browse/Cart tests
+
+### [#44 — Seller Inventory Management](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/44) — Completed
+
+ดำเนินการแล้วโดย PR #60:
+
+- [x] Responsive grid/table inventory views
+- [x] Search, filter, pagination และ view toggle
+- [x] Add/Edit Product พร้อม image preview และ validation
+- [x] Profit/Margin calculation
+- [x] Show/Hide และ customer visibility
+- [x] Delete confirmation และ active-order/hidden guards
+- [x] Zustand state และ real/mock Seller Product API
+
+งาน Seller นอก Inventory แยกไปที่ #64, #65 และ #66
 
 ---
 
-## 🎯 Sprint 3: CP6 & CP7 - Final Delivery (Target: 14 พ.ย.)
-*เป้าหมาย: ระบบหลังบ้านแอดมิน, สรุปบัญชี Escrow, และเก็บตกงานทั้งหมด*
+## 🎯 Sprint 2 — Marketplace, Checkout & Fulfillment
 
-### Issue #7: [US-06] Platform Admin Dashboard & Payouts
-- [ ] **UI:** สร้างตารางสรุปบัญชี `EscrowLedgerTable` (Double-entry: Debit/Credit, Running Balance)
-- [ ] **UI:** สร้างตาราง `PayoutQueue` สรุปยอดเงินที่ต้องโอนให้ Seller
-- [ ] **UI:** สร้างหน้า `RefundQueue` สำหรับ Order ที่ QC ไม่ผ่าน
-- [ ] **Logic:** ปุ่ม "Pay All" หรือ Pay ทีละบรรทัด พร้อม Confirm Modal ป้องกันการกดผิด
-- [ ] **Integration:** ผูก API `GET /api/admin/escrow/ledger`, `POST /api/admin/payouts/process`
+**Target:** 17 ตุลาคม 2026
+
+**Milestone:** [Sprint 2](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/milestone/1)
+
+**เป้าหมาย:** ทำ Buyer → Checkout → Seller Fulfillment → Platform Admin QC → Buyer Tracking ให้ทำงานครบ
+
+### Carryover: #42 Authentication
+
+- [ ] Real Login/Register/Forgot/Reset API
+- [ ] Reset-token validation และ expiry
+- [ ] `401`/`403`, logout และ persisted-state consistency
+- [ ] Return to requested route และ resume Guest action
+- [ ] Role matrix และ automated tests
+
+### Carryover: #43 Browse & Cart
+
+- [ ] Working Search และ filter contract
+- [ ] Invalid Price Filter state
+- [ ] Show-only product visibility
+- [ ] Loading/empty/error/Retry states
+- [ ] Out-of-stock และ insufficient-stock feedback
+- [ ] Cart removal confirmation และ live stock reconciliation
+
+### [#45 — Place Order & Checkout](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/45)
+
+- [ ] Order Review สำหรับ Cart และ Buy Now
+- [ ] Shipping Address และ Payment Method selectors
+- [ ] No-address/no-payment state
+- [ ] QC Protection และ 1-leg/2-leg summary
+- [ ] Confirm Checkout Modal
+- [ ] Stock-lock acquisition, expiry และ conflict
+- [ ] Idempotent order creation และ duplicate-submit guard
+- [ ] Order Confirmation
+- [ ] Buy Now ต้องไม่แก้ cart เดิม
+- [ ] Checkout E2E
+
+### [#46 — Platform Admin Order Management & QC Hub](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/46)
+
+- [ ] QC Queue และ QC Detail Pass/Fail
+- [ ] Orders/Shipment Monitor และ Order Detail
+- [ ] Status timeline และ tracking
+- [ ] Override Status และ Force Refund confirmations
+- [ ] Contact Buyer & Seller
+- [ ] Hub Consolidation และ blocking-order state
+- [ ] Pack & Ship confirmation และ Print Label Preview
+- [ ] Audit log, notifications และ transition validation
+
+### [#47 — User Profile & Order History](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/47)
+
+- [x] Profile view และ Edit Personal Information
+- [x] Edit Shipping Address และ Payment Method UI
+- [ ] Multiple addresses และ Default Address
+- [ ] Profile/address/payment API states
+- [ ] My Orders และ canonical status filters
+- [ ] Buyer Order Detail, tracking และ timeline
+- [ ] Checkout → My Orders E2E
+
+### [#64 — Seller Lifecycle, KYC, Approval & Storefront](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/64)
+
+- [ ] Become a Seller CTA
+- [ ] Seller Onboarding/KYC
+- [ ] Pending/Approved/Rejected/Resubmission states
+- [ ] Platform Admin Seller Approval Queue
+- [ ] Buyer → Seller role activation
+- [ ] Store Profile/Settings
+- [ ] Public Seller Storefront
+- [ ] Seller Product Detail/catalog entry point
+- [ ] Show-only product visibility และ route permission matrix
+
+### [#65 — Seller Order Management & QC Fulfillment](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/65)
+
+- [ ] Seller Order Management พร้อม search/filter/pagination
+- [ ] Seller Order Detail และ ownership guard
+- [ ] 1-leg/2-leg fulfillment actions
+- [ ] Shipment handoff, carrier และ tracking
+- [ ] QC Hub handoff และ QC status
+- [ ] Timeline/audit entry และ Buyer/Admin notifications
+- [ ] Conflict/action-failed/rollback states
+- [ ] Seller fulfillment E2E
+
+### Sprint 2 Dependency Flow
+
+`#42 Auth + #43 Browse/Cart → #45 Checkout → #47 My Orders + #65 Seller Fulfillment → #46 Admin QC`
+
+`#42 Auth → #64 Become Seller/KYC → Admin Approval → #44 Seller Inventory/Public Storefront`
+
+---
+
+## 🚀 Sprint 3 — Finance, Dashboard & Production Quality
+
+**Target:** 14 พฤศจิกายน 2026
+
+**Milestone:** [Sprint 3](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/milestone/2)
+
+**เป้าหมาย:** ปิดงานการเงิน/Analytics และทำ Frontend ให้พร้อมส่งมอบจริง
+
+### [#48 — Platform Admin Dashboard, Escrow, Payout & Refund](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/48)
+
+- [ ] Dashboard KPI: GMV, Orders, Monthly GMV และ Average Order Value
+- [ ] Sales Trend, date filter และ report export
+- [ ] Escrow Ledger แบบ Debit/Credit และ Running Balance
+- [ ] Ledger filter, pagination และ export
+- [ ] Pay One/Pay All พร้อม confirmation และ idempotency
+- [ ] Refund Queue detail และ processing states
+- [ ] Financial audit trail และ automated tests
+
+### [#66 — Seller Dashboard & Payout History](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/66)
+
+- [ ] Seller sales/order/revenue summaries
+- [ ] Pending payout และ action-required widgets
+- [ ] Date filter และ links ไป Inventory/Orders/Payouts
+- [ ] Payout History, detail, filters, pagination และ export
+- [ ] Reconcile Seller totals กับ Platform Admin ledger
+- [ ] Dashboard/Payout loading, empty และ error states
+
+### [#31 — Responsive UI & Accessibility](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/31) — Reopened
+
+- [ ] Customer, Seller และ Platform Admin mobile navigation
+- [ ] QA ที่ 375px, 768px, 1024px และ 1440px
+- [ ] Responsive tables, sidebars, forms และ modals
+- [ ] Keyboard navigation และ visible focus
+- [ ] Dialog focus trap/Escape/focus restoration
+- [ ] ARIA relationships, live regions, contrast และ reduced motion
+
+### [#33 — Frontend Resilience](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/33) — Reopened
+
+- [ ] Wildcard 404 และ route error elements
+- [ ] React Error Boundary
+- [ ] Mount global Toast provider
+- [ ] Loading/empty/error/Retry/offline/timeout states
+- [ ] Session-expired และ standard API error handling
+- [ ] Optimistic rollback สำหรับ failed mutations
+
+### [#61 — Security & Dependency Audit](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/61)
+
+- [ ] Dependabot
+- [ ] `npm audit` ใน CI
+
+### [#62 — Unit & Component Testing](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/62)
+
+- [ ] Vitest + React Testing Library infrastructure
+- [ ] Auth, Cart, Filter และ Seller Inventory store tests
+- [ ] Form, Browse, Checkout, Profile และ My Orders component tests
+- [ ] Modal/Toast/accessibility tests
+- [ ] Coverage reporting และ required CI test check
+
+### [#63 — End-to-End Testing](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/63)
+
+- [ ] Guest → Login → resume action
+- [ ] Browse → Cart → Checkout → Confirmation
+- [ ] Buy Now โดย cart เดิมไม่เปลี่ยน
+- [ ] Seller KYC → Admin Approval → Seller access
+- [ ] Seller Inventory → Public Storefront
+- [ ] Seller Fulfillment → Admin QC → Buyer Tracking
+- [ ] QC Fail → Refund และ Completed Order → Payout
+- [ ] Deterministic test data และ CI artifacts
+
+### Sprint 3 Dependency Flow
+
+`#46 QC/Order State → #48 Escrow/Payout/Refund → #66 Seller Dashboard/Payout History`
+
+`#31 Responsive/A11y + #33 Resilience + #61 Security + #62 Unit/Component → #63 Critical E2E`
+
+---
+
+## 🗺️ Requirement Coverage Map
+
+| Requirement/Figma Area | GitHub Issues |
+|---|---|
+| Authentication | #42 |
+| Homepage, Browse, Product, Cart | #43 |
+| Checkout Flow | #45 |
+| Profile และ Buyer Orders | #47 |
+| Seller Inventory | #44 |
+| Seller Lifecycle, KYC, Approval, Storefront | #64 |
+| Seller Orders และ QC Fulfillment | #65 |
+| Seller Dashboard และ Payout History | #66 |
+| Platform Admin Orders/QC/Hub | #46 |
+| Platform Admin Dashboard/Escrow/Payout/Refund | #48 |
+| Responsive และ Accessibility | #31 |
+| Error/Loading/Retry/404 | #33 |
+| Security และ Automated Tests | #61, #62, #63 |
+
+## ✅ Definition of Done สำหรับทุก Feature Issue
+
+- [ ] ระบุ route และ Figma node/frame ที่เกี่ยวข้อง
+- [ ] รองรับ default, loading, empty, validation, error และ success states
+- [ ] ระบุ role/permission ของ Guest, Buyer, Seller และ Platform Admin
+- [ ] API contract และ error codes ตรงกับ backend
+- [ ] Responsive ที่ 375px, 768px, 1024px และ 1440px
+- [ ] Keyboard, focus, ARIA, contrast และ reduced-motion ผ่าน acceptance criteria
+- [ ] มี Unit/Component/Integration/E2E ตามระดับความเสี่ยง
+- [ ] `npm run lint`, `npm run build` และ test checks ผ่าน
+- [ ] PR อ้างอิงและปิด issue เมื่อ checklist/acceptance criteria ครบจริง

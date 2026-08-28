@@ -29,13 +29,34 @@
 - [ ] **Logic:** Validation: ไม่สามารถกด Add to Cart หรือ + สินค้าเกินจำนวน Stock ได้
 - [ ] **Integration:** ผูก API `GET /api/products` (พร้อม Query parameters สำหรับ Filter)
 
-### Issue #3: [US-05] ระบบ Inventory Management (ฝั่ง Seller)
-- [ ] **UI:** สร้าง Layout พื้นฐานของ `SellerDashboard` (Sidebar nav 5 รายการ)
-- [ ] **UI:** สร้างตาราง `ProductManagementTable` แสดงรายการการ์ดที่ลงขาย
-- [ ] **UI:** สร้าง `AddEditProductModal` (ฟอร์มอัปโหลดรูป, ชื่อ, ราคา, ต้นทุน, สต็อก)
-- [ ] **UI:** เพิ่ม Toggle Switch สำหรับเปลี่ยนสถานะ (Show / Hide)
-- [ ] **Logic:** เช็คเงื่อนไขก่อนการ Delete (ห้ามลบหากมี Active Order อยู่) -> แสดง Error Toast
-- [ ] **Integration:** ผูก API `POST /api/seller/products`, `PUT /api/seller/products/{id}`, `DELETE`
+### Issue #3: [US-05] ระบบ Inventory Management & CRUD (ฝั่ง Seller)
+- [ ] **UI (Layout & Shell):**
+  - [ ] ใช้งาน `SellerLayout` และ `SellerSidebar` (เมนู: Dashboard, Add/Edit Listing, Inventory, Payouts)
+  - [ ] จัดโครงสร้างหน้า `ProductManagementPage` (`/seller/inventory`) รองรับ Responsive & Dark Theme
+- [ ] **UI (Product Management Views):**
+  - [ ] สร้างแถบเครื่องมือบนสุด: ช่อง Search ครอบคลุมทุกฟิลด์, ปุ่ม Filter หมวดหมู่เกม, ปุ่ม `+ Add Product`, และปุ่มสลับ Grid View / Table View
+  - [ ] สร้างมุมมอง **Grid View (`ProductInventoryGrid`):** การ์ดแสดงรูปภาพ, ชื่อการ์ด, ป้ายเกม, ราคา (฿), ต้นทุน (฿), สต็อก, ป้ายสถานะ Show/Hide, และ Action Dropdown
+  - [ ] สร้างมุมมอง **Table View (`ProductManagementTable`):** ตารางแสดงรูป Thumbnail, ชื่อ, หมวดหมู่เกม, ราคาขาย, ต้นทุน, กำไรสุทธิ/Margin (สีเขียว), จำนวนสต็อก, สวิตช์เปิด/ปิดสถานะ, ปุ่ม Edit (ดินสอ), ปุ่ม Delete (ถังขยะ)
+- [ ] **UI (Add / Edit Product Modal & Form):**
+  - [ ] สร้าง Component `AddEditProductModal` (Modal พื้นหลังเข้ม `#1B2336` ขอบมนตาม Figma)
+  - [ ] กล่องอัปโหลดรูปภาพ (Image Dropzone): รองรับ Drag & Drop, JPG/PNG, แสดงภาพตัวอย่าง Preview และปุ่มลบภาพ
+  - [ ] ฟอร์มกรอกข้อมูลการ์ด: ชื่อการ์ด (Card Name), หมวดหมู่เกม (Game / Category Select), สภาพการ์ด/เกรด (Condition / PSA Grade)
+  - [ ] ฟอร์มกรอกตัวเลข: ราคาขาย (Selling Price ฿), ต้นทุน (Acquisition Cost ฿), จำนวนสต็อก (Stock Quantity)
+  - [ ] **ระบบคำนวณกำไรเรียลไทม์ (Course Req #6):** คำนวณ Estimated Profit (`Price - Cost`) และ Margin % อัตโนมัติทันทีที่พิมพ์ตัวเลข พร้อมแสดงตัวอักษรสีเขียว/แดง
+  - [ ] Form Validation & Error States: ตรวจสอบช่อง Required, ตัวเลขติดลบ, สต็อกไม่ถูกต้อง แสดงขอบแดงและ Error Hint ชัดเจน
+- [ ] **UI & Logic (Status Toggle & Delete Guard):**
+  - [ ] **Show / Hide Toggle Switch:** สลับสถานะได้ทันทีจากหน้าตาราง โดยสินค้าที่ `Hide` จะถูกซ่อนออกจากหน้าลูกค้า (`BrowsePage` และ `HomePage`)
+  - [ ] **Delete Confirmation Modal:** Popup ยืนยันการลบสินค้า
+  - [ ] **Business Rule Validation Guard (กฎการลบ):**
+    - [ ] ตรวจสอบว่าสินค้ามีคำสั่งซื้อที่ค้างดำเนินการอยู่ (`Active Orders`) หรือไม่? หากมี -> บล็อกการลบและแจ้งเตือน Error Toast/Modal
+    - [ ] บังคับให้ต้องเปลี่ยนสถานะสินค้าเป็น `Hide` ก่อน ถึงจะยอมให้กดปุ่มลบได้
+- [ ] **Integration & State Management:**
+  - [ ] สร้าง `useSellerInventoryStore` (Zustand) สำหรับจัดการ State รายการสินค้า, Search/Filter, และ Pagination/View toggle
+  - [ ] ผูก API `GET /api/seller/products` (ดึงรายการการ์ดของผู้ขาย พร้อม Search & Filter Query)
+  - [ ] ผูก API `POST /api/seller/products` (สร้าง Listing สินค้าใหม่)
+  - [ ] ผูก API `PUT /api/seller/products/{id}` (อัปเดตข้อมูลการ์ด)
+  - [ ] ผูก API `PATCH /api/seller/products/{id}/status` (เปลี่ยนสถานะ Show / Hide)
+  - [ ] ผูก API `DELETE /api/seller/products/{id}` (ลบสินค้า)
 
 ---
 

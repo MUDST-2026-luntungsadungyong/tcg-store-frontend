@@ -15,6 +15,7 @@ import { ForgotPasswordPage } from '@/pages/customer/ForgotPasswordPage';
 import { CheckEmailPage } from '@/pages/customer/CheckEmailPage';
 import { ResetPasswordPage } from '@/pages/customer/ResetPasswordPage';
 import { ResetSuccessPage } from '@/pages/customer/ResetSuccessPage';
+import { ProfileSettingsPage } from '@/pages/customer/ProfileSettingsPage';
 
 // Base layout for customer-facing pages
 function StoreLayout() {
@@ -58,7 +59,7 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
-          { path: 'profile', element: <PlaceholderPage title="My Profile" /> },
+          { path: 'profile', element: <ProfileSettingsPage /> },
           { path: 'orders', element: <PlaceholderPage title="My Orders" /> },
         ],
       },

@@ -1,5 +1,6 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Bell, LogOut } from 'lucide-react';
+import { Search, Bell, LogOut, User as UserIcon, Package, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -7,8 +8,21 @@ export function Navbar() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   function handleLogout() {
+    setMenuOpen(false);
     logout();
     navigate('/');
   }
@@ -50,21 +64,56 @@ export function Navbar() {
             </button>
 
             {user ? (
-              <div className="flex items-center gap-3">
-                <Link to="/profile" className="flex items-center gap-2 hover:text-white transition-colors">
+              <div className="relative" ref={menuRef}>
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  className={`flex items-center gap-2 rounded-full transition-colors focus:outline-none ${menuOpen ? 'text-white' : 'hover:text-white'}`}
+                >
                   <span className="flex size-8 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/40">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                   <span className="hidden lg:inline">{user.name}</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  aria-label="Logout"
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  <LogOut className="h-5 w-5" />
+                  <ChevronDown size={16} className={`transition-transform ${menuOpen ? 'rotate-180 text-white' : ''}`} />
                 </button>
+
+                {menuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-xl bg-bg-elevated border border-white/10 shadow-xl py-1.5 z-50"
+                  >
+                    <Link
+                      to="/profile"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <UserIcon size={16} />
+                      Profile
+                    </Link>
+                    <Link
+                      to="/orders"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <Package size={16} />
+                      My Orders
+                    </Link>
+                    <div className="my-1.5 border-t border-white/10" />
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-status-danger hover:bg-white/5 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <Link to="/login">

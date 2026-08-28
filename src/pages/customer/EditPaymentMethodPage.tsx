@@ -1,10 +1,60 @@
 import { useRef, useState, type FormEvent, type FocusEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, CreditCard, User, Calendar, Lock } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/useAuthStore';
+import visaLogo from '@/assets/cards/visa.webp';
+import mastercardLogo from '@/assets/cards/mastercard.svg';
+import amexLogo from '@/assets/cards/amex.svg';
+import discoverLogo from '@/assets/cards/discover.png';
+
+const BRAND_LOGOS: Record<string, string> = {
+  Visa: visaLogo,
+  Mastercard: mastercardLogo,
+  Amex: amexLogo,
+  Discover: discoverLogo,
+};
+
+function BrandIcon({ brand, size = 18, className }: { brand: string } & LucideProps) {
+  return <img src={BRAND_LOGOS[brand]} alt={brand} width={size} className={className} />;
+}
+
+function CardPreview({ number, name, expiry, brand }: { number: string; name: string; expiry: string; brand: string }) {
+  const displayNumber = (number || '#### #### #### ####').padEnd(19, '#').slice(0, 19);
+
+  return (
+    <div className="aspect-[1.586/1] w-full max-w-[360px] rounded-2xl bg-gradient-to-br from-bg-elevated to-bg-card p-6 ring-1 ring-white/10 shadow-xl">
+      <div className="flex h-full flex-col justify-between">
+        <div className="flex items-start justify-between">
+          <div className="h-8 w-11 rounded-md bg-gradient-to-br from-brand-gold/70 to-brand-gold/30" />
+          {brand ? (
+            <BrandIcon brand={brand} size={36} className="h-9 w-auto object-contain" />
+          ) : (
+            <CreditCard size={28} className="text-white/40" />
+          )}
+        </div>
+
+        <p className="font-mono text-lg tracking-widest text-white sm:text-xl">{displayNumber}</p>
+
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-wide text-gray-400">Card Holder</p>
+            <p className="max-w-[200px] truncate text-sm font-semibold uppercase text-white">
+              {name || 'Your Name'}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wide text-gray-400">Expires</p>
+            <p className="text-sm font-semibold text-white">{expiry || 'MM/YY'}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function formatCardNumber(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 19);
@@ -65,6 +115,9 @@ export function EditPaymentMethodPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const cardBrand = detectCardBrand(cardNumber.replace(/\D/g, ''));
+  const cardNumberIcon = cardBrand
+    ? (props: LucideProps) => <BrandIcon brand={cardBrand} {...props} />
+    : CreditCard;
 
   const refs: Record<FieldName, React.RefObject<HTMLInputElement | null>> = {
     cardNumber: useRef<HTMLInputElement>(null),
@@ -124,42 +177,36 @@ export function EditPaymentMethodPage() {
   }
 
   return (
-    <div className="max-w-[900px] mx-auto px-8 py-16 w-full">
+    <div className="max-w-[1100px] mx-auto px-8 py-16 w-full">
       <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
         <Link to="/profile" className="hover:text-white transition-colors">Profile</Link>
         <ChevronRight size={14} />
         <span className="text-white">Edit Payment Method</span>
       </nav>
 
-      <section className="glass-card rounded-2xl px-8 py-7">
+      <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
+        <div className="flex justify-center lg:sticky lg:top-24 lg:justify-start">
+          <CardPreview number={cardNumber} name={name} expiry={expiry} brand={cardBrand} />
+        </div>
+
+        <section className="glass-card rounded-2xl px-8 py-7">
         <h1 className="text-2xl font-bold text-white mb-6">Payment Method</h1>
 
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label htmlFor="card-number" className="block text-sm font-medium text-gray-300">
-                Card Number *
-              </label>
-              {cardBrand && (
-                <span className="rounded-full bg-brand-blue/15 px-2.5 py-0.5 text-xs font-semibold text-brand-blue ring-1 ring-brand-blue/30">
-                  {cardBrand}
-                </span>
-              )}
-            </div>
-            <Input
-              ref={refs.cardNumber}
-              id="card-number"
-              icon={CreditCard}
-              inputMode="numeric"
-              autoComplete="cc-number"
-              placeholder="1234 5678 9012 3456"
-              required
-              value={cardNumber}
-              onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-              onBlur={handleBlur('cardNumber')}
-              error={fieldErrors.cardNumber}
-            />
-          </div>
+          <Input
+            ref={refs.cardNumber}
+            id="card-number"
+            label="Card Number *"
+            icon={cardNumberIcon}
+            inputMode="numeric"
+            autoComplete="cc-number"
+            placeholder="1234 5678 9012 3456"
+            required
+            value={cardNumber}
+            onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+            onBlur={handleBlur('cardNumber')}
+            error={fieldErrors.cardNumber}
+          />
           <Input
             ref={refs.name}
             id="card-name"
@@ -220,7 +267,8 @@ export function EditPaymentMethodPage() {
             </Button>
           </div>
         </form>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

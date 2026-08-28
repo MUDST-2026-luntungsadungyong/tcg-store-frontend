@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, MapPin } from 'lucide-react';
+import { ChevronRight, MapPin, Package } from 'lucide-react';
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { Button } from '@/components/common/Button';
@@ -18,6 +18,65 @@ const PROVINCES = ['Bangkok', 'Chiang Mai', 'Nonthaburi', 'Pathum Thani', 'Nakho
 
 function optionsFrom(values: string[]) {
   return values.map((v) => ({ value: v, label: v }));
+}
+
+function Barcode() {
+  // ponytail: decorative pattern, not a scannable barcode — this is a shipping-label mockup, not a real carrier label
+  const widths = [2, 1, 3, 1, 1, 2, 3, 1, 2, 1, 1, 3, 2, 1, 3, 1, 2, 2, 1, 3, 1, 1, 2, 1];
+  return (
+    <div className="flex h-10 items-stretch gap-[2px]">
+      {widths.map((w, i) => (
+        <span key={i} className="bg-white" style={{ width: `${w * 2}px` }} />
+      ))}
+    </div>
+  );
+}
+
+function ShippingLabelPreview({
+  name,
+  addressLine,
+  subDistrict,
+  district,
+  province,
+  postalCode,
+}: {
+  name: string;
+  addressLine: string;
+  subDistrict: string;
+  district: string;
+  province: string;
+  postalCode: string;
+}) {
+  return (
+    <div className="w-full max-w-[360px] rounded-lg bg-bg-elevated p-5 text-white shadow-xl ring-1 ring-white/10">
+      <div className="flex items-center justify-between border-b-2 border-dashed border-white/15 pb-3">
+        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-gray-400">
+          <Package size={14} />
+          Mythix Market
+        </div>
+        <span className="rounded bg-brand-gold/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-gold">
+          Standard
+        </span>
+      </div>
+
+      <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-gray-500">Ship To</p>
+      <p className="mt-1 text-lg font-bold leading-tight text-white">{name || 'Recipient Name'}</p>
+      <p className="mt-1 text-sm leading-snug text-gray-300">
+        {addressLine || 'House No., Street'}
+        <br />
+        {[subDistrict, district].filter(Boolean).join(', ') || 'Sub-district, District'}
+        <br />
+        {[province, postalCode].filter(Boolean).join(' ') || 'Province, Postal Code'}
+      </p>
+
+      <div className="mt-4 border-t-2 border-dashed border-white/15 pt-3">
+        <Barcode />
+        <p className="mt-1 text-center text-[10px] font-mono tracking-[0.3em] text-gray-500">
+          {(postalCode || '00000').padEnd(5, '0')}-TH
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export function EditShippingAddressPage() {
@@ -67,14 +126,26 @@ export function EditShippingAddressPage() {
   }
 
   return (
-    <div className="max-w-[900px] mx-auto px-8 py-16 w-full">
+    <div className="max-w-[1100px] mx-auto px-8 py-16 w-full">
       <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
         <Link to="/profile" className="hover:text-white transition-colors">Profile</Link>
         <ChevronRight size={14} />
         <span className="text-white">Edit Shipping Address</span>
       </nav>
 
-      <section className="glass-card rounded-2xl px-8 py-7">
+      <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
+        <div className="flex justify-center lg:sticky lg:top-24 lg:justify-start">
+          <ShippingLabelPreview
+            name={user?.name ?? ''}
+            addressLine={addressLine}
+            subDistrict={subDistrict}
+            district={district}
+            province={province}
+            postalCode={postalCode}
+          />
+        </div>
+
+        <section className="glass-card rounded-2xl px-8 py-7">
         <h1 className="text-2xl font-bold text-white mb-6">Shipping Address</h1>
 
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
@@ -145,7 +216,8 @@ export function EditShippingAddressPage() {
             </Button>
           </div>
         </form>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

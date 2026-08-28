@@ -1,8 +1,18 @@
-import { Link } from 'react-router-dom';
-import { Search, Bell } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Bell, LogOut } from 'lucide-react';
 import { Button } from '@/components/common/Button';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export function Navbar() {
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+
+  function handleLogout() {
+    logout();
+    navigate('/');
+  }
+
   return (
     <nav className="sticky top-0 z-40 w-full bg-[#1b2336] border-b border-[rgba(143,179,226,0.2)]">
       <div className="max-w-[1440px] mx-auto px-8">
@@ -39,11 +49,30 @@ export function Navbar() {
               <Bell className="h-5 w-5" />
             </button>
 
-            <Link to="/login">
-              <Button variant="primary" size="sm" className="bg-white hover:bg-gray-100 text-[#151B2B] rounded-full px-6 py-1.5 font-bold">
-                Login
-              </Button>
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <Link to="/profile" className="flex items-center gap-2 hover:text-white transition-colors">
+                  <span className="flex size-8 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/40">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="hidden lg:inline">{user.name}</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  aria-label="Logout"
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </div>
+            ) : (
+              <Link to="/login">
+                <Button variant="primary" size="sm" className="bg-white hover:bg-gray-100 text-[#151B2B] rounded-full px-6 py-1.5 font-bold">
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

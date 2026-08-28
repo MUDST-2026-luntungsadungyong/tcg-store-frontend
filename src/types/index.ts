@@ -8,6 +8,16 @@ export interface User {
   email: string;
   role: Role;
   phone?: string;
+  avatarUrl?: string;
+  addressLine?: string;
+  postalCode?: string;
+  subDistrict?: string;
+  district?: string;
+  province?: string;
+  cardLast4?: string;
+  cardHolder?: string;
+  cardExpiry?: string;
+  cardBrand?: string;
 }
 
 export interface Product {

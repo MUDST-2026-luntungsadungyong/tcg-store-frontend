@@ -22,6 +22,9 @@ export interface Product {
   condition?: string;
   set?: string;
   rarity?: string;
+  stage?: string;
+  marketPrice?: number;
+  subtitle?: string;
 }
 
 export interface CartItem {

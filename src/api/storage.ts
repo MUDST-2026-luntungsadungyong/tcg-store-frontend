@@ -2,9 +2,9 @@ import type { Product, User, Order } from '@/types';
 import { mockProducts, mockUsers, mockOrders } from './mock/data';
 
 const STORAGE_KEYS = {
-  PRODUCTS: 'mythix_mock_products',
-  USERS: 'mythix_mock_users',
-  ORDERS: 'mythix_mock_orders',
+  PRODUCTS: 'mythix_mock_products_v2',
+  USERS: 'mythix_mock_users_v2',
+  ORDERS: 'mythix_mock_orders_v2',
 };
 
 // Initialize mock data in local storage if not exists

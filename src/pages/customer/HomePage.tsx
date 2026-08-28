@@ -159,13 +159,16 @@ export function HomePage() {
         {/* Start! + scroll cue */}
         <button
           onClick={scrollToContent}
-          className="absolute flex flex-col items-center gap-2 text-[#dbe3f3] hover:text-brand-gold transition-colors duration-200 cursor-pointer bg-transparent border-none p-0"
-          style={{ left: '47.4%', top: '78.8%', transform: 'translateX(-50%)' }}
+          className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#dbe3f3] hover:text-brand-gold transition-colors duration-200 cursor-pointer bg-transparent border-none p-0 group z-20"
         >
-          <span className="text-[20px] md:text-[32px] font-bold" style={{ fontFamily: "'IBM Plex Sans Thai', sans-serif" }}>
+          <span className="text-[20px] md:text-[32px] font-bold tracking-wide" style={{ fontFamily: "'IBM Plex Sans Thai', sans-serif" }}>
             Start!
           </span>
-          <img src="/assets/chevron_double_down.svg" alt="" aria-hidden="true" className="w-6 h-6 md:w-8 md:h-8 animate-pulse" />
+          <img 
+            src="/assets/chevron_double_down.svg" 
+            alt="Scroll down" 
+            className="w-6 h-6 md:w-8 md:h-8 animate-bounce transition-transform duration-200 group-hover:scale-110" 
+          />
         </button>
       </section>
 

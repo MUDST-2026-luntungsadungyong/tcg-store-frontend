@@ -6,41 +6,60 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  // Mock data for ticker since it's not in the Product type
-  const mockTicker = {
-    value: "+ $20.00",
-    percentage: "(+15.00%)",
-    isPositive: true
-  };
+  const imageSrc = product.image || '/assets/expensive_card_1.png';
+  const marketPrice = product.marketPrice ?? (product.price * 0.9);
+  const inStock = product.stock > 0;
+
+  // Format description like the homepage (set + condition or subtitle)
+  const subtitle = product.subtitle || product.set || '1998 P.M. Japanese Promo';
+  const detail = product.condition || 'Bronze 3rd-2nd Tournament';
 
   return (
     <Link 
       to={`/products/${product.id}`}
-      className="flex flex-col bg-white rounded-[20px] overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 group"
+      className={`w-full bg-white rounded-[16px] p-4 flex gap-4 h-[180px] md:h-[200px] cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-[#8B5CF6] group ${
+        !inStock ? 'opacity-60' : ''
+      }`}
     >
-      {/* Image Container */}
-      <div className="relative aspect-[3/4] w-full bg-[#F8F9FA] p-6 flex items-center justify-center overflow-hidden">
+      {/* Left Image */}
+      <div className="relative w-[110px] md:w-[130px] h-full shrink-0 flex items-center justify-center rounded-lg">
+        {inStock ? (
+          <span className="absolute top-2 right-1 bg-[#16A34A] text-white text-[9px] font-bold px-2 py-0.5 rounded z-10 tracking-wide">
+            IN STOCK
+          </span>
+        ) : (
+          <span className="absolute top-2 right-1 bg-[#DC2626] text-white text-[9px] font-bold px-2 py-0.5 rounded z-10 tracking-wide">
+            OUT OF STOCK
+          </span>
+        )}
         <img 
-          src={product.image} 
-          alt={product.name}
-          className="w-full h-full object-contain filter drop-shadow-md group-hover:scale-105 transition-transform duration-500"
+          src={imageSrc} 
+          alt={product.name} 
+          className="w-full h-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300" 
         />
       </div>
-
-      {/* Content Container */}
-      <div className="p-5 flex flex-col flex-1 bg-white">
-        <div className="text-[22px] font-bold text-[#111827] mb-1 font-sans">
-          ฿{product.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </div>
-        
-        <h3 className="text-[13px] font-semibold text-[#374151] line-clamp-2 leading-snug mb-3 min-h-[39px]">
+      
+      {/* Right Content */}
+      <div className="flex flex-col flex-1 py-1 overflow-hidden">
+        <h3 className="text-black font-bold text-[15px] md:text-[17px] leading-tight mb-1 line-clamp-1">
           {product.name}
         </h3>
-
-        <div className="mt-auto">
-          <span className="inline-flex items-center text-[11px] font-bold text-[#16A34A] bg-[#DCFCE7] px-2 py-1 rounded-full">
-            {mockTicker.value} {mockTicker.percentage}
-          </span>
+        <p className="text-gray-500 text-[11px] md:text-[12px] leading-tight line-clamp-1 mb-1">
+          {subtitle}
+        </p>
+        <p className="text-gray-400 text-[11px] md:text-[12px] leading-tight line-clamp-1 mb-auto">
+          {detail}
+        </p>
+        
+        <div className="mt-2">
+          <div className="text-black font-black text-[22px] md:text-[28px] leading-none mb-1 line-clamp-1">
+            ฿{product.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div className="text-gray-400 text-[11px] md:text-[12px] font-medium whitespace-nowrap">
+            Market Price: <span className="text-[#16A34A] font-bold">
+              ฿{marketPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </div>
         </div>
       </div>
     </Link>

@@ -58,6 +58,9 @@ export function Navbar() {
             <Link to="/" className="hover:text-white transition-colors">
               Home
             </Link>
+            <Link to="/browse" className="hover:text-white transition-colors">
+              Cards
+            </Link>
             
             <button className="relative text-gray-300 hover:text-white transition-colors">
               <Bell className="h-5 w-5" />

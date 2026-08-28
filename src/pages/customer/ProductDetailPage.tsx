@@ -7,12 +7,16 @@ import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import { Skeleton } from '@/components/common/Skeleton';
 import { useToastStore } from '@/components/common/Toast';
+import { ContextualLoginModal } from '@/components/common/ContextualLoginModal';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const addToast = useToastStore(state => state.addToast);
+  const token = useAuthStore(state => state.token);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -30,6 +34,10 @@ export function ProductDetailPage() {
   }, [id]);
 
   const handleAddToCart = () => {
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
     // We will connect this to a real Cart Store in Module 4.
     addToast({ message: 'Item added to cart', type: 'success' });
   };
@@ -199,6 +207,12 @@ export function ProductDetailPage() {
 
         </div>
       </div>
+
+      <ContextualLoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Log in to add items to your cart"
+      />
     </div>
   );
 }

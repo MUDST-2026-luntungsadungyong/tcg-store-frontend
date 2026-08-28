@@ -11,6 +11,15 @@ function formatCardNumber(value: string) {
   return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
 }
 
+// ponytail: IIN-prefix ranges only, no full BIN table — covers the brands checkout actually needs to distinguish
+function detectCardBrand(digits: string): string {
+  if (/^4/.test(digits)) return 'Visa';
+  if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(digits)) return 'Mastercard';
+  if (/^3[47]/.test(digits)) return 'Amex';
+  if (/^6(?:011|5)/.test(digits)) return 'Discover';
+  return '';
+}
+
 function formatExpiry(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 4);
   return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
@@ -54,6 +63,8 @@ export function EditPaymentMethodPage() {
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [submitError, setSubmitError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const cardBrand = detectCardBrand(cardNumber.replace(/\D/g, ''));
 
   const refs: Record<FieldName, React.RefObject<HTMLInputElement | null>> = {
     cardNumber: useRef<HTMLInputElement>(null),
@@ -102,7 +113,7 @@ export function EditPaymentMethodPage() {
     try {
       // ponytail: mock checkout only — persist last4/holder/expiry, never the full number or CVV
       const cardLast4 = cardNumber.replace(/\D/g, '').slice(-4);
-      const updated = await usersApi.updateProfile(user.id, { cardLast4, cardHolder: name, cardExpiry: expiry });
+      const updated = await usersApi.updateProfile(user.id, { cardLast4, cardHolder: name, cardExpiry: expiry, cardBrand });
       login(token, updated);
       navigate('/profile');
     } catch (err) {
@@ -124,20 +135,31 @@ export function EditPaymentMethodPage() {
         <h1 className="text-2xl font-bold text-white mb-6">Payment Method</h1>
 
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          <Input
-            ref={refs.cardNumber}
-            id="card-number"
-            label="Card Number *"
-            icon={CreditCard}
-            inputMode="numeric"
-            autoComplete="cc-number"
-            placeholder="1234 5678 9012 3456"
-            required
-            value={cardNumber}
-            onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-            onBlur={handleBlur('cardNumber')}
-            error={fieldErrors.cardNumber}
-          />
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label htmlFor="card-number" className="block text-sm font-medium text-gray-300">
+                Card Number *
+              </label>
+              {cardBrand && (
+                <span className="rounded-full bg-brand-blue/15 px-2.5 py-0.5 text-xs font-semibold text-brand-blue ring-1 ring-brand-blue/30">
+                  {cardBrand}
+                </span>
+              )}
+            </div>
+            <Input
+              ref={refs.cardNumber}
+              id="card-number"
+              icon={CreditCard}
+              inputMode="numeric"
+              autoComplete="cc-number"
+              placeholder="1234 5678 9012 3456"
+              required
+              value={cardNumber}
+              onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+              onBlur={handleBlur('cardNumber')}
+              error={fieldErrors.cardNumber}
+            />
+          </div>
           <Input
             ref={refs.name}
             id="card-name"

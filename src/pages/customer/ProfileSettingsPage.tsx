@@ -96,7 +96,9 @@ export function ProfileSettingsPage() {
           <ProfileRow icon={CreditCard} title="Payment Method" editHref="/profile/edit/payment">
             {hasPayment ? (
               <>
-                <p className="text-base font-medium text-white">Card ending in {user?.cardLast4}</p>
+                <p className="text-base font-medium text-white">
+                  {user?.cardBrand ? `${user.cardBrand} ` : ''}ending in {user?.cardLast4}
+                </p>
                 <p className="text-sm">{user?.cardHolder} · Expires {user?.cardExpiry}</p>
               </>
             ) : (

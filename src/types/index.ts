@@ -17,6 +17,7 @@ export interface User {
   cardLast4?: string;
   cardHolder?: string;
   cardExpiry?: string;
+  cardBrand?: string;
 }
 
 export interface Product {

@@ -5,9 +5,11 @@ import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { authApi } from '@/api/auth';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const login = useAuthStore((s) => s.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +22,7 @@ export function LoginPage() {
     setIsLoading(true);
     try {
       const { token, user } = await authApi.login(email, password);
-      localStorage.setItem('token', token);
+      login(token, user);
       navigate(user.role === 'ADMIN' ? '/admin' : '/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');

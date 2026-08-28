@@ -1,10 +1,34 @@
-import { Link } from 'react-router-dom';
-import { Search, Bell, ShoppingCart } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Bell, ShoppingCart, LogOut, User as UserIcon, Package, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/common/Button';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
 
 export function Navbar() {
-  const totalItems = useCartStore(state => state.getTotalItems());
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const totalItems = useCartStore((s) => s.getTotalItems());
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  function handleLogout() {
+    setMenuOpen(false);
+    logout();
+    navigate('/');
+  }
+
   return (
     <nav className="sticky top-0 z-40 w-full bg-[#1b2336] border-b border-[rgba(143,179,226,0.2)]">
       <div className="max-w-[1440px] mx-auto px-8">
@@ -53,11 +77,65 @@ export function Navbar() {
               <Bell className="h-5 w-5" />
             </button>
 
-            <Link to="/login">
-              <Button variant="primary" size="sm" className="bg-white hover:bg-gray-100 text-[#151B2B] rounded-full px-6 py-1.5 font-bold">
-                Login
-              </Button>
-            </Link>
+            {user ? (
+              <div className="relative" ref={menuRef}>
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  className={`flex items-center gap-2 rounded-full transition-colors focus:outline-none ${menuOpen ? 'text-white' : 'hover:text-white'}`}
+                >
+                  <span className="flex size-8 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/40">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="hidden lg:inline">{user.name}</span>
+                  <ChevronDown size={16} className={`transition-transform ${menuOpen ? 'rotate-180 text-white' : ''}`} />
+                </button>
+
+                {menuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-xl bg-bg-elevated border border-white/10 shadow-xl py-1.5 z-50"
+                  >
+                    <Link
+                      to="/profile"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <UserIcon size={16} />
+                      Profile
+                    </Link>
+                    <Link
+                      to="/orders"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <Package size={16} />
+                      My Orders
+                    </Link>
+                    <div className="my-1.5 border-t border-white/10" />
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-status-danger hover:bg-white/5 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/login">
+                <Button variant="primary" size="sm" className="bg-white hover:bg-gray-100 text-[#151B2B] rounded-full px-6 py-1.5 font-bold">
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

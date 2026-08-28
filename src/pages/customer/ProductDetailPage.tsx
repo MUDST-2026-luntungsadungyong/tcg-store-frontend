@@ -7,6 +7,8 @@ import type { Product } from '@/types';
 import { Skeleton } from '@/components/common/Skeleton';
 import { useToastStore } from '@/components/common/Toast';
 import { useCartStore } from '@/store/useCartStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { ContextualLoginModal } from '@/components/common/ContextualLoginModal';
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,8 +16,10 @@ export function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const addToast = useToastStore(state => state.addToast);
   const addItem = useCartStore(state => state.addItem);
+  const token = useAuthStore(state => state.token);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -45,6 +49,10 @@ export function ProductDetailPage() {
   };
 
   const handleAddToCart = () => {
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
     if (!product) return;
     const success = addItem(product, quantity);
     if (success) {
@@ -56,6 +64,10 @@ export function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
     if (!product) return;
     addItem(product, quantity);
     navigate('/cart');
@@ -267,6 +279,12 @@ export function ProductDetailPage() {
         </div>
 
       </div>
+
+      <ContextualLoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Log in to add items to your cart"
+      />
     </div>
   );
 }

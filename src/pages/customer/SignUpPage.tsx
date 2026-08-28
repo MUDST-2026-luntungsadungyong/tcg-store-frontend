@@ -5,6 +5,7 @@ import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { authApi } from '@/api/auth';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const PASSWORD_RULES = [
   { label: 'At least 8 characters', test: (v: string) => v.length >= 8 },
@@ -14,6 +15,7 @@ const PASSWORD_RULES = [
 
 export function SignUpPage() {
   const navigate = useNavigate();
+  const login = useAuthStore((s) => s.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,7 +44,7 @@ export function SignUpPage() {
     setIsLoading(true);
     try {
       const { token, user } = await authApi.register(email, email, password);
-      localStorage.setItem('token', token);
+      login(token, user);
       navigate(user.role === 'ADMIN' ? '/admin' : '/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');

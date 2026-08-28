@@ -3,6 +3,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { SellerLayout } from '@/components/layout/SellerLayout';
 import { PlatformAdminLayout } from '@/components/layout/PlatformAdminLayout';
+import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 
 // Module 3 Pages
 import { HomePage } from '@/pages/customer/HomePage';
@@ -55,30 +56,45 @@ export const router = createBrowserRouter([
       { path: 'check-email', element: <CheckEmailPage /> },
       { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'reset-success', element: <ResetSuccessPage /> },
-      { path: 'profile', element: <PlaceholderPage title="My Profile" /> },
-      { path: 'orders', element: <PlaceholderPage title="My Orders" /> },
+      {
+        element: <ProtectedRoute />,
+        children: [
+          { path: 'profile', element: <PlaceholderPage title="My Profile" /> },
+          { path: 'orders', element: <PlaceholderPage title="My Orders" /> },
+        ],
+      },
     ],
   },
   {
     path: '/seller',
-    element: <SellerLayout />,
+    element: <ProtectedRoute requiredRole="SELLER" />,
     children: [
-      { index: true, element: <PlaceholderPage title="Seller Dashboard" /> },
-      { path: 'dashboard', element: <PlaceholderPage title="Seller Dashboard" /> },
-      { path: 'listings', element: <PlaceholderPage title="Manage Listings" /> },
-      { path: 'inventory', element: <PlaceholderPage title="Inventory Management" /> },
-      { path: 'payouts', element: <PlaceholderPage title="Payouts" /> },
+      {
+        element: <SellerLayout />,
+        children: [
+          { index: true, element: <PlaceholderPage title="Seller Dashboard" /> },
+          { path: 'dashboard', element: <PlaceholderPage title="Seller Dashboard" /> },
+          { path: 'listings', element: <PlaceholderPage title="Manage Listings" /> },
+          { path: 'inventory', element: <PlaceholderPage title="Inventory Management" /> },
+          { path: 'payouts', element: <PlaceholderPage title="Payouts" /> },
+        ],
+      },
     ],
   },
   {
     path: '/platform-admin',
-    element: <PlatformAdminLayout />,
+    element: <ProtectedRoute requiredRole="ADMIN" />,
     children: [
-      { index: true, element: <PlaceholderPage title="Platform Admin" /> },
-      { path: 'dashboard', element: <PlaceholderPage title="Platform Admin" /> },
-      { path: 'users', element: <PlaceholderPage title="Manage Users" /> },
-      { path: 'qc-hub', element: <PlaceholderPage title="QC Hub" /> },
-      { path: 'escrow', element: <PlaceholderPage title="Escrow Management" /> },
+      {
+        element: <PlatformAdminLayout />,
+        children: [
+          { index: true, element: <PlaceholderPage title="Platform Admin" /> },
+          { path: 'dashboard', element: <PlaceholderPage title="Platform Admin" /> },
+          { path: 'users', element: <PlaceholderPage title="Manage Users" /> },
+          { path: 'qc-hub', element: <PlaceholderPage title="QC Hub" /> },
+          { path: 'escrow', element: <PlaceholderPage title="Escrow Management" /> },
+        ],
+      },
     ],
   },
 ]);

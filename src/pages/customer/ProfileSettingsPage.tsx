@@ -35,9 +35,8 @@ function ProfileRow({ icon: Icon, title, editHref, children }: ProfileRowProps) 
 export function ProfileSettingsPage() {
   const user = useAuthStore((s) => s.user);
 
-  // ponytail: payment isn't on the User model yet — mock display until backend fields exist
   const hasAddress = user?.addressLine && user?.province;
-  const paymentMethod = { last4: '3456', holder: user?.name ?? 'Jane Doe', expiry: '12/28' };
+  const hasPayment = user?.cardLast4;
   const displayName = user?.name ?? 'Jane Doe';
 
   return (
@@ -95,8 +94,14 @@ export function ProfileSettingsPage() {
           </ProfileRow>
 
           <ProfileRow icon={CreditCard} title="Payment Method" editHref="/profile/edit/payment">
-            <p className="text-base font-medium text-white">Card ending in {paymentMethod.last4}</p>
-            <p className="text-sm">{paymentMethod.holder} · Expires {paymentMethod.expiry}</p>
+            {hasPayment ? (
+              <>
+                <p className="text-base font-medium text-white">Card ending in {user?.cardLast4}</p>
+                <p className="text-sm">{user?.cardHolder} · Expires {user?.cardExpiry}</p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">No payment method on file yet</p>
+            )}
           </ProfileRow>
         </div>
       </section>

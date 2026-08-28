@@ -14,6 +14,9 @@ export interface User {
   subDistrict?: string;
   district?: string;
   province?: string;
+  cardLast4?: string;
+  cardHolder?: string;
+  cardExpiry?: string;
 }
 
 export interface Product {

@@ -58,5 +58,5 @@
 - [ ] รัน `npm run lint` ผ่าน (ตรวจ static lint ด้วย Oxlint)
 - [ ] รัน `npm run build` ผ่าน (ตรวจ TypeScript types และ production bundle)
 - [ ] ตั้งชื่อ PR ตาม Conventional Commits (เช่น `feat: add shopping cart page`)
-- [ ] ใส่หมายเลข Issue ใน Description (เช่น `Closes #2`)
+- [ ] ใส่หมายเลข GitHub Issue จริงใน Description และใช้ `Closes #<issue-number>` เมื่อ acceptance criteria ครบ
 - [ ] ตรวจสอบว่า UI สอดคล้องกับ Figma และรองรับ Responsive

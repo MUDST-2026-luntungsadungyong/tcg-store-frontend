@@ -8,11 +8,11 @@ Frontend สำหรับแพลตฟอร์มซื้อขายก�
 
 | พื้นที่ | สถานะปัจจุบัน |
 | --- | --- |
-| Authentication | Login, register, forgot/reset password, mock session และ protected routes พร้อมใช้งาน |
+| Authentication | Login/register เชื่อม Spring API, เก็บ session แบบ bearer token และ protected routes พร้อมใช้งาน |
 | Buyer storefront | Home, browse/filter, product detail, cart และ profile editors พร้อมใช้งาน |
 | Seller portal | Inventory และ listing CRUD พร้อมใช้งาน; onboarding/KYC, orders, dashboard และ payouts อยู่ใน Sprint 2–3 |
 | Platform Admin | Route และ layout placeholder มีแล้ว; dashboard, user management, QC และ escrow ยังอยู่ใน roadmap |
-| Quality gates | CI รัน Oxlint และ production build; automated unit/E2E tests ยังไม่ได้ติดตั้ง |
+| Quality gates | CI รัน Oxlint และ production build; unit tests ครอบคลุม auth contract, state, navigation และ form validation |
 
 รายละเอียด scope, dependencies และ acceptance criteria ล่าสุดอยู่ใน [ISSUE_GUIDE.md](ISSUE_GUIDE.md)
 
@@ -66,7 +66,7 @@ npm run dev
 | Variable | Default ใน `.env.example` | รายละเอียด |
 | --- | --- | --- |
 | `VITE_API_BASE_URL` | `http://localhost:8080/api` | Base URL ของ backend API |
-| `VITE_ENABLE_MOCK_API` | `true` | `true` เพื่อใช้ mock API และ localStorage โดยไม่ต้องเปิด backend |
+| `VITE_ENABLE_MOCK_API` | `false` | `false` เพื่อเชื่อม backend จริง; ตั้งเป็น `true` เฉพาะตอนพัฒนา UI ด้วย mock API |
 | `VITE_APP_TITLE` | `Mythix TCG Store` | ชื่อแอปที่แสดงใน UI |
 | `VITE_PORT` | `5173` | Port ของ Vite development server |
 
@@ -148,7 +148,7 @@ Import ภายใน `src` สามารถใช้ alias `@/` ได้ �
 | `npm run build` | ตรวจ TypeScript และสร้าง production bundle ใน `dist/` |
 | `npm run preview` | เปิด production bundle บนเครื่อง local |
 
-repository ยังไม่มี `npm run test` งานเพิ่ม unit/integration tests อยู่ใน [#62](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/62) และ E2E tests อยู่ใน [#63](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/63)
+รัน unit tests ได้ด้วย `npm run test` (Vitest + Testing Library) สำหรับ E2E browser tests ยังติดตามใน [#63](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/63)
 
 ## Backend และ Mock API
 
@@ -207,6 +207,6 @@ Service ถูกกำหนดเป็น NodePort `30080` และ Deployme
 
 - Checkout, Buyer order history และ seller portal ส่วนที่เหลือยังไม่เสร็จ
 - Platform Admin/QC/Escrow ยังเป็น placeholder
-- ยังไม่มี automated test runner หรือ coverage gate
+- มี Vitest สำหรับ auth flows; ยังไม่มี coverage gate และ E2E browser suite
 - Responsive/accessibility hardening ติดตามใน [#31](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/31)
 - Loading/error/empty/offline resilience ติดตามใน [#33](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/33)

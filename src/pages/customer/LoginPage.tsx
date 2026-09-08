@@ -1,14 +1,16 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
-import { authApi } from '@/api/auth';
+import { authApi, getAuthErrorMessage } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
+import { getPostAuthDestination } from '@/auth/postAuthNavigation';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const login = useAuthStore((s) => s.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,14 +25,9 @@ export function LoginPage() {
     try {
       const { token, user } = await authApi.login(email, password);
       login(token, user);
-      const destination = {
-        CUSTOMER: '/',
-        SELLER: '/seller/inventory',
-        ADMIN: '/platform-admin',
-      }[user.role];
-      navigate(destination);
+      navigate(getPostAuthDestination(user.role, location.state));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(getAuthErrorMessage(err, 'Login failed'));
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +97,7 @@ export function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-gray-400">
         Don't have an account?{' '}
-        <Link to="/register" className="font-medium text-brand-blue hover:text-brand-blue/80 hover:underline">
+        <Link to="/register" state={location.state} className="font-medium text-brand-blue hover:text-brand-blue/80 hover:underline">
           Sign up
         </Link>
       </p>

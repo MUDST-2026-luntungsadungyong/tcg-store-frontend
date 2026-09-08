@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ENV } from '@/config/env';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const apiClient = axios.create({
   baseURL: ENV.API_BASE_URL,
@@ -30,10 +31,11 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Handle unauthorized access (e.g., redirect to login)
-      localStorage.removeItem('token');
-      // window.location.href = '/login'; // Optional: Redirect to login
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout();
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.assign('/login');
+      }
     }
     return Promise.reject(error);
   }

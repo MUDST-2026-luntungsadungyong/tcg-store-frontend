@@ -1,21 +1,25 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Check, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, Check, X, UserRound } from 'lucide-react';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
-import { authApi } from '@/api/auth';
+import { authApi, getAuthErrorMessage } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
+import { getPostAuthDestination } from '@/auth/postAuthNavigation';
 
 const PASSWORD_RULES = [
   { label: 'At least 8 characters', test: (v: string) => v.length >= 8 },
   { label: 'One uppercase letter', test: (v: string) => /[A-Z]/.test(v) },
   { label: 'One number', test: (v: string) => /[0-9]/.test(v) },
 ];
+const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
 
 export function SignUpPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const login = useAuthStore((s) => s.login);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,6 +35,16 @@ export function SignUpPage() {
     e.preventDefault();
     setError('');
 
+    if (!name.trim()) {
+      setError('Name is required');
+      return;
+    }
+
+    if (!EMAIL_PATTERN.test(email)) {
+      setError('Enter a valid email address');
+      return;
+    }
+
     if (!passwordValid) {
       setError('Password does not meet the requirements');
       return;
@@ -43,11 +57,11 @@ export function SignUpPage() {
 
     setIsLoading(true);
     try {
-      const { token, user } = await authApi.register(email, email, password);
+      const { token, user } = await authApi.register(name.trim(), email, password);
       login(token, user);
-      navigate(user.role === 'ADMIN' ? '/admin' : '/');
+      navigate(getPostAuthDestination(user.role, location.state));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign up failed');
+      setError(getAuthErrorMessage(err, 'Sign up failed'));
     } finally {
       setIsLoading(false);
     }
@@ -56,6 +70,17 @@ export function SignUpPage() {
   return (
     <AuthLayout title="Create account">
       <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
+        <Input
+          id="name"
+          type="text"
+          label="Name"
+          icon={UserRound}
+          placeholder="Your name"
+          autoComplete="name"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
         <Input
           id="email"
           type="email"
@@ -148,7 +173,7 @@ export function SignUpPage() {
 
       <p className="mt-6 text-center text-sm text-gray-400">
         Already have an account?{' '}
-        <Link to="/login" className="font-medium text-brand-blue hover:text-brand-blue/80 hover:underline">
+        <Link to="/login" state={location.state} className="font-medium text-brand-blue hover:text-brand-blue/80 hover:underline">
           Login
         </Link>
       </p>

@@ -1,7 +1,47 @@
+import axios from 'axios';
 import apiClient from './client';
 import { ENV } from '@/config/env';
-import type { User } from '@/types';
+import type { Role, User } from '@/types';
 import { storage } from './storage';
+
+interface BackendUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface BackendAuthResponse {
+  token: string;
+  user: BackendUser;
+}
+
+interface ApiErrorResponse {
+  message?: string;
+}
+
+export function toFrontendUser(user: BackendUser): User {
+  const roleByBackendRole: Record<string, Role> = {
+    USER: 'CUSTOMER',
+    CUSTOMER: 'CUSTOMER',
+    SELLER: 'SELLER',
+    ADMIN: 'ADMIN',
+  };
+  const role = roleByBackendRole[user.role];
+
+  if (!role) {
+    throw new Error('Unsupported user role');
+  }
+
+  return { id: String(user.id), name: user.name, email: user.email, role };
+}
+
+export function getAuthErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError<ApiErrorResponse>(error)) {
+    return error.response?.data?.message ?? fallback;
+  }
+  return error instanceof Error ? error.message : fallback;
+}
 
 export const authApi = {
   login: async (email: string, password: string):Promise<{token: string, user: User}> => {
@@ -22,8 +62,8 @@ export const authApi = {
       }
       throw new Error('Invalid credentials');
     }
-    const response = await apiClient.post('/auth/login', { email, password });
-    return response.data;
+    const response = await apiClient.post<BackendAuthResponse>('/auth/login', { email, password });
+    return { token: response.data.token, user: toFrontendUser(response.data.user) };
   },
   
   register: async (name: string, email: string, password: string): Promise<{ token: string; user: User }> => {
@@ -37,8 +77,8 @@ export const authApi = {
       storage.setUsers([...users, user]);
       return { token: 'mock-jwt-token-customer', user };
     }
-    const response = await apiClient.post('/auth/register', { name, email, password });
-    return response.data;
+    const response = await apiClient.post<BackendAuthResponse>('/auth/register', { name, email, password });
+    return { token: response.data.token, user: toFrontendUser(response.data.user) };
   },
 
   forgotPassword: async (email: string): Promise<void> => {
@@ -73,7 +113,7 @@ export const authApi = {
           }
           return users.find(u => u.role === 'CUSTOMER')!;
       }
-      const response = await apiClient.get('/auth/me');
-      return response.data;
+      const response = await apiClient.get<BackendUser>('/auth/me');
+      return toFrontendUser(response.data);
   }
 };

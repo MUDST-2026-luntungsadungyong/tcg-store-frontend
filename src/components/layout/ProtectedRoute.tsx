@@ -9,7 +9,7 @@ export function ProtectedRoute({ requiredRole }: { requiredRole?: Role }) {
   const isHydrating = useAuthStore((s) => s.isHydrating);
 
   if (!token) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search + location.hash }} />;
   }
 
   if (isHydrating) {
@@ -25,7 +25,7 @@ export function ProtectedRoute({ requiredRole }: { requiredRole?: Role }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search + location.hash }} />;
   }
 
   if (requiredRole && user.role !== requiredRole) {

@@ -231,28 +231,44 @@ export const mockProducts: Product[] = [
 
 export const mockOrders: Order[] = [
   {
-    id: 'ord-1001',
+    id: 'ord-1042',
     userId: 'usr-1',
+    sellerName: 'CardVault TH',
     items: [
-      { product: mockProducts[3], quantity: 2 },
+      { product: mockProducts[0], quantity: 1 },
     ],
-    totalAmount: 30000,
+    totalAmount: 2000,
     status: 'PENDING',
     shippingAddress: '123 Mythix St, Card City',
     paymentMethod: 'Credit Card',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    createdAt: new Date().toISOString(),
   },
   {
-    id: 'ord-1002',
+    id: 'ord-1041',
     userId: 'usr-1',
+    sellerName: "Alex's Collectibles",
     items: [
       { product: mockProducts[1], quantity: 1 },
     ],
     totalAmount: 350000,
-    status: 'FULFILLED',
+    status: 'SHIPPED',
     shippingAddress: '123 Mythix St, Card City',
     paymentMethod: 'PromptPay',
-    trackingNumber: 'TH1234567890',
+    trackingNumber: 'TH-98214482',
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'ord-1040',
+    userId: 'usr-1',
+    sellerName: 'CardVault TH',
+    items: [
+      { product: mockProducts[2], quantity: 1 },
+    ],
+    totalAmount: 75000,
+    status: 'FULFILLED',
+    shippingAddress: '123 Mythix St, Card City',
+    paymentMethod: 'Credit Card',
+    trackingNumber: 'TH-12345678',
     createdAt: new Date(Date.now() - 172800000).toISOString(),
   },
 ];

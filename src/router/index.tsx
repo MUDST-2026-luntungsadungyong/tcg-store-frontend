@@ -20,6 +20,7 @@ import { ProfileSettingsPage } from '@/pages/customer/ProfileSettingsPage';
 import { EditPersonalInfoPage } from '@/pages/customer/EditPersonalInfoPage';
 import { EditShippingAddressPage } from '@/pages/customer/EditShippingAddressPage';
 import { EditPaymentMethodPage } from '@/pages/customer/EditPaymentMethodPage';
+import { MyOrdersPage } from '@/pages/customer/MyOrdersPage';
 import { ProductManagementPage } from '@/pages/seller/ProductManagementPage';
 // Base layout for customer-facing pages
 function StoreLayout() {
@@ -67,7 +68,7 @@ export const router = createBrowserRouter([
           { path: 'profile/edit/personal', element: <EditPersonalInfoPage /> },
           { path: 'profile/edit/address', element: <EditShippingAddressPage /> },
           { path: 'profile/edit/payment', element: <EditPaymentMethodPage /> },
-          { path: 'orders', element: <PlaceholderPage title="My Orders" /> },
+          { path: 'orders', element: <MyOrdersPage /> },
         ],
       },
     ],

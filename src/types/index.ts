@@ -1,5 +1,5 @@
 export type Role = 'CUSTOMER' | 'SELLER' | 'ADMIN';
-export type OrderStatus = 'PENDING' | 'FULFILLED' | 'CANCELLED';
+export type OrderStatus = 'PENDING' | 'AWAITING_SHIP' | 'SHIPPED' | 'FULFILLED' | 'CANCELLED';
 export type ProductStatus = 'SHOW' | 'HIDE';
 
 export interface User {
@@ -52,6 +52,7 @@ export interface CartItem {
 export interface Order {
   id: string;
   userId: string;
+  sellerName?: string;
   items: CartItem[];
   totalAmount: number;
   status: OrderStatus;

@@ -1,62 +1,85 @@
-# 🤝 Contributing Guide & Team Conventions
+# Contributing to Mythix Frontend
 
-คู่มือและข้อปฏิบัติสำหรับการพัฒนาโปรเจกต์ **Mythix TCG Store Frontend** สำหรับสมาชิกทุกคนในทีม
+## Before starting
 
----
+1. อ่าน ticket จาก [Jira board](https://nunkantinan.atlassian.net/jira/software/projects/SCRUM/boards/1)
+2. อ่าน linked backend ticket และ dependency
+3. เปิด Figma node/frame ที่เกี่ยวข้องจาก [Figma](https://www.figma.com/design/X2UPaqQCjGuMtijIgtZ3Aq/TCG-DevOp-Project?node-id=0-1)
+4. ตรวจว่า API contract, field, enum และ permission ชัดเจนก่อนเขียน implementation
 
-## 🎨 1. มาตรฐาน CSS Framework (Tailwind CSS v3)
+Repository นี้ไม่ใช้ GitHub Issues เป็น backlog และไม่เก็บ acceptance criteria ซ้ำจาก Jira
 
-เพื่อป้องกันปัญหา CSS ชนกันและรักษา Design Consistency ให้เหมือน Figma:
+## Branches
 
-1. **ใช้ Tailwind Utility Classes เท่านั้น**:
-   - ไม่เขียน inline style (`style={{ ... }}`)
-   - ไม่สร้าง class แบบ arbitrary ในไฟล์ css อื่น
-2. **เรียกใช้ Color Palette จาก Theme**:
-   - พื้นหลังหลัก: `bg-bg-base`
-   - การ์ดสินค้า Slab: `bg-white` (สำคัญ!)
-   - การ์ดยกระดับ / Modal: `bg-bg-elevated`
-   - อินพุต: `bg-bg-input`
-   - สีฟ้าหลัก: `text-brand-blue` / `bg-brand-blue`
-   - สีทองไฮไลท์: `text-brand-gold` (`#EAB308`)
-3. **ใช้งาน Reusable Components**:
-   - ปุ่ม: ใช้ `<Button variant="primary | secondary | gold | danger" />` จาก `@/components/common/Button`
-   - อินพุต: ใช้ `<Input label="..." error="..." />` จาก `@/components/common/Input`
-   - ป้ายสถานะ: ใช้ `<Badge variant="success | warning | danger | gold" />` จาก `@/components/common/Badge`
+`main` และ `develop` เป็น protected branches ห้าม push ตรง
 
----
+ชื่อ branch ต้องมี Jira key:
 
-## 🌿 2. Git Branching Strategy
+```text
+feat/scrum-15-auth-integration
+fix/scrum-12-stock-reservation
+refactor/scrum-37-feature-first-architecture
+docs/scrum-31-accessibility-guide
+```
 
-- **`main`**: Production-ready code (Protected branch — ห้าม push ตรงเด็ดขาด)
-- **`develop`**: Integration branch สำหรับรวบรวมฟีเจอร์ของแต่ละ Sprint
-- **Feature / Fix branches**:
-  - `feat/us-01-login`
-  - `feat/us-02-browse`
-  - `fix/us-03-cart-quantity`
+รูปแบบที่อนุญาตคือ `<type>/scrum-<number>-<kebab-case>`
 
----
+## Project boundaries
 
-## 💬 3. ข้อตกลงการตั้งชื่อ Commit & PR (Conventional Commits)
+- Business code อยู่ใน `src/features/<feature>`
+- Application composition อยู่ใน `src/app`
+- Generic code ที่ไม่มี business owner อยู่ใน `src/shared`
+- Cross-feature import ต้องผ่าน public `index.ts` ของ feature
+- ห้ามย้าย business logic เข้า shared เพื่อหลบ dependency rule
+- Route ใหม่ต้องประกาศใน `src/features/<feature>/routes.tsx`
 
-โปรเจกต์มี **GitHub Actions PR Title Linter** คอยตรวจเช็ค:
+อ่านรายละเอียดที่ [docs/architecture.md](docs/architecture.md)
 
-| Prefix | ตัวอย่าง | ผลกระทบต่อเวอร์ชัน |
-|---|---|---|
-| `feat:` | `feat: add product filter sidebar` | Minor (`1.0.0` ➡️ `1.1.0`) |
-| `fix:` | `fix: resolve cart stock validation` | Patch (`1.1.0` ➡️ `1.1.1`) |
-| `feat!:` | `feat!: overhaul state to Zustand` | Major (`1.1.0` ➡️ `2.0.0`) |
-| `docs:` | `docs: update setup guide in README` | ไม่ขยับเวอร์ชัน |
-| `chore:` | `chore: update dependencies` | ไม่ขยับเวอร์ชัน |
-| `test:` | `test: add cartStore unit test` | ไม่ขยับเวอร์ชัน |
-| `ci:` | `ci: update GitHub Actions workflow` | ไม่ขยับเวอร์ชัน |
+## UI conventions
 
----
+- ใช้ Tailwind CSS และ design tokens ที่มีอยู่
+- ใช้ primitive จาก `@/shared/components`
+- Component ที่ใช้เฉพาะ feature ให้อยู่ใน feature นั้น
+- ตรวจ responsive, keyboard navigation, focus, loading, empty และ error states ตาม ticket/Figma
+- Figma section ที่มีคำว่า `Scratch` ไม่ถือเป็น approved implementation source จนกว่า Jira ticket จะอ้าง node นั้น
 
-## 📋 4. PR Checklist ก่อนส่ง Review
+## API changes
 
-ก่อนเปิด Pull Request และขอให้เพื่อน Review:
-- [ ] รัน `npm run lint` ผ่าน (ตรวจ static lint ด้วย Oxlint)
-- [ ] รัน `npm run build` ผ่าน (ตรวจ TypeScript types และ production bundle)
-- [ ] ตั้งชื่อ PR ตาม Conventional Commits (เช่น `feat: add shopping cart page`)
-- [ ] ใส่หมายเลข GitHub Issue จริงใน Description และใช้ `Closes #<issue-number>` เมื่อ acceptance criteria ครบ
-- [ ] ตรวจสอบว่า UI สอดคล้องกับ Figma และรองรับ Responsive
+- HTTP client กลางอยู่ที่ `src/shared/api/client.ts`
+- Endpoint adapter และ response normalization อยู่ใน `feature/api`
+- ห้ามใช้ mock shape เป็นหลักฐานว่า backend contract รองรับแล้ว
+- ถ้า endpoint/field/enum เปลี่ยน ให้ตกลงกับ backend และอัปเดต tests/fixtures ใน PR เดียวกัน
+- ห้ามให้ component อ่าน raw backend response โดยตรง
+
+## Commit and PR title
+
+ใช้ Conventional Commits:
+
+```text
+feat(auth): integrate login flow (SCRUM-15)
+fix(cart): handle stale stock response (SCRUM-17)
+refactor(app): split routes by feature (SCRUM-37)
+```
+
+PR title ต้องขึ้นต้นด้วย type ที่รองรับ เช่น `feat`, `fix`, `docs`, `refactor`, `test`, `ci` หรือ `chore`
+
+## Verification
+
+รันทุกคำสั่งก่อนเปิด PR:
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
+
+## Pull request checklist
+
+- [ ] Branch มี Jira key ถูกต้อง
+- [ ] PR ระบุ Jira ticket และ linked backend ticket
+- [ ] PR ระบุ Figma node/frame ที่ใช้
+- [ ] การเปลี่ยนแปลงอยู่ใน feature owner ที่ถูกต้อง
+- [ ] Mock, types และ API adapter ไม่ขัดกับ backend contract
+- [ ] Loading/empty/error/unauthorized/responsive states ครบตาม scope
+- [ ] `npm run lint`, `npm run test` และ `npm run build` ผ่าน
+- [ ] ไม่มี secret, `.env` หรือ credential ถูก commit

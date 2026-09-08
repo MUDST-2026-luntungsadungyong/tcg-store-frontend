@@ -1,39 +1,46 @@
 # Mythix TCG Store — Frontend
 
-Frontend สำหรับแพลตฟอร์มซื้อขายการ์ด TCG ของ Mythix ครอบคลุมประสบการณ์ Buyer, Seller และ Platform Admin พัฒนาด้วย React, TypeScript และ Vite
+Frontend ของแพลตฟอร์มซื้อขายการ์ด TCG สำหรับ Buyer, Seller และ Platform Admin
+พัฒนาด้วย React, TypeScript และ Vite
 
 [![CI](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/actions/workflows/ci.yml)
 
-## สถานะของโปรเจกต์
+## Source of truth
 
-| พื้นที่ | สถานะปัจจุบัน |
+- งานและ acceptance criteria: [Jira board](https://nunkantinan.atlassian.net/jira/software/projects/SCRUM/boards/1)
+- UI และ interaction: [Figma](https://www.figma.com/design/X2UPaqQCjGuMtijIgtZ3Aq/TCG-DevOp-Project?node-id=0-1)
+- Backend และ API contract: [tcg-store-backend](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-backend)
+
+Repository นี้ไม่เก็บ backlog หรือ issue guide ซ้ำกับ Jira หาก ticket, Figma และ API contract
+ไม่ตรงกัน ให้แก้แหล่งข้อมูลต้นทางก่อนเริ่ม implementation
+
+## สถานะปัจจุบัน
+
+| Area | สถานะบน `main` |
 | --- | --- |
-| Authentication | Login/register เชื่อม Spring API, เก็บ session แบบ bearer token และ protected routes พร้อมใช้งาน |
-| Buyer storefront | Home, browse/filter, product detail, cart และ profile editors พร้อมใช้งาน |
-| Seller portal | Inventory และ listing CRUD พร้อมใช้งาน; onboarding/KYC, orders, dashboard และ payouts อยู่ใน Sprint 2–3 |
-| Platform Admin | Route และ layout placeholder มีแล้ว; dashboard, user management, QC และ escrow ยังอยู่ใน roadmap |
-| Quality gates | CI รัน Oxlint และ production build; unit tests ครอบคลุม auth contract, state, navigation และ form validation |
+| Authentication | Login/register/current-user เชื่อม backend แล้ว; password recovery ยังรอ backend contract |
+| Marketplace | Home, browse, product detail และ cart มี UI/mock flow; real product/cart APIs ยังอยู่ใน Jira |
+| Profile | Profile และ edit forms มี UI/mock flow; real profile/address/payment APIs ยังไม่ครบ |
+| Seller | Inventory UI และ API adapter มีแล้ว; verification, dashboard, orders, collection, payouts และ storefront รอ ticket |
+| Buyer orders/checkout | Route boundary เตรียมไว้ แต่ implementation ยังไม่เสร็จ |
+| Platform Admin | Route/layout boundary เตรียมสำหรับ monitoring, QC Hub และ escrow |
+| Quality | Oxlint, TypeScript build และ Vitest พร้อมใช้; E2E/security gates ติดตามใน Jira |
 
-รายละเอียด scope, dependencies และ acceptance criteria ล่าสุดอยู่ใน [ISSUE_GUIDE.md](ISSUE_GUIDE.md)
+คำว่า “มี UI” หรือ “มี mock” ไม่เท่ากับเชื่อม backend สำเร็จ
 
 ## Tech stack
 
 - React 19 และ React Router 7
-- TypeScript 5 และ Vite 8
+- TypeScript 6 และ Vite 8
 - Tailwind CSS 3
 - Zustand สำหรับ client state
-- Axios สำหรับ HTTP client และ auth interceptor
-- Oxlint, TypeScript และ Vite build สำหรับ automated checks
-- Nginx, Docker และ Kubernetes สำหรับ production deployment
+- Axios สำหรับ HTTP client
+- Vitest และ Testing Library
+- Nginx, Docker และ Kubernetes
 
 ## เริ่มใช้งาน
 
-### Requirements
-
-- Node.js 20 ขึ้นไป
-- npm
-
-### Setup
+ต้องใช้ Node.js 20 ขึ้นไปและ npm
 
 ```bash
 git clone https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend.git
@@ -41,21 +48,10 @@ cd tcg-store-frontend
 npm ci --legacy-peer-deps
 ```
 
-สร้าง `.env` จากไฟล์ตัวอย่าง:
+สร้าง `.env` จาก `.env.example` แล้วเริ่ม development server:
 
 ```powershell
 Copy-Item .env.example .env
-```
-
-หรือบน macOS/Linux:
-
-```bash
-cp .env.example .env
-```
-
-จากนั้นรัน development server:
-
-```bash
 npm run dev
 ```
 
@@ -63,150 +59,96 @@ npm run dev
 
 ## Environment variables
 
-| Variable | Default ใน `.env.example` | รายละเอียด |
+| Variable | Default | รายละเอียด |
 | --- | --- | --- |
-| `VITE_API_BASE_URL` | `http://localhost:8080/api` | Base URL ของ backend API |
-| `VITE_ENABLE_MOCK_API` | `false` | `false` เพื่อเชื่อม backend จริง; ตั้งเป็น `true` เฉพาะตอนพัฒนา UI ด้วย mock API |
-| `VITE_APP_TITLE` | `Mythix TCG Store` | ชื่อแอปที่แสดงใน UI |
-| `VITE_PORT` | `5173` | Port ของ Vite development server |
+| `VITE_API_BASE_URL` | `http://localhost:8080/api` | Backend base URL |
+| `VITE_ENABLE_MOCK_API` | `false` | เปิดเฉพาะเมื่อต้องพัฒนา UI โดยยังไม่มี backend |
+| `VITE_APP_TITLE` | `Mythix TCG Store` | ชื่อแอป |
+| `VITE_PORT` | `5173` | Development port |
 
-> ตัวแปร `VITE_*` ถูกฝังตอน build หากเปลี่ยนค่าสำหรับ production ต้อง build image ใหม่ด้วยค่าที่ต้องการ
-
-## บัญชีสำหรับ Mock Mode
-
-ใช้เฉพาะ local development เมื่อ `VITE_ENABLE_MOCK_API=true`
-
-| Role | Email | Password |
-| --- | --- | --- |
-| Buyer | `user@mythix.com` | `password123` |
-| Seller | `seller@mythix.com` | `seller123` |
-| Platform Admin | `admin@mythix.com` | `admin123` |
-
-ข้อมูล mock จะถูก persist ใน browser localStorage หากต้องการเริ่มใหม่ให้ล้าง site data ของ `localhost`
-
-## Routes
-
-### หน้าที่พร้อมใช้งาน
-
-| Route | หน้าที่ |
-| --- | --- |
-| `/` | Landing page และ featured collections |
-| `/browse` | ค้นหาและกรองสินค้า |
-| `/products/:id` | รายละเอียดสินค้าและเพิ่มลงตะกร้า |
-| `/cart` | จัดการสินค้าในตะกร้า |
-| `/login`, `/register` | Authentication |
-| `/forgot-password`, `/check-email`, `/reset-password`, `/reset-success` | Password recovery flow |
-| `/profile` | Profile overview |
-| `/profile/edit/personal` | แก้ไขข้อมูลส่วนตัว |
-| `/profile/edit/address` | จัดการที่อยู่ |
-| `/profile/edit/payment` | จัดการ payment methods |
-| `/seller/inventory` | Seller inventory และ listing CRUD |
-
-`/seller`, `/seller/products` และ `/seller/listings` redirect ไป `/seller/inventory`
-
-### Routes ที่เป็น placeholder
-
-- Buyer: `/checkout`, `/orders`
-- Seller: `/seller/dashboard`, `/seller/orders`, `/seller/payouts`, `/seller/store-profile`
-- Platform Admin: `/platform-admin`, `/platform-admin/dashboard`, `/platform-admin/users`, `/platform-admin/qc-hub`, `/platform-admin/escrow`
-
-Placeholder เหล่านี้ตั้งไว้เพื่อรักษา navigation contract ระหว่างพัฒนา ไม่ได้หมายความว่า feature เสร็จแล้ว
+ตัวแปร `VITE_*` ถูกฝังตอน build การเปลี่ยน production config ต้อง build image ใหม่
 
 ## โครงสร้างโปรเจกต์
 
 ```text
-tcg-store-frontend/
-├── .github/workflows/    # CI และ PR title validation
-├── k8s/                  # Kubernetes manifests
-├── src/
-│   ├── api/              # Axios client, API modules และ mock data
-│   ├── components/       # Common, layout และ product components
-│   ├── config/           # Environment configuration
-│   ├── pages/
-│   │   ├── customer/     # Buyer และ authentication pages
-│   │   └── seller/       # Seller inventory management
-│   ├── router/           # Routes, guards และ placeholders
-│   ├── store/            # Zustand stores
-│   ├── styles/           # Tailwind entry และ global styles
-│   ├── types/            # Shared TypeScript types
-│   └── utils/            # Formatting และ shared helpers
-├── .env.example
-├── Dockerfile
-├── nginx.conf
-├── tailwind.config.js
-└── vite.config.ts
+src/
+├── app/                     # Bootstrap, application layouts และ router composition
+│   ├── layouts/
+│   ├── router/
+│   └── styles/
+├── features/                # Business capability แยกตาม Jira/Figma domain
+│   ├── admin/
+│   ├── auth/
+│   ├── cart/
+│   ├── catalog/
+│   ├── checkout/
+│   ├── orders/
+│   ├── profile/
+│   └── seller/
+├── shared/                  # โค้ดที่ไม่มี business ownership
+│   ├── api/
+│   ├── assets/
+│   ├── components/
+│   ├── config/
+│   ├── lib/
+│   ├── mocks/
+│   └── types/
+├── test/
+└── main.tsx
 ```
 
-Import ภายใน `src` สามารถใช้ alias `@/` ได้ เช่น `@/components/common/Button`
+อ่านกติกา dependency และตำแหน่งไฟล์ใหม่ใน [Architecture](docs/architecture.md)
+
+## Routes
+
+Route definitions อยู่กับ feature ใน `src/features/*/routes.tsx` และถูกประกอบที่
+`src/app/router/index.tsx`
+
+| Area | Routes |
+| --- | --- |
+| Public catalog | `/`, `/browse`, `/products/:id`, `/stores/:sellerId` |
+| Authentication | `/login`, `/register`, `/forgot-password`, `/reset-password` |
+| Buyer account | `/profile`, `/orders`, `/orders/:id`, `/become-a-seller` |
+| Cart/checkout | `/cart`, `/checkout` |
+| Seller | `/seller/inventory`, `/seller/dashboard`, `/seller/orders`, `/seller/collection`, `/seller/payouts`, `/seller/store-profile` |
+| Platform Admin | `/platform-admin/monitoring`, `/platform-admin/qc-hub`, `/platform-admin/escrow` |
+
+หน้าที่ยังไม่ implement จะแสดง placeholder ชัดเจนและต้องมี Jira ticket ก่อนลงมือ
 
 ## คำสั่งหลัก
 
 | Command | ใช้ทำอะไร |
 | --- | --- |
-| `npm run dev` | เปิด Vite development server พร้อม HMR |
-| `npm run lint` | ตรวจ static analysis ด้วย Oxlint |
-| `npm run build` | ตรวจ TypeScript และสร้าง production bundle ใน `dist/` |
-| `npm run preview` | เปิด production bundle บนเครื่อง local |
+| `npm run dev` | เปิด Vite development server |
+| `npm run lint` | ตรวจ static analysis |
+| `npm run test` | รัน unit/component tests |
+| `npm run build` | ตรวจ TypeScript และสร้าง production bundle |
+| `npm run preview` | เปิด bundle ที่ build แล้ว |
 
-รัน unit tests ได้ด้วย `npm run test` (Vitest + Testing Library) สำหรับ E2E browser tests ยังติดตามใน [#63](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/63)
+ก่อนเปิด PR ต้องรัน:
 
-## Backend และ Mock API
+```bash
+npm run lint
+npm run test
+npm run build
+```
 
-- `VITE_ENABLE_MOCK_API=true`: API modules ใช้ mock data/localStorage ทำให้พัฒนา UI ได้โดยไม่ต้องรัน backend
-- `VITE_ENABLE_MOCK_API=false`: Axios ส่ง request ไปยัง `VITE_API_BASE_URL`
-- Development proxy ส่ง request ที่ `/api` ไปยัง backend ที่กำหนดใน Vite config
-- Nginx production config ทำ SPA fallback และ proxy `/api/` ไปยัง `tcg-backend-service:8080/api/`
+## Workflow
 
-เมื่อต่อ backend จริง ให้ตรวจ API contract, authentication token และ CORS/proxy configuration ให้ตรงกับ environment เป้าหมาย
+1. เลือก Jira ticket และอ่าน linked backend ticket
+2. เปิด Figma node/frame ที่ ticket อ้างอิง
+3. สร้าง branch เช่น `feat/scrum-25-buyer-order-history`
+4. เพิ่มหรือแก้เฉพาะ feature owner ของงานนั้น
+5. ถ้า API เปลี่ยน ให้ตกลง backend contract ก่อนแก้ mock/type
+6. ใส่ Jira key, Figma node และผลตรวจใน PR
 
-## Docker และ Kubernetes
+อ่านรายละเอียดใน [CONTRIBUTING.md](CONTRIBUTING.md)
 
-Build และรัน Docker image:
+## Deployment
 
 ```bash
 docker build -t tcg-store-frontend:latest .
 docker run --rm -p 3000:80 tcg-store-frontend:latest
 ```
 
-เปิด `http://localhost:3000`
-
-Deploy manifests:
-
-```bash
-kubectl apply -f k8s/
-kubectl get pods -l app=tcg-frontend
-kubectl get svc tcg-frontend-service
-```
-
-Service ถูกกำหนดเป็น NodePort `30080` และ Deployment ใช้ 2 replicas พร้อม readiness/liveness probes
-
-> `k8s/configmap.yaml` ไม่สามารถเปลี่ยนค่า `VITE_*` ใน JavaScript bundle ที่ build เสร็จแล้วได้เอง หากต้องการ runtime configuration ต้องเพิ่มกลไก inject config แยกต่างหาก
-
-## Roadmap และเอกสารอ้างอิง
-
-- [Frontend Issue Guide](ISSUE_GUIDE.md) — scope, dependency map, coverage และ Definition of Done
-- [Sprint 2 milestone](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/milestone/1) — checkout, order history, Seller lifecycle/orders และ QC/Admin integration
-- [Sprint 3 milestone](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/milestone/2) — admin operations, seller dashboard/payouts, testing และ frontend hardening
-- [Figma design](https://www.figma.com/design/X2UPaqQCjGuMtijIgtZ3Aq/TCG-DevOp-Project?node-id=0-1&p=f&t=SUyh6jEOjI70TqQO-0)
-- [Miro user flows](https://miro.com/app/board/uXjVHyqYJNg=/?share_link_id=544445592582)
-- [Contribution guide](CONTRIBUTING.md)
-
-## การร่วมพัฒนา
-
-อ่าน [CONTRIBUTING.md](CONTRIBUTING.md) ก่อนเริ่มงาน โดยสรุป:
-
-1. เลือก GitHub Issue และตรวจ milestone/dependencies
-2. สร้าง feature branch ตามประเภทงาน
-3. ใช้ Conventional Commits และตั้งชื่อ PR ให้ผ่าน PR title check
-4. รัน `npm run lint` และ `npm run build`
-5. อ้างอิง issue ใน PR และใช้ `Closes #...` เมื่อ acceptance criteria ครบจริง
-
-`main` เป็น protected branch การเปลี่ยนแปลงต้องผ่าน Pull Request และ CI review
-
-## Known gaps
-
-- Checkout, Buyer order history และ seller portal ส่วนที่เหลือยังไม่เสร็จ
-- Platform Admin/QC/Escrow ยังเป็น placeholder
-- มี Vitest สำหรับ auth flows; ยังไม่มี coverage gate และ E2E browser suite
-- Responsive/accessibility hardening ติดตามใน [#31](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/31)
-- Loading/error/empty/offline resilience ติดตามใน [#33](https://github.com/MUDST-2026-luntungsadungyong/tcg-store-frontend/issues/33)
+Nginx ทำ SPA fallback และ proxy `/api/` ไปยัง backend service การตั้งค่า Kubernetes อยู่ใน `k8s/`

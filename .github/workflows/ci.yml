@@ -11,8 +11,8 @@ on:
       - develop
 
 jobs:
-  build-and-lint:
-    name: Build & Lint
+  verify:
+    name: Lint, Test & Build
     runs-on: ubuntu-latest
 
     strategy:
@@ -34,6 +34,9 @@ jobs:
 
       - name: Run Linting (Typecheck & Oxlint)
         run: npm run lint
+
+      - name: Run Unit and Component Tests
+        run: npm run test
 
       - name: Build Project
         run: npm run build

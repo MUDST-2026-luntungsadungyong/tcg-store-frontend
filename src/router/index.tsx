@@ -18,8 +18,8 @@ import { ResetPasswordPage } from '@/pages/customer/ResetPasswordPage';
 import { ResetSuccessPage } from '@/pages/customer/ResetSuccessPage';
 import { ProfileSettingsPage } from '@/pages/customer/ProfileSettingsPage';
 import { EditPersonalInfoPage } from '@/pages/customer/EditPersonalInfoPage';
-import { EditShippingAddressPage } from '@/pages/customer/EditShippingAddressPage';
-import { EditPaymentMethodPage } from '@/pages/customer/EditPaymentMethodPage';
+import { EditContactInformationPage } from '@/pages/customer/EditContactInformationPage';
+import { SellerVerificationPage } from '@/pages/customer/SellerVerificationPage';
 import { ProductManagementPage } from '@/pages/seller/ProductManagementPage';
 // Base layout for customer-facing pages
 function StoreLayout() {
@@ -65,8 +65,8 @@ export const router = createBrowserRouter([
         children: [
           { path: 'profile', element: <ProfileSettingsPage /> },
           { path: 'profile/edit/personal', element: <EditPersonalInfoPage /> },
-          { path: 'profile/edit/address', element: <EditShippingAddressPage /> },
-          { path: 'profile/edit/payment', element: <EditPaymentMethodPage /> },
+          { path: 'profile/edit/contact', element: <EditContactInformationPage /> },
+          { path: 'seller/apply', element: <SellerVerificationPage /> },
           { path: 'orders', element: <PlaceholderPage title="My Orders" /> },
         ],
       },

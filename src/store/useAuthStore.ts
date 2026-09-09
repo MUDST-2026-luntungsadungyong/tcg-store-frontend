@@ -26,6 +26,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   logout: () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('mythix_mock_active_user_id');
     set({ token: null, user: null, isHydrating: false });
   },
 }));

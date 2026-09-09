@@ -8,6 +8,8 @@ export interface User {
   email: string;
   role: Role;
   phone?: string;
+  contactLine?: string;
+  contactFacebook?: string;
   avatarUrl?: string;
   addressLine?: string;
   postalCode?: string;
@@ -18,6 +20,26 @@ export interface User {
   cardHolder?: string;
   cardExpiry?: string;
   cardBrand?: string;
+  sellerStatus?: 'NONE' | 'VERIFIED';
+}
+
+export interface SellerVerificationInput {
+  shopName: string;
+  shopDescription?: string;
+  phone?: string;
+  line?: string;
+  facebook?: string;
+}
+
+export interface SellerVerification {
+  id: string;
+  shopName: string;
+  shopDescription?: string;
+  phone?: string;
+  line?: string;
+  facebook?: string;
+  sellerStatus: 'VERIFIED';
+  verifiedAt: string;
 }
 
 export interface Product {

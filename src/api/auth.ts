@@ -4,11 +4,19 @@ import { ENV } from '@/config/env';
 import type { Role, User } from '@/types';
 import { storage } from './storage';
 
+const MOCK_ACTIVE_USER_ID = 'mythix_mock_active_user_id';
+
+function rememberMockUser(user: User): User {
+  localStorage.setItem(MOCK_ACTIVE_USER_ID, user.id);
+  return user;
+}
+
 interface BackendUser {
   id: string;
   name: string;
   email: string;
   role: string;
+  sellerStatus?: string;
 }
 
 interface BackendAuthResponse {
@@ -33,7 +41,9 @@ export function toFrontendUser(user: BackendUser): User {
     throw new Error('Unsupported user role');
   }
 
-  return { id: String(user.id), name: user.name, email: user.email, role };
+  const sellerStatus = user.sellerStatus === 'VERIFIED' ? 'VERIFIED' : user.sellerStatus === 'NONE' ? 'NONE' : undefined;
+
+  return { id: String(user.id), name: user.name, email: user.email, role, sellerStatus };
 }
 
 export function getAuthErrorMessage(error: unknown, fallback: string): string {
@@ -52,13 +62,13 @@ export const authApi = {
       const user = users.find(u => u.email === email);
       
       if (user && password === 'password123' && user.role === 'CUSTOMER') {
-         return { token: 'mock-jwt-token-customer', user };
+         return { token: 'mock-jwt-token-customer', user: rememberMockUser(user) };
       }
       if (user && password === 'admin123' && user.role === 'ADMIN') {
-         return { token: 'mock-jwt-token-admin', user };
+         return { token: 'mock-jwt-token-admin', user: rememberMockUser(user) };
       }
       if (user && password === 'seller123' && user.role === 'SELLER') {
-         return { token: 'mock-jwt-token-seller', user };
+         return { token: 'mock-jwt-token-seller', user: rememberMockUser(user) };
       }
       throw new Error('Invalid credentials');
     }
@@ -75,7 +85,7 @@ export const authApi = {
       }
       const user: User = { id: crypto.randomUUID(), name, email, role: 'CUSTOMER' };
       storage.setUsers([...users, user]);
-      return { token: 'mock-jwt-token-customer', user };
+      return { token: 'mock-jwt-token-customer', user: rememberMockUser(user) };
     }
     const response = await apiClient.post<BackendAuthResponse>('/auth/register', { name, email, password });
     return { token: response.data.token, user: toFrontendUser(response.data.user) };
@@ -105,6 +115,11 @@ export const authApi = {
           if(!token) throw new Error('Unauthorized');
           
           const users = storage.getUsers();
+          const activeUserId = localStorage.getItem(MOCK_ACTIVE_USER_ID);
+          if (activeUserId) {
+            const activeUser = users.find((user) => user.id === activeUserId);
+            if (activeUser) return activeUser;
+          }
           if(token.includes('admin')){
              return users.find(u => u.role === 'ADMIN')!;
           }

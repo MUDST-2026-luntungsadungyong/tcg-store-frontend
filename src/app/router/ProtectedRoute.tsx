@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
-import type { Role } from '@/shared/types';
+import type { Role } from '@/entities/account/model/types';
 
 export function ProtectedRoute({ requiredRole }: { requiredRole?: Role }) {
   const location = useLocation();

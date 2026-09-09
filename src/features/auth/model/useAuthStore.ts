@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { User } from '@/shared/types';
+import type { User } from '@/entities/account/model/types';
 
 interface AuthStore {
   token: string | null;

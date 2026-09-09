@@ -1,4 +1,4 @@
-import { Bell, ClipboardList, Layers3 } from 'lucide-react';
+import { Bell, ClipboardList, Layers3, Store } from 'lucide-react';
 import { Link, matchPath, useLocation } from 'react-router-dom';
 
 import { cn } from '@/shared/lib';
@@ -14,6 +14,7 @@ const workspaceLinks = [
     to: '/workspace/orders',
     icon: ClipboardList,
   },
+  { name: 'Store profile', to: '/workspace/store-settings', icon: Store },
   {
     name: 'Notifications',
     to: '/notifications',

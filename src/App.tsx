@@ -4,6 +4,7 @@ import { router } from './router';
 import { ENV } from './config/env';
 import { initMockStorage } from './api/storage';
 import { authApi } from './api/auth';
+import { usersApi } from './api/users';
 import { useAuthStore } from './store/useAuthStore';
 
 function App() {
@@ -14,7 +15,8 @@ function App() {
 
     const token = useAuthStore.getState().token;
     if (token) {
-      authApi.getProfile()
+      const loadProfile = ENV.ENABLE_MOCK_API ? authApi.getProfile() : usersApi.getProfile();
+      loadProfile
         .then((user) => useAuthStore.getState().completeHydration(user))
         .catch(() => useAuthStore.getState().logout());
     }

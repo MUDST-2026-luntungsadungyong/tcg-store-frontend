@@ -16,6 +16,7 @@ interface BackendUser {
   name: string;
   email: string;
   role: string;
+  sellerStatus?: string;
 }
 
 interface BackendAuthResponse {
@@ -40,7 +41,9 @@ export function toFrontendUser(user: BackendUser): User {
     throw new Error('Unsupported user role');
   }
 
-  return { id: String(user.id), name: user.name, email: user.email, role };
+  const sellerStatus = user.sellerStatus === 'VERIFIED' ? 'VERIFIED' : user.sellerStatus === 'NONE' ? 'NONE' : undefined;
+
+  return { id: String(user.id), name: user.name, email: user.email, role, sellerStatus };
 }
 
 export function getAuthErrorMessage(error: unknown, fallback: string): string {

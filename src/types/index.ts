@@ -8,6 +8,8 @@ export interface User {
   email: string;
   role: Role;
   phone?: string;
+  contactLine?: string;
+  contactFacebook?: string;
   avatarUrl?: string;
   addressLine?: string;
   postalCode?: string;
@@ -25,8 +27,6 @@ export interface SellerVerificationInput {
   shopName: string;
   shopDescription?: string;
   phone?: string;
-  contactLine?: string;
-  contactFacebook?: string;
   line?: string;
   facebook?: string;
 }

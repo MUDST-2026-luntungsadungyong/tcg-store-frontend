@@ -13,6 +13,7 @@ import {
   sellerReservationRoutes,
 } from '@/features/reservations/routes';
 import { listingWorkspaceRoutes } from '@/features/listings/routes';
+import { publicStoreRoutes, sellerStoreRoutes } from '@/features/stores/routes';
 
 import { NotFoundPage } from './NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -34,7 +35,7 @@ const workspaceRoute: RouteObject = {
   children: [
     {
       element: <WorkspaceLayout />,
-      children: [...listingWorkspaceRoutes, ...sellerReservationRoutes],
+      children: [...listingWorkspaceRoutes, ...sellerReservationRoutes, ...sellerStoreRoutes],
     },
   ],
 };
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
     children: [
       ...discoveryRoutes,
       ...authRoutes,
+      ...publicStoreRoutes,
       accountRoutes,
       { path: '*', element: <NotFoundPage /> },
     ],

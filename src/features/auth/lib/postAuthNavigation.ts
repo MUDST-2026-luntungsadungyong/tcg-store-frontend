@@ -1,9 +1,9 @@
-import type { Role } from '@/shared/types';
+import type { Role } from '@/entities/account/model/types';
 
 const defaultDestinations: Record<Role, string> = {
-  CUSTOMER: '/',
-  SELLER: '/seller/inventory',
-  ADMIN: '/platform-admin',
+  BUYER: '/',
+  SELLER: '/workspace/listings',
+  ADMIN: '/',
 };
 
 export function getPostAuthDestination(role: Role, state: unknown): string {

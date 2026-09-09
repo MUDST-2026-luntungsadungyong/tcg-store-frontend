@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { getAuthErrorMessage, toFrontendUser } from './auth';
 
 describe('auth API contract adapters', () => {
-  it('maps the backend USER role to the frontend CUSTOMER role', () => {
+  it('maps the backend USER role to the frontend BUYER role', () => {
     expect(toFrontendUser({ id: '42', name: 'Naphat', email: 'naphat@example.com', role: 'USER' })).toEqual({
       id: '42',
       name: 'Naphat',
       email: 'naphat@example.com',
-      role: 'CUSTOMER',
+      role: 'BUYER',
     });
   });
 

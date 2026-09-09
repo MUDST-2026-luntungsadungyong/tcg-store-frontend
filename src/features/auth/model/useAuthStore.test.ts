@@ -8,7 +8,7 @@ describe('useAuthStore', () => {
   });
 
   it('persists login and clears every auth field on logout', () => {
-    const user = { id: '1', name: 'Naphat', email: 'naphat@example.com', role: 'CUSTOMER' as const };
+    const user = { id: '1', name: 'Naphat', email: 'naphat@example.com', role: 'BUYER' as const };
     useAuthStore.getState().login('jwt-token', user);
 
     expect(localStorage.getItem('token')).toBe('jwt-token');

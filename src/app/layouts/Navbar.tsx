@@ -8,17 +8,18 @@ import {
   User as UserIcon,
   Package,
   ChevronDown,
-  LayoutDashboard,
+  Layers3,
+  Library,
 } from 'lucide-react';
 import { Button } from '@/shared/components/Button';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
-import { useCartStore } from '@/features/cart/model/useCartStore';
+import { useReservationCartStore } from '@/features/reservation-cart';
 
 export function Navbar() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const totalItems = useCartStore((s) => s.getTotalItems());
+  const totalItems = useReservationCartStore((s) => s.getTotalItems());
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const isSeller = user?.role === 'SELLER';
@@ -56,7 +57,7 @@ export function Navbar() {
               </Link>
             ) : (
               <Link to="/" className="flex items-center gap-2 group size-[86px]">
-                <img src="/assets/mythix_logo_white_v3.png" alt="Mythic Market" className="size-full object-cover pointer-events-none" />
+                <img src="/assets/mythix_logo_white_v3.png" alt="Mythix" className="size-full object-cover pointer-events-none" />
               </Link>
             )}
           </div>
@@ -81,20 +82,20 @@ export function Navbar() {
             <Link to="/" className={`hover:text-white transition-colors ${isSeller ? 'text-base text-[#DBE3F3]' : ''}`}>
               Home
             </Link>
-            <Link to="/browse" className={`hover:text-white transition-colors ${isSeller ? 'text-base text-[#DBE3F3]' : ''}`}>
-              {isSeller ? 'Browse Cards' : 'Cards'}
+            <Link to="/cards" className={`hover:text-white transition-colors ${isSeller ? 'text-base text-[#DBE3F3]' : ''}`}>
+              Cards
             </Link>
 
             {isSeller ? (
               <Link
-                to="/seller/inventory"
+                to="/workspace/listings"
                 className="text-sm font-semibold text-[#A5C9F9] transition-colors hover:text-white"
               >
-                Seller
+                Workspace
               </Link>
             ) : (
               <>
-                <Link to="/cart" className="relative text-gray-300 hover:text-white transition-colors" title="Shopping Cart">
+                <Link to="/cart" className="relative text-gray-300 hover:text-white transition-colors" title="Reservation cart">
                   <ShoppingCart className="h-5 w-5" />
                   {totalItems > 0 && (
                     <span className="absolute -top-2 -right-2 bg-brand-blue text-bg-base text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-md">
@@ -103,9 +104,9 @@ export function Navbar() {
                   )}
                 </Link>
 
-                <button className="relative text-gray-300 hover:text-white transition-colors">
+                <Link to="/notifications" aria-label="Notifications" className="relative text-gray-300 hover:text-white transition-colors">
                   <Bell className="h-5 w-5" />
-                </button>
+                </Link>
               </>
             )}
 
@@ -176,26 +177,26 @@ export function Navbar() {
                   >
                     {isSeller && (
                       <Link
-                        to="/seller/dashboard"
+                        to="/workspace/listings"
                         role="menuitem"
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
                       >
-                        <LayoutDashboard size={16} />
-                        Seller Dashboard
+                        <Layers3 size={16} />
+                        Card Listings
                       </Link>
                     )}
                     <Link
-                      to={isSeller ? '/seller/inventory' : '/profile'}
+                      to={isSeller ? '/workspace/listings' : '/profile'}
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
                     >
                       {isSeller ? <Package size={16} /> : <UserIcon size={16} />}
-                      {isSeller ? 'Inventory' : 'Profile'}
+                      {isSeller ? 'Listings' : 'Profile'}
                     </Link>
                     <Link
-                      to={isSeller ? '/seller/orders' : '/orders'}
+                      to={isSeller ? '/workspace/orders' : '/orders'}
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
@@ -203,6 +204,17 @@ export function Navbar() {
                       <Package size={16} />
                       {isSeller ? 'Seller Orders' : 'My Orders'}
                     </Link>
+                    {!isSeller && (
+                      <Link
+                        to="/collection"
+                        role="menuitem"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                      >
+                        <Library size={16} />
+                        My Collection
+                      </Link>
+                    )}
                     <div className="my-1.5 border-t border-white/10" />
                     <button
                       type="button"

@@ -1,71 +1,63 @@
-# Contributing to Mythix Frontend
+# Contributing to Mythix
 
-## Before starting
+## เริ่มงานจาก requirement ที่ถูกต้อง
 
-1. อ่าน ticket จาก [Jira board](https://nunkantinan.atlassian.net/jira/software/projects/SCRUM/boards/1)
-2. อ่าน linked backend ticket และ dependency
-3. เปิด Figma node/frame ที่เกี่ยวข้องจาก [Figma](https://www.figma.com/design/X2UPaqQCjGuMtijIgtZ3Aq/TCG-DevOp-Project?node-id=0-1)
-4. ตรวจว่า API contract, field, enum และ permission ชัดเจนก่อนเขียน implementation
+ก่อนแก้โค้ด ให้อ่านแหล่งข้อมูลตามลำดับความสำคัญ:
 
-Repository นี้ไม่ใช้ GitHub Issues เป็น backlog และไม่เก็บ acceptance criteria ซ้ำจาก Jira
+1. Product flow ที่ทีมยืนยันล่าสุดใน [docs/product-requirements.md](docs/product-requirements.md)
+2. Miro user flow ที่เกี่ยวข้อง
+3. Figma node/frame สำหรับหน้าตาและ interaction ที่ยังอยู่ใน scope
+4. Jira ticket, linked backend ticket และ API contract
 
-## Branches
+ถ้าแหล่งข้อมูลขัดกัน ห้ามเดาจากหน้าจอเก่า ให้บันทึกข้อขัดแย้งใน PR และยืนยัน product behavior ก่อน implementation โดยเฉพาะ Figma เดิมที่ยังมี marketplace checkout, payment และ shipping flow
 
-`main` และ `develop` เป็น protected branches ห้าม push ตรง
+## Branch และ commit
 
-ชื่อ branch ต้องมี Jira key:
-
-```text
-feat/scrum-15-auth-integration
-fix/scrum-12-stock-reservation
-refactor/scrum-37-feature-first-architecture
-docs/scrum-31-accessibility-guide
-```
-
-รูปแบบที่อนุญาตคือ `<type>/scrum-<number>-<kebab-case>`
-
-## Project boundaries
-
-- Business code อยู่ใน `src/features/<feature>`
-- Application composition อยู่ใน `src/app`
-- Generic code ที่ไม่มี business owner อยู่ใน `src/shared`
-- Cross-feature import ต้องผ่าน public `index.ts` ของ feature
-- ห้ามย้าย business logic เข้า shared เพื่อหลบ dependency rule
-- Route ใหม่ต้องประกาศใน `src/features/<feature>/routes.tsx`
-
-อ่านรายละเอียดที่ [docs/architecture.md](docs/architecture.md)
-
-## UI conventions
-
-- ใช้ Tailwind CSS และ design tokens ที่มีอยู่
-- ใช้ primitive จาก `@/shared/components`
-- Component ที่ใช้เฉพาะ feature ให้อยู่ใน feature นั้น
-- ตรวจ responsive, keyboard navigation, focus, loading, empty และ error states ตาม ticket/Figma
-- Figma section ที่มีคำว่า `Scratch` ไม่ถือเป็น approved implementation source จนกว่า Jira ticket จะอ้าง node นั้น
-
-## API changes
-
-- HTTP client กลางอยู่ที่ `src/shared/api/client.ts`
-- Endpoint adapter และ response normalization อยู่ใน `feature/api`
-- ห้ามใช้ mock shape เป็นหลักฐานว่า backend contract รองรับแล้ว
-- ถ้า endpoint/field/enum เปลี่ยน ให้ตกลงกับ backend และอัปเดต tests/fixtures ใน PR เดียวกัน
-- ห้ามให้ component อ่าน raw backend response โดยตรง
-
-## Commit and PR title
-
-ใช้ Conventional Commits:
+`main` และ `develop` เป็น protected branches ชื่อ branch ต้องมี Jira key:
 
 ```text
-feat(auth): integrate login flow (SCRUM-15)
-fix(cart): handle stale stock response (SCRUM-17)
-refactor(app): split routes by feature (SCRUM-37)
+feat/scrum-15-reservation-notification
+fix/scrum-42-ownership-transfer
+refactor/scrum-37-trading-architecture
+docs/scrum-31-order-lifecycle
 ```
 
-PR title ต้องขึ้นต้นด้วย type ที่รองรับ เช่น `feat`, `fix`, `docs`, `refactor`, `test`, `ci` หรือ `chore`
+รูปแบบคือ `<type>/scrum-<number>-<kebab-case>` และ commit ใช้ Conventional Commits เช่น:
 
-## Verification
+```text
+feat(SCRUM-42): transfer cards when seller marks order sent
+```
 
-รันทุกคำสั่งก่อนเปิด PR:
+## Product boundaries
+
+- Mythix สร้าง reservation order, แจ้งเตือน, เก็บสถานะ และบันทึก ownership
+- Mythix ไม่รับเงิน ไม่เก็บ payment method ไม่จัดการที่อยู่/ขนส่ง และไม่มี in-app chat
+- อย่าเพิ่ม `PREPARED`, shipping label, delivery SLA หรือ buyer receipt confirmation โดยไม่มี requirement ใหม่
+- `FULFILLED` หมายถึง seller ยืนยันว่าได้รับเงินนอกระบบแล้ว
+- `SENT` หมายถึง seller ส่งสินค้าแล้ว และเป็น trigger ของ ownership transfer
+- การสร้าง order ต้องตรวจ visibility/stock และ reserve stock แบบ atomic ที่ backend
+- order หนึ่งรายการต้องมี seller เดียว
+
+## Code boundaries
+
+- `src/entities` เก็บ vocabulary, types และ pure lifecycle rules
+- `src/features/<feature>` เก็บ capability ที่ผู้ใช้มองเห็น รวม API adapter, model, page และ route
+- `src/app` ประกอบ route/layout เท่านั้น
+- `src/infrastructure/mock-db` เป็น adapter สำหรับ mock mode ไม่ใช่ source of truth ของ production
+- `src/shared` เก็บเฉพาะ generic code และห้าม import จาก business feature
+- หลีกเลี่ยง cross-feature deep import; ถ้า feature ต้องแชร์ public capability ให้ export ผ่าน `index.ts`
+- API enum, mock data, UI label และ test ต้องเปลี่ยนพร้อมกัน
+
+## UI และ accessibility
+
+- ใช้ visual tokens เดิมจาก Figma ได้ แต่ copy และ action ต้องสะท้อน reservation flow
+- ทุก async page ต้องมี loading, empty และ error state
+- button ที่มีแต่ icon ต้องมี accessible name
+- modal ต้องจัดการ focus และปิดด้วย Escape
+- form error ต้องผูกกับ field และประกาศผ่าน `role="alert"` เมื่อเหมาะสม
+- ทดสอบ desktop และ mobile width ที่ได้รับผลกระทบ
+
+## ก่อนเปิด PR
 
 ```bash
 npm run lint
@@ -73,13 +65,11 @@ npm run test
 npm run build
 ```
 
-## Pull request checklist
+ใน PR ให้ระบุ:
 
-- [ ] Branch มี Jira key ถูกต้อง
-- [ ] PR ระบุ Jira ticket และ linked backend ticket
-- [ ] PR ระบุ Figma node/frame ที่ใช้
-- [ ] การเปลี่ยนแปลงอยู่ใน feature owner ที่ถูกต้อง
-- [ ] Mock, types และ API adapter ไม่ขัดกับ backend contract
-- [ ] Loading/empty/error/unauthorized/responsive states ครบตาม scope
-- [ ] `npm run lint`, `npm run test` และ `npm run build` ผ่าน
-- [ ] ไม่มี secret, `.env` หรือ credential ถูก commit
+- Jira ticket และ backend dependency
+- Product flow/Miro/Figma ที่ใช้อ้างอิง
+- state transition หรือ ownership impact
+- API/migration impact
+- สิ่งที่ลบหรือ de-scope
+- วิธี verify รวมถึง mock flow ที่ทดลอง

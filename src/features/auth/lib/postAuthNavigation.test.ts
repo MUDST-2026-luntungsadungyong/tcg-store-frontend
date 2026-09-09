@@ -3,15 +3,15 @@ import { getPostAuthDestination } from './postAuthNavigation';
 
 describe('getPostAuthDestination', () => {
   it('returns the protected route requested before login', () => {
-    expect(getPostAuthDestination('CUSTOMER', { from: '/profile?tab=contact' })).toBe('/profile?tab=contact');
+    expect(getPostAuthDestination('BUYER', { from: '/profile?tab=contact' })).toBe('/profile?tab=contact');
   });
 
   it('rejects an external redirect and uses the role default', () => {
-    expect(getPostAuthDestination('CUSTOMER', { from: '//untrusted.example' })).toBe('/');
+    expect(getPostAuthDestination('BUYER', { from: '//untrusted.example' })).toBe('/');
   });
 
   it('uses seller and admin defaults without a saved destination', () => {
-    expect(getPostAuthDestination('SELLER', null)).toBe('/seller/inventory');
-    expect(getPostAuthDestination('ADMIN', undefined)).toBe('/platform-admin');
+    expect(getPostAuthDestination('SELLER', null)).toBe('/workspace/listings');
+    expect(getPostAuthDestination('ADMIN', undefined)).toBe('/');
   });
 });

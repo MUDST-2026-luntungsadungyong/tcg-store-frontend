@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { SellerVerificationPage } from './SellerVerificationPage';
 import { useAuthStore } from '@/store/useAuthStore';
 
-const submit = vi.fn();
+const { submit } = vi.hoisted(() => ({ submit: vi.fn() }));
 
 vi.mock('@/api/sellerVerification', () => ({
   SellerVerificationError: class SellerVerificationError extends Error {},
@@ -13,6 +13,8 @@ vi.mock('@/api/sellerVerification', () => ({
 }));
 
 describe('SellerVerificationPage', () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
     submit.mockReset();
     localStorage.clear();

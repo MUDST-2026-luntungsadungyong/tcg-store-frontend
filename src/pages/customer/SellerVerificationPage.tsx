@@ -26,7 +26,7 @@ export function SellerVerificationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
-  if (user?.role === 'SELLER') {
+  if (user?.role === 'SELLER' && !isComplete) {
     return (
       <div className="mx-auto flex min-h-[56vh] max-w-xl flex-col items-center justify-center px-6 py-16 text-center">
         <CheckCircle2 className="size-12 text-emerald-400" aria-hidden="true" />

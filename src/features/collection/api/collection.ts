@@ -1,58 +1,54 @@
 ﻿import { ENV } from '@/shared/config/env';
-import { getStorageData, setStorageData } from '@/shared/mocks/storage';
-import { mockProducts } from '@/shared/mocks/data';
-import type { Product } from '@/shared/types';
+import { storage } from '@/infrastructure/mock-db/storage';
+import type { CardListing, CollectionEntry } from '@/entities/card/model/types';
 import apiClient from '@/shared/api/client';
 
-const COLLECTION_STORAGE_PREFIX = 'mythix_user_collection_';
-
-function getUserCollectionKey(): string {
-  const token = localStorage.getItem('token');
-  const userId = token?.includes('admin') ? 'usr-2' : token?.includes('seller') ? 'usr-3' : 'usr-1';
-  return `${COLLECTION_STORAGE_PREFIX}${userId}`;
-}
-
 export const collectionApi = {
-  getMyCollection: async (): Promise<Product[]> => {
+  getMyCollection: async (): Promise<CollectionEntry[]> => {
     if (ENV.ENABLE_MOCK_API) {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      const key = getUserCollectionKey();
-      let items = getStorageData<Product>(key);
-      // Seed default initial mock collection if empty
-      if (!localStorage.getItem(key)) {
-        items = mockProducts.slice(0, 4);
-        setStorageData(key, items);
-      }
-      return items;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const token = localStorage.getItem('token');
+      const userId = token?.includes('admin') ? 'usr-2' : token?.includes('seller') ? 'usr-3' : 'usr-1';
+      return storage.getCollection().filter((item) => item.ownerId === userId);
     }
-    const response = await apiClient.get<Product[]>('/collection');
+    const response = await apiClient.get<CollectionEntry[]>('/collection');
     return response.data;
   },
 
-  addToCollection: async (product: Product): Promise<Product> => {
+  addToCollection: async (listing: CardListing): Promise<CollectionEntry> => {
     if (ENV.ENABLE_MOCK_API) {
       await new Promise((resolve) => setTimeout(resolve, 300));
-      const key = getUserCollectionKey();
-      const current = getStorageData<Product>(key);
-      if (!current.some((p) => p.id === product.id)) {
-        const updated = [product, ...current];
-        setStorageData(key, updated);
+      const token = localStorage.getItem('token');
+      const userId = token?.includes('admin') ? 'usr-2' : token?.includes('seller') ? 'usr-3' : 'usr-1';
+      const all = storage.getCollection();
+      const existing = all.find((item) => item.ownerId === userId && item.listing.id === listing.id);
+      if (existing) {
+        existing.quantity += 1;
+        storage.setCollection(all);
+        return existing;
       }
-      return product;
+      const newEntry: CollectionEntry = {
+        id: `col-${Date.now()}`,
+        ownerId: userId,
+        listing,
+        quantity: 1,
+        sourceOrderId: `ord-direct-${Date.now()}`,
+        acquiredAt: new Date().toISOString(),
+      };
+      storage.setCollection([newEntry, ...all]);
+      return newEntry;
     }
-    const response = await apiClient.post<Product>('/collection', { productId: product.id });
+    const response = await apiClient.post<CollectionEntry>('/collection', { listingId: listing.id });
     return response.data;
   },
 
-  removeFromCollection: async (productId: string): Promise<void> => {
+  removeFromCollection: async (collectionEntryId: string): Promise<void> => {
     if (ENV.ENABLE_MOCK_API) {
       await new Promise((resolve) => setTimeout(resolve, 300));
-      const key = getUserCollectionKey();
-      const current = getStorageData<Product>(key);
-      const updated = current.filter((p) => p.id !== productId);
-      setStorageData(key, updated);
+      const all = storage.getCollection();
+      storage.setCollection(all.filter((item) => item.id !== collectionEntryId && item.listing.id !== collectionEntryId));
       return;
     }
-    await apiClient.delete(`/collection/${productId}`);
+    await apiClient.delete(`/collection/${collectionEntryId}`);
   },
 };

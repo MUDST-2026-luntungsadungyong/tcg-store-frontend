@@ -5,7 +5,7 @@ import { ENV } from '@/shared/config/env';
 import { authApi } from '@/features/auth/api/auth';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { configureApiClientAuth } from '@/shared/api/client';
-import { initMockStorage } from '@/shared/mocks/storage';
+import { initMockStorage } from '@/infrastructure/mock-db/storage';
 
 configureApiClientAuth({
   getAccessToken: () => useAuthStore.getState().token,

@@ -1,7 +1,7 @@
 import apiClient from '@/shared/api/client';
 import { ENV } from '@/shared/config/env';
-import type { User } from '@/shared/types';
-import { storage } from '@/shared/mocks/storage';
+import type { User } from '@/entities/account/model/types';
+import { storage } from '@/infrastructure/mock-db/storage';
 
 export const usersApi = {
     updateProfile: async (userId: string, data: Partial<User>): Promise<User> => {

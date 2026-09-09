@@ -1,21 +1,32 @@
-## Jira
+## Jira and dependencies
 
 - Ticket: SCRUM-
-- Linked backend ticket: SCRUM-
+- Linked backend ticket:
 
-## Figma
+## Requirement sources
 
-- Node/frame:
+- Product flow / decision:
+- Miro board/frame:
+- Figma node/frame:
 
 ## Changes
 
 -
 
-## API impact
+## Trading lifecycle impact
+
+- [ ] No order-state or ownership change
+- [ ] `RESERVED → FULFILLED` behavior reviewed
+- [ ] `FULFILLED → SENT` and ownership transfer reviewed
+- [ ] Off-platform payment/contact/delivery boundary preserved
+- [ ] Removed or de-scoped behavior is recorded in Markdown
+
+## API and data impact
 
 - [ ] No API contract change
 - [ ] Backend contract was updated/reviewed first
-- [ ] API adapter, types, mocks and tests use the same shape
+- [ ] API adapter, entity types, mocks and tests use the same shape
+- [ ] Atomicity/idempotency/concurrency risks were considered
 
 ## Verification
 

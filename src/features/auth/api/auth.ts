@@ -1,8 +1,8 @@
 import axios from 'axios';
 import apiClient from '@/shared/api/client';
 import { ENV } from '@/shared/config/env';
-import type { Role, User } from '@/shared/types';
-import { storage } from '@/shared/mocks/storage';
+import type { Role, User } from '@/entities/account/model/types';
+import { storage } from '@/infrastructure/mock-db/storage';
 
 interface BackendUser {
   id: string;
@@ -22,8 +22,8 @@ interface ApiErrorResponse {
 
 export function toFrontendUser(user: BackendUser): User {
   const roleByBackendRole: Record<string, Role> = {
-    USER: 'CUSTOMER',
-    CUSTOMER: 'CUSTOMER',
+    USER: 'BUYER',
+    CUSTOMER: 'BUYER',
     SELLER: 'SELLER',
     ADMIN: 'ADMIN',
   };
@@ -51,7 +51,7 @@ export const authApi = {
       // Simple mock authentication (do not use in production)
       const user = users.find(u => u.email === email);
       
-      if (user && password === 'password123' && user.role === 'CUSTOMER') {
+      if (user && password === 'password123' && user.role === 'BUYER') {
          return { token: 'mock-jwt-token-customer', user };
       }
       if (user && password === 'admin123' && user.role === 'ADMIN') {
@@ -73,7 +73,7 @@ export const authApi = {
       if (users.some(u => u.email === email)) {
         throw new Error('Email already in use');
       }
-      const user: User = { id: crypto.randomUUID(), name, email, role: 'CUSTOMER' };
+      const user: User = { id: crypto.randomUUID(), name, email, role: 'BUYER' };
       storage.setUsers([...users, user]);
       return { token: 'mock-jwt-token-customer', user };
     }
@@ -111,7 +111,7 @@ export const authApi = {
           if(token.includes('seller')){
              return users.find(u => u.role === 'SELLER')!;
           }
-          return users.find(u => u.role === 'CUSTOMER')!;
+          return users.find(u => u.role === 'BUYER')!;
       }
       const response = await apiClient.get<BackendUser>('/auth/me');
       return toFrontendUser(response.data);

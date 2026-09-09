@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layers, AlertCircle, RefreshCw } from 'lucide-react';
 import { collectionApi } from '../api/collection';
@@ -6,14 +6,14 @@ import { CollectionCard } from '../components/CollectionCard';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { Modal } from '@/shared/components/Modal';
 import { useToastStore } from '@/shared/model/useToastStore';
-import type { Product } from '@/shared/types';
+import type { CollectionEntry } from '@/entities/card/model/types';
 
 export function MyCollectionPage() {
-  const [collection, setCollection] = useState<Product[]>([]);
+  const [collection, setCollection] = useState<CollectionEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [selectedCardForDelete, setSelectedCardForDelete] = useState<Product | null>(null);
+  const [selectedEntryForDelete, setSelectedEntryForDelete] = useState<CollectionEntry | null>(null);
 
   const addToast = useToastStore((s) => s.addToast);
 
@@ -35,14 +35,14 @@ export function MyCollectionPage() {
   }, [fetchCollection]);
 
   const handleConfirmDelete = async () => {
-    if (!selectedCardForDelete) return;
-    const cardId = selectedCardForDelete.id;
-    const cardName = selectedCardForDelete.name;
+    if (!selectedEntryForDelete) return;
+    const entryId = selectedEntryForDelete.id;
+    const cardName = selectedEntryForDelete.listing.name;
 
     try {
-      setDeletingId(cardId);
-      await collectionApi.removeFromCollection(cardId);
-      setCollection((prev) => prev.filter((item) => item.id !== cardId));
+      setDeletingId(entryId);
+      await collectionApi.removeFromCollection(entryId);
+      setCollection((prev) => prev.filter((item) => item.id !== entryId));
       addToast({
         type: 'info',
         message: `Removed "${cardName}" from your collection`,
@@ -54,7 +54,7 @@ export function MyCollectionPage() {
       });
     } finally {
       setDeletingId(null);
-      setSelectedCardForDelete(null);
+      setSelectedEntryForDelete(null);
     }
   };
 
@@ -137,7 +137,7 @@ export function MyCollectionPage() {
               </p>
             </div>
             <Link
-              to="/browse"
+              to="/cards"
               className="mt-2 bg-brand-blue hover:bg-brand-blue/90 text-white font-semibold text-sm px-6 py-2.5 rounded-lg transition-colors shadow-lg shadow-brand-blue/20"
             >
               Browse Cards
@@ -148,12 +148,12 @@ export function MyCollectionPage() {
         {/* Collection Cards Grid (2-column or 3-column according to Figma 641:1898) */}
         {!loading && !error && collection.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-            {collection.map((card) => (
+            {collection.map((entry) => (
               <CollectionCard
-                key={card.id}
-                card={card}
-                onDelete={() => setSelectedCardForDelete(card)}
-                isDeleting={deletingId === card.id}
+                key={entry.id}
+                entry={entry}
+                onDelete={() => setSelectedEntryForDelete(entry)}
+                isDeleting={deletingId === entry.id}
               />
             ))}
           </div>
@@ -161,20 +161,20 @@ export function MyCollectionPage() {
 
         {/* Confirmation Modal before Deleting */}
         <Modal
-          isOpen={selectedCardForDelete !== null}
-          onClose={() => setSelectedCardForDelete(null)}
+          isOpen={selectedEntryForDelete !== null}
+          onClose={() => setSelectedEntryForDelete(null)}
           title="Delete from Collection"
         >
           <div className="flex flex-col gap-4">
             <p className="text-sm text-gray-300">
               Are you sure you want to remove{' '}
-              <strong className="text-white font-semibold">"{selectedCardForDelete?.name}"</strong> from your
+              <strong className="text-white font-semibold">"{selectedEntryForDelete?.listing.name}"</strong> from your
               personal collection?
             </p>
             <div className="flex items-center justify-end gap-3 mt-4">
               <button
                 type="button"
-                onClick={() => setSelectedCardForDelete(null)}
+                onClick={() => setSelectedEntryForDelete(null)}
                 className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-medium rounded-lg transition-colors"
               >
                 Cancel

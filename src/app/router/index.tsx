@@ -10,6 +10,7 @@ import { catalogRoutes } from '@/features/catalog/routes';
 import { checkoutRoutes } from '@/features/checkout/routes';
 import { orderRoutes } from '@/features/orders/routes';
 import { profileRoutes } from '@/features/profile/routes';
+import { collectionRoutes } from '@/features/collection/routes';
 import { sellerPortalRoutes, sellerPublicRoutes } from '@/features/seller/routes';
 
 import { NotFoundPage } from './NotFoundPage';
@@ -17,7 +18,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 
 const accountRoutes: RouteObject = {
   element: <ProtectedRoute />,
-  children: [...profileRoutes, ...orderRoutes],
+  children: [...profileRoutes, ...orderRoutes, ...collectionRoutes],
 };
 
 const sellerRoute: RouteObject = {

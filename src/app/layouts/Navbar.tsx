@@ -7,6 +7,7 @@ import {
   LogOut,
   User as UserIcon,
   Package,
+  Layers,
   ChevronDown,
   LayoutDashboard,
 } from 'lucide-react';
@@ -203,6 +204,17 @@ export function Navbar() {
                       <Package size={16} />
                       {isSeller ? 'Seller Orders' : 'My Orders'}
                     </Link>
+                    {!isSeller && (
+                      <Link
+                        to="/collection"
+                        role="menuitem"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                      >
+                        <Layers size={16} />
+                        My Collection
+                      </Link>
+                    )}
                     <div className="my-1.5 border-t border-white/10" />
                     <button
                       type="button"

@@ -1,7 +1,8 @@
 import type { RouteObject } from 'react-router-dom';
-import { PlaceholderPage } from '@/shared/components/PlaceholderPage';
+import { ProfilePage } from './pages/ProfilePage';import { EditProfilePage } from './pages/EditProfilePage';import { SellerApplicationPage } from './pages/SellerApplicationPage';
 
 export const profileRoutes: RouteObject[] = [
-  { path: 'profile', element: <PlaceholderPage title="Profile" /> },
-  { path: 'profile/edit', element: <PlaceholderPage title="Edit Profile" /> },
+  { path: 'profile', element: <ProfilePage /> },
+  { path: 'profile/edit', element: <EditProfilePage /> },
+  { path: 'profile/seller-application', element: <SellerApplicationPage /> },
 ];

@@ -14,9 +14,12 @@ interface ApiErrorResponse {
 }
 
 export class SellerVerificationError extends Error {
-  constructor(message: string, readonly code = 'REQUEST_FAILED') {
+  readonly code: string;
+
+  constructor(message: string, code = 'REQUEST_FAILED') {
     super(message);
     this.name = 'SellerVerificationError';
+    this.code = code;
   }
 }
 
@@ -52,7 +55,7 @@ export const sellerVerificationApi = {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError<ApiErrorResponse>(error)) {
-        throw new SellerVerificationError(error.response?.data?.message ?? 'Unable to submit your seller application.', error.response?.data?.code);
+        throw new SellerVerificationError(error.response?.data?.message ?? 'Unable to submit your seller application.', error.response?.data?.code ?? 'REQUEST_FAILED');
       }
       throw error instanceof SellerVerificationError ? error : new SellerVerificationError('Unable to submit your seller application.');
     }

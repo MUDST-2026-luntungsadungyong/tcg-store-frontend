@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, CreditCard, Pencil, Store } from 'lucide-react';
+import { Mail, Phone, MapPin, Pencil, Store } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 interface ProfileRowProps {
@@ -35,8 +35,6 @@ function ProfileRow({ icon: Icon, title, editHref, children }: ProfileRowProps) 
 export function ProfileSettingsPage() {
   const user = useAuthStore((s) => s.user);
 
-  const hasAddress = user?.addressLine && user?.province;
-  const hasPayment = user?.cardLast4;
   const displayName = user?.name ?? 'Jane Doe';
 
   return (
@@ -82,28 +80,11 @@ export function ProfileSettingsPage() {
         </div>
 
         <div className="divide-y divide-white/5 border-t border-white/5">
-          <ProfileRow icon={MapPin} title="Shipping Address" editHref="/profile/edit/address">
-            {hasAddress ? (
-              <>
-                <p className="text-base font-medium text-white">{user?.addressLine}</p>
-                <p className="text-sm">{user?.subDistrict}, {user?.district}, {user?.province} {user?.postalCode}</p>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">No address on file yet</p>
-            )}
-          </ProfileRow>
-
-          <ProfileRow icon={CreditCard} title="Payment Method" editHref="/profile/edit/payment">
-            {hasPayment ? (
-              <>
-                <p className="text-base font-medium text-white">
-                  {user?.cardBrand ? `${user.cardBrand} ` : ''}ending in {user?.cardLast4}
-                </p>
-                <p className="text-sm">{user?.cardHolder} · Expires {user?.cardExpiry}</p>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">No payment method on file yet</p>
-            )}
+          <ProfileRow icon={MapPin} title="Contact Information" editHref="/profile/edit/contact">
+            {user?.contactLine || user?.phone ? (
+              <p className="text-base font-medium text-white">{user.contactLine && `Line ID: ${user.contactLine}`}{user.contactLine && user.phone && ' · '}{user.phone && `Phone: ${user.phone}`}</p>
+            ) : <p className="text-sm text-gray-500">No contact information on file yet</p>}
+            {user?.contactFacebook && <p className="text-sm">Facebook: {user.contactFacebook}</p>}
           </ProfileRow>
         </div>
       </section>

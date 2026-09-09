@@ -25,6 +25,8 @@ export interface SellerVerificationInput {
   shopName: string;
   shopDescription?: string;
   phone?: string;
+  contactLine?: string;
+  contactFacebook?: string;
   line?: string;
   facebook?: string;
 }

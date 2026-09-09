@@ -9,6 +9,7 @@ interface BackendUser {
   name: string;
   email: string;
   role: string;
+  sellerStatus?: string;
 }
 
 interface BackendAuthResponse {
@@ -27,7 +28,11 @@ export function toFrontendUser(user: BackendUser): User {
     SELLER: 'SELLER',
     ADMIN: 'ADMIN',
   };
-  const role = roleByBackendRole[user.role];
+  let role = roleByBackendRole[user.role];
+
+  if (user.sellerStatus?.toUpperCase() === 'VERIFIED') {
+    role = 'SELLER';
+  }
 
   if (!role) {
     throw new Error('Unsupported user role');

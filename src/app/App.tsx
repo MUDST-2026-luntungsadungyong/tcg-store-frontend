@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from '@/app/router';
 import { ENV } from '@/shared/config/env';
 import { authApi } from '@/features/auth/api/auth';
+import { profileApi } from '@/features/profile/api/profile';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { configureApiClientAuth } from '@/shared/api/client';
 import { initMockStorage } from '@/infrastructure/mock-db/storage';
@@ -25,7 +26,7 @@ function App() {
 
     const token = useAuthStore.getState().token;
     if (token) {
-      authApi.getProfile()
+      (ENV.ENABLE_MOCK_API ? authApi.getProfile() : profileApi.get())
         .then((user) => useAuthStore.getState().completeHydration(user))
         .catch(() => useAuthStore.getState().logout());
     }

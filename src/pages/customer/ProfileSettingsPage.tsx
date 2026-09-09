@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, CreditCard, Pencil } from 'lucide-react';
+import { Mail, Phone, MapPin, CreditCard, Pencil, Store } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 interface ProfileRowProps {
@@ -107,6 +107,21 @@ export function ProfileSettingsPage() {
           </ProfileRow>
         </div>
       </section>
+
+      {user?.role !== 'SELLER' && (
+        <section className="mt-6 rounded-2xl border border-brand-gold/25 bg-brand-gold/5 px-6 py-6 sm:flex sm:items-center sm:justify-between sm:gap-8">
+          <div className="flex gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-gold/15 text-brand-gold"><Store size={20} /></span>
+            <div>
+              <h2 className="font-semibold text-white">Sell your cards on Mythix</h2>
+              <p className="mt-1 text-sm text-gray-400">Create your store profile and start listing cards for collectors.</p>
+            </div>
+          </div>
+          <Link to="/seller/apply" className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-brand-gold px-4 text-sm font-semibold text-bg-base transition-colors hover:bg-brand-gold/85 focus:outline-none focus:ring-2 focus:ring-brand-gold/70 sm:mt-0">
+            Become a seller
+          </Link>
+        </section>
+      )}
     </div>
   );
 }

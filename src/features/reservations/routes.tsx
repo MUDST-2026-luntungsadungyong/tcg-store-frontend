@@ -1,9 +1,9 @@
 import type { RouteObject } from 'react-router-dom';
-import { PlaceholderPage } from '@/shared/components/PlaceholderPage';
+import { MyOrdersPage } from './pages/MyOrdersPage';
 import { SellerOrdersPage } from './pages/SellerOrdersPage';
 
 export const buyerReservationRoutes: RouteObject[] = [
-  { path: 'orders', element: <PlaceholderPage title="My Reservation Orders" /> },
+  { path: 'orders', element: <MyOrdersPage /> },
 ];
 
 export const sellerReservationRoutes: RouteObject[] = [

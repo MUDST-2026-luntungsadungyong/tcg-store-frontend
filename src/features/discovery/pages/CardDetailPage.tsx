@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Card3DViewer } from '@/features/discovery/components/Card3DViewer';
 import { ShoppingCart, Minus, Plus } from 'lucide-react';
@@ -14,26 +14,31 @@ export function CardDetailPage() {
   const navigate = useNavigate();
   const [product, setProduct] = useState<CardListing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const addToast = useToastStore(state => state.addToast);
   const addItem = useReservationCartStore(state => state.addItem);
   const token = useAuthStore(state => state.token);
 
-  useEffect(() => {
-    async function fetchProduct() {
-      if (!id) return;
-      try {
-        const data = await listingDiscoveryApi.getListingById(id);
-        setProduct(data || null);
-      } catch (error) {
-        console.error('Failed to fetch product', error);
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchProduct = useCallback(async () => {
+    if (!id) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await listingDiscoveryApi.getListingById(id);
+      setProduct(data || null);
+    } catch (err) {
+      console.error('Failed to fetch product', err);
+      setError('Unable to load card details from server. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    fetchProduct();
   }, [id]);
+
+  useEffect(() => {
+    void fetchProduct();
+  }, [fetchProduct]);
 
   const handleIncrement = () => {
     if (product && quantity < product.stock) {
@@ -90,6 +95,29 @@ export function CardDetailPage() {
             <Skeleton className="h-40 w-full" />
             <Skeleton className="h-44 w-full max-w-[500px]" />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-[1440px] mx-auto px-8 py-32 w-full text-center flex flex-col items-center">
+        <h2 className="text-2xl font-bold text-white mb-2">Unable to load card details</h2>
+        <p className="text-gray-400 mb-6">{error}</p>
+        <div className="flex gap-4">
+          <button 
+            onClick={() => void fetchProduct()}
+            className="bg-brand-blue text-bg-base px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-brand-blue/90 transition-colors"
+          >
+            Retry
+          </button>
+          <Link 
+            to="/cards"
+            className="bg-[#242938] border border-[#40475C] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#2e3549] transition-colors"
+          >
+            Back to cards
+          </Link>
         </div>
       </div>
     );

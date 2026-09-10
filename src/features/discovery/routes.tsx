@@ -10,6 +10,10 @@ export const discoveryRoutes: RouteObject[] = [
     lazy: async () => ({ Component: (await import('./pages/CardDiscoveryPage')).CardDiscoveryPage }),
   },
   {
+    path: 'marketplace',
+    lazy: async () => ({ Component: (await import('./pages/CardDiscoveryPage')).CardDiscoveryPage }),
+  },
+  {
     path: 'cards/:id',
     lazy: async () => ({ Component: (await import('./pages/CardDetailPage')).CardDetailPage }),
   },

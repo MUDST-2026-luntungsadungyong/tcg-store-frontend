@@ -1,4 +1,4 @@
-import { createBrowserRouter, type RouteObject } from 'react-router-dom';
+﻿import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 
 import { PublicLayout } from '@/app/layouts/PublicLayout';
 import { WorkspaceLayout } from '@/app/layouts/WorkspaceLayout';

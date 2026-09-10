@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { CardListing } from '@/entities/card/model/types';
 
-interface CardListingCardProps {
+export interface CardListingCardProps {
   listing: CardListing;
 }
 
@@ -9,6 +9,7 @@ export function CardListingCard({ listing }: CardListingCardProps) {
   const imageSrc = listing.image || '/assets/expensive_card_1.png';
   const marketPrice = listing.marketPrice ?? (listing.price * 0.9);
   const inStock = listing.stock > 0;
+  const isLowStock = inStock && listing.stock <= 3;
 
   // Format description like the homepage (set + condition or subtitle)
   const subtitle = listing.subtitle || listing.set || '1998 P.M. Japanese Promo';
@@ -24,8 +25,10 @@ export function CardListingCard({ listing }: CardListingCardProps) {
       {/* Left Image */}
       <div className="relative w-[110px] md:w-[130px] h-full shrink-0 flex items-center justify-center rounded-lg">
         {inStock ? (
-          <span className="absolute top-2 right-1 bg-[#16A34A] text-white text-[9px] font-bold px-2 py-0.5 rounded z-10 tracking-wide">
-            IN STOCK
+          <span className={`absolute top-2 right-1 text-white text-[9px] font-bold px-2 py-0.5 rounded z-10 tracking-wide ${
+            isLowStock ? 'bg-[#D97706]' : 'bg-[#16A34A]'
+          }`}>
+            {isLowStock ? `ONLY ${listing.stock} LEFT` : 'IN STOCK'}
           </span>
         ) : (
           <span className="absolute top-2 right-1 bg-[#DC2626] text-white text-[9px] font-bold px-2 py-0.5 rounded z-10 tracking-wide">

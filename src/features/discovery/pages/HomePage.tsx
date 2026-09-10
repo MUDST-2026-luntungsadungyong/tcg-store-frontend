@@ -111,9 +111,9 @@ export function HomePage() {
     let cancelled = false;
 
     void listingDiscoveryApi
-      .getListings()
-      .then((products) => {
-        if (!cancelled) setFeaturedProducts(products.slice(0, 5));
+      .getListings({ size: 5 })
+      .then((res) => {
+        if (!cancelled) setFeaturedProducts(res.items.slice(0, 5));
       })
       .catch(() => {
         if (!cancelled) setFeaturedProducts([]);

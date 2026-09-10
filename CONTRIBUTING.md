@@ -1,62 +1,75 @@
-# 🤝 Contributing Guide & Team Conventions
+# Contributing to Mythix
 
-คู่มือและข้อปฏิบัติสำหรับการพัฒนาโปรเจกต์ **Mythix TCG Store Frontend** สำหรับสมาชิกทุกคนในทีม
+## เริ่มงานจาก requirement ที่ถูกต้อง
 
----
+ก่อนแก้โค้ด ให้อ่านแหล่งข้อมูลตามลำดับความสำคัญ:
 
-## 🎨 1. มาตรฐาน CSS Framework (Tailwind CSS v3)
+1. Product flow ที่ทีมยืนยันล่าสุดใน [docs/product-requirements.md](docs/product-requirements.md)
+2. Miro user flow ที่เกี่ยวข้อง
+3. Figma node/frame สำหรับหน้าตาและ interaction ที่ยังอยู่ใน scope
+4. Jira ticket, linked backend ticket และ API contract
 
-เพื่อป้องกันปัญหา CSS ชนกันและรักษา Design Consistency ให้เหมือน Figma:
+ถ้าแหล่งข้อมูลขัดกัน ห้ามเดาจากหน้าจอเก่า ให้บันทึกข้อขัดแย้งใน PR และยืนยัน product behavior ก่อน implementation โดยเฉพาะ Figma เดิมที่ยังมี marketplace checkout, payment และ shipping flow
 
-1. **ใช้ Tailwind Utility Classes เท่านั้น**:
-   - ไม่เขียน inline style (`style={{ ... }}`)
-   - ไม่สร้าง class แบบ arbitrary ในไฟล์ css อื่น
-2. **เรียกใช้ Color Palette จาก Theme**:
-   - พื้นหลังหลัก: `bg-bg-base`
-   - การ์ดสินค้า Slab: `bg-white` (สำคัญ!)
-   - การ์ดยกระดับ / Modal: `bg-bg-elevated`
-   - อินพุต: `bg-bg-input`
-   - สีฟ้าหลัก: `text-brand-blue` / `bg-brand-blue`
-   - สีทองไฮไลท์: `text-brand-gold` (`#EAB308`)
-3. **ใช้งาน Reusable Components**:
-   - ปุ่ม: ใช้ `<Button variant="primary | secondary | gold | danger" />` จาก `@/components/common/Button`
-   - อินพุต: ใช้ `<Input label="..." error="..." />` จาก `@/components/common/Input`
-   - ป้ายสถานะ: ใช้ `<Badge variant="success | warning | danger | gold" />` จาก `@/components/common/Badge`
+## Branch และ commit
 
----
+`main` และ `develop` เป็น protected branches ชื่อ branch ต้องมี Jira key:
 
-## 🌿 2. Git Branching Strategy
+```text
+feat/scrum-15-reservation-notification
+fix/scrum-42-ownership-transfer
+refactor/scrum-37-trading-architecture
+docs/scrum-31-order-lifecycle
+```
 
-- **`main`**: Production-ready code (Protected branch — ห้าม push ตรงเด็ดขาด)
-- **`develop`**: Integration branch สำหรับรวบรวมฟีเจอร์ของแต่ละ Sprint
-- **Feature / Fix branches**:
-  - `feat/us-01-login`
-  - `feat/us-02-browse`
-  - `fix/us-03-cart-quantity`
+รูปแบบคือ `<type>/scrum-<number>-<kebab-case>` และ commit ใช้ Conventional Commits เช่น:
 
----
+```text
+feat(SCRUM-42): transfer cards when seller marks order sent
+```
 
-## 💬 3. ข้อตกลงการตั้งชื่อ Commit & PR (Conventional Commits)
+## Product boundaries
 
-โปรเจกต์มี **GitHub Actions PR Title Linter** คอยตรวจเช็ค:
+- Mythix สร้าง reservation order, แจ้งเตือน, เก็บสถานะ และบันทึก ownership
+- Mythix ไม่รับเงิน ไม่เก็บ payment method ไม่จัดการที่อยู่/ขนส่ง และไม่มี in-app chat
+- อย่าเพิ่ม `PREPARED`, shipping label, delivery SLA หรือ buyer receipt confirmation โดยไม่มี requirement ใหม่
+- `FULFILLED` หมายถึง seller ยืนยันว่าได้รับเงินนอกระบบแล้ว
+- `SENT` หมายถึง seller ส่งสินค้าแล้ว และเป็น trigger ของ ownership transfer
+- การสร้าง order ต้องตรวจ visibility/stock และ reserve stock แบบ atomic ที่ backend
+- order หนึ่งรายการต้องมี seller เดียว
 
-| Prefix | ตัวอย่าง | ผลกระทบต่อเวอร์ชัน |
-|---|---|---|
-| `feat:` | `feat: add product filter sidebar` | Minor (`1.0.0` ➡️ `1.1.0`) |
-| `fix:` | `fix: resolve cart stock validation` | Patch (`1.1.0` ➡️ `1.1.1`) |
-| `feat!:` | `feat!: overhaul state to Zustand` | Major (`1.1.0` ➡️ `2.0.0`) |
-| `docs:` | `docs: update setup guide in README` | ไม่ขยับเวอร์ชัน |
-| `chore:` | `chore: update dependencies` | ไม่ขยับเวอร์ชัน |
-| `test:` | `test: add cartStore unit test` | ไม่ขยับเวอร์ชัน |
-| `ci:` | `ci: update GitHub Actions workflow` | ไม่ขยับเวอร์ชัน |
+## Code boundaries
 
----
+- `src/entities` เก็บ vocabulary, types และ pure lifecycle rules
+- `src/features/<feature>` เก็บ capability ที่ผู้ใช้มองเห็น รวม API adapter, model, page และ route
+- `src/app` ประกอบ route/layout เท่านั้น
+- `src/infrastructure/mock-db` เป็น adapter สำหรับ mock mode ไม่ใช่ source of truth ของ production
+- `src/shared` เก็บเฉพาะ generic code และห้าม import จาก business feature
+- หลีกเลี่ยง cross-feature deep import; ถ้า feature ต้องแชร์ public capability ให้ export ผ่าน `index.ts`
+- API enum, mock data, UI label และ test ต้องเปลี่ยนพร้อมกัน
 
-## 📋 4. PR Checklist ก่อนส่ง Review
+## UI และ accessibility
 
-ก่อนเปิด Pull Request และขอให้เพื่อน Review:
-- [ ] รัน `npm run lint` ผ่าน (ตรวจ static lint ด้วย Oxlint)
-- [ ] รัน `npm run build` ผ่าน (ตรวจ TypeScript types และ production bundle)
-- [ ] ตั้งชื่อ PR ตาม Conventional Commits (เช่น `feat: add shopping cart page`)
-- [ ] ใส่หมายเลข GitHub Issue จริงใน Description และใช้ `Closes #<issue-number>` เมื่อ acceptance criteria ครบ
-- [ ] ตรวจสอบว่า UI สอดคล้องกับ Figma และรองรับ Responsive
+- ใช้ visual tokens เดิมจาก Figma ได้ แต่ copy และ action ต้องสะท้อน reservation flow
+- ทุก async page ต้องมี loading, empty และ error state
+- button ที่มีแต่ icon ต้องมี accessible name
+- modal ต้องจัดการ focus และปิดด้วย Escape
+- form error ต้องผูกกับ field และประกาศผ่าน `role="alert"` เมื่อเหมาะสม
+- ทดสอบ desktop และ mobile width ที่ได้รับผลกระทบ
+
+## ก่อนเปิด PR
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
+
+ใน PR ให้ระบุ:
+
+- Jira ticket และ backend dependency
+- Product flow/Miro/Figma ที่ใช้อ้างอิง
+- state transition หรือ ownership impact
+- API/migration impact
+- สิ่งที่ลบหรือ de-scope
+- วิธี verify รวมถึง mock flow ที่ทดลอง

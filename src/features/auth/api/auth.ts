@@ -23,22 +23,24 @@ interface ApiErrorResponse {
 
 export function toFrontendUser(user: BackendUser): User {
   const roleByBackendRole: Record<string, Role> = {
-    USER: 'BUYER',
-    CUSTOMER: 'BUYER',
-    SELLER: 'SELLER',
+    USER: 'USER',
+    CUSTOMER: 'USER',
+    SELLER: 'USER',
     ADMIN: 'ADMIN',
   };
-  let role = roleByBackendRole[user.role];
-
-  if (user.sellerStatus?.toUpperCase() === 'VERIFIED') {
-    role = 'SELLER';
-  }
+  const role = roleByBackendRole[user.role];
 
   if (!role) {
     throw new Error('Unsupported user role');
   }
 
-  return { id: String(user.id), name: user.name, email: user.email, role };
+  return {
+    id: String(user.id),
+    name: user.name,
+    email: user.email,
+    role,
+    isSeller: user.role.toUpperCase() === 'SELLER' || user.sellerStatus?.toUpperCase() === 'VERIFIED',
+  };
 }
 
 export function getAuthErrorMessage(error: unknown, fallback: string): string {
@@ -56,14 +58,11 @@ export const authApi = {
       // Simple mock authentication (do not use in production)
       const user = users.find(u => u.email === email);
       
-      if (user && password === 'password123' && user.role === 'BUYER') {
-         return { token: 'mock-jwt-token-customer', user };
-      }
       if (user && password === 'admin123' && user.role === 'ADMIN') {
          return { token: 'mock-jwt-token-admin', user };
       }
-      if (user && password === 'seller123' && user.role === 'SELLER') {
-         return { token: 'mock-jwt-token-seller', user };
+      if (user && user.role === 'USER' && password === (user.isSeller ? 'seller123' : 'password123')) {
+         return { token: user.isSeller ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer', user };
       }
       throw new Error('Invalid credentials');
     }
@@ -78,7 +77,7 @@ export const authApi = {
       if (users.some(u => u.email === email)) {
         throw new Error('Email already in use');
       }
-      const user: User = { id: crypto.randomUUID(), name, email, role: 'BUYER' };
+      const user: User = { id: crypto.randomUUID(), name, email, role: 'USER', isSeller: false };
       storage.setUsers([...users, user]);
       return { token: 'mock-jwt-token-customer', user };
     }
@@ -114,9 +113,9 @@ export const authApi = {
              return users.find(u => u.role === 'ADMIN')!;
           }
           if(token.includes('seller')){
-             return users.find(u => u.role === 'SELLER')!;
+             return users.find(u => u.isSeller)!;
           }
-          return users.find(u => u.role === 'BUYER')!;
+          return users.find(u => u.role === 'USER' && !u.isSeller)!;
       }
       const response = await apiClient.get<BackendUser>('/auth/me');
       return toFrontendUser(response.data);

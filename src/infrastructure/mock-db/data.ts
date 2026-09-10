@@ -8,7 +8,8 @@ export const mockUsers: User[] = [
     id: 'usr-1',
     name: 'Buyer Demo',
     email: 'user@mythix.com',
-    role: 'BUYER',
+    role: 'USER',
+    isSeller: false,
     phone: '0812345678',
   },
   {
@@ -16,13 +17,15 @@ export const mockUsers: User[] = [
     name: 'Admin Demo',
     email: 'admin@mythix.com',
     role: 'ADMIN',
+    isSeller: false,
     phone: '0898765432',
   },
   {
     id: 'usr-3',
     name: 'Seller Demo',
     email: 'seller@mythix.com',
-    role: 'SELLER',
+    role: 'USER',
+    isSeller: true,
     phone: '0865432109',
   },
 ];

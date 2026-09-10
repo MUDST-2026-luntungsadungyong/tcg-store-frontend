@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router-dom';
-import { PlaceholderPage } from '@/shared/components/PlaceholderPage';
+import { ReservationCartPage } from './pages/ReservationCartPage';
 
 export const reservationCartRoutes: RouteObject[] = [
-  { path: 'cart', element: <PlaceholderPage title="Reservation Cart" /> },
+  { path: 'cart', element: <ReservationCartPage /> },
 ];

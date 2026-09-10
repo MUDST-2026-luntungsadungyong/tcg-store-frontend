@@ -1,12 +1,11 @@
-import type { Role } from '@/entities/account/model/types';
+import { isSellerUser, type User } from '@/entities/account/model/types';
 
-const defaultDestinations: Record<Role, string> = {
-  BUYER: '/',
-  SELLER: '/workspace/listings',
+const defaultDestinations: Record<User['role'], string> = {
+  USER: '/',
   ADMIN: '/',
 };
 
-export function getPostAuthDestination(role: Role, state: unknown): string {
+export function getPostAuthDestination(user: Pick<User, 'role' | 'isSeller'>, state: unknown): string {
   if (
     typeof state === 'object'
     && state !== null
@@ -17,5 +16,5 @@ export function getPostAuthDestination(role: Role, state: unknown): string {
   ) {
     return state.from;
   }
-  return defaultDestinations[role];
+  return isSellerUser(user) ? '/workspace/listings' : defaultDestinations[user.role];
 }

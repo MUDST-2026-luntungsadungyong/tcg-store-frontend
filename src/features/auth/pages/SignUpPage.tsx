@@ -59,7 +59,7 @@ export function SignUpPage() {
     try {
       const { token, user } = await authApi.register(name.trim(), email, password);
       login(token, user);
-      navigate(getPostAuthDestination(user.role, location.state));
+      navigate(getPostAuthDestination(user, location.state));
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Sign up failed'));
     } finally {

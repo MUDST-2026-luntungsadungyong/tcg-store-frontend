@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   CheckCircle2,
   Clock,
@@ -43,7 +43,7 @@ export function SellerOrdersPage() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | number | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [orderRes, profitRes] = await Promise.all([
@@ -57,11 +57,11 @@ export function SellerOrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
   useEffect(() => {
-    loadData();
-  }, [statusFilter]);
+    void loadData();
+  }, [loadData]);
 
   const handleStatusUpdate = async (orderId: string | number, newStatus: string) => {
     setActionLoadingId(orderId);
@@ -90,6 +90,18 @@ export function SellerOrdersPage() {
         return (
           <Badge variant="warning" className="flex items-center gap-1">
             <Clock size={12} /> Pending Fulfillment
+          </Badge>
+        );
+      case 'RESERVED':
+        return (
+          <Badge variant="warning" className="flex items-center gap-1">
+            <Clock size={12} /> Awaiting Shipment
+          </Badge>
+        );
+      case 'SENT':
+        return (
+          <Badge variant="success" className="flex items-center gap-1">
+            <CheckCircle2 size={12} /> Sent &amp; Transferred
           </Badge>
         );
       case 'FULFILLED':
@@ -190,7 +202,7 @@ export function SellerOrdersPage() {
       <div className="bg-[#192338] border border-[#31405A] rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Status Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-          {['ALL', 'PENDING', 'FULFILLED', 'CANCELLED'].map((tab) => (
+          {['ALL', 'RESERVED', 'SENT', 'PENDING', 'FULFILLED', 'CANCELLED'].map((tab) => (
             <button
               key={tab}
               onClick={() => setStatusFilter(tab)}
@@ -318,16 +330,16 @@ export function SellerOrdersPage() {
                       {/* Actions */}
                       <td className="p-4 align-top text-right whitespace-nowrap">
                         <div className="flex flex-col gap-1.5 items-end">
-                          {order.status === 'PENDING' && (
+                          {(order.status === 'PENDING' || order.status === 'RESERVED') && (
                             <>
                               <Button
                                 size="sm"
                                 variant="primary"
                                 disabled={isActionLoading}
-                                onClick={() => handleStatusUpdate(order.id, 'FULFILLED')}
+                                 onClick={() => handleStatusUpdate(order.id, order.status === 'RESERVED' ? 'SENT' : 'FULFILLED')}
                                 className="w-28 text-xs bg-status-success hover:bg-status-success/90"
                               >
-                                Mark Fulfilled
+                                 {order.status === 'RESERVED' ? 'Confirm Shipment' : 'Mark Fulfilled'}
                               </Button>
                               <Button
                                 size="sm"
@@ -340,9 +352,9 @@ export function SellerOrdersPage() {
                               </Button>
                             </>
                           )}
-                          {order.status === 'FULFILLED' && (
+                          {(order.status === 'FULFILLED' || order.status === 'SENT') && (
                             <span className="text-xs text-status-success flex items-center gap-1">
-                              <CheckCircle2 size={13} /> Completed
+                              <CheckCircle2 size={13} /> {order.status === 'SENT' ? 'Sent & Transferred' : 'Completed'}
                             </span>
                           )}
                           {order.status === 'CANCELLED' && (

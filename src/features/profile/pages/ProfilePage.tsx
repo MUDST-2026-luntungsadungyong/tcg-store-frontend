@@ -2,6 +2,7 @@ import type { ElementType } from "react";
 import { Link } from "react-router-dom";
 import { Edit3, Mail, Phone } from "lucide-react";
 import { useAuthStore } from "@/features/auth/model/useAuthStore";
+import { isSellerUser } from "@/entities/account/model/types";
 
 type ContactItemProps = {
   icon?: ElementType;
@@ -125,7 +126,7 @@ export function ProfilePage() {
           </div>
         </div>
       </section>
-      {user?.role === "BUYER" && (
+      {user?.role === "USER" && !isSellerUser(user) && (
         <Link
           className="mt-6 inline-flex min-h-11 items-center rounded-full bg-brand-gold px-5 text-sm font-semibold text-bg-base transition-colors hover:bg-brand-gold/85 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-bg-base"
           to="/profile/seller-application"

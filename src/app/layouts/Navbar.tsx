@@ -14,6 +14,7 @@ import {
 import { Button } from '@/shared/components/Button';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { useReservationCartStore } from '@/features/reservation-cart';
+import { isSellerUser } from '@/entities/account/model/types';
 
 export function Navbar() {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export function Navbar() {
   const totalItems = useReservationCartStore((s) => s.getTotalItems());
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const isSeller = user?.role === 'SELLER';
+  const isSeller = isSellerUser(user);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -47,128 +48,93 @@ export function Navbar() {
 
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
-            {isSeller ? (
-              <Link
-                to="/"
-                aria-label="TCG home"
-                className="font-['IBM_Plex_Sans_Thai'] text-2xl font-bold text-[#DBE3F3] transition-colors hover:text-white"
-              >
-                TCG
-              </Link>
-            ) : (
-              <Link to="/" className="flex items-center gap-2 group size-[86px]">
-                <img src="/assets/mythix_logo_white_v3.png" alt="Mythix" className="size-full object-cover pointer-events-none" />
-              </Link>
-            )}
+            <Link to="/" aria-label="Mythix home" className="flex items-center gap-2 group size-[86px]">
+              <img src="/assets/mythix_logo_white_v3.png" alt="Mythix" className="size-full object-cover pointer-events-none" />
+            </Link>
           </div>
 
           {/* Search Bar */}
-          <div className={`flex-1 max-w-lg mx-8 hidden ${isSeller ? 'lg:block' : 'md:block'}`}>
+          <div className="flex-1 max-w-lg mx-8 hidden md:block">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className={`h-4 w-4 ${isSeller ? 'text-[#A5C9F9]' : 'text-gray-400'}`} />
+                <Search className="h-4 w-4 text-gray-400" />
               </div>
               <input
                 type="text"
                 placeholder="Search cards..."
                 aria-label="Search cards"
-                className={`block w-[320px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors ${isSeller ? 'h-10 rounded-[20px]' : 'h-[44px] rounded-[22px]'}`}
+                className="block w-[320px] h-[44px] rounded-[22px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors"
               />
             </div>
           </div>
 
           {/* Right Actions */}
-          <div className={`flex items-center text-sm font-semibold text-gray-300 ${isSeller ? 'gap-4 xl:gap-10' : 'gap-6'}`}>
-            <Link to="/" className={`hover:text-white transition-colors ${isSeller ? 'text-base text-[#DBE3F3]' : ''}`}>
+          <div className="flex items-center gap-6 text-sm font-semibold text-gray-300">
+            <Link to="/" className="hover:text-white transition-colors">
               Home
             </Link>
-            <Link to="/cards" className={`hover:text-white transition-colors ${isSeller ? 'text-base text-[#DBE3F3]' : ''}`}>
+            <Link to="/cards" className="hover:text-white transition-colors">
               Cards
             </Link>
 
-            {isSeller ? (
+            {isSeller && (
               <Link
                 to="/workspace/listings"
-                className="text-sm font-semibold text-[#A5C9F9] transition-colors hover:text-white"
+                className="text-sm font-semibold text-brand-blue transition-colors hover:text-white"
               >
                 Workspace
               </Link>
-            ) : (
-              <>
-                <Link to="/cart" className="relative text-gray-300 hover:text-white transition-colors" title="Reservation cart">
-                  <ShoppingCart className="h-5 w-5" />
-                  {totalItems > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-brand-blue text-bg-base text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-md">
-                      {totalItems > 99 ? '99+' : totalItems}
-                    </span>
-                  )}
-                </Link>
-
-                <Link to="/notifications" aria-label="Notifications" className="relative text-gray-300 hover:text-white transition-colors">
-                  <Bell className="h-5 w-5" />
-                </Link>
-              </>
             )}
+
+            <Link
+              to="/cart"
+              aria-label="Reservation cart"
+              className="relative text-gray-300 hover:text-white transition-colors"
+              title="Reservation cart"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-2 -right-2 bg-brand-blue text-bg-base text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-md">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+            </Link>
+
+            <Link to="/notifications" aria-label="Notifications" className="relative text-gray-300 hover:text-white transition-colors">
+              <Bell className="h-5 w-5" />
+            </Link>
 
             {user ? (
               <div className="relative" ref={menuRef}>
-                {isSeller ? (
-                  <button
-                    type="button"
-                    onClick={() => setMenuOpen((v) => !v)}
-                    aria-label="Open seller account menu"
-                    aria-haspopup="menu"
-                    aria-expanded={menuOpen}
-                    className={`flex h-[52px] w-[190px] items-center gap-2 rounded-[25px] border border-[rgba(165,201,249,0.4)] px-2 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A5C9F9] ${menuOpen ? 'bg-white/5' : 'hover:bg-white/5'}`}
-                  >
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt=""
-                        className="size-[41px] shrink-0 rounded-full object-cover ring-2 ring-[#96B3DF]"
-                      />
-                    ) : (
-                      <span className="flex size-[41px] shrink-0 items-center justify-center rounded-full bg-[#96B3DF] text-[#1C1B1F] ring-1 ring-[#D9E6F8]">
-                        <UserIcon size={27} strokeWidth={1.5} />
-                      </span>
-                    )}
-                    <span className="min-w-0 flex-1">
-                      <span className="flex min-w-0 items-center gap-1.5">
-                        <span className="min-w-0 truncate text-base font-semibold leading-[19px] text-[#DBE3F3]">
-                          {user.name}
-                        </span>
-                        <span className="shrink-0 rounded-[10px] bg-[#4D5973] px-2 py-0.5 text-[10px] font-semibold leading-3 text-[#DBE3F3]">
-                          SELLER
-                        </span>
-                      </span>
-                      <span className="block truncate text-[11px] font-light leading-4 text-[#DBE3F3]">
-                        {user.email}
-                      </span>
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-label={menuOpen ? 'Close account menu' : 'Open account menu'}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  className={`flex items-center gap-2 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue ${menuOpen ? 'text-white' : 'hover:text-white'}`}
+                >
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt=""
+                      className="size-8 rounded-full object-cover ring-1 ring-white/10"
+                    />
+                  ) : (
+                    <span className="flex size-8 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/40">
+                      {user.name.charAt(0).toUpperCase()}
                     </span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setMenuOpen((v) => !v)}
-                    aria-haspopup="menu"
-                    aria-expanded={menuOpen}
-                    className={`flex items-center gap-2 rounded-full transition-colors focus:outline-none ${menuOpen ? 'text-white' : 'hover:text-white'}`}
-                  >
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt=""
-                        className="size-8 rounded-full object-cover ring-1 ring-white/10"
-                      />
-                    ) : (
-                      <span className="flex size-8 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/40">
-                        {user.name.charAt(0).toUpperCase()}
+                  )}
+                  <span className="hidden items-center gap-1.5 lg:flex">
+                    <span className="max-w-32 truncate">{user.name}</span>
+                    {isSeller && (
+                      <span className="rounded-[10px] bg-[#4D5973] px-2 py-0.5 text-[10px] font-semibold leading-3 text-[#DBE3F3]">
+                        SELLER
                       </span>
                     )}
-                    <span className="hidden lg:inline">{user.name}</span>
-                    <ChevronDown size={16} className={`transition-transform ${menuOpen ? 'rotate-180 text-white' : ''}`} />
-                  </button>
-                )}
+                  </span>
+                  <ChevronDown size={16} className={`transition-transform ${menuOpen ? 'rotate-180 text-white' : ''}`} />
+                </button>
 
                 {menuOpen && (
                   <div
@@ -187,32 +153,41 @@ export function Navbar() {
                       </Link>
                     )}
                     <Link
-                      to={isSeller ? '/workspace/listings' : '/profile'}
+                      to="/profile"
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
                     >
-                      {isSeller ? <Package size={16} /> : <UserIcon size={16} />}
-                      {isSeller ? 'Listings' : 'Profile'}
+                      <UserIcon size={16} />
+                      Profile
                     </Link>
                     <Link
-                      to={isSeller ? '/workspace/orders' : '/orders'}
+                      to="/orders"
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
                     >
                       <Package size={16} />
-                      {isSeller ? 'Seller Orders' : 'My Orders'}
+                      My Orders
                     </Link>
-                    {!isSeller && (
+                    <Link
+                      to="/collection"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <Library size={16} />
+                      My Collection
+                    </Link>
+                    {isSeller && (
                       <Link
-                        to="/collection"
+                        to="/workspace/orders"
                         role="menuitem"
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
                       >
-                        <Library size={16} />
-                        My Collection
+                        <Package size={16} />
+                        Seller Orders
                       </Link>
                     )}
                     <div className="my-1.5 border-t border-white/10" />

@@ -1,8 +1,8 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
-import type { Role } from '@/entities/account/model/types';
+import { isSellerUser, type Role } from '@/entities/account/model/types';
 
-export function ProtectedRoute({ requiredRole }: { requiredRole?: Role }) {
+export function ProtectedRoute({ requiredRole, requiredSeller }: { requiredRole?: Role; requiredSeller?: boolean }) {
   const location = useLocation();
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
@@ -29,6 +29,10 @@ export function ProtectedRoute({ requiredRole }: { requiredRole?: Role }) {
   }
 
   if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (requiredSeller && !isSellerUser(user)) {
     return <Navigate to="/" replace />;
   }
 

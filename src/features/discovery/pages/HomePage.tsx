@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
+import { getTopCollectors, type CollectorRanking } from '@/features/collection/api/leaderboard';
 import type { CardListing } from '@/entities/card/model/types';
 
 
@@ -106,6 +107,7 @@ function ExpensiveCardsCarousel() {
 
 export function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<CardListing[]>([]);
+  const [topCollectors, setTopCollectors] = useState<CollectorRanking[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +119,14 @@ export function HomePage() {
       })
       .catch(() => {
         if (!cancelled) setFeaturedProducts([]);
+      });
+
+    void getTopCollectors(5)
+      .then((data) => {
+        if (!cancelled) setTopCollectors(data);
+      })
+      .catch(() => {
+        if (!cancelled) setTopCollectors([]);
       });
 
     return () => {
@@ -196,45 +206,127 @@ export function HomePage() {
         {/* 2. The 10 Most Expensive Pokémon Cards of 2025 (Auto-Slide Carousel 3s) */}
         <ExpensiveCardsCarousel />
 
-        {/* 3. What's new! */}
+        {/* 3. The Best Collections (Top 5 Collectors Leaderboard) */}
         <section className="py-16 bg-[#0B111A]">
-          <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 mb-8">
-            <h2 className="text-[32px] font-bold text-white inline-block">
-              What's new!
-            </h2>
+          <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="bg-amber-500/20 text-amber-400 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 border border-amber-500/30">
+                  <Sparkles size={13} /> Leaderboard
+                </span>
+              </div>
+              <h2 className="text-[32px] font-bold text-white leading-tight">
+                The Best Collections
+              </h2>
+              <p className="text-gray-400 text-sm mt-1">
+                Top 5 collectors ranked by rare Pokémon cards (GX = 20 pts, Promos & Secret Rares)
+              </p>
+            </div>
+            <Link
+              to="/cards"
+              className="text-gray-300 hover:text-white flex items-center gap-1 text-sm font-semibold transition-colors self-start md:self-auto"
+            >
+              Explore All Cards <ChevronRight size={18} />
+            </Link>
           </div>
+
           <div className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar px-4 md:px-8 max-w-[1440px] mx-auto">
-            {[1, 2, 3, 4].map((item) => (
-              <div key={item} className="min-w-[650px] bg-white rounded-[24px] p-6 snap-center shrink-0 flex flex-col">
-                <div className="flex w-full">
-                  {/* Left: Image */}
-                  <div className="w-[320px] h-[200px] shrink-0 overflow-hidden rounded-xl">
-                    <img 
-                      src="/assets/whats_new_91_28.png" 
-                      alt="What's new" 
-                      className="w-full h-full object-cover"
-                    />
+            {topCollectors.map((collector) => (
+              <div
+                key={collector.userId}
+                className="min-w-[340px] sm:min-w-[420px] md:min-w-[480px] bg-white rounded-[24px] p-6 snap-center shrink-0 flex flex-col justify-between shadow-xl border-2 border-transparent hover:border-amber-400/50 transition-all duration-300"
+              >
+                {/* Top Info Bar: Rank & Collector */}
+                <div>
+                  <div className="flex items-center justify-between gap-4 pb-4 border-b border-gray-100 mb-4">
+                    <div className="flex items-center gap-3">
+                      {/* Rank Badge */}
+                      <div
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-lg shadow-md ${
+                          collector.rank === 1
+                            ? 'bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-slate-950 ring-2 ring-amber-300/60'
+                            : collector.rank === 2
+                            ? 'bg-gradient-to-br from-slate-100 via-gray-200 to-slate-400 text-slate-800 ring-1 ring-slate-300'
+                            : collector.rank === 3
+                            ? 'bg-gradient-to-br from-amber-600 via-orange-600 to-amber-800 text-white ring-1 ring-amber-700/50'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {collector.rank === 1 ? '👑 #1' : `#${collector.rank}`}
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-[18px] md:text-[20px] font-bold text-gray-900 leading-none">
+                            {collector.name}
+                          </h3>
+                          {collector.rank === 1 && (
+                            <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Champion
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500 font-medium">
+                          {collector.ultraRareCount} Ultra-Rare Cards
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Total Rare Score Pill */}
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                        Rarity Score
+                      </span>
+                      <span className="text-xl md:text-2xl font-black text-amber-600 flex items-center gap-1">
+                        ★ {collector.totalScore}
+                        <span className="text-xs font-semibold text-gray-400">pts</span>
+                      </span>
+                    </div>
                   </div>
-                  
-                  {/* Right: Text */}
-                  <div className="flex-1 flex flex-col pl-6 pt-2">
-                    <h3 className="text-[28px] font-bold text-black leading-[1.2] mb-3">
-                      Pokémon TCG: 30th<br />Celebration
-                    </h3>
-                    <p className="text-[15px] font-bold text-black leading-snug mb-2">
-                      These adorable cards show the many sides of<br />the Mouse Pokémon.
-                    </p>
-                    <p className="text-[12px] font-bold text-black">
-                      Aug 12, 2026
-                    </p>
+
+                  {/* Featured Rare Cards Showcase */}
+                  <div>
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-3">
+                      Featured Collection Highlights
+                    </h4>
+                    <div className="grid grid-cols-3 gap-3">
+                      {collector.featuredCards.slice(0, 3).map((card) => (
+                        <div
+                          key={card.id}
+                          className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex flex-col items-center text-center group hover:bg-white hover:shadow-md transition-all"
+                        >
+                          <div className="w-16 h-20 md:w-20 md:h-24 mb-2 flex items-center justify-center relative">
+                            <img
+                              src={card.image}
+                              alt={card.name}
+                              className="max-w-full max-h-full object-contain drop-shadow group-hover:scale-105 transition-transform"
+                            />
+                            {card.quantity > 1 && (
+                              <span className="absolute -top-1 -right-1 bg-slate-900 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">
+                                x{card.quantity}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-bold text-gray-900 line-clamp-1 w-full">
+                            {card.name}
+                          </span>
+                          <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 rounded px-1.5 py-0.5 mt-1 whitespace-nowrap">
+                            +{card.points} pts
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Bottom: Button */}
-                <div className="w-full flex justify-center mt-6">
-                  <button className="bg-[#FFA3A3] text-black font-bold py-2.5 px-16 rounded-full hover:bg-[#FF8A8A] transition-colors">
-                    More
-                  </button>
+                {/* Bottom Action */}
+                <div className="w-full flex justify-center mt-6 pt-4 border-t border-gray-100">
+                  <Link
+                    to="/cards"
+                    className="w-full text-center bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-6 rounded-full text-sm transition-colors shadow-sm"
+                  >
+                    View Collection Cards
+                  </Link>
                 </div>
               </div>
             ))}

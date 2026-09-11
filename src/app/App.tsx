@@ -20,9 +20,7 @@ configureApiClientAuth({
 
 function App() {
   useEffect(() => {
-    if (ENV.ENABLE_MOCK_API) {
-      initMockStorage();
-    }
+    initMockStorage();
 
     const token = useAuthStore.getState().token;
     if (token) {

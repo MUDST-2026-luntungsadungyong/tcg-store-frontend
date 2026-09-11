@@ -48,16 +48,28 @@ export function setStorageData<T>(key: string, data: T[]): void {
 }
 
 export const storage = {
-  getListings: () => getStorageData<CardListing>(STORAGE_KEYS.LISTINGS),
+  getListings: () => {
+    const data = getStorageData<CardListing>(STORAGE_KEYS.LISTINGS);
+    return data.length > 0 ? data : mockListings;
+  },
   setListings: (listings: CardListing[]) => setStorageData(STORAGE_KEYS.LISTINGS, listings),
 
-  getUsers: () => getStorageData<User>(STORAGE_KEYS.USERS),
+  getUsers: () => {
+    const data = getStorageData<User>(STORAGE_KEYS.USERS);
+    return data.length > 0 ? data : mockUsers;
+  },
   setUsers: (users: User[]) => setStorageData(STORAGE_KEYS.USERS, users),
 
-  getReservations: () => getStorageData<ReservationOrder>(STORAGE_KEYS.RESERVATIONS),
+  getReservations: () => {
+    const data = getStorageData<ReservationOrder>(STORAGE_KEYS.RESERVATIONS);
+    return data.length > 0 ? data : mockReservations;
+  },
   setReservations: (orders: ReservationOrder[]) => setStorageData(STORAGE_KEYS.RESERVATIONS, orders),
 
-  getCollection: () => getStorageData<CollectionEntry>(STORAGE_KEYS.COLLECTION),
+  getCollection: () => {
+    const data = getStorageData<CollectionEntry>(STORAGE_KEYS.COLLECTION);
+    return data.length > 0 ? data : mockCollection;
+  },
   setCollection: (entries: CollectionEntry[]) => setStorageData(STORAGE_KEYS.COLLECTION, entries),
 
   getNotifications: () => getStorageData<Notification>(STORAGE_KEYS.NOTIFICATIONS),

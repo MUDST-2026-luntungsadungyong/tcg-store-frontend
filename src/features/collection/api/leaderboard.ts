@@ -1,7 +1,9 @@
-import { storage } from '@/infrastructure/mock-db/storage';
+import { storage, initMockStorage } from '@/infrastructure/mock-db/storage';
+import { mockCollection, mockUsers } from '@/infrastructure/mock-db/data';
 import { calculateCollectionScore } from '../lib/collectionScoring';
 import type { FeaturedRareCard } from '../lib/collectionScoring';
 import type { CollectionEntry } from '@/entities/card/model/types';
+import type { User } from '@/entities/account/model/types';
 
 export interface CollectorRanking {
   rank: number;
@@ -15,18 +17,20 @@ export interface CollectorRanking {
 }
 
 /**
- * Retrieves the top collectors ranked by ultra-rare collection scores.
- * Discards all Common, Uncommon, Rare, and Rare Holo cards.
- *
- * @param limit Number of top collectors to return (default: 5)
+ * Calculates top collectors from collection and user records.
+ * Discards Common, Uncommon, Rare, and Rare Holo cards.
  */
-export async function getTopCollectors(limit = 5): Promise<CollectorRanking[]> {
-  const collections = storage.getCollection();
-  const users = storage.getUsers();
+export function calculateTopCollectors(
+  collections: CollectionEntry[] = mockCollection,
+  users: User[] = mockUsers,
+  limit = 5
+): CollectorRanking[] {
+  const safeCollections = collections && collections.length > 0 ? collections : mockCollection;
+  const safeUsers = users && users.length > 0 ? users : mockUsers;
 
   // Group collection entries by ownerId
   const collectionByUser = new Map<string, CollectionEntry[]>();
-  for (const entry of collections) {
+  for (const entry of safeCollections) {
     if (!entry.ownerId) continue;
     const list = collectionByUser.get(entry.ownerId) || [];
     list.push(entry);
@@ -34,7 +38,7 @@ export async function getTopCollectors(limit = 5): Promise<CollectorRanking[]> {
   }
 
   // Create user lookup map
-  const userMap = new Map(users.map((u) => [u.id, u]));
+  const userMap = new Map(safeUsers.map((u) => [u.id, u]));
 
   const rankings: Array<Omit<CollectorRanking, 'rank'>> = [];
 
@@ -64,4 +68,23 @@ export async function getTopCollectors(limit = 5): Promise<CollectorRanking[]> {
     ...collector,
     rank: index + 1,
   }));
+}
+
+/**
+ * Retrieves the top collectors ranked by ultra-rare collection scores.
+ * Discards all Common, Uncommon, Rare, and Rare Holo cards.
+ *
+ * @param limit Number of top collectors to return (default: 5)
+ */
+export async function getTopCollectors(limit = 5): Promise<CollectorRanking[]> {
+  try {
+    initMockStorage();
+  } catch {
+    // Ignore environments where localStorage is not accessible
+  }
+
+  const collections = storage.getCollection();
+  const users = storage.getUsers();
+
+  return calculateTopCollectors(collections, users, limit);
 }

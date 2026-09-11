@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
-import { getTopCollectors, type CollectorRanking } from '@/features/collection/api/leaderboard';
+import {
+  getTopCollectors,
+  calculateTopCollectors,
+  type CollectorRanking,
+} from '@/features/collection/api/leaderboard';
+import { mockCollection, mockUsers } from '@/infrastructure/mock-db/data';
 import type { CardListing } from '@/entities/card/model/types';
 
 
@@ -107,7 +112,9 @@ function ExpensiveCardsCarousel() {
 
 export function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<CardListing[]>([]);
-  const [topCollectors, setTopCollectors] = useState<CollectorRanking[]>([]);
+  const [topCollectors, setTopCollectors] = useState<CollectorRanking[]>(() =>
+    calculateTopCollectors(mockCollection, mockUsers, 5),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -123,10 +130,10 @@ export function HomePage() {
 
     void getTopCollectors(5)
       .then((data) => {
-        if (!cancelled) setTopCollectors(data);
+        if (!cancelled && data.length > 0) setTopCollectors(data);
       })
       .catch(() => {
-        if (!cancelled) setTopCollectors([]);
+        if (!cancelled) setTopCollectors(calculateTopCollectors(mockCollection, mockUsers, 5));
       });
 
     return () => {
@@ -299,6 +306,9 @@ export function HomePage() {
                             <img
                               src={card.image}
                               alt={card.name}
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = '/assets/expensive_card_1.png';
+                              }}
                               className="max-w-full max-h-full object-contain drop-shadow group-hover:scale-105 transition-transform"
                             />
                             {card.quantity > 1 && (

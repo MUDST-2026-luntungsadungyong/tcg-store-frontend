@@ -7,7 +7,9 @@ import {
   calculateTopCollectors,
   type CollectorRanking,
 } from '@/features/collection/api/leaderboard';
+import { getMostExpensiveOnSaleCards } from '@/features/discovery/lib/expensiveCards';
 import { mockCollection, mockUsers } from '@/infrastructure/mock-db/data';
+import { storage } from '@/infrastructure/mock-db/storage';
 import type { CardListing } from '@/entities/card/model/types';
 
 
@@ -111,7 +113,12 @@ function ExpensiveCardsCarousel() {
 }
 
 export function HomePage() {
-  const [featuredProducts, setFeaturedProducts] = useState<CardListing[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<CardListing[]>(() =>
+    storage.getListings().filter((l) => l.status === 'SHOW').slice(0, 5),
+  );
+  const [expensiveCards, setExpensiveCards] = useState<CardListing[]>(() =>
+    getMostExpensiveOnSaleCards(storage.getListings(), 10),
+  );
   const [topCollectors, setTopCollectors] = useState<CollectorRanking[]>(() =>
     calculateTopCollectors(mockCollection, mockUsers, 5),
   );
@@ -120,12 +127,18 @@ export function HomePage() {
     let cancelled = false;
 
     void listingDiscoveryApi
-      .getListings({ size: 5 })
+      .getListings({ size: 100 })
       .then((res) => {
-        if (!cancelled) setFeaturedProducts(res.items.slice(0, 5));
+        if (!cancelled && res.items.length > 0) {
+          setFeaturedProducts(res.items.slice(0, 5));
+          setExpensiveCards(getMostExpensiveOnSaleCards(res.items, 10));
+        }
       })
       .catch(() => {
-        if (!cancelled) setFeaturedProducts([]);
+        if (!cancelled) {
+          setFeaturedProducts(storage.getListings().filter((l) => l.status === 'SHOW').slice(0, 5));
+          setExpensiveCards(getMostExpensiveOnSaleCards(storage.getListings(), 10));
+        }
       });
 
     void getTopCollectors(5)
@@ -343,84 +356,47 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* 4. The 10 Most Expensive Cards */}
+        {/* 4. The 10 Most Expensive Cards on sell */}
         <section className="py-16 bg-[#0B111A]">
           <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8">
-            <h2 className="text-[32px] font-bold text-white mb-4 lg:mb-8">The 10 Most Expensive Cards</h2>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4 lg:mb-8">
+              <div>
+                <h2 className="text-[32px] font-bold text-white leading-tight">
+                  The 10 Most Expensive Cards on sell
+                </h2>
+                <p className="text-gray-400 text-sm mt-1">
+                  Top 10 highest-value cards in stock and ready for purchase
+                </p>
+              </div>
+              <Link
+                to="/cards"
+                className="text-gray-300 hover:text-white flex items-center gap-1 text-sm font-semibold transition-colors self-start md:self-auto"
+              >
+                Watch More <ChevronRight size={18} />
+              </Link>
+            </div>
+
             <div className="flex gap-16 overflow-x-auto pb-12 pt-[120px] md:pt-[140px] custom-scrollbar snap-x px-4 md:px-0">
-              {[
-                {
-                  id: 1,
-                  img: '/assets/expensive_card_1.png',
-                  price: '2000.00',
-                  marketPrice: '199.00',
-                  title: 'Trophy Pikachu - #3',
-                  desc: '1998 P.M. Japanese Promo\nBronze 3rd-2nd Tournament'
-                },
-                {
-                  id: 2,
-                  img: '/assets/expensive_card_2.png',
-                  price: '20.00',
-                  marketPrice: '5.00',
-                  title: 'Pokemon Illustrator',
-                  desc: '1998 P.M. Japanese Promo\nIllustration Contest'
-                },
-                {
-                  id: 3,
-                  img: '/assets/expensive_card_3.png',
-                  price: '5.00',
-                  marketPrice: '199.00',
-                  title: 'P.M. SM BLACK STAR',
-                  desc: 'TSUNEKAZU ISHIHARA\nISHIHARA GX-PROMO'
-                },
-                {
-                  id: 4,
-                  img: '/assets/expensive_card_1.png',
-                  price: '2000.00',
-                  marketPrice: '199.00',
-                  title: 'Trophy Pikachu - #3',
-                  desc: '1998 P.M. Japanese Promo\nBronze 3rd-2nd Tournament'
-                },
-                {
-                  id: 5,
-                  img: '/assets/expensive_card_2.png',
-                  price: '20.00',
-                  marketPrice: '5.00',
-                  title: 'Pokemon Illustrator',
-                  desc: '1998 P.M. Japanese Promo\nIllustration Contest'
-                },
-                {
-                  id: 6,
-                  img: '/assets/expensive_card_3.png',
-                  price: '5.00',
-                  marketPrice: '199.00',
-                  title: 'P.M. SM BLACK STAR',
-                  desc: 'TSUNEKAZU ISHIHARA\nISHIHARA GX-PROMO'
-                },
-                {
-                  id: 7,
-                  img: '/assets/expensive_card_1.png',
-                  price: '2000.00',
-                  marketPrice: '199.00',
-                  title: 'Trophy Pikachu - #3',
-                  desc: '1998 P.M. Japanese Promo\nBronze 3rd-2nd Tournament'
-                },
-                {
-                  id: 8,
-                  img: '/assets/expensive_card_2.png',
-                  price: '20.00',
-                  marketPrice: '5.00',
-                  title: 'Pokemon Illustrator',
-                  desc: '1998 P.M. Japanese Promo\nIllustration Contest'
-                }
-              ].map((item) => (
-                <div key={item.id} className="bg-white min-w-[200px] h-[260px] md:min-w-[240px] md:h-[315px] rounded-[24px] p-4 flex flex-col relative shrink-0 group cursor-pointer mt-4">
+              {expensiveCards.map((item) => (
+                <Link
+                  key={item.id}
+                  to={`/cards/${item.id}`}
+                  className="bg-white min-w-[200px] h-[260px] md:min-w-[240px] md:h-[315px] rounded-[24px] p-4 flex flex-col relative shrink-0 group cursor-pointer mt-4 hover:shadow-2xl transition-all"
+                >
+                  {/* Ready to sell In-Stock Badge */}
+                  <span className="absolute top-3 left-4 bg-[#16A34A] text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full z-20 shadow-sm uppercase tracking-wider">
+                    In Stock ({item.stock})
+                  </span>
+
                   {/* Image popping out of top right, tilted, anchored to bottom to avoid text */}
-                  <div className="absolute bottom-[50px] md:bottom-[65px] -right-2 md:-right-4 w-[85%] md:w-[88%] rotate-[4deg] z-10 transition-transform duration-500 group-hover:rotate-0 group-hover:-translate-y-4 drop-shadow-[0_15px_30px_rgba(0,0,0,0.4)]">
+                  <div className="absolute bottom-[50px] md:bottom-[65px] -right-2 md:-right-4 w-[85%] md:w-[88%] rotate-[4deg] z-10 transition-transform duration-500 group-hover:rotate-0 group-hover:-translate-y-4 drop-shadow-[0_15px_30px_rgba(0,0,0,0.4)] flex items-center justify-center">
                     <img 
-                      src={item.img} 
-                      alt={item.title} 
-                      className="w-full h-auto object-contain" 
+                      src={item.image} 
+                      alt={item.name} 
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/assets/expensive_card_1.png';
+                      }}
+                      className="w-full h-auto max-h-[190px] md:max-h-[230px] object-contain" 
                     />
                   </div>
                   
@@ -428,22 +404,23 @@ export function HomePage() {
                   <div className="mt-auto flex flex-col gap-0.5 relative z-20 bg-white/80 backdrop-blur-sm rounded-xl p-2 -mx-2">
                     <div className="flex justify-between items-end gap-2">
                       <span className="text-[16px] md:text-[18px] font-black text-[#1E293B] leading-none">
-                        ฿{item.price}
+                        ฿{item.price.toFixed(2)}
                       </span>
                       <span className="text-[10px] md:text-[11px] font-bold text-[#1E293B] leading-tight text-right line-clamp-2">
-                        {item.title}
+                        {item.name}
                       </span>
                     </div>
                     <div className="flex justify-between items-start gap-2">
                       <span className="text-[9px] md:text-[10px] text-gray-500 font-medium whitespace-nowrap">
-                        Market Price: <span className="text-[#16A34A] font-bold">฿{item.marketPrice}</span>
+                        Market Price: <span className="text-[#16A34A] font-bold">฿{(item.marketPrice ?? item.price).toFixed(2)}</span>
                       </span>
-                      <span className="text-[8px] md:text-[9px] text-gray-500 leading-snug whitespace-pre-wrap text-right">
-                        {item.desc}
+                      <span className="text-[8px] md:text-[9px] text-gray-500 leading-snug whitespace-pre-wrap text-right line-clamp-2">
+                        {item.set || item.rarity || item.game}
+                        {item.condition ? `\n${item.condition}` : ''}
                       </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

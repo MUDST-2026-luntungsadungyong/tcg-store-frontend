@@ -5,6 +5,8 @@ import type { Notification } from '@/entities/notification/model/types';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import {
   canTransitionReservationStatus,
+  type BackendReservationStatus,
+  type MockReservationStatus,
   type ReservationCartItem,
   type ReservationOrder,
   type ReservationStatus,
@@ -378,7 +380,7 @@ function addOwnershipToCollection(
 function transitionMockOrder(
   orderId: string,
   sellerId: string,
-  status: Extract<ReservationStatus, 'FULFILLED' | 'SENT'>,
+  status: Extract<MockReservationStatus, 'FULFILLED' | 'SENT'>,
 ): ReservationOrder {
   initMockStorage();
   const reservations = storage.getReservations();
@@ -432,7 +434,7 @@ function transitionMockOrder(
 
 async function transitionOrderWithApi(
   orderId: string,
-  status: Extract<ReservationStatus, 'FULFILLED' | 'SENT'>,
+  status: BackendReservationStatus,
 ): Promise<ReservationOrder> {
   const response = await apiClient.patch(
     `${ORDER_ENDPOINT}/${encodeURIComponent(orderId)}/status`,
@@ -451,9 +453,15 @@ export async function createReservationOrders(
 export async function transitionReservationOrder(
   orderId: string,
   sellerId: string,
-  status: Extract<ReservationStatus, 'FULFILLED' | 'SENT'>,
+  status: BackendReservationStatus,
 ): Promise<ReservationOrder> {
-  if (ENV.ENABLE_MOCK_API) return transitionMockOrder(orderId, sellerId, status);
+  if (ENV.ENABLE_MOCK_API) {
+    if (status === 'FULFILLED') return transitionMockOrder(orderId, sellerId, status);
+    throw new ReservationOrderError(
+      'INVALID_TRANSITION',
+      `${status} is not supported by the legacy mock transition adapter.`,
+    );
+  }
   return transitionOrderWithApi(orderId, status);
 }
 
@@ -482,7 +490,15 @@ export function markOrderSent(
   orderId: string,
   sellerId: string,
 ): Promise<ReservationOrder> {
-  return transitionReservationOrder(orderId, sellerId, 'SENT');
+  if (!ENV.ENABLE_MOCK_API) {
+    return Promise.reject(
+      new ReservationOrderError(
+        'INVALID_TRANSITION',
+        'SENT is a legacy mock-only status and is not supported by the backend order API.',
+      ),
+    );
+  }
+  return Promise.resolve().then(() => transitionMockOrder(orderId, sellerId, 'SENT'));
 }
 
 export const reservationOrdersApi = {

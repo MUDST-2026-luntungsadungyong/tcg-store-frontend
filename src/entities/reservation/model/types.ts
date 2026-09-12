@@ -7,6 +7,18 @@ export type ReservationStatus =
   | 'SENT'
   | 'CANCELLED';
 
+/** Statuses accepted by the real backend order API. */
+export type BackendReservationStatus = Extract<
+  ReservationStatus,
+  'PENDING' | 'FULFILLED' | 'CANCELLED'
+>;
+
+/** Legacy statuses used only by the explicitly gated local mock adapter. */
+export type MockReservationStatus = Extract<
+  ReservationStatus,
+  'RESERVED' | 'FULFILLED' | 'SENT' | 'CANCELLED'
+>;
+
 export type ReservationTransitionActor = 'SYSTEM' | 'SELLER';
 
 export interface ReservationStatusTransition {

@@ -1,17 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReservationCartItem } from '@/entities/reservation/model/types';
 
-const { get, post } = vi.hoisted(() => ({
+const { get, post, patch } = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
+  patch: vi.fn(),
 }));
 
-vi.mock('@/shared/api/client', () => ({ default: { get, post } }));
+vi.mock('@/shared/api/client', () => ({ default: { get, post, patch } }));
 vi.mock('@/shared/config/env', () => ({
   ENV: { ENABLE_MOCK_API: false, API_BASE_URL: 'http://localhost:8080/api' },
 }));
 
-import { createReservationOrders } from './reservationOrders';
+import { createReservationOrders, markOrderSent } from './reservationOrders';
 
 const cartItem: ReservationCartItem = {
   listing: {
@@ -73,5 +74,12 @@ describe('reservation order API adapter', () => {
     expect(post).toHaveBeenCalledWith('/orders', undefined, {
       headers: { 'Idempotency-Key': 'checkout-key' },
     });
+  });
+
+  it('blocks the legacy SENT transition on the production adapter', async () => {
+    await expect(markOrderSent('order-1', 'seller-1')).rejects.toMatchObject({
+      code: 'INVALID_TRANSITION',
+    });
+    expect(patch).not.toHaveBeenCalled();
   });
 });

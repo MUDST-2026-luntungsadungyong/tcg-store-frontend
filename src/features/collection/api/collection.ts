@@ -15,7 +15,7 @@ export interface CollectionResponse {
   page: CollectionPageMetadata;
 }
 
-interface CollectionEntryResponse {
+export interface CollectionEntryResponse {
   id: string;
   ownerId: string;
   quantity?: number;
@@ -31,6 +31,23 @@ interface CollectionEntryResponse {
   createdAt?: string;
   acquiredAt?: string;
   listing?: Partial<CardListing>;
+}
+
+export interface PublicCollectionOwner {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  rareCardCount?: number;
+  distinctRareCardCount?: number;
+}
+
+export interface PublicCollectionResponse {
+  owner?: PublicCollectionOwner;
+  ownerId?: string;
+  displayName?: string;
+  avatarUrl?: string | null;
+  items?: CollectionEntryResponse[];
+  page?: CollectionPageMetadata;
 }
 
 function normalizeCollectionEntry(value: CollectionEntryResponse): CollectionEntry {
@@ -107,5 +124,31 @@ export const collectionApi = {
       return;
     }
     await apiClient.delete(`/collection/${collectionEntryId}`);
+  },
+
+  getPublicCollection: async (userId: string): Promise<{
+    owner: PublicCollectionOwner;
+    items: CollectionEntry[];
+    page?: CollectionPageMetadata;
+  }> => {
+    const response = await apiClient.get<PublicCollectionResponse>(`/collections/${encodeURIComponent(userId)}`);
+    const data = response.data ?? {};
+    const owner = data.owner ?? {
+      userId: String(data.ownerId ?? userId),
+      displayName: String(data.displayName ?? 'Public collection'),
+      avatarUrl: data.avatarUrl ?? null,
+    };
+
+    return {
+      owner: {
+        userId: String(owner.userId ?? userId),
+        displayName: String(owner.displayName ?? 'Public collection'),
+        avatarUrl: owner.avatarUrl ?? null,
+        rareCardCount: owner.rareCardCount,
+        distinctRareCardCount: owner.distinctRareCardCount,
+      },
+      items: (data.items ?? []).map(normalizeCollectionEntry),
+      page: data.page,
+    };
   },
 };

@@ -1,90 +1,75 @@
-import { storage, initMockStorage } from '@/infrastructure/mock-db/storage';
-import { mockCollection, mockUsers } from '@/infrastructure/mock-db/data';
-import { calculateCollectionScore } from '../lib/collectionScoring';
-import type { FeaturedRareCard } from '../lib/collectionScoring';
-import type { CollectionEntry } from '@/entities/card/model/types';
-import type { User } from '@/entities/account/model/types';
+import apiClient from '@/shared/api/client';
+
+export interface PublicRareCardHighlight {
+  cardId: string;
+  name: string;
+  imageUrl: string;
+  rarity: string;
+  quantity: number;
+}
 
 export interface CollectorRanking {
   rank: number;
   userId: string;
-  name: string;
-  email: string;
-  avatarUrl?: string;
-  totalScore: number;
-  ultraRareCount: number;
-  featuredCards: FeaturedRareCard[];
+  displayName: string;
+  avatarUrl?: string | null;
+  rareCardCount: number;
+  distinctRareCardCount: number;
+  highlights: PublicRareCardHighlight[];
 }
 
-/**
- * Calculates top collectors from collection and user records.
- * Discards Common, Uncommon, Rare, and Rare Holo cards.
- */
-export function calculateTopCollectors(
-  collections: CollectionEntry[] = mockCollection,
-  users: User[] = mockUsers,
-  limit = 5
-): CollectorRanking[] {
-  const safeCollections = collections && collections.length > 0 ? collections : mockCollection;
-  const safeUsers = users && users.length > 0 ? users : mockUsers;
-
-  // Group collection entries by ownerId
-  const collectionByUser = new Map<string, CollectionEntry[]>();
-  for (const entry of safeCollections) {
-    if (!entry.ownerId) continue;
-    const list = collectionByUser.get(entry.ownerId) || [];
-    list.push(entry);
-    collectionByUser.set(entry.ownerId, list);
-  }
-
-  // Create user lookup map
-  const userMap = new Map(safeUsers.map((u) => [u.id, u]));
-
-  const rankings: Array<Omit<CollectorRanking, 'rank'>> = [];
-
-  for (const [ownerId, entries] of collectionByUser.entries()) {
-    const user = userMap.get(ownerId);
-    const scoreResult = calculateCollectionScore(entries);
-
-    // Only include collectors who have a score > 0
-    if (scoreResult.totalScore > 0) {
-      rankings.push({
-        userId: ownerId,
-        name: user?.name || `Collector ${ownerId.replace('usr-', '#')}`,
-        email: user?.email || '',
-        avatarUrl: user?.avatarUrl,
-        totalScore: scoreResult.totalScore,
-        ultraRareCount: scoreResult.ultraRareCount,
-        featuredCards: scoreResult.featuredCards,
-      });
-    }
-  }
-
-  // Sort descending by total score
-  rankings.sort((a, b) => b.totalScore - a.totalScore);
-
-  // Assign ranks and take top limit
-  return rankings.slice(0, limit).map((collector, index) => ({
-    ...collector,
-    rank: index + 1,
-  }));
+interface LeaderboardResponse {
+  items?: unknown;
 }
 
-/**
- * Retrieves the top collectors ranked by ultra-rare collection scores.
- * Discards all Common, Uncommon, Rare, and Rare Holo cards.
- *
- * @param limit Number of top collectors to return (default: 5)
- */
+function toNumber(value: unknown): number {
+  const result = Number(value);
+  return Number.isFinite(result) ? result : 0;
+}
+
+function normalizeHighlight(value: unknown): PublicRareCardHighlight {
+  const item = (value ?? {}) as Record<string, unknown>;
+  return {
+    cardId: String(item.cardId ?? item.id ?? ''),
+    name: String(item.name ?? item.cardName ?? 'Unknown card'),
+    imageUrl: String(item.imageUrl ?? item.image ?? ''),
+    rarity: String(item.rarity ?? 'Rare'),
+    quantity: toNumber(item.quantity),
+  };
+}
+
+function normalizeCollector(value: unknown, index: number): CollectorRanking {
+  const item = (value ?? {}) as Record<string, unknown>;
+  const owner = (item.owner ?? {}) as Record<string, unknown>;
+  const highlights = item.highlights ?? item.featuredCards ?? [];
+
+  return {
+    rank: toNumber(item.rank) || index + 1,
+    userId: String(item.userId ?? item.ownerId ?? owner.id ?? ''),
+    displayName: String(
+      item.displayName ?? item.name ?? owner.displayName ?? owner.name ?? 'Anonymous collector',
+    ),
+    avatarUrl: (item.avatarUrl ?? owner.avatarUrl ?? null) as string | null,
+    rareCardCount: toNumber(item.rareCardCount ?? item.totalRareCards ?? item.quantity),
+    distinctRareCardCount: toNumber(item.distinctRareCardCount ?? item.uniqueRareCards),
+    highlights: Array.isArray(highlights) ? highlights.map(normalizeHighlight).slice(0, 3) : [],
+  };
+}
+
+/** Reads the public, backend-owned collection leaderboard. */
 export async function getTopCollectors(limit = 5): Promise<CollectorRanking[]> {
-  try {
-    initMockStorage();
-  } catch {
-    // Ignore environments where localStorage is not accessible
-  }
+  const safeLimit = Math.min(10, Math.max(1, Math.trunc(limit)));
+  const response = await apiClient.get<LeaderboardResponse | unknown[]>('/collections/leaderboard', {
+    params: { limit: safeLimit },
+  });
+  const payload = response.data;
+  const items = !Array.isArray(payload) && Array.isArray(payload?.items)
+    ? payload.items
+    : Array.isArray(response.data)
+      ? response.data
+      : [];
 
-  const collections = storage.getCollection();
-  const users = storage.getUsers();
-
-  return calculateTopCollectors(collections, users, limit);
+  return items.map(normalizeCollector).slice(0, safeLimit);
 }
+
+export const leaderboardApi = { getTopCollectors };

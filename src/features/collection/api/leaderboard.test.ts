@@ -1,57 +1,35 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import apiClient from '@/shared/api/client';
 import { getTopCollectors } from './leaderboard';
-import { initMockStorage } from '@/infrastructure/mock-db/storage';
 
-describe('leaderboard: getTopCollectors', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    initMockStorage();
+describe('leaderboard API adapter', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('reads and limits the backend leaderboard without using local mock storage', async () => {
+    const get = vi.spyOn(apiClient, 'get').mockResolvedValue({
+      data: {
+        items: [
+          { userId: 'user-1', displayName: 'Red Champion', rank: 1, rareCardCount: 12, distinctRareCardCount: 7, highlights: [] },
+          { userId: 'user-2', displayName: 'Cynthia Shirona', rank: 2, rareCardCount: 10, distinctRareCardCount: 6, highlights: [] },
+        ],
+      },
+    } as never);
+
+    await expect(getTopCollectors(10)).resolves.toMatchObject([
+      { userId: 'user-1', displayName: 'Red Champion', rareCardCount: 12 },
+      { userId: 'user-2', displayName: 'Cynthia Shirona', rareCardCount: 10 },
+    ]);
+    expect(get).toHaveBeenCalledWith('/collections/leaderboard', { params: { limit: 10 } });
   });
 
-  it('returns exactly top 5 collectors ranked by score in descending order', async () => {
-    const topCollectors = await getTopCollectors(5);
+  it('normalizes highlight card fields and clamps the requested limit to ten', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue({
+      data: { items: [{ ownerId: 'user-1', name: 'Collector', totalRareCards: '4', highlights: [{ id: 9, cardName: 'Mew', image: '/mew.png', quantity: '2' }] }] },
+    } as never);
 
-    expect(topCollectors).toHaveLength(5);
-    expect(topCollectors[0].rank).toBe(1);
-    expect(topCollectors[0].name).toBe('Red Champion');
-    expect(topCollectors[0].totalScore).toBe(175);
-
-    expect(topCollectors[1].rank).toBe(2);
-    expect(topCollectors[1].name).toBe('Cynthia Shirona');
-    expect(topCollectors[1].totalScore).toBe(160);
-
-    expect(topCollectors[2].rank).toBe(3);
-    expect(topCollectors[2].name).toBe('Steven Stone');
-    expect(topCollectors[2].totalScore).toBe(130);
-
-    expect(topCollectors[3].rank).toBe(4);
-    expect(topCollectors[3].name).toBe('Lance Dragon');
-    expect(topCollectors[3].totalScore).toBe(90);
-
-    expect(topCollectors[4].rank).toBe(5);
-    expect(topCollectors[4].name).toBe('Ash Ketchum');
-    expect(topCollectors[4].totalScore).toBe(70);
-
-    // Verify Gary Oak (Rank 6, 35 pts) is excluded
-    const garyInTop5 = topCollectors.find((c) => c.name === 'Gary Oak');
-    expect(garyInTop5).toBeUndefined();
-
-    // Verify scores are strictly descending
-    for (let i = 0; i < topCollectors.length - 1; i++) {
-      expect(topCollectors[i].totalScore).toBeGreaterThanOrEqual(topCollectors[i + 1].totalScore);
-    }
-  });
-
-  it('featured cards only include ultra-rare cards and discard common cards', async () => {
-    const topCollectors = await getTopCollectors(1);
-    const red = topCollectors[0];
-
-    expect(red.name).toBe('Red Champion');
-    // In mockCollection, Red has Caterpie (Common) x 10, which must NOT be in featuredCards
-    const hasCommonCard = red.featuredCards.some((card) => card.rarity.toLowerCase() === 'common');
-    expect(hasCommonCard).toBe(false);
-
-    // Top card should be Trophy Pikachu (30 pts)
-    expect(red.featuredCards[0].points).toBe(30);
+    const result = await getTopCollectors(100);
+    expect(result[0]).toMatchObject({ userId: 'user-1', displayName: 'Collector', rareCardCount: 4 });
+    expect(result[0].highlights[0]).toMatchObject({ cardId: '9', name: 'Mew', imageUrl: '/mew.png', quantity: 2 });
+    expect(apiClient.get).toHaveBeenCalledWith('/collections/leaderboard', { params: { limit: 10 } });
   });
 });

@@ -3,7 +3,7 @@
 import { PublicLayout } from '@/app/layouts/PublicLayout';
 import { WorkspaceLayout } from '@/app/layouts/WorkspaceLayout';
 import { authRoutes } from '@/features/auth/routes';
-import { collectionRoutes } from '@/features/collection/routes';
+import { collectionRoutes, publicCollectionRoutes } from '@/features/collection/routes';
 import { checkoutRoutes } from '@/features/checkout/routes';
 import { discoveryRoutes } from '@/features/discovery/routes';
 import { notificationRoutes } from '@/features/notifications/routes';
@@ -50,6 +50,7 @@ export const router = createBrowserRouter([
       ...discoveryRoutes,
       ...authRoutes,
       ...publicStoreRoutes,
+      ...publicCollectionRoutes,
       accountRoutes,
       { path: '*', element: <NotFoundPage /> },
     ],

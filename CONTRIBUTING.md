@@ -13,7 +13,7 @@
 
 ## Branch และ commit
 
-`main` และ `develop` เป็น protected branches ชื่อ branch ต้องมี Jira key:
+`main` และ `develop` เป็น protected branches โดย branch naming ใช้กติกาแยกตามชนิดงาน:
 
 ```text
 feat/scrum-15-reservation-notification
@@ -22,7 +22,15 @@ refactor/scrum-37-trading-architecture
 docs/scrum-31-order-lifecycle
 ```
 
-รูปแบบคือ `<type>/scrum-<number>-<kebab-case>` และ commit ใช้ Conventional Commits เช่น:
+งาน feature, docs, test, ci, chore, refactor และ build ใช้รูปแบบ `<type>/scrum-<number>-<kebab-case>` ส่วนงานแก้ไขเร่งด่วน, audit หรือ cross-cutting maintenance ใช้ `fix/<kebab-case>` ได้โดยไม่ต้องฝัง Jira key ในชื่อ branch แต่ PR ต้องระบุ ticket/เหตุผลที่เกี่ยวข้องเมื่อมี
+
+ตัวอย่าง:
+
+```text
+fix/api-integration-audit
+```
+
+commit ใช้ Conventional Commits เช่น:
 
 ```text
 feat(SCRUM-42): transfer cards when seller marks order sent

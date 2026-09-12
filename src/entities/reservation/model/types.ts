@@ -40,6 +40,8 @@ export function canTransitionReservationStatus(
 export interface ReservationCartItem {
   listing: CardListing;
   quantity: number;
+  available?: boolean;
+  availableQuantity?: number;
 }
 
 export interface ReservationOrder {

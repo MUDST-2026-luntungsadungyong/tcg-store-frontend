@@ -53,29 +53,41 @@ export function CardDetailPage() {
     }
   };
 
-  const handleAddToReservationCart = () => {
+  const handleAddToReservationCart = async () => {
     if (!token) {
       setShowLoginModal(true);
       return;
     }
     if (!product) return;
-    const success = addItem(product, quantity);
+    const success = await addItem(product, quantity);
     if (success) {
       addToast({ 
         message: `Added ${quantity} × ${product.name} to your reservation cart.`, 
         type: 'success' 
       });
+    } else {
+      addToast({
+        message: 'Unable to add this listing to your cart. Please try again.',
+        type: 'error',
+      });
     }
   };
 
-  const handleReserveNow = () => {
+  const handleReserveNow = async () => {
     if (!token) {
       setShowLoginModal(true);
       return;
     }
     if (!product) return;
-    addItem(product, quantity);
-    navigate('/cart');
+    const success = await addItem(product, quantity);
+    if (success) {
+      navigate('/cart');
+    } else {
+      addToast({
+        message: 'Unable to add this listing to your cart. Please try again.',
+        type: 'error',
+      });
+    }
   };
 
   const handleSaveToCollection = async () => {
@@ -307,7 +319,7 @@ export function CardDetailPage() {
                 {/* Add to reservation cart */}
                 <button
                   type="button"
-                  onClick={handleAddToReservationCart}
+                  onClick={() => void handleAddToReservationCart()}
                   disabled={product.stock <= 0}
                   className="h-[40px] px-4 bg-[rgba(31,53,101,0.5)] hover:bg-[#1F3565] border border-[#6889D0] rounded-[5px] text-white text-[11px] font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -318,7 +330,7 @@ export function CardDetailPage() {
                 {/* Reserve now */}
                 <button
                   type="button"
-                  onClick={handleReserveNow}
+                  onClick={() => void handleReserveNow()}
                   disabled={product.stock <= 0}
                   className="h-[40px] px-5 bg-[#2B53A9] hover:bg-[#244691] rounded-[5px] text-white text-[11px] font-bold flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >

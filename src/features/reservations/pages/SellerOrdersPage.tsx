@@ -37,6 +37,7 @@ export function SellerOrdersPage() {
     cancelledOrders: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<SellerOrder | null>(null);
@@ -45,6 +46,7 @@ export function SellerOrdersPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const [orderRes, profitRes] = await Promise.all([
         fetchSellerOrders(0, 50, statusFilter),
@@ -54,6 +56,7 @@ export function SellerOrdersPage() {
       setSummary(profitRes);
     } catch (err) {
       console.error('Failed to load seller orders data:', err);
+      setError(err instanceof Error ? err.message : 'Unable to load seller orders.');
     } finally {
       setLoading(false);
     }
@@ -70,6 +73,7 @@ export function SellerOrdersPage() {
       await loadData();
     } catch (err) {
       console.error('Failed to update status:', err);
+      setError(err instanceof Error ? err.message : 'Unable to update order status.');
     } finally {
       setActionLoadingId(null);
     }
@@ -90,18 +94,6 @@ export function SellerOrdersPage() {
         return (
           <Badge variant="warning" className="flex items-center gap-1">
             <Clock size={12} /> Pending Fulfillment
-          </Badge>
-        );
-      case 'RESERVED':
-        return (
-          <Badge variant="warning" className="flex items-center gap-1">
-            <Clock size={12} /> Awaiting Shipment
-          </Badge>
-        );
-      case 'SENT':
-        return (
-          <Badge variant="success" className="flex items-center gap-1">
-            <CheckCircle2 size={12} /> Sent &amp; Transferred
           </Badge>
         );
       case 'FULFILLED':
@@ -138,6 +130,12 @@ export function SellerOrdersPage() {
           Refresh Data
         </Button>
       </div>
+
+      {error && (
+        <div role="alert" className="rounded-xl border border-status-danger/30 bg-status-danger/10 p-4 text-sm text-red-200">
+          Unable to load or update seller orders: {error}
+        </div>
+      )}
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -202,7 +200,7 @@ export function SellerOrdersPage() {
       <div className="bg-[#192338] border border-[#31405A] rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Status Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-          {['ALL', 'RESERVED', 'SENT', 'PENDING', 'FULFILLED', 'CANCELLED'].map((tab) => (
+          {['ALL', 'PENDING', 'FULFILLED', 'CANCELLED'].map((tab) => (
             <button
               key={tab}
               onClick={() => setStatusFilter(tab)}
@@ -330,16 +328,16 @@ export function SellerOrdersPage() {
                       {/* Actions */}
                       <td className="p-4 align-top text-right whitespace-nowrap">
                         <div className="flex flex-col gap-1.5 items-end">
-                          {(order.status === 'PENDING' || order.status === 'RESERVED') && (
+                          {order.status === 'PENDING' && (
                             <>
                               <Button
                                 size="sm"
                                 variant="primary"
                                 disabled={isActionLoading}
-                                 onClick={() => handleStatusUpdate(order.id, order.status === 'RESERVED' ? 'SENT' : 'FULFILLED')}
+                                onClick={() => handleStatusUpdate(order.id, 'FULFILLED')}
                                 className="w-28 text-xs bg-status-success hover:bg-status-success/90"
                               >
-                                 {order.status === 'RESERVED' ? 'Confirm Shipment' : 'Mark Fulfilled'}
+                                Mark Fulfilled
                               </Button>
                               <Button
                                 size="sm"
@@ -352,9 +350,9 @@ export function SellerOrdersPage() {
                               </Button>
                             </>
                           )}
-                          {(order.status === 'FULFILLED' || order.status === 'SENT') && (
+                          {order.status === 'FULFILLED' && (
                             <span className="text-xs text-status-success flex items-center gap-1">
-                              <CheckCircle2 size={13} /> {order.status === 'SENT' ? 'Sent & Transferred' : 'Completed'}
+                              <CheckCircle2 size={13} /> Completed
                             </span>
                           )}
                           {order.status === 'CANCELLED' && (

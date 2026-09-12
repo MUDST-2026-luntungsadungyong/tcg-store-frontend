@@ -3,6 +3,63 @@ import { storage } from '@/infrastructure/mock-db/storage';
 import type { CardListing, CollectionEntry } from '@/entities/card/model/types';
 import apiClient from '@/shared/api/client';
 
+export interface CollectionPageMetadata {
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface CollectionResponse {
+  items: CollectionEntryResponse[];
+  page: CollectionPageMetadata;
+}
+
+interface CollectionEntryResponse {
+  id: string;
+  ownerId: string;
+  quantity?: number;
+  cardId?: string;
+  cardName?: string;
+  game?: string;
+  setName?: string;
+  cardNumber?: string;
+  rarity?: string;
+  condition?: string;
+  imageUrl?: string;
+  sourceOrderId?: string;
+  createdAt?: string;
+  acquiredAt?: string;
+  listing?: Partial<CardListing>;
+}
+
+function normalizeCollectionEntry(value: CollectionEntryResponse): CollectionEntry {
+  const listing = value.listing ?? {};
+  const listingId = String(listing.id ?? value.cardId ?? value.id);
+  return {
+    id: String(value.id),
+    ownerId: String(value.ownerId),
+    listing: {
+      id: listingId,
+      sellerId: String(listing.sellerId ?? ''),
+      name: String(listing.name ?? value.cardName ?? listingId),
+      game: String(listing.game ?? value.game ?? ''),
+      image: String(listing.image ?? value.imageUrl ?? ''),
+      price: Number(listing.price ?? 0),
+      cost: Number(listing.cost ?? listing.price ?? 0),
+      stock: Number(listing.stock ?? 0),
+      status: listing.status === 'HIDE' ? 'HIDE' : 'SHOW',
+      condition: listing.condition ?? value.condition,
+      set: listing.set ?? value.setName,
+      rarity: listing.rarity ?? value.rarity,
+      cardNumber: listing.cardNumber ?? value.cardNumber,
+    },
+    quantity: Number(value.quantity ?? 0),
+    sourceOrderId: String(value.sourceOrderId ?? ''),
+    acquiredAt: String(value.acquiredAt ?? value.createdAt ?? new Date(0).toISOString()),
+  };
+}
+
 export const collectionApi = {
   getMyCollection: async (): Promise<CollectionEntry[]> => {
     if (ENV.ENABLE_MOCK_API) {
@@ -11,8 +68,8 @@ export const collectionApi = {
       const userId = token?.includes('admin') ? 'usr-2' : token?.includes('seller') ? 'usr-3' : 'usr-1';
       return storage.getCollection().filter((item) => item.ownerId === userId);
     }
-    const response = await apiClient.get<CollectionEntry[]>('/collection');
-    return response.data;
+    const response = await apiClient.get<CollectionResponse>('/collection');
+    return response.data.items.map(normalizeCollectionEntry);
   },
 
   addToCollection: async (listing: CardListing): Promise<CollectionEntry> => {

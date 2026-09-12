@@ -1,6 +1,7 @@
 import type { CardListing } from '@/entities/card/model/types';
 
 export type ReservationStatus =
+  | 'PENDING'
   | 'RESERVED'
   | 'FULFILLED'
   | 'SENT'

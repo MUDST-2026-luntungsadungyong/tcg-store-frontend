@@ -1,18 +1,12 @@
-name: Docker Image CI
+name: Runner Test
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+on: workflow_dispatch
 
 jobs:
-
-  build:
-
-    runs-on: self-hosted
-
+  test:
+    runs-on: [self-hosted, Windows, X64]
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      - name: Check runner
+        run: |
+          hostname
+          docker --version

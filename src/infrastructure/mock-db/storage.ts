@@ -58,7 +58,7 @@ export function initMockStorage() {
     localStorage.setItem(STORAGE_KEYS.RESERVATIONS, JSON.stringify(mockReservations));
   }
   const existingCollection = localStorage.getItem(STORAGE_KEYS.COLLECTION);
-  if (!existingCollection || existingCollection === '[]') {
+  if (!existingCollection) {
     localStorage.setItem(STORAGE_KEYS.COLLECTION, JSON.stringify(mockCollection));
   }
   if (!localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)) {
@@ -76,28 +76,16 @@ export function setStorageData<T>(key: string, data: T[]): void {
 }
 
 export const storage = {
-  getListings: () => {
-    const data = getStorageData<CardListing>(STORAGE_KEYS.LISTINGS);
-    return data.length > 0 ? data : mockListings;
-  },
+  getListings: () => getStorageData<CardListing>(STORAGE_KEYS.LISTINGS),
   setListings: (listings: CardListing[]) => setStorageData(STORAGE_KEYS.LISTINGS, listings),
 
-  getUsers: () => {
-    const data = getStorageData<User>(STORAGE_KEYS.USERS);
-    return data.length > 0 ? data : mockUsers;
-  },
+  getUsers: () => getStorageData<User>(STORAGE_KEYS.USERS),
   setUsers: (users: User[]) => setStorageData(STORAGE_KEYS.USERS, users),
 
-  getReservations: () => {
-    const data = getStorageData<ReservationOrder>(STORAGE_KEYS.RESERVATIONS);
-    return data.length > 0 ? data : mockReservations;
-  },
+  getReservations: () => getStorageData<ReservationOrder>(STORAGE_KEYS.RESERVATIONS),
   setReservations: (orders: ReservationOrder[]) => setStorageData(STORAGE_KEYS.RESERVATIONS, orders),
 
-  getCollection: () => {
-    const data = getStorageData<CollectionEntry>(STORAGE_KEYS.COLLECTION);
-    return data.length > 0 ? data : mockCollection;
-  },
+  getCollection: () => getStorageData<CollectionEntry>(STORAGE_KEYS.COLLECTION),
 
   getReservationCart: (buyerId: string) =>
     getStorageData<ReservationCartItem>(reservationCartStorageKey(buyerId)),

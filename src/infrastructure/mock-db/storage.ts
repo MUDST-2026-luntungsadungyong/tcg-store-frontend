@@ -15,10 +15,10 @@ import {
 } from './data';
 
 const STORAGE_KEYS = {
-  LISTINGS: 'mythix_mock_listings_v1',
-  USERS: 'mythix_mock_users_v5',
+  LISTINGS: 'mythix_mock_listings_v2',
+  USERS: 'mythix_mock_users_v6',
   RESERVATIONS: 'mythix_mock_reservations_v1',
-  COLLECTION: 'mythix_mock_collection_v1',
+  COLLECTION: 'mythix_mock_collection_v2',
   NOTIFICATIONS: 'mythix_mock_notifications_v1',
 };
 
@@ -57,7 +57,8 @@ export function initMockStorage() {
   if (!localStorage.getItem(STORAGE_KEYS.RESERVATIONS)) {
     localStorage.setItem(STORAGE_KEYS.RESERVATIONS, JSON.stringify(mockReservations));
   }
-  if (!localStorage.getItem(STORAGE_KEYS.COLLECTION)) {
+  const existingCollection = localStorage.getItem(STORAGE_KEYS.COLLECTION);
+  if (!existingCollection) {
     localStorage.setItem(STORAGE_KEYS.COLLECTION, JSON.stringify(mockCollection));
   }
   if (!localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)) {
@@ -84,12 +85,12 @@ export const storage = {
   getReservations: () => getStorageData<ReservationOrder>(STORAGE_KEYS.RESERVATIONS),
   setReservations: (orders: ReservationOrder[]) => setStorageData(STORAGE_KEYS.RESERVATIONS, orders),
 
+  getCollection: () => getStorageData<CollectionEntry>(STORAGE_KEYS.COLLECTION),
+
   getReservationCart: (buyerId: string) =>
     getStorageData<ReservationCartItem>(reservationCartStorageKey(buyerId)),
   setReservationCart: (buyerId: string, items: ReservationCartItem[]) =>
     setStorageData(reservationCartStorageKey(buyerId), items),
-
-  getCollection: () => getStorageData<CollectionEntry>(STORAGE_KEYS.COLLECTION),
   setCollection: (entries: CollectionEntry[]) => setStorageData(STORAGE_KEYS.COLLECTION, entries),
 
   getNotifications: () => getStorageData<Notification>(STORAGE_KEYS.NOTIFICATIONS),

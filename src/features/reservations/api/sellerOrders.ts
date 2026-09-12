@@ -1,4 +1,9 @@
 import apiClient from '@/shared/api/client';
+import type { ReservationOrder } from '@/entities/reservation/model/types';
+import { ENV } from '@/shared/config/env';
+import { useAuthStore } from '@/features/auth/model/useAuthStore';
+import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
+import { reservationOrdersApi } from './reservationOrders';
 
 export interface SellerOrderItem {
   itemId: number | string;
@@ -132,11 +137,68 @@ const fallbackOrders: SellerOrder[] = [
 
 let localOrdersCache = [...fallbackOrders];
 
+function mapReservationOrder(order: ReservationOrder): SellerOrder {
+  const buyer = storage.getUsers().find((user) => user.id === order.buyerId);
+  const items = order.items.map((item, index) => ({
+    itemId: `${order.id}-${index}`,
+    cardId: item.listing.id,
+    productName: item.listing.name,
+    unitPrice: item.listing.price,
+    unitCost: item.listing.cost,
+    itemProfit: (item.listing.price - item.listing.cost) * item.quantity,
+    quantity: item.quantity,
+    itemTotal: item.listing.price * item.quantity,
+  }));
+  const sellerRevenue = order.totalAmount;
+  const sellerCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
+
+  return {
+    id: order.id,
+    orderNumber: order.id.toUpperCase(),
+    status: order.status,
+    buyerId: order.buyerId,
+    buyerName: buyer?.name ?? `Buyer ${order.buyerId}`,
+    buyerEmail: buyer?.email,
+    buyerPhone: buyer?.phone,
+    buyerContactLine: buyer?.line,
+    buyerContactFacebook: buyer?.facebook,
+    sellerRevenue,
+    sellerCost,
+    sellerProfit: sellerRevenue - sellerCost,
+    items,
+    createdAt: order.createdAt,
+    updatedAt: order.sentAt ?? order.createdAt,
+  };
+}
+
+function getMockSellerOrders(): SellerOrder[] {
+  initMockStorage();
+  const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
+  return storage.getReservations().filter((order) => order.sellerId === sellerId).map(mapReservationOrder);
+}
+
 export async function fetchSellerOrders(
   page: number = 0,
   size: number = 20,
   status?: string
 ): Promise<SellerOrdersPageResponse> {
+  if (ENV.ENABLE_MOCK_API) {
+    let filtered = getMockSellerOrders();
+    if (status && status !== 'ALL') {
+      filtered = filtered.filter((order) => {
+        if (status === 'PENDING') return order.status === 'RESERVED';
+        if (status === 'FULFILLED') return order.status === 'SENT';
+        return order.status.toUpperCase() === status.toUpperCase();
+      });
+    }
+    return {
+      orders: filtered.slice(page * size, (page + 1) * size),
+      totalPages: Math.max(1, Math.ceil(filtered.length / size)),
+      totalElements: filtered.length,
+      currentPage: page,
+    };
+  }
+
   try {
     const params: Record<string, unknown> = { page, size };
     if (status && status !== 'ALL') {
@@ -176,6 +238,14 @@ export async function updateSellerOrderStatus(
   orderId: number | string,
   newStatus: string
 ): Promise<SellerOrder> {
+  if (ENV.ENABLE_MOCK_API && (newStatus.toUpperCase() === 'SENT' || String(orderId).startsWith('ORD-'))) {
+    const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
+    if (newStatus.toUpperCase() === 'SENT') {
+      const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
+      return mapReservationOrder(updated);
+    }
+  }
+
   try {
     const res = await apiClient.patch(`/api/seller/orders/${orderId}/status`, {
       status: newStatus.toUpperCase(),
@@ -202,6 +272,22 @@ export async function updateSellerOrderStatus(
 }
 
 export async function fetchProfitSummary(): Promise<SellerProfitSummary> {
+  if (ENV.ENABLE_MOCK_API) {
+    const orders = getMockSellerOrders();
+    const active = orders.filter((order) => order.status !== 'CANCELLED');
+    const totalRevenue = active.reduce((sum, order) => sum + order.sellerRevenue, 0);
+    const totalCost = active.reduce((sum, order) => sum + order.sellerCost, 0);
+    return {
+      totalRevenue,
+      totalCost,
+      netProfit: totalRevenue - totalCost,
+      totalOrders: orders.length,
+      pendingOrders: orders.filter((order) => order.status === 'RESERVED').length,
+      fulfilledOrders: orders.filter((order) => order.status === 'SENT').length,
+      cancelledOrders: orders.filter((order) => order.status === 'CANCELLED').length,
+    };
+  }
+
   try {
     const res = await apiClient.get('/api/seller/orders/profit');
     if (res.data) {

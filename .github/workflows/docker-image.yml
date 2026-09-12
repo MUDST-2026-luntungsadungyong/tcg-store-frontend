@@ -1,0 +1,12 @@
+name: Runner Test
+
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - name: Check runner
+        run: |
+          hostname
+          docker --version

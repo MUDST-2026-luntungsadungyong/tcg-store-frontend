@@ -1,6 +1,8 @@
-import type { RouteObject } from 'react-router-dom';
-import { PlaceholderPage } from '@/shared/components/PlaceholderPage';
+﻿import type { RouteObject } from 'react-router-dom';
 
 export const collectionRoutes: RouteObject[] = [
-  { path: 'collection', element: <PlaceholderPage title="My Collection" /> },
+  {
+    path: 'collection',
+    lazy: async () => ({ Component: (await import('./pages/MyCollectionPage')).MyCollectionPage }),
+  },
 ];

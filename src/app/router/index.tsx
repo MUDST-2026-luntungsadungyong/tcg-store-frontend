@@ -1,9 +1,10 @@
-import { createBrowserRouter, type RouteObject } from 'react-router-dom';
+﻿import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 
 import { PublicLayout } from '@/app/layouts/PublicLayout';
 import { WorkspaceLayout } from '@/app/layouts/WorkspaceLayout';
 import { authRoutes } from '@/features/auth/routes';
 import { collectionRoutes } from '@/features/collection/routes';
+import { checkoutRoutes } from '@/features/checkout/routes';
 import { discoveryRoutes } from '@/features/discovery/routes';
 import { notificationRoutes } from '@/features/notifications/routes';
 import { profileRoutes } from '@/features/profile/routes';
@@ -22,6 +23,7 @@ const accountRoutes: RouteObject = {
   element: <ProtectedRoute />,
   children: [
     ...reservationCartRoutes,
+    ...checkoutRoutes,
     ...buyerReservationRoutes,
     ...collectionRoutes,
     ...notificationRoutes,
@@ -31,7 +33,7 @@ const accountRoutes: RouteObject = {
 
 const workspaceRoute: RouteObject = {
   path: '/workspace',
-  element: <ProtectedRoute requiredRole="SELLER" />,
+  element: <ProtectedRoute requiredSeller />,
   children: [
     {
       element: <WorkspaceLayout />,

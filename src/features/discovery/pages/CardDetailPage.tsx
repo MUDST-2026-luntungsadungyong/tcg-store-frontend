@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Card3DViewer } from '@/features/discovery/components/Card3DViewer';
-import { ShoppingCart, Minus, Plus } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Bookmark } from 'lucide-react';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
+import { collectionApi } from '@/features/collection';
 import type { CardListing } from '@/entities/card/model/types';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { useToastStore } from '@/shared/model/useToastStore';
@@ -52,29 +53,61 @@ export function CardDetailPage() {
     }
   };
 
-  const handleAddToReservationCart = () => {
+  const handleAddToReservationCart = async () => {
     if (!token) {
       setShowLoginModal(true);
       return;
     }
     if (!product) return;
-    const success = addItem(product, quantity);
+    const success = await addItem(product, quantity);
     if (success) {
       addToast({ 
         message: `Added ${quantity} × ${product.name} to your reservation cart.`, 
         type: 'success' 
       });
+    } else {
+      addToast({
+        message: 'Unable to add this listing to your cart. Please try again.',
+        type: 'error',
+      });
     }
   };
 
-  const handleReserveNow = () => {
+  const handleReserveNow = async () => {
     if (!token) {
       setShowLoginModal(true);
       return;
     }
     if (!product) return;
-    addItem(product, quantity);
-    navigate('/cart');
+    const success = await addItem(product, quantity);
+    if (success) {
+      navigate('/cart');
+    } else {
+      addToast({
+        message: 'Unable to add this listing to your cart. Please try again.',
+        type: 'error',
+      });
+    }
+  };
+
+  const handleSaveToCollection = async () => {
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
+    if (!product) return;
+    try {
+      await collectionApi.addToCollection(product);
+      addToast({
+        type: 'success',
+        message: `Saved "${product.name}" to your collection!`,
+      });
+    } catch {
+      addToast({
+        type: 'error',
+        message: 'Failed to add card to collection.',
+      });
+    }
   };
 
   if (isLoading) {
@@ -286,7 +319,7 @@ export function CardDetailPage() {
                 {/* Add to reservation cart */}
                 <button
                   type="button"
-                  onClick={handleAddToReservationCart}
+                  onClick={() => void handleAddToReservationCart()}
                   disabled={product.stock <= 0}
                   className="h-[40px] px-4 bg-[rgba(31,53,101,0.5)] hover:bg-[#1F3565] border border-[#6889D0] rounded-[5px] text-white text-[11px] font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -297,11 +330,22 @@ export function CardDetailPage() {
                 {/* Reserve now */}
                 <button
                   type="button"
-                  onClick={handleReserveNow}
+                  onClick={() => void handleReserveNow()}
                   disabled={product.stock <= 0}
                   className="h-[40px] px-5 bg-[#2B53A9] hover:bg-[#244691] rounded-[5px] text-white text-[11px] font-bold flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Reserve now
+                </button>
+
+                {/* Save to Collection Button (US-10-2) */}
+                <button
+                  type="button"
+                  onClick={handleSaveToCollection}
+                  className="h-[40px] px-3.5 bg-bg-surface hover:bg-bg-elevated border border-white/20 rounded-[5px] text-gray-200 hover:text-white text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all"
+                  title="Save to Personal Collection"
+                >
+                  <Bookmark size={13} className="text-brand-blue" />
+                  <span>Collect</span>
                 </button>
               </div>
 

@@ -25,7 +25,7 @@ export function LoginPage() {
     try {
       const { token, user } = await authApi.login(email, password);
       login(token, user);
-      navigate(getPostAuthDestination(user.role, location.state));
+      navigate(getPostAuthDestination(user, location.state));
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Login failed'));
     } finally {

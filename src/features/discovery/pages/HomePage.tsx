@@ -7,6 +7,93 @@ import { getMostExpensiveOnSaleCards } from '@/features/discovery/lib/expensiveC
 import type { CardListing } from '@/entities/card/model/types';
 import { Skeleton } from '@/shared/components/Skeleton';
 
+type HomeBanner = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  image: string;
+  href: string;
+};
+
+const HOME_BANNERS: HomeBanner[] = [
+  {
+    id: 'pokemon-30th-celebration',
+    eyebrow: 'Featured update',
+    title: 'Pokémon TCG: 30th Celebration',
+    description: 'Celebrate three decades of Pokémon through a playful new card collection.',
+    image: '/assets/whats_new_91_28.png',
+    href: '/cards'
+  },
+  {
+    id: 'marketplace-highlights',
+    eyebrow: 'Marketplace guide',
+    title: 'Discover the most valuable cards on Mythix',
+    description: 'Explore high-value cards currently listed and available from verified sellers.',
+    image: '/assets/expensive_card_banner_132_306.png',
+    href: '/cards'
+  }
+];
+
+const FEATURED_HOME_BANNER = HOME_BANNERS[0];
+
+function FeaturedBannerPreview({ banner }: { banner: HomeBanner }) {
+  return (
+    <Link
+      to={banner.href}
+      aria-label={`Open ${banner.title}`}
+      className="group absolute bottom-8 right-6 z-30 hidden w-[min(42vw,540px)] overflow-hidden rounded-[28px] border border-white/20 bg-bg-card/75 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1 lg:flex"
+    >
+      <div className="h-32 w-40 shrink-0 overflow-hidden rounded-[20px] bg-white">
+        <img src={banner.image} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col px-5 py-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-status-warning">{banner.eyebrow}</span>
+        <h2 className="mt-2 line-clamp-2 text-xl font-bold leading-tight text-[#DBE3F3]">{banner.title}</h2>
+        <div className="mt-auto flex items-center justify-between gap-3">
+          <span className="text-xs font-medium text-[#DBE3F3]/70">Discover the story</span>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-status-warning text-bg-card transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">
+            <ChevronRight size={22} />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function EditorialBanners() {
+  return (
+    <section id="latest-stories" className="bg-bg-card py-16">
+      <div className="mx-auto max-w-[1440px] px-4 md:px-8">
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-status-warning">Mythix stories</p>
+            <h2 className="mt-2 text-3xl font-bold text-[#DBE3F3] md:text-4xl">What&apos;s new</h2>
+          </div>
+          <span className="text-sm text-[#DBE3F3]/60">{HOME_BANNERS.length.toString().padStart(2, '0')} stories</span>
+        </div>
+        <div className="flex snap-x gap-6 overflow-x-auto pb-6 custom-scrollbar">
+          {HOME_BANNERS.map((banner, index) => (
+            <Link key={banner.id} to={banner.href} className="group grid min-h-[280px] min-w-[min(88vw,680px)] snap-start overflow-hidden rounded-[28px] border border-white/10 bg-white text-bg-card shadow-xl md:grid-cols-[1.15fr_0.85fr]">
+              <div className="relative min-h-52 overflow-hidden bg-white md:min-h-full">
+                <img src={banner.image} alt="" className={`h-full w-full transition-transform duration-500 group-hover:scale-[1.03] ${index === 1 ? 'object-contain p-5' : 'object-cover'}`} />
+              </div>
+              <div className="flex flex-col p-6 md:p-8">
+                <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#8A6D16]">{banner.eyebrow}</span>
+                <h3 className="mt-3 text-2xl font-black leading-tight">{banner.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-[#596173]">{banner.description}</p>
+                <span className="mt-8 inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-bg-card px-5 py-3 text-sm font-bold text-[#DBE3F3] transition-colors group-hover:bg-bg-elevated">
+                  Learn more <ChevronRight size={18} />
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/30 bg-bg-card p-8 text-center">
@@ -21,7 +108,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 
 function ExpensiveCards({ cards, loading, error, onRetry }: { cards: CardListing[]; loading: boolean; error: string | null; onRetry: () => void }) {
   return (
-    <section className="bg-bg-surface py-16">
+    <section id="expensive-cards" className="bg-bg-surface py-16">
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
         <div className="mb-12 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
@@ -201,7 +288,7 @@ export function HomePage() {
 
   return (
     <div className="flex w-full flex-col overflow-hidden pb-20">
-      <section className="relative h-[calc(100dvh-64px)] min-h-[560px] w-full overflow-hidden bg-bg-card">
+      <section className="relative h-[calc(100dvh-64px)] min-h-[680px] w-full overflow-hidden bg-bg-card">
         <img src="/assets/hero_castle_bg.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg-card/10 via-transparent to-bg-card/80" aria-hidden="true" />
         <div className="hidden">
@@ -217,9 +304,9 @@ export function HomePage() {
           </a>
         </div>
         <span
-          className="pointer-events-none absolute select-none whitespace-nowrap font-sans text-[rgba(255,255,255,0.3)]"
+          className="pointer-events-none absolute hidden select-none whitespace-nowrap font-sans text-[rgba(255,255,255,0.12)] md:block"
           style={{
-            left: '10.9%',
+            left: '29%',
             top: '25.7%',
             fontSize: 'clamp(2rem, 8.9vw, 8rem)',
             lineHeight: 1
@@ -229,7 +316,7 @@ export function HomePage() {
           MYTHIC
         </span>
         <span
-          className="pointer-events-none absolute select-none whitespace-nowrap font-sans text-[rgba(255,255,255,0.1)]"
+          className="pointer-events-none absolute hidden select-none whitespace-nowrap font-sans text-[rgba(255,255,255,0.1)] md:block"
           style={{
             left: '54.9%',
             top: '50%',
@@ -240,26 +327,28 @@ export function HomePage() {
         >
           MARKET
         </span>
-        <div className="absolute inset-x-5 bottom-[22%] z-20 mx-auto max-w-md text-center md:bottom-[14%] md:left-[10.9%] md:right-auto md:mx-0 md:text-left">
+        <div className="absolute inset-x-5 top-[38%] z-20 mx-auto max-w-3xl -translate-y-1/2 text-center md:left-[7%] md:right-auto md:mx-0 md:text-left">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.32em] text-status-warning sm:text-sm">Mythix trading platform</p>
-          <h2 className="text-3xl font-black leading-[0.98] tracking-tight text-[#DBE3F3] sm:text-4xl md:text-5xl">
-            Rare finds. <span className="text-status-warning">Confident trades.</span>
+          <h2 className="text-5xl font-black leading-[0.92] tracking-[-0.045em] text-[#DBE3F3] sm:text-6xl lg:text-[76px]">
+            Rare finds.<br /><span className="text-status-warning">Confident trades.</span>
           </h2>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-[#DBE3F3]/80 sm:text-base">Discover rare Pokémon cards, build your collection, and trade with confidence.</p>
+          <p className="mx-auto mt-5 max-w-md text-sm leading-relaxed text-[#DBE3F3]/80 sm:text-base md:mx-0">Discover rare Pokémon cards, build your collection, and trade with confidence.</p>
           <a href="#explore-section" className="mt-6 inline-flex min-h-11 items-center rounded-xl bg-status-warning px-5 py-3 text-sm font-bold text-bg-card shadow-lg shadow-black/20 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-status-warning/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-warning">
             Explore marketplace
           </a>
         </div>
-        <div className="pointer-events-none absolute left-1/2 top-[35%] w-[clamp(220px,36vw,520px)] -translate-x-1/2 -translate-y-1/2">
+        <div className="pointer-events-none absolute left-[72%] top-[33%] hidden w-[clamp(260px,28vw,470px)] -translate-x-1/2 -translate-y-1/2 lg:block">
           <img src="/assets/mythix_logo_white_v2.png" alt="Mythix Market" className="block h-auto w-full object-contain" />
         </div>
         <h1 className="sr-only">Mythix Trading Platform</h1>
-        <a href="#explore-section" className="absolute left-1/2 top-[78.8%] flex -translate-x-1/2 flex-col items-center gap-2 font-sans text-[20px] font-bold text-[#DBE3F3] transition-colors duration-200 hover:text-status-warning md:text-[32px]">
+        <a href="#explore-section" className="hidden">
           <span>Start!</span>
           <img src="/assets/chevron_double_down.svg" alt="" aria-hidden="true" className="h-6 w-6 animate-pulse md:h-8 md:w-8" />
         </a>
+        <FeaturedBannerPreview banner={FEATURED_HOME_BANNER} />
       </section>
       <div id="explore-section" className="w-full">
+        <EditorialBanners />
         <ExpensiveCards cards={expensiveCards} loading={listingsLoading} error={listingsError} onRetry={loadHomeData} />
         <Leaderboard collectors={topCollectors} loading={leaderboardLoading} error={leaderboardError} onRetry={loadHomeData} />
         <section className="bg-bg-surface py-12">

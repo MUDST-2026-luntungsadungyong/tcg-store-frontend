@@ -32,7 +32,7 @@ export function PublicCollectionPage() {
   }, [fetchCollection]);
 
   return (
-    <main className="min-h-[calc(100vh-64px)] w-full bg-bg-base px-4 py-10 text-white md:px-8">
+    <div className="min-h-[calc(100vh-64px)] w-full bg-bg-base px-4 py-10 text-white md:px-8">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -123,6 +123,6 @@ export function PublicCollectionPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }

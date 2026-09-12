@@ -9,16 +9,18 @@ jobs:
     name: Validate branch name
     runs-on: ubuntu-latest
     steps:
-      - name: Require Jira key in branch name
+      - name: Validate branch name
         env:
           BRANCH_NAME: ${{ github.head_ref }}
         run: |
-          if [[ "$BRANCH_NAME" == dependabot/* ]]; then
+          # Fix branches are allowed for hotfixes, audits, and cross-cutting
+          # maintenance where a single Jira ticket may not own the change.
+          if [[ "$BRANCH_NAME" == dependabot/* || "$BRANCH_NAME" == fix/* ]]; then
             exit 0
           fi
 
           if [[ ! "$BRANCH_NAME" =~ ^(feat|fix|docs|test|ci|chore|refactor|build)/scrum-[0-9]+-[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
             echo "Invalid branch: $BRANCH_NAME"
-            echo "Expected: <type>/scrum-<number>-<kebab-case>"
+            echo "Expected: fix/<kebab-case> or <type>/scrum-<number>-<kebab-case>"
             exit 1
           fi

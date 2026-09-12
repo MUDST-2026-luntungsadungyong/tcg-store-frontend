@@ -16,6 +16,7 @@ interface StatusConfig {
 }
 
 const STATUS_CONFIGS: Record<ReservationStatus, StatusConfig> = {
+  PENDING: { label: 'Pending Fulfillment', variant: 'warning', icon: Clock },
   RESERVED: { label: 'Awaiting Ship', variant: 'warning', icon: Clock },
   SENT: { label: 'Shipped', variant: 'gold', icon: Truck },
   FULFILLED: { label: 'Fulfilled', variant: 'success', icon: CheckCircle2 },
@@ -24,6 +25,7 @@ const STATUS_CONFIGS: Record<ReservationStatus, StatusConfig> = {
 
 const FILTER_TABS: Array<{ key: FilterTab; label: string }> = [
   { key: 'ALL', label: 'All' },
+  { key: 'PENDING', label: 'Pending Fulfillment' },
   { key: 'RESERVED', label: 'Awaiting Ship' },
   { key: 'SENT', label: 'Shipped' },
   { key: 'FULFILLED', label: 'Fulfilled' },

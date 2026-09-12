@@ -4,12 +4,9 @@ import { ChevronRight, Sparkles } from 'lucide-react';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
 import {
   getTopCollectors,
-  calculateTopCollectors,
   type CollectorRanking,
 } from '@/features/collection/api/leaderboard';
 import { getMostExpensiveOnSaleCards } from '@/features/discovery/lib/expensiveCards';
-import { mockCollection, mockUsers } from '@/infrastructure/mock-db/data';
-import { storage } from '@/infrastructure/mock-db/storage';
 import type { CardListing } from '@/entities/card/model/types';
 
 
@@ -113,15 +110,10 @@ function ExpensiveCardsCarousel() {
 }
 
 export function HomePage() {
-  const [featuredProducts, setFeaturedProducts] = useState<CardListing[]>(() =>
-    storage.getListings().filter((l) => l.status === 'SHOW').slice(0, 5),
-  );
-  const [expensiveCards, setExpensiveCards] = useState<CardListing[]>(() =>
-    getMostExpensiveOnSaleCards(storage.getListings(), 10),
-  );
-  const [topCollectors, setTopCollectors] = useState<CollectorRanking[]>(() =>
-    calculateTopCollectors(mockCollection, mockUsers, 5),
-  );
+  const [featuredProducts, setFeaturedProducts] = useState<CardListing[]>([]);
+  const [expensiveCards, setExpensiveCards] = useState<CardListing[]>([]);
+  const [topCollectors, setTopCollectors] = useState<CollectorRanking[]>([]);
+  const [homeError, setHomeError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,10 +126,12 @@ export function HomePage() {
           setExpensiveCards(getMostExpensiveOnSaleCards(res.items, 10));
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Failed to load home page listings:', error);
         if (!cancelled) {
-          setFeaturedProducts(storage.getListings().filter((l) => l.status === 'SHOW').slice(0, 5));
-          setExpensiveCards(getMostExpensiveOnSaleCards(storage.getListings(), 10));
+          setHomeError('Unable to load marketplace highlights. Please try again later.');
+          setFeaturedProducts([]);
+          setExpensiveCards([]);
         }
       });
 
@@ -145,8 +139,12 @@ export function HomePage() {
       .then((data) => {
         if (!cancelled && data.length > 0) setTopCollectors(data);
       })
-      .catch(() => {
-        if (!cancelled) setTopCollectors(calculateTopCollectors(mockCollection, mockUsers, 5));
+      .catch((error) => {
+        console.error('Failed to load leaderboard:', error);
+        if (!cancelled) {
+          setHomeError('Unable to load leaderboard data.');
+          setTopCollectors([]);
+        }
       });
 
     return () => {
@@ -223,6 +221,11 @@ export function HomePage() {
       </section>
 
       <div id="explore-section" className="w-full scroll-mt-20">
+        {homeError && (
+          <div role="alert" className="mx-auto max-w-[1440px] px-4 pt-6 text-sm text-red-200 md:px-8">
+            {homeError}
+          </div>
+        )}
         {/* 2. The 10 Most Expensive Pokémon Cards of 2025 (Auto-Slide Carousel 3s) */}
         <ExpensiveCardsCarousel />
 

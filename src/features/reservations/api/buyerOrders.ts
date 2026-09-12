@@ -2,6 +2,7 @@ import apiClient from '@/shared/api/client';
 import { ENV } from '@/shared/config/env';
 import type { ReservationOrder } from '@/entities/reservation/model/types';
 import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
+import { normalizeReservationOrder } from './reservationOrders';
 
 type BuyerOrdersResponse = ReservationOrder[] | { content?: ReservationOrder[] };
 
@@ -14,5 +15,6 @@ export async function fetchBuyerOrders(buyerId: string): Promise<ReservationOrde
 
   const response = await apiClient.get<BuyerOrdersResponse>('/orders/me');
   const data = response.data;
-  return Array.isArray(data) ? data : data.content ?? [];
+  const orders = Array.isArray(data) ? data : data.content ?? [];
+  return orders.map((order) => normalizeReservationOrder(order, buyerId));
 }

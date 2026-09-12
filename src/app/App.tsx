@@ -6,6 +6,7 @@ import { authApi } from '@/features/auth/api/auth';
 import { profileApi } from '@/features/profile/api/profile';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { configureApiClientAuth } from '@/shared/api/client';
+import { ToastProvider } from '@/shared/components/Toast';
 import { initMockStorage } from '@/infrastructure/mock-db/storage';
 
 configureApiClientAuth({
@@ -31,7 +32,10 @@ function App() {
   }, []);
 
   return (
-    <RouterProvider router={router} />
+    <>
+      <RouterProvider router={router} />
+      <ToastProvider />
+    </>
   );
 }
 

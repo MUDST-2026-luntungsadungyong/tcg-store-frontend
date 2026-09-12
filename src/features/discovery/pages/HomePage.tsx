@@ -203,6 +203,7 @@ export function HomePage() {
     <div className="flex w-full flex-col overflow-hidden pb-20">
       <section className="relative h-[calc(100dvh-64px)] min-h-[560px] w-full overflow-hidden bg-bg-card">
         <img src="/assets/hero_castle_bg.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg-card/10 via-transparent to-bg-card/80" aria-hidden="true" />
         <div className="hidden">
           <p className="mb-3 text-sm font-bold uppercase tracking-[0.35em] text-brand-gold">Mythix trading platform</p>
           <h1 className="text-5xl font-black tracking-tight text-white md:text-8xl">
@@ -239,6 +240,16 @@ export function HomePage() {
         >
           MARKET
         </span>
+        <div className="absolute inset-x-5 bottom-[22%] z-20 mx-auto max-w-md text-center md:bottom-[14%] md:left-[10.9%] md:right-auto md:mx-0 md:text-left">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.32em] text-status-warning sm:text-sm">Mythix trading platform</p>
+          <h2 className="text-3xl font-black leading-[0.98] tracking-tight text-[#DBE3F3] sm:text-4xl md:text-5xl">
+            Rare finds. <span className="text-status-warning">Confident trades.</span>
+          </h2>
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-[#DBE3F3]/80 sm:text-base">Discover rare Pokémon cards, build your collection, and trade with confidence.</p>
+          <a href="#explore-section" className="mt-6 inline-flex min-h-11 items-center rounded-xl bg-status-warning px-5 py-3 text-sm font-bold text-bg-card shadow-lg shadow-black/20 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-status-warning/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-warning">
+            Explore marketplace
+          </a>
+        </div>
         <div className="pointer-events-none absolute left-1/2 top-[35%] w-[clamp(220px,36vw,520px)] -translate-x-1/2 -translate-y-1/2">
           <img src="/assets/mythix_logo_white_v2.png" alt="Mythix Market" className="block h-auto w-full object-contain" />
         </div>

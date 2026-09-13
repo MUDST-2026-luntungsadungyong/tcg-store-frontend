@@ -42,9 +42,20 @@ export function PublicCollectionPage() {
             <h1 className="text-3xl font-bold tracking-tight md:text-5xl">
               {owner?.displayName ?? 'Public Collection'}
             </h1>
-            <p className="mt-2 text-sm text-text-secondary md:text-base">
-              Public collection showcase
-              {owner?.rareCardCount !== undefined ? ` · ${owner.rareCardCount} rare cards` : ''}
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-secondary md:text-base">
+              <span>Public collection showcase</span>
+              {owner?.rareCardCount !== undefined && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>{owner.rareCardCount} rare cards</span>
+                </>
+              )}
+              {owner?.distinctRareCardCount !== undefined && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>{owner.distinctRareCardCount} unique rare cards</span>
+                </>
+              )}
             </p>
           </div>
           <button

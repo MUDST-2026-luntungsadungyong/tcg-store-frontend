@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, ChevronRight, Layers, RefreshCw, Sparkles } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Layers, RefreshCw, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getTopCollectors, type CollectorRanking } from '@/features/collection/api/leaderboard';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
@@ -35,13 +35,17 @@ const HOME_BANNERS: HomeBanner[] = [
   }
 ];
 
-const FEATURED_HOME_BANNER = HOME_BANNERS[0];
-
-function FeaturedBannerPreview({ banner }: { banner: HomeBanner }) {
+function FeaturedBannerPreview({ banner, onMouseEnter, onMouseLeave }: { banner: HomeBanner; onMouseEnter: () => void; onMouseLeave: () => void }) {
   return (
     <Link
       to={banner.href}
       aria-label={`Open ${banner.title}`}
+      data-testid="hero-banner-preview"
+      data-banner-id={banner.id}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onFocus={onMouseEnter}
+      onBlur={onMouseLeave}
       className="group absolute bottom-8 right-6 z-30 hidden w-[min(42vw,540px)] overflow-hidden rounded-[28px] border border-white/20 bg-bg-card/75 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1 lg:flex"
     >
       <div className="h-32 w-40 shrink-0 overflow-hidden rounded-[20px] bg-white">
@@ -61,7 +65,9 @@ function FeaturedBannerPreview({ banner }: { banner: HomeBanner }) {
   );
 }
 
-function EditorialBanners() {
+function EditorialBanners({ activeIndex, onChange, onPause, onResume }: { activeIndex: number; onChange: (index: number) => void; onPause: () => void; onResume: () => void }) {
+  const banner = HOME_BANNERS[activeIndex];
+
   return (
     <section id="latest-stories" className="bg-bg-card py-16">
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
@@ -72,22 +78,73 @@ function EditorialBanners() {
           </div>
           <span className="text-sm text-[#DBE3F3]/60">{HOME_BANNERS.length.toString().padStart(2, '0')} stories</span>
         </div>
-        <div className="flex snap-x gap-6 overflow-x-auto pb-6 custom-scrollbar">
-          {HOME_BANNERS.map((banner, index) => (
-            <Link key={banner.id} to={banner.href} className="group grid min-h-[280px] min-w-[min(88vw,680px)] snap-start overflow-hidden rounded-[28px] border border-white/10 bg-white text-bg-card shadow-xl md:grid-cols-[1.15fr_0.85fr]">
-              <div className="relative min-h-52 overflow-hidden bg-white md:min-h-full">
-                <img src={banner.image} alt="" className={`h-full w-full transition-transform duration-500 group-hover:scale-[1.03] ${index === 1 ? 'object-contain p-5' : 'object-cover'}`} />
-              </div>
-              <div className="flex flex-col p-6 md:p-8">
-                <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#8A6D16]">{banner.eyebrow}</span>
-                <h3 className="mt-3 text-2xl font-black leading-tight">{banner.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-[#596173]">{banner.description}</p>
-                <span className="mt-8 inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-bg-card px-5 py-3 text-sm font-bold text-[#DBE3F3] transition-colors group-hover:bg-bg-elevated">
-                  Learn more <ChevronRight size={18} />
-                </span>
-              </div>
-            </Link>
-          ))}
+        <div
+          className="relative"
+          onMouseEnter={onPause}
+          onMouseLeave={onResume}
+          onFocus={onPause}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) onResume();
+          }}
+        >
+          <Link
+            to={banner.href}
+            data-testid="editorial-banner"
+            data-banner-id={banner.id}
+            aria-live="polite"
+            className="group grid min-h-[340px] w-full overflow-hidden rounded-[28px] border border-white/10 bg-white text-bg-card shadow-xl transition-opacity duration-500 md:min-h-[390px] md:grid-cols-[1.15fr_0.85fr]"
+          >
+            <div className="relative min-h-56 overflow-hidden bg-white md:min-h-full">
+              <img src={banner.image} alt="" className={`h-full w-full transition-transform duration-500 group-hover:scale-[1.03] ${activeIndex === 1 ? 'object-contain p-5' : 'object-cover'}`} />
+            </div>
+            <div className="flex flex-col p-6 md:p-10">
+              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#8A6D16]">{banner.eyebrow}</span>
+              <h3 className="mt-3 text-3xl font-black leading-tight md:text-4xl">{banner.title}</h3>
+              <p className="mt-4 max-w-md text-base leading-relaxed text-[#596173]">{banner.description}</p>
+              <span className="mt-auto inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-bg-card px-5 py-3 text-sm font-bold text-[#DBE3F3] transition-colors group-hover:bg-bg-elevated">
+                Learn more <ChevronRight size={18} />
+              </span>
+            </div>
+          </Link>
+          <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 flex items-center justify-between md:inset-x-6">
+            <button
+              type="button"
+              aria-label="Previous story"
+              onClick={(event) => {
+                event.preventDefault();
+                onChange((activeIndex - 1 + HOME_BANNERS.length) % HOME_BANNERS.length);
+              }}
+              className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-bg-card/90 text-[#DBE3F3] shadow-lg transition-colors hover:bg-bg-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-status-warning"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-bg-card/90 px-3 py-2" aria-label="Story navigation">
+              {HOME_BANNERS.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-label={`Show story ${index + 1}`}
+                  aria-current={index === activeIndex ? 'true' : undefined}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    onChange(index);
+                  }}
+                  className={`h-2 rounded-full transition-all ${index === activeIndex ? 'w-7 bg-status-warning' : 'w-2 bg-[#DBE3F3]/50 hover:bg-[#DBE3F3]'}`}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              aria-label="Next story"
+              onClick={(event) => {
+                event.preventDefault();
+                onChange((activeIndex + 1) % HOME_BANNERS.length);
+              }}
+              className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-bg-card/90 text-[#DBE3F3] shadow-lg transition-colors hover:bg-bg-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-status-warning"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -248,6 +305,8 @@ function Leaderboard({ collectors, loading, error, onRetry }: { collectors: Coll
 }
 
 export function HomePage() {
+  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
+  const [bannerPaused, setBannerPaused] = useState(false);
   const [featuredProducts, setFeaturedProducts] = useState<CardListing[]>([]);
   const [expensiveCards, setExpensiveCards] = useState<CardListing[]>([]);
   const [topCollectors, setTopCollectors] = useState<CollectorRanking[]>([]);
@@ -286,54 +345,26 @@ export function HomePage() {
     loadHomeData();
   }, [loadHomeData]);
 
+  useEffect(() => {
+    if (bannerPaused || HOME_BANNERS.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveBannerIndex((index) => (index + 1) % HOME_BANNERS.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [activeBannerIndex, bannerPaused]);
+
   return (
     <div className="flex w-full flex-col overflow-hidden pb-20">
       <section className="relative h-[calc(100dvh-64px)] min-h-[680px] w-full overflow-hidden bg-bg-card">
         <img src="/assets/hero_castle_bg.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg-card/10 via-transparent to-bg-card/80" aria-hidden="true" />
-        <div className="hidden">
-          <p className="mb-3 text-sm font-bold uppercase tracking-[0.35em] text-brand-gold">Mythix trading platform</p>
-          <h1 className="text-5xl font-black tracking-tight text-white md:text-8xl">
-            MYTHIC
-            <br />
-            <span className="text-brand-blue">TRADE</span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-xl text-text-secondary">Discover rare Pokémon cards, build your collection, and trade with confidence.</p>
-          <a href="#explore-section" className="mt-8 inline-flex rounded-xl bg-brand-blue px-6 py-3 font-bold text-bg-base hover:bg-brand-blue/90">
-            Explore marketplace
-          </a>
-        </div>
-        <span
-          className="pointer-events-none absolute hidden select-none whitespace-nowrap font-sans text-[rgba(255,255,255,0.12)] md:block"
-          style={{
-            left: '29%',
-            top: '25.7%',
-            fontSize: 'clamp(2rem, 8.9vw, 8rem)',
-            lineHeight: 1
-          }}
-          aria-hidden="true"
-        >
-          MYTHIC
-        </span>
-        <span
-          className="pointer-events-none absolute hidden select-none whitespace-nowrap font-sans text-[rgba(255,255,255,0.1)] md:block"
-          style={{
-            left: '54.9%',
-            top: '50%',
-            fontSize: 'clamp(2rem, 8.9vw, 8rem)',
-            lineHeight: 1
-          }}
-          aria-hidden="true"
-        >
-          MARKET
-        </span>
         <div className="absolute inset-x-5 top-[38%] z-20 mx-auto max-w-3xl -translate-y-1/2 text-center md:left-[7%] md:right-auto md:mx-0 md:text-left">
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.32em] text-status-warning sm:text-sm">Mythix trading platform</p>
-          <h2 className="text-5xl font-black leading-[0.92] tracking-[-0.045em] text-[#DBE3F3] sm:text-6xl lg:text-[76px]">
-            Rare finds.<br /><span className="text-status-warning">Confident trades.</span>
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.32em] text-status-warning sm:text-sm">Buy • collect • trade</p>
+          <h2 className="text-6xl font-black leading-[0.9] tracking-[-0.055em] text-[#DBE3F3] sm:text-7xl lg:text-[88px] xl:text-[104px]">
+            Buy rare cards.<br /><span className="text-status-warning">Trade with confidence.</span>
           </h2>
           <p className="mx-auto mt-5 max-w-md text-sm leading-relaxed text-[#DBE3F3]/80 sm:text-base md:mx-0">Discover rare Pokémon cards, build your collection, and trade with confidence.</p>
-          <a href="#explore-section" className="mt-6 inline-flex min-h-11 items-center rounded-xl bg-status-warning px-5 py-3 text-sm font-bold text-bg-card shadow-lg shadow-black/20 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-status-warning/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-warning">
+          <a href="#explore-section" className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-status-warning px-6 py-3 text-sm font-bold text-bg-card shadow-lg shadow-black/20 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-status-warning/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-warning">
             Explore marketplace
           </a>
         </div>
@@ -345,10 +376,19 @@ export function HomePage() {
           <span>Start!</span>
           <img src="/assets/chevron_double_down.svg" alt="" aria-hidden="true" className="h-6 w-6 animate-pulse md:h-8 md:w-8" />
         </a>
-        <FeaturedBannerPreview banner={FEATURED_HOME_BANNER} />
+        <FeaturedBannerPreview
+          banner={HOME_BANNERS[activeBannerIndex]}
+          onMouseEnter={() => setBannerPaused(true)}
+          onMouseLeave={() => setBannerPaused(false)}
+        />
       </section>
       <div id="explore-section" className="w-full">
-        <EditorialBanners />
+        <EditorialBanners
+          activeIndex={activeBannerIndex}
+          onChange={setActiveBannerIndex}
+          onPause={() => setBannerPaused(true)}
+          onResume={() => setBannerPaused(false)}
+        />
         <ExpensiveCards cards={expensiveCards} loading={listingsLoading} error={listingsError} onRetry={loadHomeData} />
         <Leaderboard collectors={topCollectors} loading={leaderboardLoading} error={leaderboardError} onRetry={loadHomeData} />
         <section className="bg-bg-surface py-12">

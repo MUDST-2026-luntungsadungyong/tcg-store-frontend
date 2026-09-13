@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Search,
   Bell,
@@ -18,12 +18,15 @@ import { isSellerUser } from '@/entities/account/model/types';
 
 export function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const totalItems = useReservationCartStore((s) => s.getTotalItems());
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
   const isSeller = isSellerUser(user);
+  const isCardDiscoveryPage = location.pathname === '/cards';
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -41,6 +44,12 @@ export function Navbar() {
     navigate('/');
   }
 
+  function handleSearchSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const query = searchQuery.trim();
+    navigate(query ? `/cards?search=${encodeURIComponent(query)}` : '/cards');
+  }
+
   return (
     <nav className="sticky top-0 z-40 w-full bg-[#1b2336] border-b border-[rgba(143,179,226,0.2)]">
       <div className="max-w-[1440px] mx-auto px-8">
@@ -53,20 +62,24 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Search Bar */}
-          <div className="flex-1 max-w-lg mx-8 hidden md:block">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400" />
+          {/* Search Bar (the Cards page owns its search and filters) */}
+          {!isCardDiscoveryPage && (
+            <form onSubmit={handleSearchSubmit} className="flex-1 max-w-lg mx-8 hidden md:block">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-gray-400" />
+                </div>
+                <input
+                  type="search"
+                  placeholder="Search cards..."
+                  aria-label="Search cards"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="block w-[320px] h-[44px] rounded-[22px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors"
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Search cards..."
-                aria-label="Search cards"
-                className="block w-[320px] h-[44px] rounded-[22px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors"
-              />
-            </div>
-          </div>
+            </form>
+          )}
 
           {/* Right Actions */}
           <div className="flex items-center gap-6 text-sm font-semibold text-gray-300">

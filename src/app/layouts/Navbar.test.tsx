@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
@@ -56,5 +56,37 @@ describe('Navbar', () => {
       'href',
       '/workspace/orders',
     );
+  });
+
+  it('submits the global search to card discovery', async () => {
+    const user = userEvent.setup();
+
+    function LocationProbe() {
+      const location = useLocation();
+      return <output data-testid="location">{location.pathname}{location.search}</output>;
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Navbar />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    const search = screen.getByRole('searchbox', { name: 'Search cards' });
+    await user.type(search, 'Pikachu Illustrator');
+    await user.keyboard('{Enter}');
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/cards?search=Pikachu%20Illustrator');
+  });
+
+  it('hides the global search on the card discovery page', () => {
+    render(
+      <MemoryRouter initialEntries={['/cards']}>
+        <Navbar />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('searchbox', { name: 'Search cards' })).not.toBeInTheDocument();
   });
 });

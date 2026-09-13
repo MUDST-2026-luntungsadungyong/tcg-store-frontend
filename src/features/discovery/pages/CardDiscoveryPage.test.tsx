@@ -82,6 +82,29 @@ describe('CardDiscoveryPage', () => {
     expect(screen.queryByText('Charizard VMAX')).not.toBeInTheDocument();
   });
 
+  it('initializes the page search from the Navbar query parameter', async () => {
+    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
+      items: mockItems,
+      pageNumber: 0,
+      pageSize: 12,
+      totalElements: 2,
+      totalPages: 1,
+      last: true,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/cards?search=Pikachu']}>
+        <CardDiscoveryPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Pikachu Illustrator')).toBeInTheDocument();
+    expect(screen.getByTestId('search-input')).toHaveValue('Pikachu');
+    expect(listingDiscoveryApi.getListings).toHaveBeenCalledWith(
+      expect.objectContaining({ search: 'Pikachu' }),
+    );
+  });
+
   it('rejects invalid price ranges when Min > Max and displays inline error', async () => {
     const user = userEvent.setup();
     vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({

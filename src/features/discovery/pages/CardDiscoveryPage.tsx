@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, X, AlertCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
 import type { CardListing } from '@/entities/card/model/types';
@@ -12,6 +13,8 @@ const STAGES = ['Basic', 'Stage 1', 'Stage 2', 'V', 'VMAX', 'VSTAR'];
 const CONDITIONS = ['Mint', 'Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played', 'Damaged'];
 
 export function CardDiscoveryPage() {
+  const [searchParams] = useSearchParams();
+  const urlSearch = searchParams.get('search') ?? '';
   const [products, setProducts] = useState<CardListing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +26,7 @@ export function CardDiscoveryPage() {
   const [totalElements, setTotalElements] = useState(0);
 
   // Local filter controls
-  const [searchInput, setSearchInput] = useState('');
+  const [searchInput, setSearchInput] = useState(urlSearch);
   const [condition, setCondition] = useState<string[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
 
@@ -68,6 +71,12 @@ export function CardDiscoveryPage() {
   useEffect(() => {
     void fetchProducts();
   }, [fetchProducts]);
+
+  // Accept searches submitted from the global Navbar when arriving on /cards.
+  useEffect(() => {
+    setSearchInput(urlSearch);
+    setPage(0);
+  }, [urlSearch]);
 
   // Handle price input changes with validation
   const handleMinChange = (val: string) => {

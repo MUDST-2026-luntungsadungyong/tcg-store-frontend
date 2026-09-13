@@ -154,10 +154,10 @@ function EditorialBanners({ activeIndex, onChange, onPause, onResume }: { active
 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/30 bg-bg-card p-8 text-center">
+    <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/30 bg-white p-8 text-center text-bg-card">
       <AlertCircle className="text-status-danger" />
-      <p className="text-sm text-text-secondary">{message}</p>
-      <button type="button" onClick={onRetry} className="inline-flex items-center gap-2 rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-bg-base hover:bg-brand-blue/90">
+      <p className="text-sm text-[#596173]">{message}</p>
+      <button type="button" onClick={onRetry} className="inline-flex items-center gap-2 rounded-lg bg-bg-card px-4 py-2 text-sm font-semibold text-white hover:bg-bg-elevated">
         <RefreshCw size={15} /> Try again
       </button>
     </div>
@@ -186,11 +186,11 @@ function ExpensiveCards({ cards, loading, error, onRetry }: { cards: CardListing
           </div>
         )}
         {!loading && error && <ErrorState message={error} onRetry={onRetry} />}
-        {!loading && !error && cards.length === 0 && <div className="rounded-2xl border border-white/10 bg-bg-card p-10 text-center text-sm text-text-secondary">No cards are currently listed for sale.</div>}
+        {!loading && !error && cards.length === 0 && <div className="rounded-2xl border border-[#D9E0EA] bg-white p-10 text-center text-sm text-[#596173]">No cards are currently listed for sale.</div>}
         {!loading && !error && cards.length > 0 && (
           <div className="flex gap-8 overflow-x-auto px-4 pb-12 pt-16 snap-x custom-scrollbar">
             {cards.map((item) => (
-              <Link key={item.id} to={`/cards/${item.id}`} className="group relative flex h-[380px] min-w-[260px] shrink-0 snap-start flex-col rounded-3xl border border-white/10 bg-bg-card p-4 shadow-glow transition-transform hover:-translate-y-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-blue md:h-[420px] md:min-w-[300px]">
+              <Link key={item.id} to={`/cards/${item.id}`} className="group relative flex h-[380px] min-w-[260px] shrink-0 snap-start flex-col rounded-3xl border border-[#D9E0EA] bg-white text-bg-card p-4 shadow-glow transition-transform hover:-translate-y-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-blue md:h-[420px] md:min-w-[300px]">
                 <span className="absolute left-4 top-4 z-20 rounded-full bg-status-success px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-bg-base">In stock ({item.stock})</span>
                 <div className="absolute -right-5 bottom-24 z-10 flex w-[100%] items-center justify-center rotate-[4deg] drop-shadow-[0_24px_34px_rgba(0,0,0,0.55)] transition-transform duration-300 group-hover:-translate-y-4 group-hover:rotate-0">
                   <img
@@ -202,12 +202,12 @@ function ExpensiveCards({ cards, loading, error, onRetry }: { cards: CardListing
                     className="max-h-[280px] w-full object-contain md:max-h-[320px]"
                   />
                 </div>
-                <div className="relative z-20 mt-auto rounded-xl border border-white/10 bg-bg-surface/95 p-3">
+                <div className="relative z-20 mt-auto rounded-xl border border-[#D9E0EA] bg-[#F7F8FB] p-3">
                   <div className="flex items-end justify-between gap-2">
-                    <span className="text-xl font-black text-white">฿{item.price.toFixed(2)}</span>
-                    <span className="line-clamp-2 text-right text-xs font-bold text-white">{item.name}</span>
+                    <span className="text-xl font-black text-bg-card">฿{item.price.toFixed(2)}</span>
+                    <span className="line-clamp-2 text-right text-xs font-bold text-bg-card">{item.name}</span>
                   </div>
-                  <div className="mt-1 flex justify-between gap-2 text-[10px] text-text-secondary">
+                  <div className="mt-1 flex justify-between gap-2 text-[10px] text-[#596173]">
                     <span>
                       Market: <strong className="text-status-success">฿{(item.marketPrice ?? item.price).toFixed(2)}</strong>
                     </span>
@@ -242,55 +242,55 @@ function Leaderboard({ collectors, loading, error, onRetry }: { collectors: Coll
         {loading && (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-3xl border border-white/10 bg-bg-card p-6">
-                <Skeleton className="h-12 w-2/3 bg-white/10" />
-                <Skeleton className="mt-6 h-28 w-full bg-white/10" />
-                <Skeleton className="mt-6 h-10 w-full bg-white/10" />
+              <div key={i} className="rounded-3xl border border-[#D9E0EA] bg-white p-6">
+                <Skeleton className="h-12 w-2/3 bg-[#E5E9F0]" />
+                <Skeleton className="mt-6 h-28 w-full bg-[#E5E9F0]" />
+                <Skeleton className="mt-6 h-10 w-full bg-[#E5E9F0]" />
               </div>
             ))}
           </div>
         )}
         {!loading && error && <ErrorState message={error} onRetry={onRetry} />}
         {!loading && !error && collectors.length === 0 && (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-bg-card p-10 text-center">
-            <Layers className="text-text-secondary" />
-            <p className="text-sm text-text-secondary">No public rare-card collections yet.</p>
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#D9E0EA] bg-white p-10 text-center text-bg-card">
+            <Layers className="text-[#596173]" />
+            <p className="text-sm text-[#596173]">No public rare-card collections yet.</p>
           </div>
         )}
         {!loading && !error && collectors.length > 0 && (
           <div className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar">
             {collectors.map((collector) => (
-              <article key={collector.userId} className="flex min-w-[320px] snap-center shrink-0 flex-col rounded-3xl border border-white/10 bg-bg-card p-6 shadow-glow transition-transform hover:-translate-y-1 sm:min-w-[390px] md:min-w-[430px]">
-                <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-5">
+              <article key={collector.userId} className="flex min-w-[320px] snap-center shrink-0 flex-col rounded-3xl border border-[#D9E0EA] bg-white p-6 text-bg-card shadow-glow transition-transform hover:-translate-y-1 sm:min-w-[390px] md:min-w-[430px]">
+                <div className="flex items-start justify-between gap-4 border-b border-[#D9E0EA] pb-5">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-black ${collector.rank === 1 ? 'bg-brand-gold text-bg-base' : 'bg-bg-elevated text-white'}`}>#{collector.rank}</span>
+                    <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-black ${collector.rank === 1 ? 'bg-brand-gold text-bg-base' : 'bg-[#E5E9F0] text-bg-card'}`}>#{collector.rank}</span>
                     <div className="min-w-0">
-                      <h3 className="truncate text-lg font-bold text-white">{collector.displayName}</h3>
-                      <p className="text-xs text-text-secondary">{collector.distinctRareCardCount} unique rare cards</p>
+                      <h3 className="truncate text-lg font-bold text-bg-card">{collector.displayName}</h3>
+                      <p className="text-xs text-[#596173]">{collector.distinctRareCardCount} unique rare cards</p>
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-text-secondary">Rare cards</span>
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-[#596173]">Rare cards</span>
                     <span className="text-2xl font-black text-brand-gold">{collector.rareCardCount}</span>
                   </div>
                 </div>
                 <div className="mt-5">
-                  <h4 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-text-secondary">Collection highlights</h4>
+                  <h4 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#596173]">Collection highlights</h4>
                   {collector.highlights.length > 0 ? (
                     <div className="grid grid-cols-3 gap-3">
                       {collector.highlights.map((card) => (
-                        <Link key={card.cardId} to={`/cards/${card.cardId}`} className="rounded-xl border border-white/10 bg-bg-surface p-2 text-center hover:border-brand-blue/60">
+                        <Link key={card.cardId} to={`/cards/${card.cardId}`} className="rounded-xl border border-[#D9E0EA] bg-[#F7F8FB] p-2 text-center hover:border-brand-blue/60">
                           <div className="relative flex h-24 items-center justify-center">
                             <img src={card.imageUrl || '/assets/expensive_card_1.png'} alt={card.name} className="max-h-full max-w-full object-contain drop-shadow-lg" />
-                            {card.quantity > 1 && <span className="absolute right-0 top-0 rounded-full bg-bg-base px-1.5 py-0.5 text-[9px] font-bold text-white">×{card.quantity}</span>}
+                            {card.quantity > 1 && <span className="absolute right-0 top-0 rounded-full bg-bg-card px-1.5 py-0.5 text-[9px] font-bold text-white">×{card.quantity}</span>}
                           </div>
-                          <span className="mt-2 block truncate text-[10px] font-semibold text-white">{card.name}</span>
+                          <span className="mt-2 block truncate text-[10px] font-semibold text-bg-card">{card.name}</span>
                           <span className="mt-1 block truncate text-[9px] text-brand-gold">{card.rarity}</span>
                         </Link>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-text-secondary">Rare card details unavailable.</p>
+                    <p className="text-sm text-[#596173]">Rare card details unavailable.</p>
                   )}
                 </div>
                 <Link to={`/collections/${encodeURIComponent(collector.userId)}`} className="mt-6 rounded-xl bg-brand-blue py-3 text-center text-sm font-bold text-bg-base hover:bg-brand-blue/90">
@@ -409,14 +409,14 @@ export function HomePage() {
             ) : (
               <div className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar">
                 {featuredProducts.map((item) => (
-                  <Link key={item.id} to={`/cards/${item.id}`} className="flex h-[200px] min-w-[360px] snap-start gap-4 rounded-2xl border border-white/10 bg-bg-card p-4 hover:border-brand-blue/60">
+                  <Link key={item.id} to={`/cards/${item.id}`} className="flex h-[200px] min-w-[360px] snap-start gap-4 rounded-2xl border border-[#D9E0EA] bg-white p-4 text-bg-card hover:border-brand-blue/60">
                     <div className="flex w-[130px] shrink-0 items-center justify-center">
                       <img src={item.image || '/assets/expensive_card_1.png'} alt={item.name} className="h-full w-full object-contain drop-shadow-lg" />
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col">
-                      <h3 className="truncate text-lg font-bold text-white">{item.name}</h3>
-                      <p className="mt-1 text-xs text-text-secondary">{item.set || item.game}</p>
-                      <p className="mt-auto text-2xl font-black text-white">฿{item.price.toFixed(2)}</p>
+                      <h3 className="truncate text-lg font-bold text-bg-card">{item.name}</h3>
+                      <p className="mt-1 text-xs text-[#596173]">{item.set || item.game}</p>
+                      <p className="mt-auto text-2xl font-black text-bg-card">฿{item.price.toFixed(2)}</p>
                       <p className="text-xs text-status-success">Market: ฿{(item.marketPrice ?? item.price).toFixed(2)}</p>
                     </div>
                   </Link>

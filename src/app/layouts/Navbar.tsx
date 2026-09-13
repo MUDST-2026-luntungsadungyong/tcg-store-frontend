@@ -15,6 +15,8 @@ import { Button } from '@/shared/components/Button';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { useReservationCartStore } from '@/features/reservation-cart';
 import { isSellerUser } from '@/entities/account/model/types';
+import { listingDiscoveryApi } from '@/features/discovery/api/listings';
+import type { CardListing } from '@/entities/card/model/types';
 
 export function Navbar() {
   const navigate = useNavigate();
@@ -24,14 +26,50 @@ export function Navbar() {
   const totalItems = useReservationCartStore((s) => s.getTotalItems());
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState<CardListing[]>([]);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLFormElement>(null);
   const isSeller = isSellerUser(user);
   const isCardDiscoveryPage = location.pathname === '/cards';
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (isCardDiscoveryPage || !query) {
+      setSearchSuggestions([]);
+      setIsSearchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      setIsSearchLoading(true);
+      void listingDiscoveryApi.getListings({ search: query, page: 0, size: 5 })
+        .then((result) => {
+          if (!cancelled) setSearchSuggestions(result.items.slice(0, 5));
+        })
+        .catch(() => {
+          if (!cancelled) setSearchSuggestions([]);
+        })
+        .finally(() => {
+          if (!cancelled) setIsSearchLoading(false);
+        });
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [isCardDiscoveryPage, searchQuery]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -64,7 +102,7 @@ export function Navbar() {
 
           {/* Search Bar (the Cards page owns its search and filters) */}
           {!isCardDiscoveryPage && (
-            <form onSubmit={handleSearchSubmit} className="flex-1 max-w-lg mx-8 hidden md:block">
+            <form ref={searchRef} onSubmit={handleSearchSubmit} className="relative flex-1 max-w-lg mx-8 hidden md:block">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-4 w-4 text-gray-400" />
@@ -74,9 +112,40 @@ export function Navbar() {
                   placeholder="Search cards..."
                   aria-label="Search cards"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => {
+                    if (searchQuery.trim()) setSearchOpen(true);
+                  }}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSearchOpen(Boolean(e.target.value.trim()));
+                  }}
                   className="block w-[320px] h-[44px] rounded-[22px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors"
                 />
+                {searchOpen && searchQuery.trim() && (
+                  <div role="listbox" aria-label="Card search suggestions" className="absolute left-0 top-[calc(100%+8px)] z-50 w-[360px] overflow-hidden rounded-xl border border-white/10 bg-bg-elevated p-2 shadow-2xl">
+                    {isSearchLoading ? (
+                      <p className="px-3 py-3 text-sm text-text-secondary">Searching cards...</p>
+                    ) : searchSuggestions.length > 0 ? (
+                      searchSuggestions.map((card) => (
+                        <Link
+                          key={card.id}
+                          to={`/cards/${card.id}`}
+                          role="option"
+                          onClick={() => setSearchOpen(false)}
+                          className="flex items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-white/10"
+                        >
+                          <img src={card.image || '/assets/expensive_card_1.png'} alt="" className="size-12 shrink-0 rounded-md bg-bg-base object-contain p-1" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold text-white">{card.name}</span>
+                            <span className="block truncate text-xs text-text-secondary">{card.set || card.game || 'Card'} · ฿{card.price.toLocaleString()}</span>
+                          </span>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="px-3 py-3 text-sm text-text-secondary">No matching cards</p>
+                    )}
+                  </div>
+                )}
               </div>
             </form>
           )}

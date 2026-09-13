@@ -4,7 +4,7 @@ import type { CollectionEntry } from '@/entities/card/model/types';
 
 interface CollectionCardProps {
   entry: CollectionEntry;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
   isDeleting?: boolean;
 }
 
@@ -49,20 +49,22 @@ export function CollectionCard({ entry, onDelete, isDeleting }: CollectionCardPr
           </p>
         </Link>
 
-        <div className="pt-3">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(entry.id);
-            }}
-            disabled={isDeleting}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-status-danger/10 hover:bg-status-danger/20 text-status-danger border border-status-danger/30 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
-          >
-            <Trash2 size={13} />
-            Delete from Collection
-          </button>
-        </div>
+        {onDelete && (
+          <div className="pt-3">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(entry.id);
+              }}
+              disabled={isDeleting}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-status-danger/10 hover:bg-status-danger/20 text-status-danger border border-status-danger/30 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+            >
+              <Trash2 size={13} />
+              Delete from Collection
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

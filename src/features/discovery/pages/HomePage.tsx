@@ -46,7 +46,7 @@ function FeaturedBannerPreview({ banner, onMouseEnter, onMouseLeave }: { banner:
       onMouseLeave={onMouseLeave}
       onFocus={onMouseEnter}
       onBlur={onMouseLeave}
-      className="group absolute bottom-8 right-6 z-30 hidden w-[min(42vw,540px)] overflow-hidden rounded-[28px] border border-white/20 bg-bg-card/75 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1 lg:flex"
+      className="group absolute bottom-5 left-5 right-5 z-30 flex w-auto overflow-hidden rounded-[28px] border border-white/20 bg-bg-card/75 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1 md:bottom-8 md:left-auto md:right-6 md:w-[min(42vw,540px)]"
     >
       <div className="h-32 w-40 shrink-0 overflow-hidden rounded-[20px] bg-white">
         <img src={banner.image} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -69,7 +69,7 @@ function EditorialBanners({ activeIndex, onChange, onPause, onResume }: { active
   const banner = HOME_BANNERS[activeIndex];
 
   return (
-    <section id="latest-stories" className="bg-bg-card py-16">
+    <section id="latest-stories" role="region" aria-roledescription="carousel" aria-label="Featured stories" className="bg-bg-card py-16">
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
@@ -91,8 +91,8 @@ function EditorialBanners({ activeIndex, onChange, onPause, onResume }: { active
             to={banner.href}
             data-testid="editorial-banner"
             data-banner-id={banner.id}
-            aria-live="polite"
-            className="group grid min-h-[340px] w-full overflow-hidden rounded-[28px] border border-white/10 bg-white text-bg-card shadow-xl transition-opacity duration-500 md:min-h-[390px] md:grid-cols-[1.15fr_0.85fr]"
+            aria-label={`Story ${activeIndex + 1} of ${HOME_BANNERS.length}: ${banner.title}`}
+            className="group grid min-h-[340px] w-full overflow-hidden rounded-[28px] border border-white/10 bg-white text-bg-card shadow-xl transition-opacity duration-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-status-warning md:min-h-[390px] md:grid-cols-[1.15fr_0.85fr]"
           >
             <div className="relative min-h-56 overflow-hidden bg-white md:min-h-full">
               <img src={banner.image} alt="" className={`h-full w-full transition-transform duration-500 group-hover:scale-[1.03] ${activeIndex === 1 ? 'object-contain p-5' : 'object-cover'}`} />
@@ -106,6 +106,7 @@ function EditorialBanners({ activeIndex, onChange, onPause, onResume }: { active
               </span>
             </div>
           </Link>
+          <p className="sr-only" aria-live="polite">Showing story {activeIndex + 1} of {HOME_BANNERS.length}: {banner.title}</p>
           <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 flex items-center justify-between md:inset-x-6">
             <button
               type="button"
@@ -307,6 +308,7 @@ function Leaderboard({ collectors, loading, error, onRetry }: { collectors: Coll
 export function HomePage() {
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
   const [bannerPaused, setBannerPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const [featuredProducts, setFeaturedProducts] = useState<CardListing[]>([]);
   const [expensiveCards, setExpensiveCards] = useState<CardListing[]>([]);
   const [topCollectors, setTopCollectors] = useState<CollectorRanking[]>([]);
@@ -346,12 +348,21 @@ export function HomePage() {
   }, [loadHomeData]);
 
   useEffect(() => {
-    if (bannerPaused || HOME_BANNERS.length < 2) return undefined;
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setReducedMotion(mediaQuery.matches);
+    updatePreference();
+    mediaQuery.addEventListener?.('change', updatePreference);
+    return () => mediaQuery.removeEventListener?.('change', updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (bannerPaused || reducedMotion || HOME_BANNERS.length < 2) return undefined;
     const timer = window.setInterval(() => {
       setActiveBannerIndex((index) => (index + 1) % HOME_BANNERS.length);
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [activeBannerIndex, bannerPaused]);
+  }, [activeBannerIndex, bannerPaused, reducedMotion]);
 
   return (
     <div className="flex w-full flex-col overflow-hidden pb-20">
@@ -360,22 +371,14 @@ export function HomePage() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg-card/10 via-transparent to-bg-card/80" aria-hidden="true" />
         <div className="absolute inset-x-5 top-[38%] z-20 mx-auto max-w-3xl -translate-y-1/2 text-center md:left-[7%] md:right-auto md:mx-0 md:text-left">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.32em] text-status-warning sm:text-sm">Buy • collect • trade</p>
-          <h2 className="text-6xl font-black leading-[0.9] tracking-[-0.055em] text-[#DBE3F3] sm:text-7xl lg:text-[88px] xl:text-[104px]">
+          <h1 className="text-6xl font-black leading-[0.9] tracking-[-0.055em] text-[#DBE3F3] sm:text-7xl lg:text-[88px] xl:text-[104px]">
             Buy rare cards.<br /><span className="text-status-warning">Trade with confidence.</span>
-          </h2>
+          </h1>
           <p className="mx-auto mt-5 max-w-md text-sm leading-relaxed text-[#DBE3F3]/80 sm:text-base md:mx-0">Discover rare Pokémon cards, build your collection, and trade with confidence.</p>
           <a href="#explore-section" className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-status-warning px-6 py-3 text-sm font-bold text-bg-card shadow-lg shadow-black/20 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-status-warning/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-warning">
             Explore marketplace
           </a>
         </div>
-        <div className="pointer-events-none absolute left-[72%] top-[33%] hidden w-[clamp(260px,28vw,470px)] -translate-x-1/2 -translate-y-1/2 lg:block">
-          <img src="/assets/mythix_logo_white_v2.png" alt="Mythix Market" className="block h-auto w-full object-contain" />
-        </div>
-        <h1 className="sr-only">Mythix Trading Platform</h1>
-        <a href="#explore-section" className="hidden">
-          <span>Start!</span>
-          <img src="/assets/chevron_double_down.svg" alt="" aria-hidden="true" className="h-6 w-6 animate-pulse md:h-8 md:w-8" />
-        </a>
         <FeaturedBannerPreview
           banner={HOME_BANNERS[activeBannerIndex]}
           onMouseEnter={() => setBannerPaused(true)}

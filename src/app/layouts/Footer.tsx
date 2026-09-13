@@ -7,8 +7,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           {/* Logo Section */}
           <div className="col-span-1">
-            <Link to="/" className="mb-2 inline-flex h-20 w-20 items-center justify-center overflow-visible">
-              <img src="/assets/component_293_629.png" alt="Mythic TCG" className="h-20 w-20 scale-[1.35] object-contain" />
+            <Link to="/" className="mb-2 inline-flex h-24 w-24 items-center justify-center overflow-visible">
+              <img src="/assets/component_293_629.png" alt="Mythic TCG" className="h-24 w-24 scale-[1.35] object-contain" />
             </Link>
             <p className="text-[#EAB308] text-sm font-semibold mt-2">
               Reserve, trade and collect TCG cards

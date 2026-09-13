@@ -1,107 +1,150 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { AlertCircle, ChevronLeft, ChevronRight, Layers, RefreshCw, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { getTopCollectors, type CollectorRanking } from '@/features/collection/api/leaderboard';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
-import {
-  getTopCollectors,
-  type CollectorRanking,
-} from '@/features/collection/api/leaderboard';
 import { getMostExpensiveOnSaleCards } from '@/features/discovery/lib/expensiveCards';
 import type { CardListing } from '@/entities/card/model/types';
+import { Skeleton } from '@/shared/components/Skeleton';
 
+type HomeBanner = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  image: string;
+  href: string;
+};
 
+const HOME_BANNERS: HomeBanner[] = [
+  {
+    id: 'pokemon-30th-celebration',
+    eyebrow: 'Featured update',
+    title: 'Pokémon TCG: 30th Celebration',
+    description: 'Celebrate three decades of Pokémon through a playful new card collection.',
+    image: '/assets/whats_new_91_28.png',
+    href: '/cards'
+  },
+  {
+    id: 'marketplace-highlights',
+    eyebrow: 'Marketplace guide',
+    title: 'Discover the most valuable cards on Mythix',
+    description: 'Explore high-value cards currently listed and available from verified sellers.',
+    image: '/assets/expensive_card_banner_132_306.png',
+    href: '/cards'
+  }
+];
 
-// Auto-sliding Infinite Seamless Loop Banner Carousel (3s interval)
-function ExpensiveCardsCarousel() {
-  const SLIDES = [
-    { id: 1, img: '/assets/expensive_card_banner_132_306.png' },
-    { id: 2, img: '/assets/expensive_card_banner_132_306.png' },
-    { id: 3, img: '/assets/expensive_card_banner_132_306.png' },
-  ];
+function FeaturedBannerPreview({ banner, onMouseEnter, onMouseLeave }: { banner: HomeBanner; onMouseEnter: () => void; onMouseLeave: () => void }) {
+  return (
+    <Link
+      to={banner.href}
+      aria-label={`Open ${banner.title}`}
+      data-testid="hero-banner-preview"
+      data-banner-id={banner.id}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onFocus={onMouseEnter}
+      onBlur={onMouseLeave}
+      className="group absolute bottom-5 left-5 right-5 z-30 flex h-[152px] w-auto overflow-hidden rounded-[28px] border border-white/70 bg-white p-3 text-bg-card shadow-[0_24px_70px_rgba(0,0,0,0.42)] transition-transform duration-300 hover:-translate-y-1 md:bottom-8 md:left-auto md:right-6 md:w-[min(42vw,540px)]"
+    >
+      <div className="h-32 w-40 shrink-0 overflow-hidden rounded-[20px] bg-white">
+        <img src={banner.image} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col px-5 py-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-status-warning">{banner.eyebrow}</span>
+        <h2 className="mt-2 line-clamp-2 text-xl font-bold leading-tight text-bg-card">{banner.title}</h2>
+        <div className="mt-auto flex items-center justify-between gap-3">
+          <span className="text-xs font-medium text-bg-card/70">Discover the story</span>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-status-warning text-bg-card transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">
+            <ChevronRight size={22} />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
-  // Extended slides with clones at boundaries for infinite loop: [Clone 3, 1, 2, 3, Clone 1]
-  const extendedSlides = [SLIDES[SLIDES.length - 1], ...SLIDES, SLIDES[0]];
-  const [currentIndex, setCurrentIndex] = useState(1);
-  const [isTransitioning, setIsTransitioning] = useState(true);
-
-  // Auto-slide forward every 3 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIsTransitioning(true);
-      setCurrentIndex((prev) => prev + 1);
-    }, 3000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleTransitionEnd = () => {
-    // When reached Clone 1 at the end, snap silently back to real Slide 1
-    if (currentIndex >= extendedSlides.length - 1) {
-      setIsTransitioning(false);
-      setCurrentIndex(1);
-    }
-    // When reached Clone 3 at the start, snap silently to real Slide 3
-    else if (currentIndex <= 0) {
-      setIsTransitioning(false);
-      setCurrentIndex(SLIDES.length);
-    }
-  };
-
-  // Active dot index (0, 1, 2)
-  const activeDotIndex = (currentIndex - 1 + SLIDES.length) % SLIDES.length;
-
-  const handleDotClick = (dotIdx: number) => {
-    setIsTransitioning(true);
-    setCurrentIndex(dotIdx + 1);
-  };
+function EditorialBanners({ activeIndex, onChange, onPause, onResume }: { activeIndex: number; onChange: (index: number) => void; onPause: () => void; onResume: () => void }) {
+  const banner = HOME_BANNERS[activeIndex];
 
   return (
-    <section className="w-full flex flex-col items-center overflow-hidden bg-[#151B2B]">
-      <div className="w-full max-w-[1440px] mx-auto">
-        <div className="relative w-full overflow-hidden">
-          {/* Slides Container */}
-          <div 
-            className={`flex w-full ${isTransitioning ? 'transition-transform duration-700 ease-in-out' : 'transition-none'}`}
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-            onTransitionEnd={handleTransitionEnd}
-          >
-            {extendedSlides.map((slide, idx) => (
-              <div key={`${slide.id}-${idx}`} className="w-full flex-shrink-0 flex items-center justify-center select-none py-12 md:py-20 px-8">
-                <div className="w-full max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8 md:gap-16">
-                  {/* Left: Card Image */}
-                  <div className="flex-1 flex items-center justify-center relative h-[350px] md:h-[500px]">
-                    <img 
-                      src={slide.img} 
-                      alt="Pokémon Card" 
-                      className="max-h-full max-w-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-20"
-                    />
-                  </div>
-
-                  {/* Right: Text */}
-                  <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left z-10">
-                    <h2 className="text-[#FDE047] text-4xl md:text-5xl lg:text-[64px] font-black leading-[1.1] tracking-wide drop-shadow-lg">
-                      The 10 Most<br />Expensive<br />Pokémon Cards<br />of 2025
-                    </h2>
-                  </div>
-                </div>
-              </div>
-            ))}
+    <section id="latest-stories" role="region" aria-roledescription="carousel" aria-label="Featured stories" className="bg-bg-card py-16">
+      <div className="mx-auto max-w-[1440px] px-4 md:px-8">
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-status-warning">Mythix stories</p>
+            <h2 className="mt-2 text-3xl font-bold text-[#DBE3F3] md:text-4xl">What&apos;s new</h2>
           </div>
-
-          {/* Dots Pagination - Exact Figma match (hollow/solid circles without background) */}
-          <div className="absolute bottom-6 md:bottom-12 left-1/2 transform -translate-x-1/2 flex items-center gap-4 z-10">
-            {SLIDES.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleDotClick(idx)}
-                className={`transition-all duration-300 rounded-full cursor-pointer w-[14px] h-[14px] ${
-                  activeDotIndex === idx 
-                    ? 'bg-[#CBD5E1] shadow-sm' 
-                    : 'bg-transparent border-[1.5px] border-[#64748B] hover:border-[#94A3B8]'
-                }`}
-                aria-label={`Go to slide ${idx + 1}`}
-              />
-            ))}
+          <span className="text-sm text-[#DBE3F3]/60">{HOME_BANNERS.length.toString().padStart(2, '0')} stories</span>
+        </div>
+        <div
+          className="relative"
+          onMouseEnter={onPause}
+          onMouseLeave={onResume}
+          onFocus={onPause}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) onResume();
+          }}
+        >
+          <Link
+            to={banner.href}
+            data-testid="editorial-banner"
+            data-banner-id={banner.id}
+            aria-label={`Story ${activeIndex + 1} of ${HOME_BANNERS.length}: ${banner.title}`}
+            className="group grid h-[520px] w-full overflow-hidden rounded-[28px] border border-white/10 bg-white text-bg-card shadow-xl transition-opacity duration-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-status-warning md:h-[390px] md:grid-cols-[1.15fr_0.85fr]"
+          >
+            <div className="relative h-[220px] overflow-hidden bg-white md:h-full">
+              <img src={banner.image} alt="" className={`h-full w-full transition-transform duration-500 group-hover:scale-[1.03] ${activeIndex === 1 ? 'object-contain p-5' : 'object-cover'}`} />
+            </div>
+            <div className="flex flex-col p-6 md:p-10">
+              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#8A6D16]">{banner.eyebrow}</span>
+              <h3 className="mt-3 text-3xl font-black leading-tight md:text-4xl">{banner.title}</h3>
+              <p className="mt-4 max-w-md text-base leading-relaxed text-[#596173]">{banner.description}</p>
+              <span className="mt-auto inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-bg-card px-5 py-3 text-sm font-bold text-[#DBE3F3] transition-colors group-hover:bg-bg-elevated">
+                Learn more <ChevronRight size={18} />
+              </span>
+            </div>
+          </Link>
+          <p className="sr-only" aria-live="polite">Showing story {activeIndex + 1} of {HOME_BANNERS.length}: {banner.title}</p>
+          <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 flex items-center justify-between md:inset-x-6">
+            <button
+              type="button"
+              aria-label="Previous story"
+              onClick={(event) => {
+                event.preventDefault();
+                onChange((activeIndex - 1 + HOME_BANNERS.length) % HOME_BANNERS.length);
+              }}
+              className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-bg-card/90 text-[#DBE3F3] shadow-lg transition-colors hover:bg-bg-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-status-warning"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-bg-card/90 px-3 py-2" aria-label="Story navigation">
+              {HOME_BANNERS.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-label={`Show story ${index + 1}`}
+                  aria-current={index === activeIndex ? 'true' : undefined}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    onChange(index);
+                  }}
+                  className={`h-2 rounded-full transition-all ${index === activeIndex ? 'w-7 bg-status-warning' : 'w-2 bg-[#DBE3F3]/50 hover:bg-[#DBE3F3]'}`}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              aria-label="Next story"
+              onClick={(event) => {
+                event.preventDefault();
+                onChange((activeIndex + 1) % HOME_BANNERS.length);
+              }}
+              className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-bg-card/90 text-[#DBE3F3] shadow-lg transition-colors hover:bg-bg-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-status-warning"
+            >
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
       </div>
@@ -109,386 +152,279 @@ function ExpensiveCardsCarousel() {
   );
 }
 
-export function HomePage() {
-  const [featuredProducts, setFeaturedProducts] = useState<CardListing[]>([]);
-  const [expensiveCards, setExpensiveCards] = useState<CardListing[]>([]);
-  const [topCollectors, setTopCollectors] = useState<CollectorRanking[]>([]);
-  const [homeError, setHomeError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void listingDiscoveryApi
-      .getListings({ size: 100 })
-      .then((res) => {
-        if (!cancelled && res.items.length > 0) {
-          setFeaturedProducts(res.items.slice(0, 5));
-          setExpensiveCards(getMostExpensiveOnSaleCards(res.items, 10));
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to load home page listings:', error);
-        if (!cancelled) {
-          setHomeError('Unable to load marketplace highlights. Please try again later.');
-          setFeaturedProducts([]);
-          setExpensiveCards([]);
-        }
-      });
-
-    void getTopCollectors(5)
-      .then((data) => {
-        if (!cancelled && data.length > 0) setTopCollectors(data);
-      })
-      .catch((error) => {
-        console.error('Failed to load leaderboard:', error);
-        if (!cancelled) {
-          setHomeError('Unable to load leaderboard data.');
-          setTopCollectors([]);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const scrollToContent = () => {
-    document.getElementById('explore-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="flex flex-col pb-20 w-full overflow-hidden">
-      
-      {/* Hero layout follows the Figma visual language; copy reflects the reservation product. */}
-      <section className="relative w-full bg-bg-base overflow-hidden h-[calc(100dvh-64px)] min-h-[560px]">
-        <img
-          src="/assets/hero_castle_bg.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
-        />
+    <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/30 bg-white p-8 text-center text-bg-card">
+      <AlertCircle className="text-status-danger" />
+      <p className="text-sm text-[#596173]">{message}</p>
+      <button type="button" onClick={onRetry} className="inline-flex items-center gap-2 rounded-lg bg-bg-card px-4 py-2 text-sm font-semibold text-white hover:bg-bg-elevated">
+        <RefreshCw size={15} /> Try again
+      </button>
+    </div>
+  );
+}
 
-        {/* MYTHIC (upper-left, faded) */}
-        <span
-          className="absolute font-bold uppercase text-[rgba(255,255,255,0.3)] whitespace-nowrap select-none"
-          style={{ left: '10.9%', top: '25.7%', fontSize: 'clamp(28px,8.9vw,128px)', fontFamily: "'IBM Plex Sans Thai', sans-serif" }}
-          aria-hidden="true"
-        >
-          MYTHIC
-        </span>
-
-        {/* TRADE (lower-right, more faded) */}
-        <span
-          className="absolute font-bold uppercase text-[rgba(255,255,255,0.1)] whitespace-nowrap select-none"
-          style={{ left: '54.9%', top: '50%', fontSize: 'clamp(28px,8.9vw,128px)', fontFamily: "'IBM Plex Sans Thai', sans-serif" }}
-          aria-hidden="true"
-        >
-          TRADE
-        </span>
-
-        {/* Logo lockup, centered — width scales with viewport, height follows via aspect-ratio so it never distorts/crops on resize */}
-        <div
-          className="absolute overflow-hidden pointer-events-none"
-          style={{
-            left: '50%',
-            top: '35%',
-            width: 'clamp(180px, 36vw, 883px)',
-            aspectRatio: '883 / 632',
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          <img
-            src="/assets/mythix_logo_white_v2.png"
-            alt="Mythix trading platform"
-            className="absolute top-0 left-0 w-full h-[140%] object-cover"
-          />
+function ExpensiveCards({ cards, loading, error, onRetry }: { cards: CardListing[]; loading: boolean; error: string | null; onRetry: () => void }) {
+  return (
+    <section id="expensive-cards" className="bg-bg-surface py-16">
+      <div className="mx-auto max-w-[1440px] px-4 md:px-8">
+        <div className="mb-12 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-brand-gold">Marketplace spotlight</p>
+            <h2 className="text-3xl font-bold leading-tight text-white">The 10 Most Expensive Cards on sale</h2>
+            <p className="mt-1 text-sm text-text-secondary">Highest-value cards currently in stock and ready for purchase</p>
+          </div>
+          <Link to="/cards" className="inline-flex items-center gap-1 text-sm font-semibold text-text-secondary transition-colors hover:text-white">
+            Explore all cards <ChevronRight size={18} />
+          </Link>
         </div>
-
-        {/* Start! + scroll cue */}
-        <button
-          onClick={scrollToContent}
-          className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#dbe3f3] hover:text-brand-gold transition-colors duration-200 cursor-pointer bg-transparent border-none p-0 group z-20"
-        >
-          <span className="text-[20px] md:text-[32px] font-bold tracking-wide" style={{ fontFamily: "'IBM Plex Sans Thai', sans-serif" }}>
-            Start!
-          </span>
-          <img 
-            src="/assets/chevron_double_down.svg" 
-            alt="Scroll down" 
-            className="w-6 h-6 md:w-8 md:h-8 animate-bounce transition-transform duration-200 group-hover:scale-110" 
-          />
-        </button>
-      </section>
-
-      <div id="explore-section" className="w-full scroll-mt-20">
-        {homeError && (
-          <div role="alert" className="mx-auto max-w-[1440px] px-4 pt-6 text-sm text-red-200 md:px-8">
-            {homeError}
+        {loading && (
+          <div className="flex gap-6 overflow-hidden px-2 pt-16">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-[380px] min-w-[260px] rounded-3xl bg-white/10" />
+            ))}
           </div>
         )}
-        {/* 2. The 10 Most Expensive Pokémon Cards of 2025 (Auto-Slide Carousel 3s) */}
-        <ExpensiveCardsCarousel />
-
-        {/* 3. The Best Collections (Top 5 Collectors Leaderboard) */}
-        <section className="py-16 bg-[#0B111A]">
-          <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="bg-amber-500/20 text-amber-400 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 border border-amber-500/30">
-                  <Sparkles size={13} /> Leaderboard
-                </span>
-              </div>
-              <h2 className="text-[32px] font-bold text-white leading-tight">
-                The Best Collections
-              </h2>
-              <p className="text-gray-400 text-sm mt-1">
-                Top 5 collectors ranked by rare Pokémon cards (GX = 20 pts, Promos & Secret Rares)
-              </p>
-            </div>
-            <Link
-              to="/cards"
-              className="text-gray-300 hover:text-white flex items-center gap-1 text-sm font-semibold transition-colors self-start md:self-auto"
-            >
-              Explore All Cards <ChevronRight size={18} />
-            </Link>
+        {!loading && error && <ErrorState message={error} onRetry={onRetry} />}
+        {!loading && !error && cards.length === 0 && <div className="rounded-2xl border border-[#D9E0EA] bg-white p-10 text-center text-sm text-[#596173]">No cards are currently listed for sale.</div>}
+        {!loading && !error && cards.length > 0 && (
+          <div className="flex gap-8 overflow-x-auto px-4 pb-12 pt-16 snap-x custom-scrollbar">
+            {cards.map((item) => (
+              <Link key={item.id} to={`/cards/${item.id}`} className="group relative flex h-[380px] min-w-[260px] shrink-0 snap-start flex-col rounded-3xl border border-[#D9E0EA] bg-white text-bg-card p-4 shadow-glow transition-transform hover:-translate-y-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-blue md:h-[420px] md:min-w-[300px]">
+                <span className="absolute left-4 top-4 z-20 rounded-full bg-status-success px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-bg-base">In stock ({item.stock})</span>
+                <div className="absolute -right-5 bottom-24 z-10 flex w-[100%] items-center justify-center rotate-[4deg] drop-shadow-[0_24px_34px_rgba(0,0,0,0.55)] transition-transform duration-300 group-hover:-translate-y-4 group-hover:rotate-0">
+                  <img
+                    src={item.image || '/assets/expensive_card_1.png'}
+                    alt={item.name}
+                    onError={(e) => {
+                      e.currentTarget.src = '/assets/expensive_card_1.png';
+                    }}
+                    className="max-h-[280px] w-full object-contain md:max-h-[320px]"
+                  />
+                </div>
+                <div className="relative z-20 mt-auto rounded-xl border border-[#D9E0EA] bg-[#F7F8FB] p-3">
+                  <div className="flex items-end justify-between gap-2">
+                    <span className="text-xl font-black text-bg-card">฿{item.price.toFixed(2)}</span>
+                    <span className="line-clamp-2 text-right text-xs font-bold text-bg-card">{item.name}</span>
+                  </div>
+                  <div className="mt-1 flex justify-between gap-2 text-[10px] text-[#596173]">
+                    <span>
+                      Market: <strong className="text-status-success">฿{(item.marketPrice ?? item.price).toFixed(2)}</strong>
+                    </span>
+                    <span className="line-clamp-2 text-right">{item.set || item.rarity || item.game}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
-          <div className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar px-4 md:px-8 max-w-[1440px] mx-auto">
-            {topCollectors.map((collector) => (
-              <div
-                key={collector.userId}
-                className="min-w-[340px] sm:min-w-[420px] md:min-w-[480px] bg-white rounded-[24px] p-6 snap-center shrink-0 flex flex-col justify-between shadow-xl border-2 border-transparent hover:border-amber-400/50 transition-all duration-300"
-              >
-                {/* Top Info Bar: Rank & Collector */}
-                <div>
-                  <div className="flex items-center justify-between gap-4 pb-4 border-b border-gray-100 mb-4">
-                    <div className="flex items-center gap-3">
-                      {/* Rank Badge */}
-                      <div
-                        className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-lg shadow-md ${
-                          collector.rank === 1
-                            ? 'bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-slate-950 ring-2 ring-amber-300/60'
-                            : collector.rank === 2
-                            ? 'bg-gradient-to-br from-slate-100 via-gray-200 to-slate-400 text-slate-800 ring-1 ring-slate-300'
-                            : collector.rank === 3
-                            ? 'bg-gradient-to-br from-amber-600 via-orange-600 to-amber-800 text-white ring-1 ring-amber-700/50'
-                            : 'bg-slate-100 text-slate-700'
-                        }`}
-                      >
-                        {collector.rank === 1 ? '👑 #1' : `#${collector.rank}`}
-                      </div>
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-[18px] md:text-[20px] font-bold text-gray-900 leading-none">
-                            {collector.name}
-                          </h3>
-                          {collector.rank === 1 && (
-                            <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                              Champion
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-500 font-medium">
-                          {collector.ultraRareCount} Ultra-Rare Cards
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Total Rare Score Pill */}
-                    <div className="flex flex-col items-end">
-                      <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-                        Rarity Score
-                      </span>
-                      <span className="text-xl md:text-2xl font-black text-amber-600 flex items-center gap-1">
-                        ★ {collector.totalScore}
-                        <span className="text-xs font-semibold text-gray-400">pts</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Featured Rare Cards Showcase */}
-                  <div>
-                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-3">
-                      Featured Collection Highlights
-                    </h4>
-                    <div className="grid grid-cols-3 gap-3">
-                      {collector.featuredCards.slice(0, 3).map((card) => (
-                        <div
-                          key={card.id}
-                          className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex flex-col items-center text-center group hover:bg-white hover:shadow-md transition-all"
-                        >
-                          <div className="w-16 h-20 md:w-20 md:h-24 mb-2 flex items-center justify-center relative">
-                            <img
-                              src={card.image}
-                              alt={card.name}
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src = '/assets/expensive_card_1.png';
-                              }}
-                              className="max-w-full max-h-full object-contain drop-shadow group-hover:scale-105 transition-transform"
-                            />
-                            {card.quantity > 1 && (
-                              <span className="absolute -top-1 -right-1 bg-slate-900 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">
-                                x{card.quantity}
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[11px] font-bold text-gray-900 line-clamp-1 w-full">
-                            {card.name}
-                          </span>
-                          <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 rounded px-1.5 py-0.5 mt-1 whitespace-nowrap">
-                            +{card.points} pts
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Action */}
-                <div className="w-full flex justify-center mt-6 pt-4 border-t border-gray-100">
-                  <Link
-                    to="/cards"
-                    className="w-full text-center bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-6 rounded-full text-sm transition-colors shadow-sm"
-                  >
-                    View Collection Cards
-                  </Link>
-                </div>
+function Leaderboard({ collectors, loading, error, onRetry }: { collectors: CollectorRanking[]; loading: boolean; error: string | null; onRetry: () => void }) {
+  return (
+    <section className="bg-bg-base py-16">
+      <div className="mx-auto max-w-[1440px] px-4 md:px-8">
+        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-brand-gold/30 bg-brand-gold/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-brand-gold">
+              <Sparkles size={13} /> Leaderboard
+            </span>
+            <h2 className="mt-2 text-3xl font-bold text-white">The Best Collections</h2>
+            <p className="mt-1 text-sm text-text-secondary">Top 10 collectors ranked by the number of rare Pokémon cards they own</p>
+          </div>
+          <Link to="/cards" className="inline-flex items-center gap-1 text-sm font-semibold text-text-secondary hover:text-white">
+            Explore all cards <ChevronRight size={18} />
+          </Link>
+        </div>
+        {loading && (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-3xl border border-[#D9E0EA] bg-white p-6">
+                <Skeleton className="h-12 w-2/3 bg-[#E5E9F0]" />
+                <Skeleton className="mt-6 h-28 w-full bg-[#E5E9F0]" />
+                <Skeleton className="mt-6 h-10 w-full bg-[#E5E9F0]" />
               </div>
             ))}
           </div>
-        </section>
+        )}
+        {!loading && error && <ErrorState message={error} onRetry={onRetry} />}
+        {!loading && !error && collectors.length === 0 && (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#D9E0EA] bg-white p-10 text-center text-bg-card">
+            <Layers className="text-[#596173]" />
+            <p className="text-sm text-[#596173]">No public rare-card collections yet.</p>
+          </div>
+        )}
+        {!loading && !error && collectors.length > 0 && (
+          <div className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar">
+            {collectors.map((collector) => (
+              <article key={collector.userId} className="flex min-w-[320px] snap-center shrink-0 flex-col rounded-3xl border border-[#D9E0EA] bg-white p-6 text-bg-card shadow-glow transition-transform hover:-translate-y-1 sm:min-w-[390px] md:min-w-[430px]">
+                <div className="flex items-start justify-between gap-4 border-b border-[#D9E0EA] pb-5">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-black ${collector.rank === 1 ? 'bg-brand-gold text-bg-base' : 'bg-[#E5E9F0] text-bg-card'}`}>#{collector.rank}</span>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-lg font-bold text-bg-card">{collector.displayName}</h3>
+                      <p className="text-xs text-[#596173]">{collector.distinctRareCardCount} unique rare cards</p>
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-[#596173]">Rare cards</span>
+                    <span className="text-2xl font-black text-brand-gold">{collector.rareCardCount}</span>
+                  </div>
+                </div>
+                <div className="mt-5">
+                  <h4 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#596173]">Collection highlights</h4>
+                  {collector.highlights.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-3">
+                      {collector.highlights.map((card) => (
+                        <Link key={card.cardId} to={`/cards/${card.cardId}`} className="rounded-xl border border-[#D9E0EA] bg-[#F7F8FB] p-2 text-center hover:border-brand-blue/60">
+                          <div className="relative flex h-24 items-center justify-center">
+                            <img src={card.imageUrl || '/assets/expensive_card_1.png'} alt={card.name} className="max-h-full max-w-full object-contain drop-shadow-lg" />
+                            {card.quantity > 1 && <span className="absolute right-0 top-0 rounded-full bg-bg-card px-1.5 py-0.5 text-[9px] font-bold text-white">×{card.quantity}</span>}
+                          </div>
+                          <span className="mt-2 block truncate text-[10px] font-semibold text-bg-card">{card.name}</span>
+                          <span className="mt-1 block truncate text-[9px] text-brand-gold">{card.rarity}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[#596173]">Rare card details unavailable.</p>
+                  )}
+                </div>
+                <Link to={`/collections/${encodeURIComponent(collector.userId)}`} className="mt-6 rounded-xl bg-brand-blue py-3 text-center text-sm font-bold text-bg-base hover:bg-brand-blue/90">
+                  View public collection
+                </Link>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
-        {/* 4. The 10 Most Expensive Cards on sell */}
-        <section className="py-16 bg-[#0B111A]">
-          <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4 lg:mb-8">
-              <div>
-                <h2 className="text-[32px] font-bold text-white leading-tight">
-                  The 10 Most Expensive Cards on sell
-                </h2>
-                <p className="text-gray-400 text-sm mt-1">
-                  Top 10 highest-value cards in stock and ready for purchase
-                </p>
+export function HomePage() {
+  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
+  const [bannerPaused, setBannerPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [featuredProducts, setFeaturedProducts] = useState<CardListing[]>([]);
+  const [expensiveCards, setExpensiveCards] = useState<CardListing[]>([]);
+  const [topCollectors, setTopCollectors] = useState<CollectorRanking[]>([]);
+  const [listingsLoading, setListingsLoading] = useState(true);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  const [listingsError, setListingsError] = useState<string | null>(null);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+
+  const loadHomeData = useCallback(() => {
+    setListingsLoading(true);
+    setListingsError(null);
+    setLeaderboardLoading(true);
+    setLeaderboardError(null);
+    void listingDiscoveryApi
+      .getListings({ size: 100 })
+      .then((res) => {
+        setFeaturedProducts(res.items.slice(0, 5));
+        setExpensiveCards(getMostExpensiveOnSaleCards(res.items, 10));
+      })
+      .catch(() => {
+        setListingsError('Unable to load marketplace highlights.');
+        setFeaturedProducts([]);
+        setExpensiveCards([]);
+      })
+      .finally(() => setListingsLoading(false));
+    void getTopCollectors(10)
+      .then(setTopCollectors)
+      .catch(() => {
+        setLeaderboardError('Unable to load leaderboard data.');
+        setTopCollectors([]);
+      })
+      .finally(() => setLeaderboardLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadHomeData();
+  }, [loadHomeData]);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setReducedMotion(mediaQuery.matches);
+    updatePreference();
+    mediaQuery.addEventListener?.('change', updatePreference);
+    return () => mediaQuery.removeEventListener?.('change', updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (bannerPaused || reducedMotion || HOME_BANNERS.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveBannerIndex((index) => (index + 1) % HOME_BANNERS.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [activeBannerIndex, bannerPaused, reducedMotion]);
+
+  return (
+    <div className="flex w-full flex-col overflow-hidden pb-20">
+      <section className="relative h-[calc(100dvh-64px)] min-h-[680px] w-full overflow-hidden bg-bg-card">
+        <img src="/assets/hero_castle_bg.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg-card/10 via-transparent to-bg-card/80" aria-hidden="true" />
+        <div className="absolute inset-x-5 top-[38%] z-20 mx-auto max-w-4xl -translate-y-1/2 text-center md:left-[7%] md:right-auto md:mx-0 md:text-left">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.32em] text-status-warning sm:text-sm">Buy • collect • trade</p>
+          <h1 className="text-6xl font-black leading-[0.9] tracking-[-0.055em] text-[#DBE3F3] sm:text-7xl lg:text-[84px] xl:text-[96px]">
+            Buy rare cards.<br /><span className="text-status-warning">Trade with confidence.</span>
+          </h1>
+          <p className="mx-auto mt-5 max-w-md text-sm leading-relaxed text-[#DBE3F3]/80 sm:text-base md:mx-0">Discover rare Pokémon cards, build your collection, and trade with confidence.</p>
+          <a href="#explore-section" className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-status-warning px-6 py-3 text-sm font-bold text-bg-card shadow-lg shadow-black/20 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-status-warning/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-warning">
+            Explore marketplace
+          </a>
+        </div>
+        <FeaturedBannerPreview
+          banner={HOME_BANNERS[activeBannerIndex]}
+          onMouseEnter={() => setBannerPaused(true)}
+          onMouseLeave={() => setBannerPaused(false)}
+        />
+      </section>
+      <div id="explore-section" className="w-full">
+        <EditorialBanners
+          activeIndex={activeBannerIndex}
+          onChange={setActiveBannerIndex}
+          onPause={() => setBannerPaused(true)}
+          onResume={() => setBannerPaused(false)}
+        />
+        <ExpensiveCards cards={expensiveCards} loading={listingsLoading} error={listingsError} onRetry={loadHomeData} />
+        <Leaderboard collectors={topCollectors} loading={leaderboardLoading} error={leaderboardError} onRetry={loadHomeData} />
+        <section className="bg-bg-surface py-12">
+          <div className="mx-auto max-w-[1440px] px-4 md:px-8">
+            <div className="mb-8 flex items-center justify-between">
+              <h2 className="text-3xl font-bold text-white">The Pokémon Cards Collection</h2>
+              <Link to="/cards" className="inline-flex items-center gap-1 text-sm font-semibold text-text-secondary hover:text-white">
+                Watch more <ChevronRight size={18} />
+              </Link>
+            </div>
+            {listingsLoading ? (
+              <Skeleton className="h-[200px] w-full bg-white/10" />
+            ) : listingsError ? (
+              <ErrorState message={listingsError} onRetry={loadHomeData} />
+            ) : (
+              <div className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar">
+                {featuredProducts.map((item) => (
+                  <Link key={item.id} to={`/cards/${item.id}`} className="flex h-[200px] min-w-[360px] snap-start gap-4 rounded-2xl border border-[#D9E0EA] bg-white p-4 text-bg-card hover:border-brand-blue/60">
+                    <div className="flex w-[130px] shrink-0 items-center justify-center">
+                      <img src={item.image || '/assets/expensive_card_1.png'} alt={item.name} className="h-full w-full object-contain drop-shadow-lg" />
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <h3 className="truncate text-lg font-bold text-bg-card">{item.name}</h3>
+                      <p className="mt-1 text-xs text-[#596173]">{item.set || item.game}</p>
+                      <p className="mt-auto text-2xl font-black text-bg-card">฿{item.price.toFixed(2)}</p>
+                      <p className="text-xs text-status-success">Market: ฿{(item.marketPrice ?? item.price).toFixed(2)}</p>
+                    </div>
+                  </Link>
+                ))}
               </div>
-              <Link
-                to="/cards"
-                className="text-gray-300 hover:text-white flex items-center gap-1 text-sm font-semibold transition-colors self-start md:self-auto"
-              >
-                Watch More <ChevronRight size={18} />
-              </Link>
-            </div>
-
-            <div className="flex gap-16 overflow-x-auto pb-12 pt-[120px] md:pt-[140px] custom-scrollbar snap-x px-4 md:px-0">
-              {expensiveCards.map((item) => (
-                <Link
-                  key={item.id}
-                  to={`/cards/${item.id}`}
-                  className="bg-white min-w-[200px] h-[260px] md:min-w-[240px] md:h-[315px] rounded-[24px] p-4 flex flex-col relative shrink-0 group cursor-pointer mt-4 hover:shadow-2xl transition-all"
-                >
-                  {/* Ready to sell In-Stock Badge */}
-                  <span className="absolute top-3 left-4 bg-[#16A34A] text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full z-20 shadow-sm uppercase tracking-wider">
-                    In Stock ({item.stock})
-                  </span>
-
-                  {/* Image popping out of top right, tilted, anchored to bottom to avoid text */}
-                  <div className="absolute bottom-[50px] md:bottom-[65px] -right-2 md:-right-4 w-[85%] md:w-[88%] rotate-[4deg] z-10 transition-transform duration-500 group-hover:rotate-0 group-hover:-translate-y-4 drop-shadow-[0_15px_30px_rgba(0,0,0,0.4)] flex items-center justify-center">
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = '/assets/expensive_card_1.png';
-                      }}
-                      className="w-full h-auto max-h-[190px] md:max-h-[230px] object-contain" 
-                    />
-                  </div>
-                  
-                  {/* Text Container at the bottom */}
-                  <div className="mt-auto flex flex-col gap-0.5 relative z-20 bg-white/80 backdrop-blur-sm rounded-xl p-2 -mx-2">
-                    <div className="flex justify-between items-end gap-2">
-                      <span className="text-[16px] md:text-[18px] font-black text-[#1E293B] leading-none">
-                        ฿{item.price.toFixed(2)}
-                      </span>
-                      <span className="text-[10px] md:text-[11px] font-bold text-[#1E293B] leading-tight text-right line-clamp-2">
-                        {item.name}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-start gap-2">
-                      <span className="text-[9px] md:text-[10px] text-gray-500 font-medium whitespace-nowrap">
-                        Market Price: <span className="text-[#16A34A] font-bold">฿{(item.marketPrice ?? item.price).toFixed(2)}</span>
-                      </span>
-                      <span className="text-[8px] md:text-[9px] text-gray-500 leading-snug whitespace-pre-wrap text-right line-clamp-2">
-                        {item.set || item.rarity || item.game}
-                        {item.condition ? `\n${item.condition}` : ''}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            )}
           </div>
         </section>
-
-        {/* 5. The Pokémon Cards Collection */}
-        <section className="py-12">
-          <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-[28px] font-bold text-white">The Pokémon Cards Collection</h2>
-              <Link to="/cards" className="text-gray-300 hover:text-white flex items-center gap-1 text-[15px] font-semibold transition-colors">
-                Watch More <ChevronRight size={20} />
-              </Link>
-            </div>
-            
-            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-8 snap-x custom-scrollbar">
-              {featuredProducts.map((item) => (
-                <Link
-                  key={item.id}
-                  to={`/cards/${item.id}`}
-                  className="bg-white rounded-[16px] p-4 flex gap-4 min-w-[320px] md:min-w-[400px] h-[180px] md:h-[200px] snap-start shrink-0 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-[#8B5CF6]"
-                >
-                  {/* Left Image */}
-                  <div className="relative w-[110px] md:w-[130px] h-full shrink-0 flex items-center justify-center rounded-lg">
-                    {item.stock > 0 && (
-                      <span className="absolute top-2 right-1 bg-[#16A34A] text-white text-[9px] font-bold px-2 py-0.5 rounded z-10 tracking-wide">
-                        IN STOCK
-                      </span>
-                    )}
-                    <img 
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-contain drop-shadow-md" 
-                    />
-                  </div>
-                  
-                  {/* Right Content */}
-                  <div className="flex flex-col flex-1 py-1">
-                    <h3 className="text-black font-bold text-[15px] md:text-[17px] leading-tight mb-2">
-                      {item.name}
-                    </h3>
-                    <p className="text-gray-400 text-[11px] md:text-[12px] leading-snug whitespace-pre-wrap mb-auto">
-                      {item.set || item.game}
-                      {'\n\n'}
-                      {item.condition || item.rarity || ''}
-                    </p>
-                    
-                    <div className="mt-2">
-                      <div className="text-black font-black text-[22px] md:text-[28px] leading-none mb-1">
-                        ฿{item.price.toFixed(2)}
-                      </div>
-                      <div className="text-gray-400 text-[11px] md:text-[12px] font-medium">
-                        Market Price:{' '}
-                        <span className="text-[#16A34A] font-bold">
-                          ฿{(item.marketPrice ?? item.price).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
       </div>
     </div>
   );

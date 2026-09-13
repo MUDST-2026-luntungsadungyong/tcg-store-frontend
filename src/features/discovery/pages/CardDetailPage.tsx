@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Card3DViewer } from '@/features/discovery/components/Card3DViewer';
 import { ShoppingCart, Minus, Plus, Bookmark } from 'lucide-react';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
+import { catalogApi, type CatalogCard } from '@/features/discovery/api/catalog';
 import { collectionApi } from '@/features/collection';
 import type { CardListing } from '@/entities/card/model/types';
 import { Skeleton } from '@/shared/components/Skeleton';
@@ -10,10 +11,32 @@ import { useToastStore } from '@/shared/model/useToastStore';
 import { ContextualLoginModal, useAuthStore } from '@/features/auth';
 import { useReservationCartStore } from '@/features/reservation-cart';
 
+function toCatalogListing(card: CatalogCard): CardListing {
+  return {
+    id: card.id,
+    sellerId: '',
+    name: card.name,
+    game: 'Pokemon',
+    image: card.imageLarge || card.imageSmall || '',
+    price: Number(card.marketPrice ?? 0),
+    cost: 0,
+    stock: 0,
+    status: 'SHOW',
+    rarity: card.rarity,
+    set: card.setName,
+    cardNumber: card.cardNumber,
+    subtitle: card.supertype,
+    cardText: [card.hp, card.types].filter(Boolean).join(' · '),
+    year: undefined,
+    tournament: undefined,
+  };
+}
+
 export function CardDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<CardListing | null>(null);
+  const [catalogOnly, setCatalogOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -26,9 +49,32 @@ export function CardDetailPage() {
     if (!id) return;
     setIsLoading(true);
     setError(null);
+    setCatalogOnly(false);
     try {
-      const data = await listingDiscoveryApi.getListingById(id);
-      setProduct(data || null);
+      const isCatalogId = id.includes('-');
+      let data: CardListing | undefined;
+
+      try {
+        data = await listingDiscoveryApi.getListingById(id);
+      } catch (err) {
+        if (!isCatalogId) throw err;
+      }
+
+      if (data) {
+        setProduct(data);
+        return;
+      }
+
+      if (isCatalogId) {
+        const catalogCard = await catalogApi.getCardById(id);
+        if (catalogCard) {
+          setProduct(toCatalogListing(catalogCard));
+          setCatalogOnly(true);
+          return;
+        }
+      }
+
+      setProduct(null);
     } catch (err) {
       console.error('Failed to fetch product', err);
       setError('Unable to load card details from server. Please try again.');
@@ -273,7 +319,7 @@ export function CardDetailPage() {
               
               {/* Condition / Grade */}
               <div className="text-[#C9C9C9] text-sm font-bold mb-1">
-                {product.condition || product.grade || 'Near Mint-Mint 8'}
+                {catalogOnly ? 'Catalog card' : product.condition || product.grade || 'Near Mint-Mint 8'}
               </div>
 
               {/* Price */}
@@ -283,10 +329,15 @@ export function CardDetailPage() {
 
               {/* Stock info */}
               <div className="text-[#A6ADC7] text-xs font-['Inter',sans-serif] mb-4">
-                {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                {catalogOnly ? 'Not currently listed for reservation' : product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
               </div>
 
               {/* Stepper + Action Buttons */}
+              {catalogOnly ? (
+                <p className="text-sm leading-relaxed text-[#DBE3F3]">
+                  This card is shown from the public collection catalog. Browse Cards to find an active listing.
+                </p>
+              ) : (
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
                 
                 {/* Quantity Selector */}
@@ -348,6 +399,7 @@ export function CardDetailPage() {
                   <span>Collect</span>
                 </button>
               </div>
+              )}
 
             </div>
 

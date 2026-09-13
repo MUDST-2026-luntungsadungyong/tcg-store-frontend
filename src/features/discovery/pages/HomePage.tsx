@@ -46,16 +46,16 @@ function FeaturedBannerPreview({ banner, onMouseEnter, onMouseLeave }: { banner:
       onMouseLeave={onMouseLeave}
       onFocus={onMouseEnter}
       onBlur={onMouseLeave}
-      className="group absolute bottom-5 left-5 right-5 z-30 flex w-auto overflow-hidden rounded-[28px] border border-white/20 bg-bg-card/75 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1 md:bottom-8 md:left-auto md:right-6 md:w-[min(42vw,540px)]"
+      className="group absolute bottom-5 left-5 right-5 z-30 flex h-[152px] w-auto overflow-hidden rounded-[28px] border border-white/70 bg-white p-3 text-bg-card shadow-[0_24px_70px_rgba(0,0,0,0.42)] transition-transform duration-300 hover:-translate-y-1 md:bottom-8 md:left-auto md:right-6 md:w-[min(42vw,540px)]"
     >
       <div className="h-32 w-40 shrink-0 overflow-hidden rounded-[20px] bg-white">
         <img src={banner.image} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col px-5 py-2">
         <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-status-warning">{banner.eyebrow}</span>
-        <h2 className="mt-2 line-clamp-2 text-xl font-bold leading-tight text-[#DBE3F3]">{banner.title}</h2>
+        <h2 className="mt-2 line-clamp-2 text-xl font-bold leading-tight text-bg-card">{banner.title}</h2>
         <div className="mt-auto flex items-center justify-between gap-3">
-          <span className="text-xs font-medium text-[#DBE3F3]/70">Discover the story</span>
+          <span className="text-xs font-medium text-bg-card/70">Discover the story</span>
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-status-warning text-bg-card transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">
             <ChevronRight size={22} />
           </span>
@@ -92,9 +92,9 @@ function EditorialBanners({ activeIndex, onChange, onPause, onResume }: { active
             data-testid="editorial-banner"
             data-banner-id={banner.id}
             aria-label={`Story ${activeIndex + 1} of ${HOME_BANNERS.length}: ${banner.title}`}
-            className="group grid min-h-[340px] w-full overflow-hidden rounded-[28px] border border-white/10 bg-white text-bg-card shadow-xl transition-opacity duration-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-status-warning md:min-h-[390px] md:grid-cols-[1.15fr_0.85fr]"
+            className="group grid h-[520px] w-full overflow-hidden rounded-[28px] border border-white/10 bg-white text-bg-card shadow-xl transition-opacity duration-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-status-warning md:h-[390px] md:grid-cols-[1.15fr_0.85fr]"
           >
-            <div className="relative min-h-56 overflow-hidden bg-white md:min-h-full">
+            <div className="relative h-[220px] overflow-hidden bg-white md:h-full">
               <img src={banner.image} alt="" className={`h-full w-full transition-transform duration-500 group-hover:scale-[1.03] ${activeIndex === 1 ? 'object-contain p-5' : 'object-cover'}`} />
             </div>
             <div className="flex flex-col p-6 md:p-10">
@@ -369,9 +369,9 @@ export function HomePage() {
       <section className="relative h-[calc(100dvh-64px)] min-h-[680px] w-full overflow-hidden bg-bg-card">
         <img src="/assets/hero_castle_bg.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg-card/10 via-transparent to-bg-card/80" aria-hidden="true" />
-        <div className="absolute inset-x-5 top-[38%] z-20 mx-auto max-w-3xl -translate-y-1/2 text-center md:left-[7%] md:right-auto md:mx-0 md:text-left">
+        <div className="absolute inset-x-5 top-[38%] z-20 mx-auto max-w-4xl -translate-y-1/2 text-center md:left-[7%] md:right-auto md:mx-0 md:text-left">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.32em] text-status-warning sm:text-sm">Buy • collect • trade</p>
-          <h1 className="text-6xl font-black leading-[0.9] tracking-[-0.055em] text-[#DBE3F3] sm:text-7xl lg:text-[88px] xl:text-[104px]">
+          <h1 className="text-6xl font-black leading-[0.9] tracking-[-0.055em] text-[#DBE3F3] sm:text-7xl lg:text-[84px] xl:text-[96px]">
             Buy rare cards.<br /><span className="text-status-warning">Trade with confidence.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-md text-sm leading-relaxed text-[#DBE3F3]/80 sm:text-base md:mx-0">Discover rare Pokémon cards, build your collection, and trade with confidence.</p>

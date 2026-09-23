@@ -241,10 +241,15 @@ function buildMockOrders(input: CreateReservationOrdersInput): ReservationOrder[
 }
 
 function normalizeStatus(status: string): ReservationStatus {
-  if (status === 'PENDING' || status === 'FULFILLED' || status === 'CANCELLED') {
-    return status;
+  if (status === 'PENDING' || status === 'RESERVED') {
+    return 'PENDING';
   }
-  if (status === 'RESERVED' || status === 'SENT') return status;
+  if (status === 'SENT' || status === 'FULFILLED') {
+    return 'SENT';
+  }
+  if (status === 'CANCELLED') {
+    return 'CANCELLED';
+  }
   throw new ReservationOrderError(
     'REQUEST_FAILED',
     `The server returned an unsupported reservation order status: ${status}.`,

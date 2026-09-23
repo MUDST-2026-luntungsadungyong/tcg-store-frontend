@@ -5,7 +5,7 @@ import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
 import { reservationOrdersApi } from './reservationOrders';
 
-export type SellerOrderStatus = 'PENDING' | 'FULFILLED' | 'CANCELLED';
+export type SellerOrderStatus = 'PENDING' | 'SENT' | 'FULFILLED' | 'CANCELLED';
 
 export interface SellerOrderItem {
   itemId: number | string;
@@ -68,7 +68,7 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
   const sellerRevenue = order.totalAmount;
   const sellerCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
   const status: SellerOrderStatus = order.status === 'SENT' || order.status === 'FULFILLED'
-    ? 'FULFILLED'
+    ? 'SENT'
     : order.status === 'CANCELLED'
       ? 'CANCELLED'
       : 'PENDING';
@@ -105,7 +105,18 @@ export async function fetchSellerOrders(
 ): Promise<SellerOrdersPageResponse> {
   if (ENV.ENABLE_MOCK_API) {
     let filtered = getMockSellerOrders();
-    if (status && status !== 'ALL') filtered = filtered.filter((order) => order.status === status);
+    if (status && status !== 'ALL') {
+      const upper = status.toUpperCase();
+      filtered = filtered.filter((order) => {
+        if (upper === 'PENDING' || upper === 'RESERVED') {
+          return order.status === 'PENDING';
+        }
+        if (upper === 'SENT' || upper === 'FULFILLED') {
+          return order.status === 'SENT';
+        }
+        return order.status === upper;
+      });
+    }
     return {
       orders: filtered.slice(page * size, (page + 1) * size),
       totalPages: Math.max(1, Math.ceil(filtered.length / size)),
@@ -115,14 +126,19 @@ export async function fetchSellerOrders(
   }
 
   const params: Record<string, unknown> = { page, size };
-  if (status && status !== 'ALL') params.status = status;
+  if (status && status !== 'ALL') {
+    params.status = status === 'SENT' ? 'FULFILLED' : status;
+  }
   const response = await apiClient.get('/seller/orders', { params });
   const data = response.data;
   if (!data || !Array.isArray(data.content)) {
     throw new Error('The server returned an invalid seller orders response.');
   }
   return {
-    orders: data.content as SellerOrder[],
+    orders: (data.content as SellerOrder[]).map((order) => ({
+      ...order,
+      status: (order.status === 'FULFILLED' ? 'SENT' : order.status) as SellerOrderStatus,
+    })),
     totalPages: data.totalPages ?? 1,
     totalElements: data.totalElements ?? data.content.length,
     currentPage: data.number ?? page,
@@ -134,21 +150,26 @@ export async function updateSellerOrderStatus(
   newStatus: SellerOrderStatus | string,
 ): Promise<SellerOrder> {
   const normalizedStatus = newStatus.toUpperCase();
-  if (!['PENDING', 'FULFILLED', 'CANCELLED'].includes(normalizedStatus)) {
+  if (!['PENDING', 'SENT', 'FULFILLED', 'CANCELLED'].includes(normalizedStatus)) {
     throw new Error(`Unsupported seller order status: ${newStatus}`);
   }
 
-  if (ENV.ENABLE_MOCK_API && normalizedStatus === 'FULFILLED') {
+  if (ENV.ENABLE_MOCK_API && (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED')) {
     const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
-    const updated = await reservationOrdersApi.confirmSellerPayment(String(orderId), sellerId);
+    const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
     return mapReservationOrder(updated);
   }
 
+  const backendStatus = normalizedStatus === 'SENT' ? 'FULFILLED' : normalizedStatus;
   const response = await apiClient.patch(`/seller/orders/${encodeURIComponent(orderId)}/status`, {
-    status: normalizedStatus,
+    status: backendStatus,
   });
   if (!response.data) throw new Error('The server returned an empty seller order update response.');
-  return response.data as SellerOrder;
+  const result = response.data as SellerOrder;
+  return {
+    ...result,
+    status: (result.status === 'FULFILLED' ? 'SENT' : result.status) as SellerOrderStatus,
+  };
 }
 
 export async function fetchProfitSummary(): Promise<SellerProfitSummary> {
@@ -163,7 +184,7 @@ export async function fetchProfitSummary(): Promise<SellerProfitSummary> {
       netProfit: totalRevenue - totalCost,
       totalOrders: orders.length,
       pendingOrders: orders.filter((order) => order.status === 'PENDING').length,
-      fulfilledOrders: orders.filter((order) => order.status === 'FULFILLED').length,
+      fulfilledOrders: orders.filter((order) => order.status === 'SENT' || order.status === 'FULFILLED').length,
       cancelledOrders: orders.filter((order) => order.status === 'CANCELLED').length,
     };
   }

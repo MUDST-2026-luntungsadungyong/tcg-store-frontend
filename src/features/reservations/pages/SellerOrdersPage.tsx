@@ -91,15 +91,17 @@ export function SellerOrdersPage() {
   const getStatusBadge = (status: string) => {
     switch (status.toUpperCase()) {
       case 'PENDING':
+      case 'RESERVED':
         return (
           <Badge variant="warning" className="flex items-center gap-1">
-            <Clock size={12} /> Pending Fulfillment
+            <Clock size={12} /> Pending
           </Badge>
         );
+      case 'SENT':
       case 'FULFILLED':
         return (
           <Badge variant="success" className="flex items-center gap-1">
-            <CheckCircle2 size={12} /> Fulfilled
+            <CheckCircle2 size={12} /> Sent
           </Badge>
         );
       case 'CANCELLED':
@@ -148,7 +150,7 @@ export function SellerOrdersPage() {
           <div className="text-2xl font-bold text-white mt-2">
             ฿{summary.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <p className="text-xs text-gray-400 mt-1">From all active fulfilled & pending sales</p>
+          <p className="text-xs text-gray-400 mt-1">From all active sent & pending sales</p>
         </div>
 
         {/* Total Cost */}
@@ -189,7 +191,7 @@ export function SellerOrdersPage() {
           <div className="flex items-center gap-3 text-xs mt-2">
             <span className="text-status-warning font-medium">{summary.pendingOrders} Pending</span>
             <span className="text-gray-600">|</span>
-            <span className="text-status-success font-medium">{summary.fulfilledOrders} Fulfilled</span>
+            <span className="text-status-success font-medium">{summary.fulfilledOrders} Sent</span>
             <span className="text-gray-600">|</span>
             <span className="text-gray-400 font-medium">{summary.cancelledOrders} Cancelled</span>
           </div>
@@ -200,7 +202,7 @@ export function SellerOrdersPage() {
       <div className="bg-[#192338] border border-[#31405A] rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Status Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-          {['ALL', 'PENDING', 'FULFILLED', 'CANCELLED'].map((tab) => (
+          {['ALL', 'PENDING', 'SENT', 'CANCELLED'].map((tab) => (
             <button
               key={tab}
               onClick={() => setStatusFilter(tab)}
@@ -210,7 +212,13 @@ export function SellerOrdersPage() {
                   : 'bg-[#243350] text-gray-300 hover:bg-[#2e4063]'
               }`}
             >
-              {tab === 'ALL' ? 'All Orders' : tab.charAt(0) + tab.slice(1).toLowerCase()}
+              {tab === 'ALL'
+                ? 'All Orders'
+                : tab === 'PENDING'
+                  ? 'Pending'
+                  : tab === 'SENT'
+                    ? 'Sent'
+                    : 'Cancelled'}
             </button>
           ))}
         </div>
@@ -328,16 +336,16 @@ export function SellerOrdersPage() {
                       {/* Actions */}
                       <td className="p-4 align-top text-right whitespace-nowrap">
                         <div className="flex flex-col gap-1.5 items-end">
-                          {order.status === 'PENDING' && (
+                          {(order.status === 'PENDING' || (order.status as string) === 'RESERVED') && (
                             <>
                               <Button
                                 size="sm"
                                 variant="primary"
                                 disabled={isActionLoading}
-                                onClick={() => handleStatusUpdate(order.id, 'FULFILLED')}
+                                onClick={() => handleStatusUpdate(order.id, 'SENT')}
                                 className="w-28 text-xs bg-status-success hover:bg-status-success/90"
                               >
-                                Mark Fulfilled
+                                Mark as Sent
                               </Button>
                               <Button
                                 size="sm"
@@ -350,9 +358,9 @@ export function SellerOrdersPage() {
                               </Button>
                             </>
                           )}
-                          {order.status === 'FULFILLED' && (
+                          {(order.status === 'SENT' || (order.status as string) === 'FULFILLED') && (
                             <span className="text-xs text-status-success flex items-center gap-1">
-                              <CheckCircle2 size={13} /> Completed
+                              <CheckCircle2 size={13} /> Sent
                             </span>
                           )}
                           {order.status === 'CANCELLED' && (
@@ -408,7 +416,7 @@ export function SellerOrdersPage() {
             )}
 
             <div className="p-3 bg-[#243350]/60 rounded-lg border border-[#31405A] text-xs text-gray-400">
-              💡 <strong>P2P Direct Handover Note:</strong> Reach out to the buyer directly using Line or Phone to coordinate card delivery or physical meetup. Once the buyer confirms receipt, mark the order as <strong>Fulfilled</strong>.
+              💡 <strong>P2P Direct Handover Note:</strong> Reach out to the buyer directly using Line or Phone to coordinate card delivery or physical meetup. Once the buyer confirms receipt, mark the order as <strong>Sent</strong>.
             </div>
 
             <div className="flex justify-end pt-2">

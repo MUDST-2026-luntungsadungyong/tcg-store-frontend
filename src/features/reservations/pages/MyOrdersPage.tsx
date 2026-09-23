@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, Clock, Package, RefreshCw, Truck, XCircle } from 'lucide-react';
+import { AlertCircle, Clock, Package, RefreshCw, Truck, XCircle } from 'lucide-react';
 
 import type { ReservationOrder, ReservationStatus } from '@/entities/reservation/model/types';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
@@ -16,19 +16,17 @@ interface StatusConfig {
 }
 
 const STATUS_CONFIGS: Record<ReservationStatus, StatusConfig> = {
-  PENDING: { label: 'Pending Fulfillment', variant: 'warning', icon: Clock },
-  RESERVED: { label: 'Awaiting Ship', variant: 'warning', icon: Clock },
-  SENT: { label: 'Shipped', variant: 'gold', icon: Truck },
-  FULFILLED: { label: 'Fulfilled', variant: 'success', icon: CheckCircle2 },
+  PENDING: { label: 'Pending', variant: 'warning', icon: Clock },
+  RESERVED: { label: 'Pending', variant: 'warning', icon: Clock },
+  SENT: { label: 'Sent', variant: 'success', icon: Truck },
+  FULFILLED: { label: 'Sent', variant: 'success', icon: Truck },
   CANCELLED: { label: 'Cancelled', variant: 'danger', icon: XCircle },
 };
 
 const FILTER_TABS: Array<{ key: FilterTab; label: string }> = [
   { key: 'ALL', label: 'All' },
-  { key: 'PENDING', label: 'Pending Fulfillment' },
-  { key: 'RESERVED', label: 'Awaiting Ship' },
-  { key: 'SENT', label: 'Shipped' },
-  { key: 'FULFILLED', label: 'Fulfilled' },
+  { key: 'PENDING', label: 'Pending' },
+  { key: 'SENT', label: 'Sent' },
   { key: 'CANCELLED', label: 'Cancelled' },
 ];
 
@@ -58,7 +56,18 @@ export function MyOrdersPage() {
   }, [loadOrders]);
 
   const filteredOrders = useMemo(
-    () => (activeTab === 'ALL' ? orders : orders.filter((order) => order.status === activeTab)),
+    () =>
+      activeTab === 'ALL'
+        ? orders
+        : orders.filter((order) => {
+            if (activeTab === 'PENDING') {
+              return order.status === 'PENDING' || order.status === 'RESERVED';
+            }
+            if (activeTab === 'SENT') {
+              return order.status === 'SENT' || order.status === 'FULFILLED';
+            }
+            return order.status === activeTab;
+          }),
     [activeTab, orders],
   );
 

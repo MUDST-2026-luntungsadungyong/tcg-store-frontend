@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Card3DViewer } from '@/features/discovery/components/Card3DViewer';
-import { ShoppingCart, Minus, Plus, Bookmark } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Bookmark, Store } from 'lucide-react';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
 import { catalogApi, type CatalogCard } from '@/features/discovery/api/catalog';
 import { collectionApi } from '@/features/collection';
@@ -36,6 +36,8 @@ export function CardDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<CardListing | null>(null);
+  const [offers, setOffers] = useState<CardListing[]>([]);
+  const [selectedOffer, setSelectedOffer] = useState<CardListing | null>(null);
   const [catalogOnly, setCatalogOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +52,8 @@ export function CardDetailPage() {
     setIsLoading(true);
     setError(null);
     setCatalogOnly(false);
+    setOffers([]);
+    setSelectedOffer(null);
     try {
       const isCatalogId = id.includes('-');
       let data: CardListing | undefined;
@@ -62,14 +66,47 @@ export function CardDetailPage() {
 
       if (data) {
         setProduct(data);
+        try {
+          const result = await listingDiscoveryApi.getListings({
+            cardId: data.cardId,
+            search: data.cardId ? undefined : data.name,
+            page: 0,
+            size: 100,
+            sortBy: 'price',
+            sortDir: 'asc',
+          });
+          const matchingOffers = result.items.filter(candidate =>
+            data.cardId ? candidate.cardId === data.cardId : candidate.name === data.name,
+          );
+          const availableOffers = matchingOffers.length > 0 ? matchingOffers : [data];
+          setOffers(availableOffers);
+          setSelectedOffer(availableOffers.find(candidate => candidate.id === data.id) ?? availableOffers[0]);
+        } catch {
+          setOffers([data]);
+          setSelectedOffer(data);
+        }
         return;
       }
 
       if (isCatalogId) {
         const catalogCard = await catalogApi.getCardById(id);
         if (catalogCard) {
-          setProduct(toCatalogListing(catalogCard));
-          setCatalogOnly(true);
+          const catalogListing = toCatalogListing(catalogCard);
+          setProduct(catalogListing);
+          try {
+            const result = await listingDiscoveryApi.getListings({
+              cardId: catalogCard.id,
+              page: 0,
+              size: 100,
+              sortBy: 'price',
+              sortDir: 'asc',
+            });
+            setOffers(result.items);
+            setSelectedOffer(result.items[0] ?? null);
+            setCatalogOnly(result.items.length === 0);
+          } catch {
+            setCatalogOnly(true);
+          }
           return;
         }
       }
@@ -87,8 +124,10 @@ export function CardDetailPage() {
     void fetchProduct();
   }, [fetchProduct]);
 
+  const activeListing = selectedOffer ?? (catalogOnly ? null : product);
+
   const handleIncrement = () => {
-    if (product && quantity < product.stock) {
+    if (activeListing && quantity < activeListing.stock) {
       setQuantity(prev => prev + 1);
     }
   };
@@ -104,11 +143,11 @@ export function CardDetailPage() {
       setShowLoginModal(true);
       return;
     }
-    if (!product) return;
-    const success = await addItem(product, quantity);
+    if (!activeListing) return;
+    const success = await addItem(activeListing, quantity);
     if (success) {
       addToast({ 
-        message: `Added ${quantity} × ${product.name} to your reservation cart.`, 
+        message: `Added ${quantity} × ${activeListing.name} to your reservation cart.`,
         type: 'success' 
       });
     } else {
@@ -124,8 +163,8 @@ export function CardDetailPage() {
       setShowLoginModal(true);
       return;
     }
-    if (!product) return;
-    const success = await addItem(product, quantity);
+    if (!activeListing) return;
+    const success = await addItem(activeListing, quantity);
     if (success) {
       navigate('/cart');
     } else {
@@ -143,7 +182,7 @@ export function CardDetailPage() {
     }
     if (!product) return;
     try {
-      await collectionApi.addToCollection(product);
+      await collectionApi.addToCollection(activeListing ?? product);
       addToast({
         type: 'success',
         message: `Saved "${product.name}" to your collection!`,
@@ -319,21 +358,23 @@ export function CardDetailPage() {
               
               {/* Condition / Grade */}
               <div className="text-[#C9C9C9] text-sm font-bold mb-1">
-                {catalogOnly ? 'Catalog card' : product.condition || product.grade || 'Near Mint-Mint 8'}
+                {activeListing ? activeListing.condition || activeListing.grade || 'Near Mint-Mint 8' : 'Catalog card'}
               </div>
 
               {/* Price */}
-              <div className="text-white text-[26px] font-bold leading-tight mb-1">
-                ฿{product.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
+              {activeListing && (
+                <div className="text-white text-[26px] font-bold leading-tight mb-1">
+                  ฿{activeListing.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              )}
 
               {/* Stock info */}
               <div className="text-[#A6ADC7] text-xs font-['Inter',sans-serif] mb-4">
-                {catalogOnly ? 'Not currently listed for reservation' : product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                {!activeListing ? 'Not currently listed for reservation' : activeListing.stock > 0 ? `${activeListing.stock} in stock` : 'Out of stock'}
               </div>
 
               {/* Stepper + Action Buttons */}
-              {catalogOnly ? (
+              {!activeListing ? (
                 <p className="text-sm leading-relaxed text-[#DBE3F3]">
                   This card is shown from the public collection catalog. Browse Cards to find an active listing.
                 </p>
@@ -346,7 +387,7 @@ export function CardDetailPage() {
                     type="button"
                     aria-label="Decrease quantity"
                     onClick={handleDecrement}
-                    disabled={quantity <= 1 || product.stock <= 0}
+                    disabled={quantity <= 1 || activeListing.stock <= 0}
                     className="w-10 h-full flex items-center justify-center text-[#8E8E8E] hover:text-[#31487A] disabled:opacity-40 transition-colors"
                   >
                     <Minus size={14} />
@@ -360,7 +401,7 @@ export function CardDetailPage() {
                     type="button"
                     aria-label="Increase quantity"
                     onClick={handleIncrement}
-                    disabled={quantity >= product.stock || product.stock <= 0}
+                    disabled={quantity >= activeListing.stock || activeListing.stock <= 0}
                     className="w-10 h-full flex items-center justify-center text-[#31487A] hover:opacity-80 disabled:opacity-40 transition-colors"
                   >
                     <Plus size={14} />
@@ -371,7 +412,7 @@ export function CardDetailPage() {
                 <button
                   type="button"
                   onClick={() => void handleAddToReservationCart()}
-                  disabled={product.stock <= 0}
+                  disabled={activeListing.stock <= 0}
                   className="h-[40px] px-4 bg-[rgba(31,53,101,0.5)] hover:bg-[#1F3565] border border-[#6889D0] rounded-[5px] text-white text-[11px] font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart size={14} className="text-white" />
@@ -382,7 +423,7 @@ export function CardDetailPage() {
                 <button
                   type="button"
                   onClick={() => void handleReserveNow()}
-                  disabled={product.stock <= 0}
+                  disabled={activeListing.stock <= 0}
                   className="h-[40px] px-5 bg-[#2B53A9] hover:bg-[#244691] rounded-[5px] text-white text-[11px] font-bold flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Reserve now
@@ -402,6 +443,69 @@ export function CardDetailPage() {
               )}
 
             </div>
+
+            <section className="mt-8 w-full" aria-labelledby="seller-offers-heading">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8FB3E2]">Compare listings</p>
+                  <h2 id="seller-offers-heading" className="mt-1 text-xl font-bold">Seller offers</h2>
+                </div>
+                <span className="text-sm text-gray-400">{offers.length} available</span>
+              </div>
+
+              {offers.length > 0 ? (
+                <div className="space-y-3">
+                  {offers.map(offer => {
+                    const isSelected = activeListing?.id === offer.id;
+                    return (
+                      <div
+                        key={offer.id}
+                        className={`flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+                          isSelected ? 'border-[#6889D0] bg-[#31487A]/45' : 'border-white/10 bg-white/[.03]'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Store size={15} className="shrink-0 text-[#8FB3E2]" />
+                            <Link
+                              to={`/stores/${offer.sellerId}`}
+                              className="truncate font-semibold text-white hover:text-[#8FB3E2] hover:underline"
+                            >
+                              {offer.sellerName || `Seller ${offer.sellerId}`}
+                            </Link>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-400">
+                            {[offer.condition, offer.language, `${offer.stock} in stock`].filter(Boolean).join(' · ')}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 sm:justify-end">
+                          <span className="text-lg font-bold">
+                            ฿{offer.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedOffer(offer);
+                              setQuantity(1);
+                            }}
+                            aria-pressed={isSelected}
+                            className={`min-w-20 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${
+                              isSelected ? 'bg-[#2B53A9] text-white' : 'bg-white/10 text-gray-200 hover:bg-white/15'
+                            }`}
+                          >
+                            {isSelected ? 'Selected' : 'Select'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-white/15 p-6 text-center text-sm text-gray-400">
+                  No seller has this card listed right now.
+                </div>
+              )}
+            </section>
 
           </div>
 

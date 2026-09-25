@@ -8,6 +8,8 @@ export interface ListingFilterParams {
   rarity?: string;
   stage?: string;
   condition?: string;
+  cardId?: string;
+  sellerId?: string;
   minPrice?: number;
   maxPrice?: number;
   page?: number;
@@ -49,6 +51,13 @@ export const listingDiscoveryApi = {
       if (params?.condition && params.condition.trim()) {
         const c = params.condition.trim().toLowerCase();
         all = all.filter(l => l.condition?.toLowerCase() === c);
+      }
+      if (params?.cardId && params.cardId.trim()) {
+        const cardId = params.cardId.trim();
+        all = all.filter(l => (l.cardId ?? l.id) === cardId);
+      }
+      if (params?.sellerId && params.sellerId.trim()) {
+        all = all.filter(l => l.sellerId === params.sellerId);
       }
       if (params?.minPrice !== undefined && params.minPrice > 0) {
         all = all.filter(l => l.price >= params.minPrice!);

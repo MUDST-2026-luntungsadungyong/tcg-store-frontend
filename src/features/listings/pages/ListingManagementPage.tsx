@@ -3,8 +3,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
-  type DragEvent,
   type FormEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -13,7 +11,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Grid2X2,
-  ImagePlus,
   List,
   Package,
   Pencil,
@@ -30,6 +27,12 @@ import {
   type ManagedListingInput,
 } from '@/features/listings/api/listings';
 import { useListingStore } from '@/features/listings/model/useListingStore';
+import {
+  CatalogCardDetails,
+  CatalogCardImageFrame,
+  CatalogCardPicker,
+} from '@/features/listings/components/CatalogCardPicker';
+import type { CatalogCard } from '@/features/discovery/api/catalog';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
@@ -37,24 +40,6 @@ import { Modal } from '@/shared/components/Modal';
 import { Select } from '@/shared/components/Select';
 import { useToastStore } from '@/shared/model/useToastStore';
 import type { ListingVisibility } from '@/entities/card/model/types';
-
-const GAME_OPTIONS = [
-  { value: '', label: 'Select game' },
-  { value: 'Pokemon', label: 'Pokemon' },
-  { value: 'YGO', label: 'Yu-Gi-Oh!' },
-  { value: 'MTG', label: 'Magic: The Gathering' },
-  { value: 'One Piece', label: 'One Piece' },
-];
-
-const CONDITION_OPTIONS = [
-  { value: '', label: 'Select condition' },
-  { value: 'Gem Mint', label: 'Gem Mint' },
-  { value: 'Mint', label: 'Mint' },
-  { value: 'Near Mint', label: 'Near Mint' },
-  { value: 'Lightly Played', label: 'Lightly Played' },
-  { value: 'Moderately Played', label: 'Moderately Played' },
-  { value: 'Heavily Played', label: 'Heavily Played' },
-];
 
 const STATUS_FILTER_OPTIONS = [
   { value: 'ALL', label: 'All statuses' },
@@ -64,51 +49,39 @@ const STATUS_FILTER_OPTIONS = [
 
 const GAME_FILTER_OPTIONS = [
   { value: 'ALL', label: 'All games' },
-  ...GAME_OPTIONS.slice(1),
+  { value: 'Pokemon', label: 'Pokemon' },
+  { value: 'YGO', label: 'Yu-Gi-Oh!' },
+  { value: 'MTG', label: 'Magic: The Gathering' },
+  { value: 'One Piece', label: 'One Piece' },
 ];
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
 type ListingForm = {
-  name: string;
-  game: string;
-  image: string;
   price: string;
-  cost: string;
   stock: string;
-  status: ListingVisibility;
-  condition: string;
-  set: string;
-  rarity: string;
 };
 
-type ListingFormErrors = Partial<Record<keyof ListingForm, string>>;
+type ListingFormErrors = Partial<Record<keyof ListingForm | 'card', string>>;
 
 const emptyForm = (): ListingForm => ({
-  name: '',
-  game: '',
-  image: '',
   price: '',
-  cost: '',
-  stock: '',
-  status: 'SHOW',
-  condition: '',
-  set: '',
-  rarity: '',
+  stock: '1',
 });
 
 const listingToForm = (listing: ManagedListing): ListingForm => ({
+  price: String(listing.price),
+  stock: String(listing.stock),
+});
+
+const listingToCatalogCard = (listing: ManagedListing): CatalogCard => ({
+  id: listing.id,
   name: listing.name,
   game: listing.game,
-  image: listing.image,
-  price: String(listing.price),
-  cost: String(listing.cost),
-  stock: String(listing.stock),
-  status: listing.status,
-  condition: listing.condition ?? '',
-  set: listing.set ?? '',
-  rarity: listing.rarity ?? '',
+  rarity: listing.rarity,
+  setName: listing.set,
+  cardNumber: listing.cardNumber,
+  imageLarge: listing.image,
+  marketPrice: listing.marketPrice ?? listing.price,
+  supertype: listing.stage,
 });
 
 const formatBaht = (amount: number) =>
@@ -123,23 +96,16 @@ const profitMargin = (price: number, cost: number) =>
 
 function validateForm(
   form: ListingForm,
-  imageFile: File | null,
+  selectedCard: CatalogCard | null,
+  isEditing: boolean,
 ): ListingFormErrors {
   const errors: ListingFormErrors = {};
   const price = Number(form.price);
-  const cost = Number(form.cost);
   const stock = Number(form.stock);
 
-  if (!form.name.trim()) errors.name = 'Listing name is required.';
-  if (!form.game) errors.game = 'Game is required.';
-  if (!form.image.trim() && !imageFile) {
-    errors.image = 'Add an image URL or upload an image.';
-  }
+  if (!isEditing && !selectedCard) errors.card = 'Select a card from the database.';
   if (!form.price.trim() || Number.isNaN(price) || price < 0) {
-    errors.price = 'Enter a valid sell price.';
-  }
-  if (!form.cost.trim() || Number.isNaN(cost) || cost < 0) {
-    errors.cost = 'Enter a valid cost.';
+    errors.price = 'Enter a valid listing price.';
   }
   if (
     !form.stock.trim() ||
@@ -155,7 +121,6 @@ function validateForm(
 
 export function ListingManagementPage() {
   const addToast = useToastStore((state) => state.addToast);
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const editorDialogRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -188,8 +153,7 @@ export function ListingManagementPage() {
   );
   const [form, setForm] = useState<ListingForm>(emptyForm);
   const [formErrors, setFormErrors] = useState<ListingFormErrors>({});
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState('');
+  const [selectedCard, setSelectedCard] = useState<CatalogCard | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ManagedListing | null>(null);
 
   useEffect(() => {
@@ -261,23 +225,19 @@ export function ListingManagementPage() {
 
   const openAddModal = () => {
     clearError();
-    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setEditingListing(null);
     setForm(emptyForm());
     setFormErrors({});
-    setImageFile(null);
-    setImagePreview('');
+    setSelectedCard(null);
     setEditorOpen(true);
   };
 
   const openEditModal = (listing: ManagedListing) => {
     clearError();
-    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setEditingListing(listing);
     setForm(listingToForm(listing));
     setFormErrors({});
-    setImageFile(null);
-    setImagePreview(listing.image);
+    setSelectedCard(listingToCatalogCard(listing));
     setEditorOpen(true);
   };
 
@@ -286,80 +246,36 @@ export function ListingManagementPage() {
     setEditorOpen(false);
     setEditingListing(null);
     setFormErrors({});
-    setImageFile(null);
-    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
-    setImagePreview('');
-  };
-
-  const selectImageFile = (file: File) => {
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setFormErrors((current) => ({
-        ...current,
-        image: 'Use a JPG, PNG, or WebP image.',
-      }));
-      return;
-    }
-
-    if (file.size > MAX_IMAGE_SIZE) {
-      setFormErrors((current) => ({
-        ...current,
-        image: 'Image must be 5 MB or smaller.',
-      }));
-      return;
-    }
-
-    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-    setFormErrors((current) => ({ ...current, image: undefined }));
-  };
-
-  const handleImageFile = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (file) selectImageFile(file);
-  };
-
-  const handleImageDrop = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    if (file) selectImageFile(file);
-  };
-
-  const removeImage = () => {
-    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
-    setImageFile(null);
-    setImagePreview('');
-    updateForm('image', '');
+    setSelectedCard(null);
   };
 
   const handleSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isSaving) return;
 
-    const nextErrors = validateForm(form, imageFile);
+    const nextErrors = validateForm(form, selectedCard, Boolean(editingListing));
     setFormErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
+    const card = selectedCard;
+    if (!card && !editingListing) return;
+
     const payload: ManagedListingInput = {
-      name: form.name.trim(),
-      game: form.game,
-      image: form.image.trim(),
+      name: editingListing?.name ?? card!.name,
+      game: editingListing?.game ?? card!.game ?? 'Pokemon',
+      image:
+        editingListing?.image ?? card!.imageSmall ?? card!.imageLarge ?? '',
       price: Number(form.price),
-      cost: Number(form.cost),
+      cost: editingListing?.cost ?? 0,
       stock: Number(form.stock),
-      status: form.status,
-      condition: form.condition || undefined,
-      set: form.set.trim() || undefined,
-      rarity: form.rarity.trim() || undefined,
+      status: editingListing?.status ?? 'SHOW',
+      condition: editingListing?.condition,
+      set: editingListing?.set ?? card!.setName,
+      rarity: editingListing?.rarity ?? card!.rarity,
     };
 
     try {
-      const saved = await saveListing(
-        payload,
-        editingListing?.id,
-        imageFile,
-      );
+      const saved = await saveListing(payload, editingListing?.id);
 
       addToast({
         type: 'success',
@@ -371,9 +287,7 @@ export function ListingManagementPage() {
 
       setEditorOpen(false);
       setEditingListing(null);
-      setImageFile(null);
-      if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
-      setImagePreview('');
+      setSelectedCard(null);
     } catch (saveError) {
       const failure = toListingError(saveError);
       addToast({
@@ -963,227 +877,56 @@ export function ListingManagementPage() {
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <form className="space-y-5" onSubmit={handleSave} noValidate>
           <div className="grid gap-5 md:grid-cols-[180px_minmax(0,1fr)]">
-            <div>
-              <div
-                role="button"
-                tabIndex={0}
-                aria-label="Upload listing image"
-                className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-dashed border-white/20 bg-bg-input transition-colors hover:border-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
-                onClick={() => imageInputRef.current?.click()}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    imageInputRef.current?.click();
-                  }
-                }}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={handleImageDrop}
-              >
-                {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Listing preview"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-4 text-center text-gray-500">
-                    <ImagePlus size={30} />
-                    <span className="text-xs">Drop JPG, PNG, or WebP here</span>
-                  </div>
-                )}
-              </div>
-
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="hidden"
-                onChange={handleImageFile}
-              />
-              <div className="mt-3 flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="flex-1 gap-2"
-                  onClick={() => imageInputRef.current?.click()}
-                >
-                  <ImagePlus size={15} /> Upload
-                </Button>
-                {imagePreview && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    aria-label="Remove listing image"
-                    className="text-status-danger hover:text-status-danger"
-                    onClick={removeImage}
-                  >
-                    <X size={15} />
-                  </Button>
-                )}
-              </div>
-              {imageFile && (
-                <p className="mt-2 truncate text-xs text-gray-400">
-                  {imageFile.name}
-                </p>
-              )}
-              {formErrors.image && (
-                <p className="mt-2 text-xs text-status-danger">
-                  {formErrors.image}
-                </p>
-              )}
-            </div>
+            <CatalogCardImageFrame card={selectedCard} />
 
             <div className="space-y-4">
-              <Input
-                id="seller-listing-name"
-                label="Listing name"
-                value={form.name}
-                onChange={(event) => updateForm('name', event.target.value)}
-                error={formErrors.name}
-                placeholder="Charizard Base Set"
+              <CatalogCardPicker
+                card={selectedCard}
+                disabled={Boolean(editingListing)}
+                error={formErrors.card}
+                onSelect={(card) => {
+                  setSelectedCard(card);
+                  setForm((current) => ({
+                    ...current,
+                    price:
+                      card && typeof card.marketPrice === 'number'
+                        ? String(card.marketPrice)
+                        : current.price,
+                  }));
+                  setFormErrors((current) => ({
+                    ...current,
+                    card: undefined,
+                    price: undefined,
+                  }));
+                }}
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Select
-                  id="seller-listing-game"
-                  label="Game"
-                  value={form.game}
-                  options={GAME_OPTIONS}
-                  onChange={(event) => updateForm('game', event.target.value)}
-                  error={formErrors.game}
+                <Input
+                  id="seller-listing-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  label="Listing price (฿)"
+                  value={form.price}
+                  onChange={(event) => updateForm('price', event.target.value)}
+                  error={formErrors.price}
                 />
-                <Select
-                  id="seller-listing-condition"
-                  label="Condition / Grade"
-                  value={form.condition}
-                  options={CONDITION_OPTIONS}
-                  onChange={(event) =>
-                    updateForm('condition', event.target.value)
-                  }
+                <Input
+                  id="seller-listing-stock"
+                  type="number"
+                  min="0"
+                  step="1"
+                  label="Quantity to sell"
+                  value={form.stock}
+                  onChange={(event) => updateForm('stock', event.target.value)}
+                  error={formErrors.stock}
                 />
               </div>
 
-              <Input
-                id="seller-listing-image-url"
-                label="Image URL"
-                value={form.image}
-                onChange={(event) => {
-                  if (imagePreview.startsWith('blob:')) {
-                    URL.revokeObjectURL(imagePreview);
-                  }
-                  setImageFile(null);
-                  updateForm('image', event.target.value);
-                  setImagePreview(event.target.value);
-                }}
-                error={formErrors.image}
-                placeholder="https://..."
-              />
+              {selectedCard && <CatalogCardDetails card={selectedCard} />}
             </div>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Input
-              id="seller-listing-price"
-              type="number"
-              min="0"
-              step="0.01"
-              label="Sell price (฿)"
-              value={form.price}
-              onChange={(event) => updateForm('price', event.target.value)}
-              error={formErrors.price}
-            />
-            <Input
-              id="seller-listing-cost"
-              type="number"
-              min="0"
-              step="0.01"
-              label="Cost (฿)"
-              value={form.cost}
-              onChange={(event) => updateForm('cost', event.target.value)}
-              error={formErrors.cost}
-            />
-            <Input
-              id="seller-listing-stock"
-              type="number"
-              min="0"
-              step="1"
-              label="Stock"
-              value={form.stock}
-              onChange={(event) => updateForm('stock', event.target.value)}
-              error={formErrors.stock}
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              id="seller-listing-set"
-              label="Set"
-              value={form.set}
-              onChange={(event) => updateForm('set', event.target.value)}
-              placeholder="Base Set"
-            />
-            <Input
-              id="seller-listing-rarity"
-              label="Rarity"
-              value={form.rarity}
-              onChange={(event) => updateForm('rarity', event.target.value)}
-              placeholder="Holo Rare"
-            />
-          </div>
-
-          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-4">
-            <div>
-              <p className="font-medium text-white">Visible to customers</p>
-              <p className="mt-1 text-xs text-gray-400">
-                Hidden listings stay in your workspace but are removed from card discovery.
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-label="Listing visibility"
-              aria-checked={form.status === 'SHOW'}
-              onClick={() =>
-                updateForm(
-                  'status',
-                  form.status === 'SHOW' ? 'HIDE' : 'SHOW',
-                )
-              }
-              className={`relative h-6 w-11 rounded-full transition-colors ${
-                form.status === 'SHOW' ? 'bg-brand-blue' : 'bg-gray-700'
-              }`}
-            >
-              <span
-                className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${
-                  form.status === 'SHOW' ? 'left-6' : 'left-1'
-                }`}
-              />
-            </button>
-          </div>
-
-          {form.price && form.cost && (
-            <div className="rounded-xl border border-brand-blue/20 bg-brand-blue/5 p-4">
-              <p className="text-xs uppercase tracking-wide text-gray-400">
-                Estimated profit / unit
-              </p>
-              <p
-                className={`mt-1 text-xl font-bold ${
-                  Number(form.price) - Number(form.cost) >= 0
-                    ? 'text-status-success'
-                    : 'text-status-danger'
-                }`}
-              >
-                {formatBaht(Number(form.price) - Number(form.cost))}
-              </p>
-              <p className="mt-1 text-sm text-gray-400">
-                {profitMargin(Number(form.price), Number(form.cost)) === null
-                  ? 'Margin unavailable when sell price is zero.'
-                  : `${profitMargin(Number(form.price), Number(form.cost))?.toFixed(1)}% margin`}
-              </p>
-            </div>
-          )}
 
           <div className="flex justify-end gap-3 border-t border-white/10 pt-5">
             <Button

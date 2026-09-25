@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Input } from "@/shared/components/Input";
 import { Button } from "@/shared/components/Button";
 import { profileApi } from "../api/profile";
@@ -8,15 +8,13 @@ import { useAuthStore } from "@/features/auth/model/useAuthStore";
 
 export function SellerApplicationPage() {
   const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
-  const login = useAuthStore((state) => state.login);
-  const navigate = useNavigate();
   const [shopName, setShopName] = useState("");
   const [shopDescription, setShopDescription] = useState("");
   const [phone, setPhone] = useState(user?.phone || "");
   const [line, setLine] = useState(user?.line || "");
   const [facebook, setFacebook] = useState(user?.facebook || "");
   const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function submit(event: React.FormEvent) {
@@ -26,11 +24,14 @@ export function SellerApplicationPage() {
       return;
     }
     setError("");
+    setSubmitted(false);
     setIsSubmitting(true);
     try {
       await profileApi.verifySeller({ shopName, shopDescription, phone, line, facebook });
-      if (user && token) login(token, { ...user, isSeller: true, phone, line, facebook });
-      navigate("/workspace/store-settings");
+      setError("");
+      setShopName("");
+      setShopDescription("");
+      setSubmitted(true);
     } catch {
       setError("Unable to submit your seller application. Please try again.");
     } finally {
@@ -47,7 +48,7 @@ export function SellerApplicationPage() {
 
       <header className="mt-7 border-b border-white/10 pb-6">
         <h1 className="text-3xl font-bold tracking-tight text-white">Become a seller</h1>
-        <p className="mt-2 text-gray-400">Add the details buyers need to contact your store.</p>
+        <p className="mt-2 text-gray-400">Submit your store details for an administrator to review.</p>
       </header>
 
       <form className="mt-7 space-y-8" onSubmit={submit}>
@@ -69,6 +70,7 @@ export function SellerApplicationPage() {
         </fieldset>
 
         {error && <p role="alert" className="text-sm text-status-danger">{error}</p>}
+        {submitted && <p role="status" className="text-sm text-green-400">Application submitted. Your seller account will be activated once an administrator approves it.</p>}
         <div className="flex flex-wrap items-center gap-3 border-t border-white/10 pt-6">
           <Button type="submit" isLoading={isSubmitting}>Submit seller application</Button>
           <Link to="/profile" className="px-3 py-2 text-sm text-gray-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 focus:ring-offset-bg-base">Cancel</Link>

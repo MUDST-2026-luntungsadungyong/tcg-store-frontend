@@ -1,6 +1,7 @@
-﻿import { ENV } from '@/shared/config/env';
+import { ENV } from '@/shared/config/env';
 import { storage } from '@/infrastructure/mock-db/storage';
 import type { CardListing, CollectionEntry } from '@/entities/card/model/types';
+import type { CatalogCard } from '@/features/discovery/api/catalog';
 import apiClient from '@/shared/api/client';
 
 export interface CollectionPageMetadata {
@@ -113,6 +114,47 @@ export const collectionApi = {
       return newEntry;
     }
     const response = await apiClient.post<CollectionEntry>('/collection', { listingId: listing.id });
+    return response.data;
+  },
+
+  addCatalogCardToCollection: async (card: CatalogCard): Promise<CollectionEntry> => {
+    if (ENV.ENABLE_MOCK_API) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const token = localStorage.getItem('token');
+      const userId = token?.includes('admin') ? 'usr-2' : token?.includes('seller') ? 'usr-3' : 'usr-1';
+      const all = storage.getCollection();
+      const existing = all.find((item) => item.ownerId === userId && item.listing.id === card.id);
+      if (existing) {
+        existing.quantity += 1;
+        storage.setCollection(all);
+        return existing;
+      }
+      const listing: CardListing = {
+        id: card.id,
+        sellerId: '',
+        name: card.name,
+        game: card.game ?? 'Pokemon',
+        image: card.imageSmall ?? card.imageLarge ?? '',
+        price: card.marketPrice ?? 0,
+        cost: 0,
+        stock: 0,
+        status: 'SHOW',
+        set: card.setName,
+        rarity: card.rarity,
+        cardNumber: card.cardNumber,
+      };
+      const newEntry: CollectionEntry = {
+        id: `col-${Date.now()}`,
+        ownerId: userId,
+        listing,
+        quantity: 1,
+        sourceOrderId: `ord-direct-${Date.now()}`,
+        acquiredAt: new Date().toISOString(),
+      };
+      storage.setCollection([newEntry, ...all]);
+      return newEntry;
+    }
+    const response = await apiClient.post<CollectionEntry>('/collection', { cardId: card.id });
     return response.data;
   },
 

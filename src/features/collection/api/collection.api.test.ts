@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { get } = vi.hoisted(() => ({ get: vi.fn() }));
+const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 
-vi.mock('@/shared/api/client', () => ({ default: { get } }));
+vi.mock('@/shared/api/client', () => ({ default: { get, post } }));
 vi.mock('@/shared/config/env', () => ({
   ENV: { ENABLE_MOCK_API: false, API_BASE_URL: 'http://localhost:8080/api' },
 }));
 
+import type { CatalogCard } from '@/features/discovery/api/catalog';
 import { collectionApi } from './collection';
 
 describe('collection API adapter', () => {
@@ -36,4 +37,27 @@ describe('collection API adapter', () => {
     }]);
     expect(get).toHaveBeenCalledWith('/collection');
   });
+
+  it('calls POST /collection with cardId when adding a catalog card', async () => {
+    post.mockResolvedValueOnce({
+      data: {
+        id: 'col-new',
+        ownerId: 'buyer-1',
+        quantity: 1,
+        listing: { id: 'card-1', name: 'Charizard' },
+      },
+    });
+
+    const mockCatalogCard: CatalogCard = {
+      id: 'card-1',
+      name: 'Charizard',
+      game: 'Pokemon',
+      marketPrice: 1500,
+    };
+
+    const result = await collectionApi.addCatalogCardToCollection(mockCatalogCard);
+    expect(post).toHaveBeenCalledWith('/collection', { cardId: 'card-1' });
+    expect(result).toMatchObject({ id: 'col-new' });
+  });
 });
+

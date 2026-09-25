@@ -1,12 +1,21 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { Layers, AlertCircle, RefreshCw } from 'lucide-react';
+import { Layers, AlertCircle, Plus, RefreshCw, X } from 'lucide-react';
 import { collectionApi } from '../api/collection';
 import { CollectionCard } from '../components/CollectionCard';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { Modal } from '@/shared/components/Modal';
+import { Input } from '@/shared/components/Input';
+import { Button } from '@/shared/components/Button';
 import { useToastStore } from '@/shared/model/useToastStore';
 import type { CollectionEntry } from '@/entities/card/model/types';
+import type { CatalogCard } from '@/features/discovery/api/catalog';
+import {
+  CatalogCardDetails,
+  CatalogCardImageFrame,
+  CatalogCardPicker,
+} from '@/features/listings/components/CatalogCardPicker';
 
 export function MyCollectionPage() {
   const [collection, setCollection] = useState<CollectionEntry[]>([]);
@@ -14,6 +23,12 @@ export function MyCollectionPage() {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedEntryForDelete, setSelectedEntryForDelete] = useState<CollectionEntry | null>(null);
+
+  const [addCardOpen, setAddCardOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<CatalogCard | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [addCardError, setAddCardError] = useState<string | null>(null);
+  const addCardDialogRef = useRef<HTMLDivElement>(null);
 
   const addToast = useToastStore((s) => s.addToast);
 
@@ -33,6 +48,62 @@ export function MyCollectionPage() {
   useEffect(() => {
     void fetchCollection();
   }, [fetchCollection]);
+
+  useEffect(() => {
+    if (!addCardOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = 'hidden';
+    addCardDialogRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
+  }, [addCardOpen]);
+
+  const openAddCard = () => {
+    setSelectedCard(null);
+    setAddCardError(null);
+    setAddCardOpen(true);
+  };
+
+  const closeAddCard = () => {
+    if (isAdding) return;
+    setAddCardOpen(false);
+    setSelectedCard(null);
+    setAddCardError(null);
+  };
+
+  const handleAddCard = async () => {
+    if (!selectedCard) {
+      setAddCardError('Select a card from the database.');
+      return;
+    }
+    if (isAdding) return;
+    setIsAdding(true);
+    setAddCardError(null);
+    try {
+      const entry = await collectionApi.addCatalogCardToCollection(selectedCard);
+      setCollection((prev) => {
+        const exists = prev.find((item) => item.id === entry.id);
+        if (exists) return prev.map((item) => (item.id === entry.id ? entry : item));
+        return [entry, ...prev];
+      });
+      addToast({
+        type: 'success',
+        title: 'Card added',
+        message: `"${selectedCard.name}" was added to your collection.`,
+      });
+      closeAddCard();
+    } catch (err) {
+      addToast({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to add card to collection.',
+      });
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   const handleConfirmDelete = async () => {
     if (!selectedEntryForDelete) return;
@@ -73,16 +144,27 @@ export function MyCollectionPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={fetchCollection}
-            disabled={loading}
-            className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-bg-surface hover:bg-bg-elevated border border-white/10 text-sm font-medium text-gray-300 transition-colors disabled:opacity-50"
-            title="Refresh Collection"
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <button
+              type="button"
+              id="collection-add-card-button"
+              onClick={openAddCard}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue/90 text-sm font-semibold text-white transition-colors shadow-lg shadow-brand-blue/20"
+            >
+              <Plus size={16} />
+              Add Card
+            </button>
+            <button
+              type="button"
+              onClick={fetchCollection}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-bg-surface hover:bg-bg-elevated border border-white/10 text-sm font-medium text-gray-300 transition-colors disabled:opacity-50"
+              title="Refresh Collection"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Loading Skeleton */}
@@ -190,6 +272,94 @@ export function MyCollectionPage() {
             </div>
           </div>
         </Modal>
+
+        {/* Add Card Dialog */}
+        {addCardOpen &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget && !isAdding) closeAddCard();
+              }}
+            >
+              <div
+                ref={addCardDialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="add-card-dialog-title"
+                tabIndex={-1}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape' && !isAdding) closeAddCard();
+                }}
+                className="glass-elevated flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-xl"
+              >
+                <div className="flex shrink-0 items-center justify-between border-b border-white/10 p-4">
+                  <h2 id="add-card-dialog-title" className="text-lg font-semibold text-white">
+                    Add Card to Collection
+                  </h2>
+                  <button
+                    type="button"
+                    aria-label="Close add card dialog"
+                    disabled={isAdding}
+                    onClick={closeAddCard}
+                    className="text-gray-400 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                  <div className="space-y-5">
+                    <div className="grid gap-5 md:grid-cols-[180px_minmax(0,1fr)]">
+                      <CatalogCardImageFrame card={selectedCard} />
+
+                      <div className="space-y-4">
+                        <CatalogCardPicker
+                          card={selectedCard}
+                          error={addCardError ?? undefined}
+                          onSelect={(card) => {
+                            setSelectedCard(card);
+                            setAddCardError(null);
+                          }}
+                        />
+
+                        <Input
+                          id="collection-card-market-price"
+                          type="number"
+                          label="Market price (฿)"
+                          value={selectedCard?.marketPrice ?? ''}
+                          disabled
+                          placeholder="—"
+                          onChange={() => undefined}
+                        />
+
+                        {selectedCard && <CatalogCardDetails card={selectedCard} />}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 border-t border-white/10 pt-5">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={isAdding}
+                        onClick={closeAddCard}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        isLoading={isAdding}
+                        onClick={() => void handleAddCard()}
+                      >
+                        Add to Collection
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )}
 
       </div>
     </div>

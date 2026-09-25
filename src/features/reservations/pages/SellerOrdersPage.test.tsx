@@ -36,7 +36,7 @@ const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
     {
       id: 2,
       orderNumber: 'ORD-2026-002',
-      status: 'FULFILLED',
+      status: 'SENT',
       buyerId: 102,
       buyerName: 'Piyawat Santisuk',
       buyerEmail: 'piyawat@example.com',
@@ -72,7 +72,7 @@ const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
 
   const mockUpdateStatus = vi.fn().mockResolvedValue({
     ...mockOrdersList[0],
-    status: 'FULFILLED',
+    status: 'SENT',
   });
 
   return { mockOrdersList, mockSummary, mockUpdateStatus };
@@ -164,7 +164,7 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     });
   });
 
-  it('handles order status update to Fulfilled', async () => {
+  it('handles order status update to Sent', async () => {
     const user = userEvent.setup();
 
     render(
@@ -177,9 +177,9 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
       expect(screen.getByText('ORD-2026-001')).toBeInTheDocument();
     });
 
-    const fulfillBtns = screen.getAllByRole('button', { name: 'Mark Fulfilled' });
-    await user.click(fulfillBtns[0]);
+    const sentBtns = screen.getAllByRole('button', { name: /Mark as Sent/i });
+    await user.click(sentBtns[0]);
 
-    expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'FULFILLED');
+    expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT');
   });
 });

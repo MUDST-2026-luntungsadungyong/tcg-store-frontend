@@ -2,7 +2,9 @@ export type ListingVisibility = 'SHOW' | 'HIDE';
 
 export interface CardListing {
   id: string;
+  cardId?: string;
   sellerId: string;
+  sellerName?: string;
   name: string;
   game: string;
   image: string;
@@ -11,6 +13,7 @@ export interface CardListing {
   stock: number;
   status: ListingVisibility;
   condition?: string;
+  language?: string;
   set?: string;
   rarity?: string;
   stage?: string;

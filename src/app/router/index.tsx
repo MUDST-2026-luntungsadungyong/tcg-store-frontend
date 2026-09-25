@@ -2,6 +2,7 @@
 
 import { PublicLayout } from '@/app/layouts/PublicLayout';
 import { WorkspaceLayout } from '@/app/layouts/WorkspaceLayout';
+import { AdminLayout } from '@/app/layouts/AdminLayout';
 import { authRoutes } from '@/features/auth/routes';
 import { collectionRoutes, publicCollectionRoutes } from '@/features/collection/routes';
 import { checkoutRoutes } from '@/features/checkout/routes';
@@ -15,6 +16,11 @@ import {
 } from '@/features/reservations/routes';
 import { listingWorkspaceRoutes } from '@/features/listings/routes';
 import { publicStoreRoutes, sellerStoreRoutes } from '@/features/stores/routes';
+import { AdminSellerApplicationsPage } from '@/features/admin/pages/AdminSellerApplicationsPage';
+import { AdminDashboardPage } from '@/features/admin/pages/AdminDashboardPage';
+import { AdminAuditLogsPage } from '@/features/admin/pages/AdminAuditLogsPage';
+import { AdminOrderLogsPage } from '@/features/admin/pages/AdminOrderLogsPage';
+import { AdminUsersPage } from '@/features/admin/pages/AdminUsersPage';
 
 import { NotFoundPage } from './NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -42,6 +48,12 @@ const workspaceRoute: RouteObject = {
   ],
 };
 
+const adminRoute: RouteObject = {
+  path: '/admin',
+  element: <ProtectedRoute requiredRole="ADMIN" />,
+  children: [{ element: <AdminLayout />, children: [{ index: true, element: <AdminDashboardPage /> }, { path: 'seller-applications', element: <AdminSellerApplicationsPage /> }, { path: 'audit-logs', element: <AdminAuditLogsPage /> }, { path: 'orders', element: <AdminOrderLogsPage /> }, { path: 'users', element: <AdminUsersPage /> }] }],
+};
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -56,4 +68,5 @@ export const router = createBrowserRouter([
     ],
   },
   workspaceRoute,
+  adminRoute,
 ]);

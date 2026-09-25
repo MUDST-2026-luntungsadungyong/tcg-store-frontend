@@ -10,6 +10,9 @@ import {
   ChevronDown,
   Layers3,
   Library,
+  ClipboardList,
+  ReceiptText,
+  UsersRound,
 } from 'lucide-react';
 import { Button } from '@/shared/components/Button';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
@@ -221,8 +224,17 @@ export function Navbar() {
                 {menuOpen && (
                   <div
                     role="menu"
-                    className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-xl bg-bg-elevated border border-white/10 shadow-xl py-1.5 z-50"
+                    className="absolute right-0 top-[calc(100%+8px)] w-60 rounded-xl bg-bg-elevated border border-white/10 shadow-xl py-1.5 z-50"
                   >
+                    {user.role === 'ADMIN' && <>
+                      <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">Administration</p>
+                      <Link to="/admin" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><Layers3 size={16} />Admin dashboard</Link>
+                      <Link to="/admin/seller-applications" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><UserIcon size={16} />Seller approvals</Link>
+                      <Link to="/admin/orders" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><ReceiptText size={16} />Order monitoring</Link>
+                      <Link to="/admin/users" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><UsersRound size={16} />User management</Link>
+                      <Link to="/admin/audit-logs" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><ClipboardList size={16} />Audit trail</Link>
+                      <div className="my-1.5 border-t border-white/10" />
+                    </>}
                     {isSeller && (
                       <Link
                         to="/workspace/listings"

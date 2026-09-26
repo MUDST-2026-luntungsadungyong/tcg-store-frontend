@@ -23,15 +23,15 @@ function NavigationItem({ item, compact, onNavigate }: { item: NavItem; compact:
 }
 
 function NavigationSection({ label, items, compact, onNavigate }: { label: string; items: NavItem[]; compact: boolean; onNavigate?: () => void }) {
-  return <section className="mt-6 first:mt-0" aria-label={label}><p className={cn('mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500', compact && 'sr-only')}>{label}</p><div className="space-y-1">{items.map((item) => <NavigationItem key={item.to} item={item} compact={compact} onNavigate={onNavigate} />)}</div></section>;
+  return <section className={label === 'Main' ? 'mt-0' : 'mt-6'} aria-label={label}><p className={cn('mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500', label === 'Main' && !compact && 'mb-3', compact && 'sr-only')}>{label}</p><div className="space-y-1">{items.map((item) => <NavigationItem key={item.to} item={item} compact={compact} onNavigate={onNavigate} />)}</div></section>;
 }
 
 function SidebarNavigation({ compact = false, onNavigate }: { compact?: boolean; onNavigate?: () => void }) {
-  return <nav aria-label="Administration navigation" className={cn('p-3', compact && 'px-2')}><NavigationSection label="Main" items={mainLinks} compact={compact} onNavigate={onNavigate} /><NavigationSection label="System" items={systemLinks} compact={compact} onNavigate={onNavigate} /><section className="mt-6" aria-label="Others"><p className={cn('mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500', compact && 'sr-only')}>Others</p><button type="button" disabled title="Administration settings are not available in the current application" aria-label={compact ? 'Settings unavailable' : undefined} className={cn('flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-slate-500 transition', compact && 'justify-center px-0')}><Settings size={18} strokeWidth={1.8} aria-hidden="true" /><span className={cn(compact && 'sr-only')}>Settings</span></button></section></nav>;
+  return <nav aria-label="Administration navigation" className={cn('px-3 pb-3 pt-6', compact && 'px-2')}><NavigationSection label="Main" items={mainLinks} compact={compact} onNavigate={onNavigate} /><NavigationSection label="System" items={systemLinks} compact={compact} onNavigate={onNavigate} /><section className="mt-6" aria-label="Others"><p className={cn('mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500', compact && 'sr-only')}>Others</p><button type="button" disabled title="Administration settings are not available in the current application" aria-label={compact ? 'Settings unavailable' : undefined} className={cn('flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-slate-500 transition', compact && 'justify-center px-0')}><Settings size={18} strokeWidth={1.8} aria-hidden="true" /><span className={cn(compact && 'sr-only')}>Settings</span></button></section></nav>;
 }
 
 function BrandHeader({ collapsed, onToggle }: { collapsed: boolean; onToggle?: () => void }) {
-  return <div className={cn('flex h-[84px] min-w-0 items-center border-b border-white/10', collapsed ? 'flex-col justify-center gap-1' : 'gap-2.5 px-4')}>
+  return <div className={cn('flex min-w-0 items-center border-b border-white/10', collapsed ? 'h-[96px] flex-col justify-center gap-1' : 'gap-2.5 px-4 pb-6 pt-7')}>
     <span className={cn('flex shrink-0 items-center justify-center overflow-hidden', collapsed ? 'h-9 w-9' : 'h-10 w-10')}>
       <img src="/assets/mythix_logo_white_v3.png" alt="MYTHIX TCG" className="h-full w-full scale-[2.1] object-contain" />
     </span>

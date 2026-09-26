@@ -47,7 +47,7 @@ describe('AdminDashboardPage', () => {
     expect(screen.getByText('฿156,000')).toBeInTheDocument();
     expect(screen.getByText('45 completed orders')).toBeInTheDocument();
     expect(screen.getByText('Marketplace GMV')).toBeInTheDocument();
-    expect(screen.getByText('Approved sellers')).toBeInTheDocument();
+    expect(screen.getAllByText('Approved sellers')).toHaveLength(2);
     expect(screen.getByText('Catalog records')).toBeInTheDocument();
 
     const reviewLink = screen.getByRole('link', { name: /Review applications/i });
@@ -78,7 +78,7 @@ describe('AdminDashboardPage', () => {
       expect(screen.getByText('No seller applications are waiting for review.')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Queue is clear')).toBeInTheDocument();
+    expect(screen.getByText('Approval queue is clear')).toBeInTheDocument();
   });
 
   it('displays error alert when fetching dashboard data fails and allows retry', async () => {

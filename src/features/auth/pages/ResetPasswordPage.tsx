@@ -4,7 +4,7 @@ import { Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { AuthLayout } from '@/features/auth/layouts/AuthLayout';
 import { Input } from '@/shared/components/Input';
 import { Button } from '@/shared/components/Button';
-import { authApi, hasPendingDemoReset } from '@/features/auth/api/auth';
+import { authApi, getAuthErrorMessage, hasPendingDemoReset } from '@/features/auth/api/auth';
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -20,6 +20,11 @@ export function ResetPasswordPage() {
     e.preventDefault();
     setError('');
 
+    if (password.length < 8 || password.length > 72) {
+      setError('Password must be between 8 and 72 characters.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -30,7 +35,7 @@ export function ResetPasswordPage() {
       await authApi.resetPassword(password);
       navigate('/reset-success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(getAuthErrorMessage(err, 'Could not reset password. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -48,6 +53,8 @@ export function ResetPasswordPage() {
             icon={Lock}
             placeholder="••••••••"
             autoComplete="new-password"
+            minLength={8}
+            maxLength={72}
             required
             className="pr-10"
             value={password}
@@ -71,6 +78,8 @@ export function ResetPasswordPage() {
           icon={Lock}
           placeholder="••••••••"
           autoComplete="new-password"
+          minLength={8}
+          maxLength={72}
           required
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}

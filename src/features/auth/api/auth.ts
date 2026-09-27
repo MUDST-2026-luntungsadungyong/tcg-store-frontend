@@ -19,6 +19,7 @@ interface BackendAuthResponse {
 
 interface ApiErrorResponse {
   message?: string;
+  fieldErrors?: Record<string, string>;
 }
 
 export function toFrontendUser(user: BackendUser): User {
@@ -45,7 +46,8 @@ export function toFrontendUser(user: BackendUser): User {
 
 export function getAuthErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError<ApiErrorResponse>(error)) {
-    return error.response?.data?.message ?? fallback;
+    const details = error.response?.data;
+    return details?.fieldErrors?.newPassword ?? details?.fieldErrors?.email ?? details?.message ?? fallback;
   }
   return error instanceof Error ? error.message : fallback;
 }

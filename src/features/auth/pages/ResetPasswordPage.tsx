@@ -53,6 +53,7 @@ export function ResetPasswordPage() {
             icon={Lock}
             placeholder="••••••••"
             autoComplete="new-password"
+            aria-describedby="new-password-requirements"
             minLength={8}
             maxLength={72}
             required
@@ -70,6 +71,9 @@ export function ResetPasswordPage() {
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
+        <p id="new-password-requirements" className="text-sm text-gray-300">
+          Password must be 8–72 characters long.
+        </p>
 
         <Input
           id="confirm-password"

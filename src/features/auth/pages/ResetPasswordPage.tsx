@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { AuthLayout } from '@/features/auth/layouts/AuthLayout';
 import { Input } from '@/shared/components/Input';
 import { Button } from '@/shared/components/Button';
-import { authApi } from '@/features/auth/api/auth';
+import { authApi, hasPendingDemoReset } from '@/features/auth/api/auth';
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -13,6 +13,8 @@ export function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  if (!hasPendingDemoReset()) return <Navigate to="/forgot-password" replace />;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -36,6 +38,7 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout title="Reset Password">
+      <p className="mt-3 text-center text-sm text-gray-400">Demo flow: this changes the account password without email verification.</p>
       <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
         <div className="relative">
           <Input

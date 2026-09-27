@@ -15,10 +15,12 @@ export function ResetPasswordPage() {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  // Capture entry permission once; the API clears it after a successful reset.
+  const [resetStarted] = useState(hasPendingDemoReset);
   const passwordValid = PASSWORD_RULES.every((rule) => rule.test(password));
   const passwordsMatch = confirmPassword.length === 0 || confirmPassword === password;
 
-  if (!hasPendingDemoReset()) return <Navigate to="/forgot-password" replace />;
+  if (!resetStarted) return <Navigate to="/forgot-password" replace />;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

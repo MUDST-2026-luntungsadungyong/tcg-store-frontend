@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type { CardListing } from '@/entities/card/model/types';
-import { listingDiscoveryApi } from '@/features/discovery/api/listings';
 import { CardListingCard } from '@/features/discovery/components/CardListingCard';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { storesApi, type StoreProfile } from '../api/stores';
@@ -22,12 +21,12 @@ export function PublicStorePage() {
 
     Promise.all([
       storesApi.public(sellerId),
-      listingDiscoveryApi.getListings({ sellerId, page: 0, size: 100, sortBy: 'price', sortDir: 'asc' }),
+      storesApi.availableListings(sellerId),
     ])
-      .then(([profile, result]) => {
+      .then(([profile, availableListings]) => {
         if (cancelled) return;
         setStore(profile);
-        setListings(result.items);
+        setListings(availableListings);
       })
       .catch(() => {
         if (!cancelled) setError('Store not found.');

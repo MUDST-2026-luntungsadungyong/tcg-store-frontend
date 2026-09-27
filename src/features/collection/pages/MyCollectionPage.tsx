@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
-import { Layers, AlertCircle, Plus, RefreshCw, X } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Layers, AlertCircle, Plus, RefreshCw, ShoppingBag, Store, X } from 'lucide-react';
 import { collectionApi } from '../api/collection';
 import { CollectionCard } from '../components/CollectionCard';
 import { Skeleton } from '@/shared/components/Skeleton';
@@ -9,8 +9,12 @@ import { Modal } from '@/shared/components/Modal';
 import { Input } from '@/shared/components/Input';
 import { Button } from '@/shared/components/Button';
 import { useToastStore } from '@/shared/model/useToastStore';
-import type { CollectionEntry } from '@/entities/card/model/types';
+import { useAuthStore } from '@/features/auth/model/useAuthStore';
+import type { CardListing, CollectionEntry } from '@/entities/card/model/types';
 import type { CatalogCard } from '@/features/discovery/api/catalog';
+import { CardListingCard } from '@/features/discovery/components/CardListingCard';
+import { groupListingsByCard } from '@/features/discovery/lib/groupListings';
+import { listingsApi } from '@/features/listings/api/listings';
 import {
   CatalogCardDetails,
   CatalogCardImageFrame,
@@ -18,9 +22,19 @@ import {
 } from '@/features/listings/components/CatalogCardPicker';
 
 export function MyCollectionPage() {
+  const user = useAuthStore((state) => state.user);
+  const isSeller = user?.isSeller === true;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedView = searchParams.get('view');
+  const activeView: 'collection' | 'store' = isSeller && requestedView === 'store' ? 'store' : 'collection';
+
   const [collection, setCollection] = useState<CollectionEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [storeListings, setStoreListings] = useState<CardListing[]>([]);
+  const [storeLoading, setStoreLoading] = useState(false);
+  const [storeError, setStoreError] = useState<string | null>(null);
+  const [storeLoaded, setStoreLoaded] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedEntryForDelete, setSelectedEntryForDelete] = useState<CollectionEntry | null>(null);
 
@@ -31,6 +45,8 @@ export function MyCollectionPage() {
   const addCardDialogRef = useRef<HTMLDivElement>(null);
 
   const addToast = useToastStore((s) => s.addToast);
+
+  const storeCards = useMemo(() => groupListingsByCard(storeListings), [storeListings]);
 
   const fetchCollection = useCallback(async () => {
     setLoading(true);
@@ -48,6 +64,40 @@ export function MyCollectionPage() {
   useEffect(() => {
     void fetchCollection();
   }, [fetchCollection]);
+
+  const fetchStore = useCallback(async () => {
+    if (!isSeller) return;
+    setStoreLoading(true);
+    setStoreError(null);
+    try {
+      const listings = await listingsApi.getListings({ status: 'SHOW', page: 0, size: 100 });
+      setStoreListings(listings.filter((listing) => listing.status === 'SHOW' && listing.stock > 0));
+    } catch (err) {
+      setStoreError(err instanceof Error ? err.message : 'Failed to load your store.');
+    } finally {
+      setStoreLoaded(true);
+      setStoreLoading(false);
+    }
+  }, [isSeller]);
+
+  useEffect(() => {
+    if (activeView === 'store' && !storeLoaded) void fetchStore();
+  }, [activeView, fetchStore, storeLoaded]);
+
+  const selectView = (view: 'collection' | 'store') => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (view === 'collection') nextParams.delete('view');
+    else nextParams.set('view', view);
+    setSearchParams(nextParams);
+  };
+
+  const refreshActiveView = () => {
+    if (activeView === 'store') {
+      void fetchStore();
+      return;
+    }
+    void fetchCollection();
+  };
 
   useEffect(() => {
     if (!addCardOpen) return;
@@ -137,38 +187,88 @@ export function MyCollectionPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
-              My Collection
+              {activeView === 'store' ? 'My Store' : 'My Collection'}
             </h1>
             <p className="text-sm md:text-base text-gray-400 mt-2 max-w-2xl leading-relaxed">
-              Cards you have saved to your personal collection. List any card for sale anytime.
+              {activeView === 'store'
+                ? 'Cards you currently have listed for sale in your store.'
+                : 'Cards you have saved to your personal collection. List any card for sale anytime.'}
             </p>
           </div>
 
           <div className="flex items-center gap-3 self-start sm:self-auto">
+            {activeView === 'collection' ? (
+              <button
+                type="button"
+                id="collection-add-card-button"
+                onClick={openAddCard}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue/90 text-sm font-semibold text-white transition-colors shadow-lg shadow-brand-blue/20"
+              >
+                <Plus size={16} />
+                Add Card
+              </button>
+            ) : (
+              <Link
+                to="/workspace/listings"
+                aria-label="Manage your listings"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue/90 text-sm font-semibold text-white transition-colors shadow-lg shadow-brand-blue/20"
+              >
+                <Store size={16} />
+                Manage Listings
+              </Link>
+            )}
             <button
               type="button"
-              id="collection-add-card-button"
-              onClick={openAddCard}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue/90 text-sm font-semibold text-white transition-colors shadow-lg shadow-brand-blue/20"
-            >
-              <Plus size={16} />
-              Add Card
-            </button>
-            <button
-              type="button"
-              onClick={fetchCollection}
-              disabled={loading}
+              onClick={refreshActiveView}
+              disabled={loading || storeLoading}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-bg-surface hover:bg-bg-elevated border border-white/10 text-sm font-medium text-gray-300 transition-colors disabled:opacity-50"
-              title="Refresh Collection"
+              title={`Refresh ${activeView === 'store' ? 'Store' : 'Collection'}`}
             >
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw size={16} className={loading || storeLoading ? 'animate-spin' : ''} />
               Refresh
             </button>
           </div>
         </div>
 
+        {isSeller && (
+          <div
+            role="tablist"
+            aria-label="Seller inventory views"
+            className="inline-flex w-fit rounded-xl border border-white/10 bg-bg-surface p-1"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeView === 'collection'}
+              aria-controls="seller-inventory-panel"
+              onClick={() => selectView('collection')}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                activeView === 'collection' ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/20' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Layers size={16} />
+              My Collection
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">{collection.length}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeView === 'store'}
+              aria-controls="seller-inventory-panel"
+              onClick={() => selectView('store')}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                activeView === 'store' ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/20' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Store size={16} />
+              My Store
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">{storeCards.length}</span>
+            </button>
+          </div>
+        )}
+
         {/* Loading Skeleton */}
-        {loading && (
+        {(activeView === 'collection' ? loading : storeLoading) && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-5 flex gap-5 animate-pulse">
@@ -187,7 +287,7 @@ export function MyCollectionPage() {
         )}
 
         {/* Error State with Retry */}
-        {!loading && error && (
+        {activeView === 'collection' && !loading && error && (
           <div className="bg-[#192338] border border-status-danger/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center gap-4">
             <div className="size-12 rounded-full bg-status-danger/10 text-status-danger flex items-center justify-center">
               <AlertCircle size={28} />
@@ -198,7 +298,7 @@ export function MyCollectionPage() {
             </div>
             <button
               type="button"
-              onClick={fetchCollection}
+              onClick={() => void fetchCollection()}
               className="px-5 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-semibold rounded-lg transition-colors"
             >
               Try Again
@@ -206,8 +306,23 @@ export function MyCollectionPage() {
           </div>
         )}
 
-        {/* Empty State */}
-        {!loading && !error && collection.length === 0 && (
+        {activeView === 'store' && !storeLoading && storeError && (
+          <div className="bg-[#192338] border border-status-danger/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center gap-4">
+            <div className="size-12 rounded-full bg-status-danger/10 text-status-danger flex items-center justify-center">
+              <AlertCircle size={28} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Unable to load store</h3>
+              <p className="text-sm text-gray-400 mt-1">{storeError}</p>
+            </div>
+            <button type="button" onClick={refreshActiveView} className="px-5 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-semibold rounded-lg transition-colors">
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* Collection empty state */}
+        {activeView === 'collection' && !loading && !error && collection.length === 0 && (
           <div className="bg-[#192338] border border-[rgba(143,179,226,0.15)] rounded-2xl py-20 px-6 flex flex-col items-center justify-center text-center gap-4">
             <div className="size-16 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
               <Layers size={32} />
@@ -227,9 +342,25 @@ export function MyCollectionPage() {
           </div>
         )}
 
-        {/* Collection Cards Grid (2-column or 3-column according to Figma 641:1898) */}
-        {!loading && !error && collection.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+        {/* Store empty state */}
+        {activeView === 'store' && !storeLoading && !storeError && storeCards.length === 0 && (
+          <div className="bg-[#192338] border border-[rgba(143,179,226,0.15)] rounded-2xl py-20 px-6 flex flex-col items-center justify-center text-center gap-4">
+            <div className="size-16 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
+              <ShoppingBag size={32} />
+            </div>
+            <div className="max-w-md">
+              <h3 className="text-xl font-bold text-white">Your store is empty</h3>
+              <p className="text-sm text-gray-400 mt-1">Cards appear here only after you open a listing for sale with available stock.</p>
+            </div>
+            <Link to="/workspace/listings" className="mt-2 bg-brand-blue hover:bg-brand-blue/90 text-white font-semibold text-sm px-6 py-2.5 rounded-lg transition-colors shadow-lg shadow-brand-blue/20">
+              Manage Listings
+            </Link>
+          </div>
+        )}
+
+        {/* Collection cards */}
+        {activeView === 'collection' && !loading && !error && collection.length > 0 && (
+          <div id="seller-inventory-panel" role={isSeller ? 'tabpanel' : undefined} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
             {collection.map((entry) => (
               <CollectionCard
                 key={entry.id}
@@ -237,6 +368,15 @@ export function MyCollectionPage() {
                 onDelete={() => setSelectedEntryForDelete(entry)}
                 isDeleting={deletingId === entry.id}
               />
+            ))}
+          </div>
+        )}
+
+        {/* Seller store cards reuse the canonical public-store presentation. */}
+        {activeView === 'store' && !storeLoading && !storeError && storeCards.length > 0 && (
+          <div id="seller-inventory-panel" role="tabpanel" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pt-2">
+            {storeCards.map((card) => (
+              <CardListingCard key={card.cardId || card.id} listing={card} sellerCount={card.sellerCount} />
             ))}
           </div>
         )}

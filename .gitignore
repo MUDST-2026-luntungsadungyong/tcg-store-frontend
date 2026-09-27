@@ -7,6 +7,7 @@ DevOps_User*.csv
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # Dependencies
 node_modules/

@@ -1,18 +1,22 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, AlertCircle, Check, X } from 'lucide-react';
 import { AuthLayout } from '@/features/auth/layouts/AuthLayout';
 import { Input } from '@/shared/components/Input';
 import { Button } from '@/shared/components/Button';
 import { authApi, getAuthErrorMessage, hasPendingDemoReset } from '@/features/auth/api/auth';
+import { PASSWORD_RULES } from '@/features/auth/lib/passwordRules';
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const passwordValid = PASSWORD_RULES.every((rule) => rule.test(password));
+  const passwordsMatch = confirmPassword.length === 0 || confirmPassword === password;
 
   if (!hasPendingDemoReset()) return <Navigate to="/forgot-password" replace />;
 
@@ -20,8 +24,8 @@ export function ResetPasswordPage() {
     e.preventDefault();
     setError('');
 
-    if (password.length < 8 || password.length > 72) {
-      setError('Password must be between 8 and 72 characters.');
+    if (!passwordValid) {
+      setError('Password does not meet the requirements');
       return;
     }
 
@@ -60,6 +64,8 @@ export function ResetPasswordPage() {
             className="pr-10"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onFocus={() => setPasswordFocused(true)}
+            onBlur={() => setPasswordFocused(false)}
           />
           <button
             type="button"
@@ -71,23 +77,41 @@ export function ResetPasswordPage() {
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
-        <p id="new-password-requirements" className="text-sm text-gray-300">
-          Password must be 8–72 characters long.
-        </p>
+        {(passwordFocused || password.length > 0) && (
+          <ul id="new-password-requirements" className="space-y-1">
+            {PASSWORD_RULES.map((rule) => {
+              const ok = rule.test(password);
+              return (
+                <li
+                  key={rule.label}
+                  className={`flex items-center gap-1.5 text-xs transition-colors ${ok ? 'text-status-success' : 'text-gray-500'}`}
+                >
+                  {ok ? <Check size={13} className="shrink-0" /> : <X size={13} className="shrink-0" />}
+                  {rule.label}
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
-        <Input
-          id="confirm-password"
-          type={showPassword ? 'text' : 'password'}
-          label="Confirm Password"
-          icon={Lock}
-          placeholder="••••••••"
-          autoComplete="new-password"
-          minLength={8}
-          maxLength={72}
-          required
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
+        <div>
+          <Input
+            id="confirm-password"
+            type={showPassword ? 'text' : 'password'}
+            label="Confirm Password"
+            icon={Lock}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            minLength={8}
+            maxLength={72}
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          {!passwordsMatch && (
+            <p className="mt-1.5 text-xs text-status-danger">Passwords do not match</p>
+          )}
+        </div>
 
         {error && (
           <div

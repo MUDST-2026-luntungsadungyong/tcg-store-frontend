@@ -6,6 +6,7 @@ import { listingDiscoveryApi } from '@/features/discovery/api/listings';
 import { catalogApi, type CatalogCard } from '@/features/discovery/api/catalog';
 import { collectionApi } from '@/features/collection';
 import type { CardListing } from '@/entities/card/model/types';
+import { formatCondition } from '@/entities/card/model/condition';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { useToastStore } from '@/shared/model/useToastStore';
 import { ContextualLoginModal, useAuthStore } from '@/features/auth';
@@ -275,7 +276,7 @@ export function CardDetailPage() {
     },
     {
       label: 'Grade:',
-      value: product.grade || product.condition || 'NM-MT 8 (Near Mint-Mint 8)',
+      value: product.grade || (product.condition ? formatCondition(product.condition) : 'NM-MT 8 (Near Mint-Mint 8)'),
       isBold: true,
     },
     {
@@ -358,7 +359,9 @@ export function CardDetailPage() {
               
               {/* Condition / Grade */}
               <div className="text-[#C9C9C9] text-sm font-bold mb-1">
-                {activeListing ? activeListing.condition || activeListing.grade || 'Near Mint-Mint 8' : 'Catalog card'}
+                {activeListing
+                  ? (activeListing.condition ? formatCondition(activeListing.condition) : (activeListing.grade || 'Near Mint-Mint 8'))
+                  : 'Catalog card'}
               </div>
 
               {/* Price */}
@@ -475,7 +478,7 @@ export function CardDetailPage() {
                             </Link>
                           </div>
                           <p className="mt-1 text-sm text-gray-400">
-                            {[offer.condition, offer.language, `${offer.stock} in stock`].filter(Boolean).join(' · ')}
+                            {[offer.condition ? formatCondition(offer.condition) : undefined, offer.language, `${offer.stock} in stock`].filter(Boolean).join(' · ')}
                           </p>
                         </div>
                         <div className="flex items-center justify-between gap-4 sm:justify-end">

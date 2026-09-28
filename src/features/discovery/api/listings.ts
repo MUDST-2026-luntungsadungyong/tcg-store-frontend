@@ -1,6 +1,7 @@
 import apiClient from '@/shared/api/client';
 import { ENV } from '@/shared/config/env';
 import type { CardListing } from '@/entities/card/model/types';
+import { normalizeConditionToCode } from '@/entities/card/model/condition';
 import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
 
 export interface ListingFilterParams {
@@ -49,8 +50,8 @@ export const listingDiscoveryApi = {
         all = all.filter(l => l.stage?.toLowerCase().includes(s));
       }
       if (params?.condition && params.condition.trim()) {
-        const c = params.condition.trim().toLowerCase();
-        all = all.filter(l => l.condition?.toLowerCase() === c);
+        const c = normalizeConditionToCode(params.condition);
+        all = all.filter(l => normalizeConditionToCode(l.condition) === c);
       }
       if (params?.cardId && params.cardId.trim()) {
         const cardId = params.cardId.trim();
@@ -83,7 +84,12 @@ export const listingDiscoveryApi = {
       };
     }
 
-    const response = await apiClient.get('/products', { params });
+    const queryParams: Record<string, unknown> = { ...params };
+    if (params?.condition && params.condition.trim()) {
+      queryParams.condition = normalizeConditionToCode(params.condition);
+    }
+
+    const response = await apiClient.get('/products', { params: queryParams });
     const data = response.data;
 
     // Handle raw array

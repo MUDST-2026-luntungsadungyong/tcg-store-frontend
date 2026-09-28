@@ -26,7 +26,7 @@ const mockItems: CardListing[] = [
     status: 'SHOW',
     rarity: 'Rare Holo',
     stage: 'Basic',
-    condition: 'Near Mint',
+    condition: 'NM',
   },
   {
     id: 'prd-2',
@@ -40,7 +40,7 @@ const mockItems: CardListing[] = [
     status: 'SHOW',
     rarity: 'Ultra Rare',
     stage: 'VMAX',
-    condition: 'Mint',
+    condition: 'LP',
   },
 ];
 
@@ -49,7 +49,7 @@ describe('CardDiscoveryPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders products and filters with search input', async () => {
+  it('renders products and filters only after clicking search', async () => {
     const user = userEvent.setup();
     vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
       items: mockItems,
@@ -66,18 +66,73 @@ describe('CardDiscoveryPage', () => {
       </MemoryRouter>
     );
 
-    // Verify products render
+    // Verify products render and condition abbreviation 'NM' is displayed as 'Near Mint'
     expect(await screen.findByText('Pikachu Illustrator')).toBeInTheDocument();
+    expect(screen.getByText('Near Mint')).toBeInTheDocument();
     expect(screen.getByText('Charizard VMAX')).toBeInTheDocument();
+    expect(screen.getByText('Lightly Played')).toBeInTheDocument();
 
     // Verify out of stock badge
     expect(screen.getByText('OUT OF STOCK')).toBeInTheDocument();
 
-    // Type in search input
+    // Type in search input (should NOT filter immediately)
     const searchInput = screen.getByTestId('search-input');
     await user.type(searchInput, 'Pikachu');
 
-    // Only Pikachu should be visible
+    // Both cards should still be visible before clicking Search
+    expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
+    expect(screen.getByText('Charizard VMAX')).toBeInTheDocument();
+
+    // Click search button
+    const searchButton = screen.getByTestId('search-button');
+    await user.click(searchButton);
+
+    // Only Pikachu should be visible after searching
+    expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
+    expect(screen.queryByText('Charizard VMAX')).not.toBeInTheDocument();
+  });
+
+  it('filters by condition abbreviation when user selects full name and clicks search', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
+      items: mockItems,
+      pageNumber: 0,
+      pageSize: 12,
+      totalElements: 2,
+      totalPages: 1,
+      last: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <CardDiscoveryPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Pikachu Illustrator');
+
+    // Open Condition filter dropdown
+    const conditionButton = screen.getByRole('button', { name: /Condition:/i });
+    await user.click(conditionButton);
+
+    // Click 'Near Mint' option
+    const nearMintOption = screen.getByRole('button', { name: 'Near Mint' });
+    await user.click(nearMintOption);
+
+    // Before clicking Search, both items remain visible
+    expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
+    expect(screen.getByText('Charizard VMAX')).toBeInTheDocument();
+
+    // Click Search / Apply Filters button
+    const applyButton = screen.getByRole('button', { name: 'Apply Filters' });
+    await user.click(applyButton);
+
+    // API should be called with standard DB abbreviation 'NM'
+    expect(listingDiscoveryApi.getListings).toHaveBeenCalledWith(
+      expect.objectContaining({ condition: 'NM' })
+    );
+
+    // Client-side filter should show Pikachu (NM) and hide Charizard (LP)
     expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
     expect(screen.queryByText('Charizard VMAX')).not.toBeInTheDocument();
   });

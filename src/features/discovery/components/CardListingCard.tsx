@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { CardListing } from '@/entities/card/model/types';
+import { formatCondition } from '@/entities/card/model/condition';
 
 export interface CardListingCardProps {
   listing: CardListing;
@@ -13,7 +14,7 @@ export function CardListingCard({ listing }: CardListingCardProps) {
 
   // Format description like the homepage (set + condition or subtitle)
   const subtitle = listing.subtitle || listing.set || '1998 P.M. Japanese Promo';
-  const detail = listing.condition || 'Bronze 3rd-2nd Tournament';
+  const detail = (listing.condition ? formatCondition(listing.condition) : undefined) || 'Bronze 3rd-2nd Tournament';
 
   return (
     <Link 

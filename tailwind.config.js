@@ -25,7 +25,16 @@ export default {
       boxShadow: {
         'glow-blue': '0 0 15px rgba(114, 168, 255, 0.4)',
         'glow-gold': '0 0 15px rgba(191, 166, 89, 0.4)',
-      }
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 2s infinite linear',
+      },
     },
   },
   plugins: [],

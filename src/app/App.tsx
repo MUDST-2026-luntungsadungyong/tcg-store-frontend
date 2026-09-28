@@ -8,6 +8,7 @@ import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { configureApiClientAuth } from '@/shared/api/client';
 import { ToastProvider } from '@/shared/components/Toast';
 import { initMockStorage } from '@/infrastructure/mock-db/storage';
+import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 
 configureApiClientAuth({
   getAccessToken: () => useAuthStore.getState().token,
@@ -34,10 +35,10 @@ function App() {
   }, []);
 
   return (
-    <>
+    <ErrorBoundary>
       <RouterProvider router={router} />
       <ToastProvider />
-    </>
+    </ErrorBoundary>
   );
 }
 

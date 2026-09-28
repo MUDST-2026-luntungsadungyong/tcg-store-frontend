@@ -1,31 +1,23 @@
 import { Link } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 import { AuthLayout } from '@/features/auth/layouts/AuthLayout';
-import { Button } from '@/shared/components/Button';
 
 export function ResetSuccessPage() {
   return (
-    <AuthLayout title="Password Updated">
-      <div className="mt-4 flex flex-col items-center gap-3 text-center">
-        <CheckCircle2 className="size-10 text-status-success" />
-        <p className="text-sm text-gray-400">
-          Your password has been updated. You can now sign in with your new password.
+    <AuthLayout title="Password Changed Successfully">
+      <div className="mt-5 flex flex-col items-center gap-4 text-center">
+        <CheckCircle2 className="size-12 text-status-success" aria-hidden="true" />
+        <p className="text-sm text-gray-300">
+          Your password has been changed. Sign in with your new password to continue.
         </p>
       </div>
 
-      <div className="mt-6">
-        <Link to="/login">
-          <Button type="button" variant="primary" size="lg" className="w-full font-semibold">
-            Go to Login
-          </Button>
-        </Link>
-      </div>
-
-      <p className="mt-6 text-center text-sm text-gray-400">
-        <Link to="/" className="font-medium text-brand-blue hover:text-brand-blue/80 hover:underline">
-          Back to Home
-        </Link>
-      </p>
+      <Link
+        to="/login"
+        className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-brand-blue px-6 py-3 text-lg font-semibold text-white transition-colors hover:bg-[#4a85e0] focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 focus:ring-offset-bg-base"
+      >
+        Go to Login
+      </Link>
     </AuthLayout>
   );
 }

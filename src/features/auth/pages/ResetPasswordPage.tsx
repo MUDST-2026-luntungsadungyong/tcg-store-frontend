@@ -1,22 +1,35 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Lock, Eye, EyeOff, AlertCircle, Check, X } from 'lucide-react';
 import { AuthLayout } from '@/features/auth/layouts/AuthLayout';
 import { Input } from '@/shared/components/Input';
 import { Button } from '@/shared/components/Button';
-import { authApi } from '@/features/auth/api/auth';
+import { authApi, getAuthErrorMessage, hasPendingDemoReset } from '@/features/auth/api/auth';
+import { PASSWORD_RULES } from '@/features/auth/lib/passwordRules';
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  // Capture entry permission once; the API clears it after a successful reset.
+  const [resetStarted] = useState(hasPendingDemoReset);
+  const passwordValid = PASSWORD_RULES.every((rule) => rule.test(password));
+  const passwordsMatch = confirmPassword.length === 0 || confirmPassword === password;
+
+  if (!resetStarted) return <Navigate to="/forgot-password" replace />;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (!passwordValid) {
+      setError('Password does not meet the requirements');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -28,7 +41,7 @@ export function ResetPasswordPage() {
       await authApi.resetPassword(password);
       navigate('/reset-success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(getAuthErrorMessage(err, 'Could not reset password. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -36,6 +49,7 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout title="Reset Password">
+      <p className="mt-3 text-center text-sm text-gray-400">Demo flow: this changes the account password without email verification.</p>
       <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
         <div className="relative">
           <Input
@@ -45,10 +59,15 @@ export function ResetPasswordPage() {
             icon={Lock}
             placeholder="••••••••"
             autoComplete="new-password"
+            aria-describedby="new-password-requirements"
+            minLength={8}
+            maxLength={72}
             required
             className="pr-10"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onFocus={() => setPasswordFocused(true)}
+            onBlur={() => setPasswordFocused(false)}
           />
           <button
             type="button"
@@ -60,18 +79,41 @@ export function ResetPasswordPage() {
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
+        {(passwordFocused || password.length > 0) && (
+          <ul id="new-password-requirements" className="space-y-1">
+            {PASSWORD_RULES.map((rule) => {
+              const ok = rule.test(password);
+              return (
+                <li
+                  key={rule.label}
+                  className={`flex items-center gap-1.5 text-xs transition-colors ${ok ? 'text-status-success' : 'text-gray-500'}`}
+                >
+                  {ok ? <Check size={13} className="shrink-0" /> : <X size={13} className="shrink-0" />}
+                  {rule.label}
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
-        <Input
-          id="confirm-password"
-          type={showPassword ? 'text' : 'password'}
-          label="Confirm Password"
-          icon={Lock}
-          placeholder="••••••••"
-          autoComplete="new-password"
-          required
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
+        <div>
+          <Input
+            id="confirm-password"
+            type={showPassword ? 'text' : 'password'}
+            label="Confirm Password"
+            icon={Lock}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            minLength={8}
+            maxLength={72}
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          {!passwordsMatch && (
+            <p className="mt-1.5 text-xs text-status-danger">Passwords do not match</p>
+          )}
+        </div>
 
         {error && (
           <div

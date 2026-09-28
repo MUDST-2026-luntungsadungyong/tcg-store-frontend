@@ -11,6 +11,7 @@ import {
   formatCondition,
   normalizeConditionToCode,
 } from '@/entities/card/model/condition';
+import { groupListingsByCard } from '@/features/discovery/lib/groupListings';
 
 const RARITIES = ['Common', 'Uncommon', 'Rare', 'Holo', 'Rare Holo', 'Ultra Rare', 'Secret Rare'];
 const STAGES = ['Basic', 'Stage 1', 'Stage 2', 'V', 'VMAX', 'VSTAR'];
@@ -23,11 +24,9 @@ export function CardDiscoveryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination state
+  // Pagination happens after offers are grouped into canonical cards.
   const [page, setPage] = useState(0);
   const pageSize = 12;
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
 
   // Draft filter controls (what user selects before clicking Search)
   const [searchInput, setSearchInput] = useState(urlSearch);
@@ -53,26 +52,29 @@ export function CardDiscoveryPage() {
     try {
       const minP = appliedPriceRange[0] > 0 ? appliedPriceRange[0] : undefined;
       const maxP = appliedPriceRange[1] < 9999999 ? appliedPriceRange[1] : undefined;
-      const data = await listingDiscoveryApi.getListings({
+      const params = {
         search: appliedSearch.trim() || undefined,
         rarity: appliedRarity.length === 1 ? appliedRarity[0] : undefined,
         stage: appliedStage.length === 1 ? appliedStage[0] : undefined,
         condition: appliedCondition.length === 1 ? normalizeConditionToCode(appliedCondition[0]) : undefined,
         minPrice: minP,
         maxPrice: maxP,
-        page,
-        size: pageSize,
-      });
-      setProducts(data.items);
-      setTotalPages(Math.max(1, data.totalPages));
-      setTotalElements(data.totalElements);
+        page: 0,
+        size: 100,
+      };
+      const firstPage = await listingDiscoveryApi.getListings(params);
+      const otherPages = await Promise.all(Array.from(
+        { length: Math.max(0, firstPage.totalPages - 1) },
+        (_, index) => listingDiscoveryApi.getListings({ ...params, page: index + 1 }),
+      ));
+      setProducts([...firstPage.items, ...otherPages.flatMap(result => result.items)]);
     } catch (err: unknown) {
       console.error('Failed to fetch products', err);
       setError('Unable to load cards from the server. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
-  }, [appliedSearch, appliedRarity, appliedStage, appliedCondition, appliedPriceRange, page]);
+  }, [appliedSearch, appliedRarity, appliedStage, appliedCondition, appliedPriceRange]);
 
   useEffect(() => {
     void fetchProducts();
@@ -170,9 +172,11 @@ export function CardDiscoveryPage() {
     );
   };
 
-  // Client-side additional filtering for multi-select values or in-stock toggle based on applied filters
+  // Client-side additional filtering for multi-select values or in-stock toggle
+  const canonicalProducts = useMemo(() => groupListingsByCard(products), [products]);
+
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    return canonicalProducts.filter((p) => {
       // Must be SHOW
       if (p.status !== 'SHOW') return false;
 
@@ -211,7 +215,10 @@ export function CardDiscoveryPage() {
 
       return true;
     });
-  }, [products, appliedInStockOnly, appliedSearch, appliedRarity, appliedStage, appliedCondition, appliedPriceRange]);
+  }, [canonicalProducts, appliedInStockOnly, appliedSearch, appliedRarity, appliedStage, appliedCondition, appliedPriceRange]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const pageProducts = filteredProducts.slice(page * pageSize, (page + 1) * pageSize);
 
   const activeFiltersCount =
     (appliedSearch.trim() ? 1 : 0) +
@@ -509,8 +516,8 @@ export function CardDiscoveryPage() {
           /* Product Grid */
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-              {filteredProducts.map(product => (
-                <CardListingCard key={product.id} listing={product} />
+              {pageProducts.map(product => (
+                <CardListingCard key={product.cardId || product.id} listing={product} sellerCount={product.sellerCount} />
               ))}
             </div>
 
@@ -528,7 +535,7 @@ export function CardDiscoveryPage() {
                 <span className="text-sm text-[#A6ADC7]">
                   Page <span className="font-semibold text-white">{page + 1}</span> of{' '}
                   <span className="font-semibold text-white">{totalPages}</span>
-                  {totalElements > 0 && ` (${totalElements} total)`}
+                  {filteredProducts.length > 0 && ` (${filteredProducts.length} total)`}
                 </span>
                 <button
                   onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}

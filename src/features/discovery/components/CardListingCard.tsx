@@ -4,9 +4,10 @@ import { formatCondition } from '@/entities/card/model/condition';
 
 export interface CardListingCardProps {
   listing: CardListing;
+  sellerCount?: number;
 }
 
-export function CardListingCard({ listing }: CardListingCardProps) {
+export function CardListingCard({ listing, sellerCount = 1 }: CardListingCardProps) {
   const imageSrc = listing.image || '/assets/expensive_card_1.png';
   const marketPrice = listing.marketPrice ?? (listing.price * 0.9);
   const inStock = listing.stock > 0;
@@ -18,7 +19,7 @@ export function CardListingCard({ listing }: CardListingCardProps) {
 
   return (
     <Link 
-      to={`/cards/${listing.id}`}
+      to={`/cards/${encodeURIComponent(listing.cardId || listing.id)}`}
       className={`w-full bg-white rounded-[16px] p-4 flex gap-4 h-[180px] md:h-[200px] cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-[#8B5CF6] group ${
         !inStock ? 'opacity-60' : ''
       }`}
@@ -57,10 +58,12 @@ export function CardListingCard({ listing }: CardListingCardProps) {
         
         <div className="mt-2">
           <div className="text-black font-black text-[22px] md:text-[28px] leading-none mb-1 line-clamp-1">
-            ฿{listing.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <span className="mr-1 text-[11px] font-bold text-gray-500">From</span>฿{listing.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="text-gray-400 text-[11px] md:text-[12px] font-medium whitespace-nowrap">
-            Market Price: <span className="text-[#16A34A] font-bold">
+          <div className="text-gray-500 text-[11px] md:text-[12px] font-medium whitespace-nowrap">
+            {sellerCount} {sellerCount === 1 ? 'seller' : 'sellers'}
+            <span className="mx-1.5">·</span>
+            Market <span className="text-[#16A34A] font-bold">
               ฿{marketPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>

@@ -214,6 +214,40 @@ describe('CardDiscoveryPage', () => {
     expect(screen.getByRole('button', { name: 'Clear All Filters' })).toBeInTheDocument();
   });
 
+  it('keeps hidden listings out of buyer discovery while showing out-of-stock cards', async () => {
+    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
+      items: [
+        {
+          ...mockItems[0],
+          status: 'SHOW',
+          stock: 0,
+        },
+        {
+          ...mockItems[1],
+          id: 'hidden-listing',
+          name: 'Hidden Blastoise',
+          status: 'HIDE',
+          stock: 8,
+        },
+      ],
+      pageNumber: 0,
+      pageSize: 12,
+      totalElements: 2,
+      totalPages: 1,
+      last: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <CardDiscoveryPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Pikachu Illustrator')).toBeInTheDocument();
+    expect(screen.getByText('OUT OF STOCK')).toBeInTheDocument();
+    expect(screen.queryByText('Hidden Blastoise')).not.toBeInTheDocument();
+  });
+
   it('displays error state with retry button when API fails', async () => {
     const user = userEvent.setup();
     vi.mocked(listingDiscoveryApi.getListings).mockRejectedValueOnce(new Error('Network error'));

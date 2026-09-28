@@ -32,6 +32,13 @@ pipeline {
             }
         }
 
+        stage('Security & Dependency Audit') {
+            steps {
+                echo '=== Stage: Dependency Vulnerability Audit (npm audit) ==='
+                sh 'npm run audit'
+            }
+        }
+
         stage('Typecheck & Build') {
             steps {
                 echo '=== Stage 4: Compile TypeScript and Build Web Bundle ==='

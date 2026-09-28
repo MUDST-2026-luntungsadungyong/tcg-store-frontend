@@ -19,6 +19,7 @@ interface BackendAuthResponse {
 
 interface ApiErrorResponse {
   message?: string;
+  fieldErrors?: Record<string, string>;
 }
 
 export function toFrontendUser(user: BackendUser): User {
@@ -45,9 +46,16 @@ export function toFrontendUser(user: BackendUser): User {
 
 export function getAuthErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError<ApiErrorResponse>(error)) {
-    return error.response?.data?.message ?? fallback;
+    const details = error.response?.data;
+    return details?.fieldErrors?.newPassword ?? details?.fieldErrors?.email ?? details?.message ?? fallback;
   }
   return error instanceof Error ? error.message : fallback;
+}
+
+const DEMO_RESET_EMAIL_KEY = 'mythix_demo_reset_email';
+
+export function hasPendingDemoReset(): boolean {
+  return Boolean(sessionStorage.getItem(DEMO_RESET_EMAIL_KEY));
 }
 
 export const authApi = {
@@ -85,20 +93,22 @@ export const authApi = {
     return { token: response.data.token, user: toFrontendUser(response.data.user) };
   },
 
-  forgotPassword: async (email: string): Promise<void> => {
+  forgotPassword: async (email: string): Promise<boolean> => {
     if (ENV.ENABLE_MOCK_API) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return;
+      throw new Error('Use the backend API for the password reset demo.');
     }
-    await apiClient.post('/auth/forgot-password', { email });
+    sessionStorage.removeItem(DEMO_RESET_EMAIL_KEY);
+    const response = await apiClient.post<{ exists: boolean }>('/auth/forgot-password', { email });
+    if (response.data.exists) sessionStorage.setItem(DEMO_RESET_EMAIL_KEY, email.trim().toLowerCase());
+    return response.data.exists;
   },
 
   resetPassword: async (newPassword: string): Promise<void> => {
-    if (ENV.ENABLE_MOCK_API) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return;
-    }
-    await apiClient.post('/auth/reset-password', { newPassword });
+    if (ENV.ENABLE_MOCK_API) throw new Error('Use the backend API for the password reset demo.');
+    const email = sessionStorage.getItem(DEMO_RESET_EMAIL_KEY);
+    if (!email) throw new Error('Start again from Forgot Password.');
+    await apiClient.post('/auth/reset-password', { email, newPassword });
+    sessionStorage.removeItem(DEMO_RESET_EMAIL_KEY);
   },
 
   getProfile: async (): Promise<User> => {

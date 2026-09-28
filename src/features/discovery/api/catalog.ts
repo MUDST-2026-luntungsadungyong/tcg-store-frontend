@@ -75,6 +75,22 @@ function mockCatalogSearch(query: string): CatalogCard[] {
 
 export const catalogApi = {
   getCardById: async (id: string): Promise<CatalogCard | undefined> => {
+    if (ENV.ENABLE_MOCK_API) {
+      initMockStorage();
+      const listing = storage.getListings().find(item => item.cardId === id || item.id === id);
+      if (!listing) return undefined;
+      return {
+        id: listing.cardId || listing.id,
+        name: listing.name,
+        game: listing.game,
+        rarity: listing.rarity,
+        setName: listing.set,
+        cardNumber: listing.cardNumber,
+        imageLarge: listing.image,
+        marketPrice: listing.marketPrice ?? listing.price,
+        supertype: listing.stage,
+      };
+    }
     const response = await apiClient.get<CatalogCard>(`/cards/${encodeURIComponent(id)}`);
     return response.data;
   },

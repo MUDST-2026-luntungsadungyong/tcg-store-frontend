@@ -1,0 +1,22 @@
+{
+  "cards": [
+    {
+      "id": "base1-4",
+      "name": "Charizard",
+      "set": "Base",
+      "number": "4",
+      "rarity": "Rare Holo",
+      "imageUrl": "https://images.pokemontcg.io/base1/4_hires.png",
+      "price": 350.00
+    },
+    {
+      "id": "base1-15",
+      "name": "Venusaur",
+      "set": "Base",
+      "number": "15",
+      "rarity": "Rare Holo",
+      "imageUrl": "https://images.pokemontcg.io/base1/15_hires.png",
+      "price": 120.00
+    }
+  ]
+}

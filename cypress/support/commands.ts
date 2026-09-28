@@ -58,13 +58,56 @@ Cypress.Commands.add('cleanTestOrder', (orderId: string | number) => {
   }
 });
 
+// Auth & Account Custom Commands
+Cypress.Commands.add('loginByUI', (email: string, password = 'password123') => {
+  cy.visit('/login');
+  cy.get('#email').clear().type(email);
+  cy.get('#password').clear().type(password);
+  cy.get('button[type="submit"]').click();
+});
+
+Cypress.Commands.add('registerNewUser', (name: string, email: string, password = 'Password123!') => {
+  cy.visit('/register');
+  cy.get('#name').clear().type(name);
+  cy.get('#email').clear().type(email);
+  cy.get('#password').clear().type(password);
+  cy.get('#confirm-password').clear().type(password);
+  cy.get('button[type="submit"]').click();
+});
+
+Cypress.Commands.add('requestPasswordReset', (email: string) => {
+  cy.visit('/forgot-password');
+  cy.get('#email').clear().type(email);
+  cy.get('button[type="submit"]').click();
+});
+
+Cypress.Commands.add('updateProfileName', (name: string) => {
+  cy.visit('/profile/edit');
+  cy.get('#name').clear().type(name);
+  cy.get('button[type="submit"]').click();
+});
+
+Cypress.Commands.add('updateProfileContact', (contact: { phone?: string; line?: string; facebook?: string }) => {
+  cy.visit('/profile/edit/contact');
+  if (contact.phone !== undefined) cy.get('#phone').clear().type(contact.phone);
+  if (contact.line !== undefined) cy.get('#line').clear().type(contact.line);
+  if (contact.facebook !== undefined) cy.get('#facebook').clear().type(contact.facebook);
+  cy.get('button[type="submit"]').click();
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
       loginByMock(role?: string): Chainable<void>;
       sellerFastForwardOrder(orderId: string, status?: string): Chainable<void>;
       cleanTestOrder(orderId: string | number): Chainable<void>;
+      loginByUI(email: string, password?: string): Chainable<void>;
+      registerNewUser(name: string, email: string, password?: string): Chainable<void>;
+      requestPasswordReset(email: string): Chainable<void>;
+      updateProfileName(name: string): Chainable<void>;
+      updateProfileContact(contact: { phone?: string; line?: string; facebook?: string }): Chainable<void>;
     }
   }
 }
+
 

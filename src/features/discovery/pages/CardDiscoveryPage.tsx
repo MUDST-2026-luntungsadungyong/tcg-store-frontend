@@ -244,37 +244,26 @@ export function CardDiscoveryPage() {
 
       {/* Search Input Bar */}
       <div className="w-full max-w-[1440px] px-8 mb-6">
-        <form onSubmit={handleSearchSubmit} className="relative w-full max-w-[640px] mx-auto flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A6ADC7] w-5 h-5 pointer-events-none" />
-            <input
-              type="text"
-              data-testid="search-input"
-              placeholder="Search cards by name..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full bg-[#242938] border border-[#40475C] focus:border-brand-blue rounded-xl pl-12 pr-10 py-3 text-sm text-white placeholder:text-[#A6ADC7] focus:outline-none transition-colors"
-            />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={() => setSearchInput('')}
-                aria-label="Clear search input"
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A6ADC7] hover:text-white transition-colors"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-          <button
-            type="submit"
-            data-testid="search-button"
-            aria-label="Search"
-            className="px-6 py-3 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-bg-base font-bold text-sm transition-colors flex items-center gap-2 shrink-0 cursor-pointer shadow-md"
-          >
-            <Search size={16} />
-            <span>Search</span>
-          </button>
+        <form onSubmit={handleSearchSubmit} className="relative w-full max-w-[640px] mx-auto">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A6ADC7] w-5 h-5 pointer-events-none" />
+          <input
+            type="text"
+            data-testid="search-input"
+            placeholder="Search cards by name..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-full bg-[#242938] border border-[#40475C] focus:border-brand-blue rounded-xl pl-12 pr-10 py-3 text-sm text-white placeholder:text-[#A6ADC7] focus:outline-none transition-colors"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput('')}
+              aria-label="Clear search input"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A6ADC7] hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+          )}
         </form>
       </div>
 
@@ -351,7 +340,7 @@ export function CardDiscoveryPage() {
           type="button"
           onClick={handleSearch}
           disabled={Boolean(priceError)}
-          data-testid="apply-filters-button"
+          data-testid="search-button"
           aria-label="Apply Filters"
           className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors h-[42px] flex items-center gap-2 ${
             priceError

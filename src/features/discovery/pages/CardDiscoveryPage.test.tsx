@@ -92,6 +92,32 @@ describe('CardDiscoveryPage', () => {
     expect(screen.queryByText('Charizard VMAX')).not.toBeInTheDocument();
   });
 
+  it('applies search when user presses Enter in the search input', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
+      items: mockItems,
+      pageNumber: 0,
+      pageSize: 12,
+      totalElements: 2,
+      totalPages: 1,
+      last: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <CardDiscoveryPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Pikachu Illustrator');
+
+    const searchInput = screen.getByTestId('search-input');
+    await user.type(searchInput, 'Charizard{enter}');
+
+    expect(screen.getByText('Charizard VMAX')).toBeInTheDocument();
+    expect(screen.queryByText('Pikachu Illustrator')).not.toBeInTheDocument();
+  });
+
   it('filters by condition abbreviation when user selects full name and clicks search', async () => {
     const user = userEvent.setup();
     vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({

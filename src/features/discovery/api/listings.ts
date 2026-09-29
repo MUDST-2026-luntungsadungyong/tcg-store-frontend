@@ -63,7 +63,7 @@ export const listingDiscoveryApi = {
       if (params?.minPrice !== undefined && params.minPrice > 0) {
         all = all.filter(l => l.price >= params.minPrice!);
       }
-      if (params?.maxPrice !== undefined && params.maxPrice < 9999999) {
+      if (params?.maxPrice !== undefined && params.maxPrice < 9999999999) {
         all = all.filter(l => l.price <= params.maxPrice!);
       }
 

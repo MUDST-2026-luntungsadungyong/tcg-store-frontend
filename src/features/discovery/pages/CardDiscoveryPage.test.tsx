@@ -194,6 +194,84 @@ describe('CardDiscoveryPage', () => {
     expect(applyButton).toBeDisabled();
   });
 
+  it('restricts min and max price inputs to at most 10 digits', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
+      items: mockItems,
+      pageNumber: 0,
+      pageSize: 12,
+      totalElements: 2,
+      totalPages: 1,
+      last: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <CardDiscoveryPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Pikachu Illustrator');
+
+    const minInput = screen.getByTestId('min-price-input');
+    const maxInput = screen.getByTestId('max-price-input');
+
+    expect(minInput).toHaveAttribute('maxLength', '10');
+    expect(maxInput).toHaveAttribute('maxLength', '10');
+
+    // Type 12 digits
+    await user.type(minInput, '123456789012');
+    expect(minInput).toHaveValue('1234567890');
+
+    await user.type(maxInput, '987654321098');
+    expect(maxInput).toHaveValue('9876543210');
+  });
+
+  it('renders in-stock toggle before the search button and filters only after search is clicked', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
+      items: [
+        { ...mockItems[0], stock: 0 },
+        { ...mockItems[1], stock: 5 },
+      ],
+      pageNumber: 0,
+      pageSize: 12,
+      totalElements: 2,
+      totalPages: 1,
+      last: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <CardDiscoveryPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Pikachu Illustrator');
+
+    const inStockCheckbox = screen.getByRole('checkbox', { name: /in stock only/i });
+    const applyButton = screen.getByRole('button', { name: 'Apply Filters' });
+
+    // In Stock toggle should appear before the Search/Apply Filters button in DOM order
+    expect(
+      Boolean(inStockCheckbox.compareDocumentPosition(applyButton) & Node.DOCUMENT_POSITION_FOLLOWING)
+    ).toBe(true);
+
+    // Toggle In Stock Only
+    await user.click(inStockCheckbox);
+
+    // Both cards should still be visible before clicking Search
+    expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
+    expect(screen.getByText('Charizard VMAX')).toBeInTheDocument();
+
+    // Click Search / Apply Filters
+    await user.click(applyButton);
+
+    // Out-of-stock card should now be filtered out
+    expect(screen.queryByText('Pikachu Illustrator')).not.toBeInTheDocument();
+    expect(screen.getByText('Charizard VMAX')).toBeInTheDocument();
+  });
+
   it('displays empty state when no cards match filters', async () => {
     vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
       items: [],

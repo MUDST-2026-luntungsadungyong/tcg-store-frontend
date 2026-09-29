@@ -16,6 +16,8 @@ import { groupListingsByCard } from '@/features/discovery/lib/groupListings';
 const RARITIES = ['Common', 'Uncommon', 'Rare', 'Holo', 'Rare Holo', 'Ultra Rare', 'Secret Rare'];
 const STAGES = ['Basic', 'Stage 1', 'Stage 2', 'V', 'VMAX', 'VSTAR'];
 const CONDITIONS = [...CONDITION_OPTIONS];
+const MAX_PRICE_LIMIT = 9999999999;
+const MAX_PRICE_DIGITS = 10;
 
 export function CardDiscoveryPage() {
   const [searchParams] = useSearchParams();
@@ -43,7 +45,7 @@ export function CardDiscoveryPage() {
   const [appliedRarity, setAppliedRarity] = useState<string[]>([]);
   const [appliedStage, setAppliedStage] = useState<string[]>([]);
   const [appliedCondition, setAppliedCondition] = useState<string[]>([]);
-  const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, 9999999]);
+  const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, MAX_PRICE_LIMIT]);
   const [appliedInStockOnly, setAppliedInStockOnly] = useState(false);
 
   const fetchProducts = useCallback(async () => {
@@ -51,7 +53,7 @@ export function CardDiscoveryPage() {
     setError(null);
     try {
       const minP = appliedPriceRange[0] > 0 ? appliedPriceRange[0] : undefined;
-      const maxP = appliedPriceRange[1] < 9999999 ? appliedPriceRange[1] : undefined;
+      const maxP = appliedPriceRange[1] < MAX_PRICE_LIMIT ? appliedPriceRange[1] : undefined;
       const params = {
         search: appliedSearch.trim() || undefined,
         rarity: appliedRarity.length === 1 ? appliedRarity[0] : undefined,
@@ -89,13 +91,13 @@ export function CardDiscoveryPage() {
 
   // Handle price input changes with validation
   const handleMinChange = (val: string) => {
-    const clean = val.replace(/[^0-9]/g, '');
+    const clean = val.replace(/[^0-9]/g, '').slice(0, MAX_PRICE_DIGITS);
     setLocalMin(clean);
     validatePriceRange(clean, localMax);
   };
 
   const handleMaxChange = (val: string) => {
-    const clean = val.replace(/[^0-9]/g, '');
+    const clean = val.replace(/[^0-9]/g, '').slice(0, MAX_PRICE_DIGITS);
     setLocalMax(clean);
     validatePriceRange(localMin, clean);
   };
@@ -119,7 +121,7 @@ export function CardDiscoveryPage() {
     if (!isValid) return;
 
     const min = localMin ? parseInt(localMin, 10) : 0;
-    const max = localMax ? parseInt(localMax, 10) : 9999999;
+    const max = localMax ? parseInt(localMax, 10) : MAX_PRICE_LIMIT;
 
     setAppliedSearch(searchInput.trim());
     setAppliedRarity([...selectedRarity]);
@@ -150,7 +152,7 @@ export function CardDiscoveryPage() {
     setAppliedStage([]);
     setAppliedCondition([]);
     setAppliedInStockOnly(false);
-    setAppliedPriceRange([0, 9999999]);
+    setAppliedPriceRange([0, MAX_PRICE_LIMIT]);
     setPage(0);
   };
 
@@ -226,7 +228,7 @@ export function CardDiscoveryPage() {
     appliedStage.length +
     appliedCondition.length +
     (appliedInStockOnly ? 1 : 0) +
-    (appliedPriceRange[0] > 0 || appliedPriceRange[1] < 9999999 ? 1 : 0);
+    (appliedPriceRange[0] > 0 || appliedPriceRange[1] < MAX_PRICE_LIMIT ? 1 : 0);
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -307,6 +309,7 @@ export function CardDiscoveryPage() {
             <input
               type="text"
               inputMode="numeric"
+              maxLength={MAX_PRICE_DIGITS}
               data-testid="min-price-input"
               placeholder="Min THB"
               value={localMin}
@@ -317,6 +320,7 @@ export function CardDiscoveryPage() {
             <input
               type="text"
               inputMode="numeric"
+              maxLength={MAX_PRICE_DIGITS}
               data-testid="max-price-input"
               placeholder="Max THB"
               value={localMax}
@@ -330,6 +334,17 @@ export function CardDiscoveryPage() {
             </p>
           )}
         </div>
+
+        {/* In-Stock Only Toggle */}
+        <label className="flex items-center gap-2 cursor-pointer select-none bg-[#242938] border border-[#40475C] px-3.5 rounded-lg h-[42px] text-sm text-[#EDF0F7] hover:border-brand-blue/50 transition-colors">
+          <input
+            type="checkbox"
+            checked={inStockOnly}
+            onChange={e => setInStockOnly(e.target.checked)}
+            className="rounded border-[#40475C] text-brand-blue focus:ring-0 focus:ring-offset-0 cursor-pointer"
+          />
+          <span>In Stock Only</span>
+        </label>
 
         {/* Search / Apply Filters button */}
         <button
@@ -347,17 +362,6 @@ export function CardDiscoveryPage() {
           <Search size={15} />
           <span>Search</span>
         </button>
-
-        {/* In-Stock Only Toggle */}
-        <label className="flex items-center gap-2 cursor-pointer select-none bg-[#242938] border border-[#40475C] px-3.5 rounded-lg h-[42px] text-sm text-[#EDF0F7] hover:border-brand-blue/50 transition-colors">
-          <input
-            type="checkbox"
-            checked={inStockOnly}
-            onChange={e => setInStockOnly(e.target.checked)}
-            className="rounded border-[#40475C] text-brand-blue focus:ring-0 focus:ring-offset-0 cursor-pointer"
-          />
-          <span>In Stock Only</span>
-        </label>
 
         {activeFiltersCount > 0 && (
           <button
@@ -460,17 +464,17 @@ export function CardDiscoveryPage() {
           </div>
         )}
 
-        {(appliedPriceRange[0] > 0 || appliedPriceRange[1] < 9999999) && (
+        {(appliedPriceRange[0] > 0 || appliedPriceRange[1] < MAX_PRICE_LIMIT) && (
           <div className="flex items-center gap-1.5 bg-[#2E364D] rounded-full px-3 py-1">
             <span className="text-xs text-[#EDF0F7]">
-              Price: ฿{appliedPriceRange[0]}–{appliedPriceRange[1] === 9999999 ? 'Max' : `฿${appliedPriceRange[1]}`}
+              Price: ฿{appliedPriceRange[0]}–{appliedPriceRange[1] === MAX_PRICE_LIMIT ? 'Max' : `฿${appliedPriceRange[1]}`}
             </span>
             <button
               onClick={() => {
                 setLocalMin('');
                 setLocalMax('');
                 setPriceError(null);
-                setAppliedPriceRange([0, 9999999]);
+                setAppliedPriceRange([0, MAX_PRICE_LIMIT]);
                 setPage(0);
               }}
               aria-label="Remove price filter"

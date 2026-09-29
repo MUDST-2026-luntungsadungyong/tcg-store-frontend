@@ -185,9 +185,11 @@ export function Navbar() {
               )}
             </Link>
 
-            <Link to="/notifications" aria-label="Notifications" className="relative text-gray-300 hover:text-white transition-colors">
-              <Bell className="h-5 w-5" />
-            </Link>
+            {user && (
+              <Link to="/notifications" aria-label="Notifications" className="relative text-gray-300 hover:text-white transition-colors">
+                <Bell className="h-5 w-5" />
+              </Link>
+            )}
 
             {user ? (
               <div className="relative" ref={menuRef}>

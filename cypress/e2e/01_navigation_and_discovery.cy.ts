@@ -20,4 +20,10 @@ describe('Core Journey 1: Home, Navigation & Card Discovery', () => {
       .should('be.visible')
       .type('Pikachu{enter}');
   });
+
+  it('protects the notifications inbox from unauthenticated users', () => {
+    cy.visit('/notifications');
+    cy.url().should('include', '/login');
+    cy.get('#email').should('be.visible');
+  });
 });

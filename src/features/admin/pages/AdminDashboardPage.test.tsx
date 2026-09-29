@@ -27,6 +27,7 @@ describe('AdminDashboardPage', () => {
         pendingSellerApplications: 3,
         approvedSellers: 15,
         totalCards: 2000,
+        listedCards: 42,
         totalOrders: 45,
         totalOrderAmount: 156000,
       },
@@ -48,7 +49,8 @@ describe('AdminDashboardPage', () => {
     expect(screen.getByText('45 completed orders')).toBeInTheDocument();
     expect(screen.getByText('Marketplace GMV')).toBeInTheDocument();
     expect(screen.getAllByText('Approved sellers')).toHaveLength(2);
-    expect(screen.getByText('Catalog records')).toBeInTheDocument();
+    expect(screen.getByText('Listed cards')).toBeInTheDocument();
+    expect(screen.getByText('Currently visible on the marketplace')).toBeInTheDocument();
 
     const reviewLink = screen.getByRole('link', { name: /Review applications/i });
     expect(reviewLink).toHaveAttribute('href', '/admin/seller-applications');
@@ -63,6 +65,7 @@ describe('AdminDashboardPage', () => {
         pendingSellerApplications: 0,
         approvedSellers: 4,
         totalCards: 500,
+        listedCards: 8,
         totalOrders: 10,
         totalOrderAmount: 25000,
       },
@@ -102,6 +105,7 @@ describe('AdminDashboardPage', () => {
         pendingSellerApplications: 0,
         approvedSellers: 2,
         totalCards: 100,
+        listedCards: 3,
         totalOrders: 2,
         totalOrderAmount: 1500,
       },

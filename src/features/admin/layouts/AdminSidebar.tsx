@@ -10,7 +10,7 @@ const mainLinks: NavItem[] = [
   { name: 'Overview', to: '/admin', icon: LayoutDashboard },
   { name: 'Seller approvals', to: '/admin/seller-applications', icon: ShieldCheck },
   { name: 'Order monitoring', to: '/admin/orders', icon: ReceiptText },
-  { name: 'User management', to: '/admin/users', icon: UsersRound },
+  { name: 'Admin management', to: '/admin/users', icon: UsersRound },
 ];
 
 const systemLinks: NavItem[] = [{ name: 'Audit trail', to: '/admin/audit-logs', icon: ClipboardList }];

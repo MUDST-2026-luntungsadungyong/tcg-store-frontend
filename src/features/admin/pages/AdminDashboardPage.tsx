@@ -97,12 +97,12 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
   const maxGmv = useMemo(() => Math.max(...items.map((t) => Number(t.gmv || 0)), 100), [items]);
   const maxOrders = useMemo(() => Math.max(...items.map((t) => Number(t.orders || 0)), 1), [items]);
 
-  const width = 800;
-  const height = 220;
-  const padTop = 20;
-  const padBottom = 32;
-  const padLeft = 24;
-  const padRight = 24;
+  const width = 560;
+  const height = 180;
+  const padTop = 18;
+  const padBottom = 28;
+  const padLeft = 20;
+  const padRight = 20;
   const chartHeight = height - padTop - padBottom;
   const chartWidth = width - padLeft - padRight;
   const step = chartWidth / items.length;
@@ -130,7 +130,7 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
     <div className="relative mt-4 w-full overflow-hidden">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-48 sm:h-64 md:h-72 select-none"
+        className="w-full h-48 sm:h-56 select-none"
         preserveAspectRatio="none"
       >
         <defs>
@@ -395,8 +395,9 @@ export function AdminDashboardPage() {
             ))}
           </section>
 
-          {/* Full-width GMV & Orders Chart Card */}
-          <section className="mt-6">
+          {/* Row 2: Chart & Recent Activity (2-column on desktop, stacked on mobile/tablet) */}
+          <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(19rem,.85fr)]">
+            {/* GMV & Orders Chart Card */}
             <article className={`${card} min-h-[350px] p-5 sm:p-6 flex flex-col justify-between`}>
               <div>
                 <div className="flex items-start justify-between gap-4">
@@ -429,10 +430,7 @@ export function AdminDashboardPage() {
                 </span>
               </div>
             </article>
-          </section>
 
-          {/* Bottom Management Cards (2x2 on desktop/tablet, stacked on mobile) */}
-          <section className="mt-6 grid gap-6 md:grid-cols-2">
             {/* Recent Activity */}
             <article className={`${card} p-5 sm:p-6 flex flex-col justify-between`}>
               <div>
@@ -472,7 +470,10 @@ export function AdminDashboardPage() {
                 )}
               </div>
             </article>
+          </section>
 
+          {/* Row 3: Management Cards (3 columns on desktop) */}
+          <section className="mt-6 grid gap-6 lg:grid-cols-3">
             {/* Pending Seller Approvals */}
             <article className={`${card} p-5 sm:p-6 flex flex-col justify-between`}>
               <div>

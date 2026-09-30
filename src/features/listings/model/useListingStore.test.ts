@@ -6,7 +6,7 @@ describe('useListingStore query and view state', () => {
   beforeEach(() => {
     useListingStore.setState({
       searchQuery: '',
-      gameFilter: 'ALL',
+      gameFilter: 'Pokemon',
       statusFilter: 'ALL',
       viewMode: 'table',
       currentPage: 3,

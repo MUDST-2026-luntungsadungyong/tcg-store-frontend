@@ -48,11 +48,7 @@ const STATUS_FILTER_OPTIONS = [
 ];
 
 const GAME_FILTER_OPTIONS = [
-  { value: 'ALL', label: 'All games' },
   { value: 'Pokemon', label: 'Pokemon' },
-  { value: 'YGO', label: 'Yu-Gi-Oh!' },
-  { value: 'MTG', label: 'Magic: The Gathering' },
-  { value: 'One Piece', label: 'One Piece' },
 ];
 
 type ListingForm = {

@@ -462,8 +462,8 @@ export function MyCollectionPage() {
 
                 <div className="min-h-0 flex-1 overflow-y-auto p-4">
                   <div className="space-y-5">
-                    <div className="grid items-stretch gap-5 md:grid-cols-[240px_minmax(0,1fr)]">
-                      <CatalogCardImageFrame card={selectedCard} fillHeight />
+                    <div className="grid gap-5 md:grid-cols-[240px_minmax(0,1fr)]">
+                      <CatalogCardImageFrame card={selectedCard} />
 
                       <div className="space-y-4">
                         <CatalogCardPicker

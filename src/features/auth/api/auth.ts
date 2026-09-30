@@ -40,7 +40,9 @@ export function toFrontendUser(user: BackendUser): User {
     name: user.name,
     email: user.email,
     role,
-    isSeller: user.role.toUpperCase() === 'SELLER' || user.sellerStatus?.toUpperCase() === 'VERIFIED',
+    isSeller:
+      user.role.toUpperCase() === 'SELLER' ||
+      ['VERIFIED', 'APPROVED'].includes(user.sellerStatus?.toUpperCase() ?? ''),
   };
 }
 

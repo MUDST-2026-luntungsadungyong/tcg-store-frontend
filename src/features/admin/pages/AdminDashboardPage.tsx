@@ -127,10 +127,10 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
     .join(' ');
 
   return (
-    <div className="relative mt-4 w-full overflow-hidden">
+    <div className="relative mt-4 w-full min-w-0 overflow-hidden">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-48 sm:h-56 select-none"
+        className="block h-48 w-full min-w-0 max-w-full select-none sm:h-56"
         preserveAspectRatio="none"
       >
         <defs>
@@ -346,13 +346,13 @@ export function AdminDashboardPage() {
     : [];
 
   return (
-    <main id="main-content" className="mx-auto max-w-[1440px] px-5 py-6 sm:px-8 lg:px-10">
+    <main id="main-content" className="mx-auto w-full max-w-[1440px] min-w-0 px-4 py-6 sm:px-8 lg:px-10">
       <header className="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Overview</h1>
           <p className="mt-1 text-sm text-slate-400">Here&apos;s what&apos;s happening on your marketplace today.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             disabled
@@ -382,9 +382,9 @@ export function AdminDashboardPage() {
 
       {data ? (
         <>
-          <section aria-label="Platform metrics" className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section aria-label="Platform metrics" className="mt-6 grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {metrics.map(({ label, value, note, icon: Icon, color }) => (
-              <article key={label} className={`${card} p-5`}>
+              <article key={label} className={`${card} min-w-0 p-5`}>
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-400">{label}</p>
                   <Icon size={18} className={color} />
@@ -396,9 +396,9 @@ export function AdminDashboardPage() {
           </section>
 
           {/* Row 2: Chart & Recent Activity (2-column on desktop, stacked on mobile/tablet) */}
-          <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(19rem,.85fr)]">
+          <section className="mt-6 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(19rem,.85fr)]">
             {/* GMV & Orders Chart Card */}
-            <article className={`${card} min-h-[350px] p-5 sm:p-6 flex flex-col justify-between`}>
+            <article className={`${card} min-w-0 min-h-[350px] p-5 sm:p-6 flex flex-col justify-between`}>
               <div>
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -432,7 +432,7 @@ export function AdminDashboardPage() {
             </article>
 
             {/* Recent Activity */}
-            <article className={`${card} p-5 sm:p-6 flex flex-col justify-between`}>
+            <article className={`${card} min-w-0 p-5 sm:p-6 flex flex-col justify-between`}>
               <div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -449,12 +449,12 @@ export function AdminDashboardPage() {
                 {activity.length ? (
                   <ol className="mt-4 divide-y divide-white/10">
                     {activity.map((entry) => (
-                      <li key={entry.id} className="flex gap-3 py-3 first:pt-0">
+                      <li key={entry.id} className="flex min-w-0 items-start gap-3 py-3 first:pt-0">
                         <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/[.04]">
                           <ClipboardCheck size={18} className="text-brand-blue" />
                         </span>
-                        <span className="min-w-0 flex-1">
-                          <strong className="block text-sm text-white">{entry.action.replaceAll('_', ' ')}</strong>
+                        <span className="min-w-0 flex-1 overflow-hidden">
+                          <strong className="block truncate text-sm text-white">{entry.action.replaceAll('_', ' ')}</strong>
                           <span className="mt-0.5 block truncate text-sm text-slate-400">{entry.details || `By ${entry.actorName}`}</span>
                           <time className="mt-1 block text-xs text-slate-500">{new Date(entry.createdAt).toLocaleString()}</time>
                         </span>
@@ -473,9 +473,9 @@ export function AdminDashboardPage() {
           </section>
 
           {/* Row 3: Management Cards (3 columns on desktop) */}
-          <section className="mt-6 grid gap-6 lg:grid-cols-3">
+          <section className="mt-6 grid min-w-0 gap-6 lg:grid-cols-3">
             {/* Pending Seller Approvals */}
-            <article className={`${card} p-5 sm:p-6 flex flex-col justify-between`}>
+            <article className={`${card} min-w-0 p-5 sm:p-6 flex flex-col justify-between`}>
               <div>
                 <div className="flex items-center justify-between">
                   <h2 className="font-semibold text-white">Pending seller approvals</h2>
@@ -504,7 +504,7 @@ export function AdminDashboardPage() {
             </article>
 
             {/* Approved Sellers */}
-            <article className={`${card} p-5 sm:p-6`}>
+            <article className={`${card} min-w-0 p-5 sm:p-6`}>
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold text-white">Approved sellers</h2>
                 <Store size={18} className="text-status-success" />
@@ -512,12 +512,12 @@ export function AdminDashboardPage() {
               {sellers.length ? (
                 <div className="mt-4 divide-y divide-white/10">
                   {sellers.map((seller) => (
-                    <div key={seller.id} className="flex items-center justify-between gap-3 py-3">
-                      <span className="min-w-0">
+                    <div key={seller.id} className="flex min-w-0 items-center justify-between gap-3 py-3">
+                      <span className="min-w-0 flex-1 overflow-hidden">
                         <strong className="block truncate text-sm text-white">{seller.name}</strong>
-                        <span className="mt-1 block text-xs text-slate-500">{seller.email}</span>
+                        <span className="mt-1 block truncate text-xs text-slate-500">{seller.email}</span>
                       </span>
-                      <span className="rounded-full border border-status-success/30 bg-status-success/10 px-2 py-1 text-xs text-status-success">
+                      <span className="shrink-0 rounded-full border border-status-success/30 bg-status-success/10 px-2 py-1 text-xs text-status-success">
                         Active
                       </span>
                     </div>
@@ -531,28 +531,28 @@ export function AdminDashboardPage() {
             </article>
 
             {/* Catalog Summary */}
-            <article className={`${card} p-5 sm:p-6 flex flex-col justify-between`}>
+            <article className={`${card} min-w-0 p-5 sm:p-6 flex flex-col justify-between`}>
               <div>
                 <div className="flex items-center justify-between">
                   <h2 className="font-semibold text-white">Catalog summary</h2>
                   <Boxes size={18} className="text-violet-300" />
                 </div>
-                <dl className="mt-5 space-y-3.5">
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-slate-400">Products (Total Cards)</dt>
-                    <dd className="font-semibold tabular-nums text-white">{data.totalCards.toLocaleString()}</dd>
+                <dl className="mt-5 space-y-3.5 min-w-0">
+                  <div className="flex justify-between gap-2 min-w-0">
+                    <dt className="text-sm text-slate-400 shrink-0">Products (Total Cards)</dt>
+                    <dd className="font-semibold tabular-nums text-white text-right truncate">{data.totalCards.toLocaleString()}</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-slate-400">Active Listings</dt>
-                    <dd className="font-semibold tabular-nums text-brand-gold">{data.listedCards.toLocaleString()}</dd>
+                  <div className="flex justify-between gap-2 min-w-0">
+                    <dt className="text-sm text-slate-400 shrink-0">Active Listings</dt>
+                    <dd className="font-semibold tabular-nums text-brand-gold text-right truncate">{data.listedCards.toLocaleString()}</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-slate-400">Categories</dt>
-                    <dd className="text-sm text-white font-medium">Pokémon, Trainer, Energy</dd>
+                  <div className="flex justify-between gap-2 min-w-0">
+                    <dt className="text-sm text-slate-400 shrink-0">Categories</dt>
+                    <dd className="text-sm text-white font-medium text-right truncate">Pokémon, Trainer, Energy</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-slate-400">Brand</dt>
-                    <dd className="text-sm text-white font-medium">Pokémon TCG</dd>
+                  <div className="flex justify-between gap-2 min-w-0">
+                    <dt className="text-sm text-slate-400 shrink-0">Brand</dt>
+                    <dd className="text-sm text-white font-medium text-right truncate">Pokémon TCG</dd>
                   </div>
                 </dl>
               </div>
@@ -566,7 +566,7 @@ export function AdminDashboardPage() {
           </section>
         </>
       ) : (
-        <section aria-label="Loading dashboard" className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section aria-label="Loading dashboard" className="mt-6 grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }, (_, i) => (
             <div key={i} className="h-36 animate-pulse rounded-2xl border border-white/10 bg-bg-elevated" />
           ))}

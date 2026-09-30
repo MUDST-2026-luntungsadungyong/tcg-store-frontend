@@ -404,7 +404,7 @@ export function AdminSidebar() {
       {/* Mobile Navigation Drawer (Slide-out Sheet) */}
       <div
         className={cn(
-          'fixed inset-0 z-50 transition-opacity duration-300 md:hidden',
+          'fixed inset-0 z-50 overflow-hidden transition-opacity duration-300 md:hidden',
           open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         )}
       >

@@ -878,7 +878,7 @@ export function ListingManagementPage() {
 
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <form className="space-y-5" onSubmit={handleSave} noValidate>
-          <div className="grid gap-5 md:grid-cols-[240px_minmax(0,1fr)]">
+          <div className="grid gap-5 md:grid-cols-[320px_minmax(0,1fr)]">
             <CatalogCardImageFrame card={selectedCard} />
 
             <div className="space-y-4">

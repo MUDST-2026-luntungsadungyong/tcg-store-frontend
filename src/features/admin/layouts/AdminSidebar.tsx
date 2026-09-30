@@ -232,28 +232,61 @@ function SidebarFooter({
         </Link>
       </div>
 
-      {/* Admin User Info Card */}
-      <div
-        className={cn(
-          'flex items-center gap-2.5 rounded-xl bg-white/[0.02] p-2 border border-white/5',
-          collapsed ? 'justify-center' : 'justify-between'
-        )}
-      >
-        <div className="flex min-w-0 items-center gap-2.5">
-          {user?.avatarUrl ? (
-            <img
-              src={user.avatarUrl}
-              alt=""
-              className="size-8 rounded-full object-cover ring-1 ring-white/20 shrink-0"
-            />
-          ) : (
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/30">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
-            </span>
-          )}
+      {collapsed ? (
+        /* Collapsed Mode: Clean Centered Stack */
+        <div className="flex flex-col items-center gap-2">
+          {/* User Avatar with Floating Tooltip */}
+          <div className="group relative flex justify-center py-0.5">
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt=""
+                className="size-9 shrink-0 rounded-full object-cover ring-1 ring-white/20"
+              />
+            ) : (
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/30">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+              </span>
+            )}
+            <div
+              role="tooltip"
+              className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 scale-95 rounded-lg border border-white/15 bg-bg-surface px-3 py-1.5 text-xs text-white opacity-0 shadow-2xl backdrop-blur transition-all duration-150 group-hover:scale-100 group-hover:opacity-100 whitespace-nowrap"
+            >
+              <p className="font-semibold">{user?.name || 'Administrator'}</p>
+              <p className="text-[10px] text-slate-400">{user?.email || 'Platform Admin'}</p>
+            </div>
+          </div>
 
-          {!collapsed && (
-            <div className="min-w-0">
+          {/* Expand Toggle Button */}
+          {onToggle && (
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-label="Expand administration sidebar"
+              title="Expand sidebar (Ctrl+B)"
+              className="flex size-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-slate-400 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue"
+            >
+              <PanelLeftOpen size={16} />
+            </button>
+          )}
+        </div>
+      ) : (
+        /* Expanded Mode: Full Card + Collapse Button */
+        <>
+          <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt=""
+                className="size-9 shrink-0 rounded-full object-cover ring-1 ring-white/20"
+              />
+            ) : (
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/30">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+              </span>
+            )}
+
+            <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-white">
                 {user?.name || 'Administrator'}
               </p>
@@ -261,36 +294,22 @@ function SidebarFooter({
                 {user?.email || 'Platform Admin'}
               </p>
             </div>
+          </div>
+
+          {onToggle && (
+            <button
+              type="button"
+              onClick={onToggle}
+              className="mt-2.5 flex h-8 w-full items-center justify-center gap-1.5 rounded-lg border border-white/5 bg-white/[0.02] text-[11px] font-medium text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
+            >
+              <ChevronLeft size={14} />
+              <span>Collapse sidebar</span>
+              <kbd className="ml-1.5 rounded border border-white/10 bg-black/30 px-1.5 py-0.5 text-[9px] font-mono text-slate-500">
+                Ctrl+B
+              </kbd>
+            </button>
           )}
-        </div>
-
-        {/* Collapsed mode expand button */}
-        {collapsed && onToggle && (
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-label="Expand administration sidebar"
-            title="Expand sidebar (Ctrl+B)"
-            className="flex size-7 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white"
-          >
-            <PanelLeftOpen size={15} />
-          </button>
-        )}
-      </div>
-
-      {/* Expand/Collapse Toggle Button for Expanded Mode */}
-      {!collapsed && onToggle && (
-        <button
-          type="button"
-          onClick={onToggle}
-          className="mt-2.5 flex h-8 w-full items-center justify-center gap-1.5 rounded-lg border border-white/5 bg-white/[0.02] text-[11px] font-medium text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
-        >
-          <ChevronLeft size={14} />
-          <span>Collapse sidebar</span>
-          <kbd className="ml-1.5 rounded border border-white/10 bg-black/30 px-1.5 py-0.5 text-[9px] font-mono text-slate-500">
-            Ctrl+B
-          </kbd>
-        </button>
+        </>
       )}
     </div>
   );

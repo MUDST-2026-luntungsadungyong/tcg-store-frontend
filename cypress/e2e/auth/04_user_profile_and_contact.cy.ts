@@ -1,58 +1,72 @@
 /// <reference types="cypress" />
 
-describe('Auth Journey 4: User Profile & Contact Information Management', () => {
+describe('Auth Journey 4: User Profile & Contact Information Management (US-08-1)', () => {
   beforeEach(() => {
-    // Authenticate user before visiting protected profile routes
     cy.loginByMock('CUSTOMER');
   });
 
-  it('renders profile dashboard with personal information and contact cards', () => {
-    cy.visit('/profile');
-    cy.url().should('include', '/profile');
-    cy.contains('My Profile').should('be.visible');
-
-    // Sections
-    cy.contains('Personal Information').should('be.visible');
-    cy.contains('Contact Information').should('be.visible');
-
-    // Links to sub-editors
-    cy.contains('Edit profile').should('be.visible').and('have.attr', 'href', '/profile/edit');
-    cy.contains('Edit contact').should('be.visible').and('have.attr', 'href', '/profile/edit/contact');
-  });
-
-  it('navigates to edit profile page and displays full name input', () => {
-    cy.visit('/profile');
-    cy.contains('Edit profile').click();
-    cy.url().should('include', '/profile/edit');
+  it('navigates to edit profile page, updates name and email, and saves successfully', () => {
+    cy.visit('/profile/edit');
     cy.contains('Edit Profile').should('be.visible');
-    cy.get('#name').should('be.visible');
-    cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Save changes');
+    
+    cy.intercept('PUT', '**/users/profile', {
+      statusCode: 200,
+      body: { id: 'usr-1', name: 'Ash Ketchum Edited', email: 'buyer@mythix.com', role: 'CUSTOMER' }
+    }).as('updateProfile');
 
-    // Back button returns to /profile
-    cy.contains('Back to profile').click();
+    cy.get('#name').clear().type('Ash Ketchum Edited');
+    cy.get('button[type="submit"]').click();
+    
+    cy.wait('@updateProfile');
+    // Redirects to profile and shows updated name
     cy.url().should('eq', Cypress.config().baseUrl + '/profile');
+    cy.contains('Ash Ketchum Edited').should('be.visible');
   });
 
-  it('navigates to edit contact page and displays contact input fields', () => {
-    cy.visit('/profile');
-    cy.contains('Edit contact').click();
-    cy.url().should('include', '/profile/edit/contact');
+  it('navigates to edit contact page, updates contact methods, and saves successfully', () => {
+    cy.visit('/profile/edit/contact');
     cy.contains('Edit Contact Information').should('be.visible');
 
-    cy.get('#phone').should('be.visible');
-    cy.get('#line').should('be.visible');
-    cy.get('#facebook').should('be.visible');
-    cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Save contact info');
+    cy.intercept('PUT', '**/users/profile', {
+      statusCode: 200,
+      body: { id: 'usr-1', name: 'Ash Ketchum', email: 'buyer@mythix.com', role: 'CUSTOMER', phone: '0812345678', line: 'ash_ketchum_new' }
+    }).as('updateContact');
 
-    // Back button returns to /profile
-    cy.contains('Back to profile').click();
+    cy.get('#phone').clear().type('0812345678');
+    cy.get('#line').clear().type('ash_ketchum_new');
+    cy.get('button[type="submit"]').click();
+    
+    cy.wait('@updateContact');
+    
+    // Redirects to profile and shows updated info
     cy.url().should('eq', Cypress.config().baseUrl + '/profile');
+    cy.contains('0812345678').should('be.visible');
+    cy.contains('ash_ketchum_new').should('be.visible');
   });
 
-  it('redirects unauthenticated guest trying to access profile to /login', () => {
-    // Clear credentials
-    window.localStorage.clear();
-    cy.visit('/profile');
-    cy.url().should('include', '/login');
+  it('discards changes when clicking Cancel or Back', () => {
+    cy.visit('/profile/edit');
+    cy.get('#name').clear().type('Should Not Save');
+    cy.contains('Back to profile').click();
+    
+    cy.url().should('eq', Cypress.config().baseUrl + '/profile');
+    cy.contains('Should Not Save').should('not.exist');
+  });
+
+  it('displays API error message when saving fails', () => {
+    cy.visit('/profile/edit');
+    cy.get('#name').clear().type('Ash Ketchum Edited');
+    
+    // Intercept and force failure
+    cy.intercept('PUT', '**/api/users/profile', {
+      statusCode: 500,
+      body: { message: 'Internal Server Error' }
+    }).as('saveProfileError');
+
+    cy.get('button[type="submit"]').click();
+    cy.wait('@saveProfileError');
+    
+    // Assert error message according to US-08-1
+    cy.contains('Unable to save profile. Please try again.').should('be.visible');
   });
 });

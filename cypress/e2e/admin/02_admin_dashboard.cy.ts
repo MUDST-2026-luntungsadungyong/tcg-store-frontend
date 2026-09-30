@@ -2,7 +2,7 @@
 
 describe('US-11-2: View and Refresh Admin Dashboard', () => {
   beforeEach(() => {
-    cy.loginAsAdmin();
+    cy.loginByMock('ADMIN');
   });
 
   it('should show loading skeleton while fetching dashboard data', () => {
@@ -25,8 +25,14 @@ describe('US-11-2: View and Refresh Admin Dashboard', () => {
     cy.intercept('GET', '**/api/admin/dashboard', {
       statusCode: 200,
       body: {
-        metrics: { totalUsers: 100, activeListings: 50, revenue: 10000 },
-        pendingApplications: 0,
+        totalUsers: 100,
+        totalAdmins: 2,
+        pendingSellerApplications: 0,
+        approvedSellers: 10,
+        totalCards: 500,
+        listedCards: 50,
+        totalOrders: 100,
+        totalOrderAmount: 10000
       },
     }).as('getDashboardSuccessEmpty');
 
@@ -45,8 +51,14 @@ describe('US-11-2: View and Refresh Admin Dashboard', () => {
     cy.intercept('GET', '**/api/admin/dashboard', {
       statusCode: 200,
       body: {
-        metrics: { totalUsers: 100, activeListings: 50, revenue: 10000 },
-        pendingApplications: 5,
+        totalUsers: 100,
+        totalAdmins: 2,
+        pendingSellerApplications: 5,
+        approvedSellers: 10,
+        totalCards: 500,
+        listedCards: 50,
+        totalOrders: 100,
+        totalOrderAmount: 10000
       },
     }).as('getDashboardSuccessPending');
 
@@ -54,7 +66,7 @@ describe('US-11-2: View and Refresh Admin Dashboard', () => {
     cy.wait('@getDashboardSuccessPending');
 
     // Verify pending approvals count and link
-    cy.contains(/Pending Seller Approvals/i).should('be.visible');
+    cy.contains(/Pending seller approvals/i).should('be.visible');
     cy.contains('5').should('be.visible');
     cy.contains(/Review applications/i).should('be.visible').click();
     
@@ -73,8 +85,14 @@ describe('US-11-2: View and Refresh Admin Dashboard', () => {
         req.reply({
           statusCode: 200,
           body: {
-            metrics: { totalUsers: 100, activeListings: 50, revenue: 10000 },
-            pendingApplications: 0,
+            totalUsers: 100,
+            totalAdmins: 2,
+            pendingSellerApplications: 0,
+            approvedSellers: 10,
+            totalCards: 500,
+            listedCards: 50,
+            totalOrders: 100,
+            totalOrderAmount: 10000
           },
         });
       }

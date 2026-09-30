@@ -2,7 +2,7 @@
 
 describe('US-11-3: View Seller Application Queue', () => {
   beforeEach(() => {
-    cy.loginAsAdmin();
+    cy.loginByMock('ADMIN');
   });
 
   it('should show loading skeleton while fetching seller applications', () => {
@@ -37,12 +37,10 @@ describe('US-11-3: View Seller Application Queue', () => {
     cy.contains(/Please try again/i).should('be.visible');
 
     // Click Retry
-    cy.get('button').contains(/Retry/i).click();
+    cy.contains('button', /Retry/i).click();
     
     // Should succeed on second try and show empty state (since body is [])
     cy.wait('@getApplicationsFailThenSuccess');
-    // Assuming empty state says something like "No applications" or "No seller applications"
-    // cy.contains(/No applications/i).should('be.visible');
   });
 
   it('should display empty state if there are no pending applications', () => {
@@ -54,11 +52,8 @@ describe('US-11-3: View Seller Application Queue', () => {
     cy.visit('/admin/seller-applications');
     cy.wait('@getApplicationsEmpty');
 
-    // Currently the exact text for empty state isn't specified in US-11-3 flowchart but "แสดง Empty State" is.
-    // The previous flow said "No pending applications" for the dashboard. We'll check for a general empty state.
-    // Replace this with the actual empty state text implementation.
     cy.get('table').should('not.exist');
-    cy.contains(/No|Empty/i).should('exist');
+    cy.contains(/The review queue is clear/i).should('exist');
   });
 
   it('should display a table of pending applications with required columns', () => {
@@ -69,8 +64,8 @@ describe('US-11-3: View Seller Application Queue', () => {
         applicantEmail: 'john@example.com',
         shopName: "John's Cards",
         shopDescription: 'Selling rare cards',
-        submittedDate: '2023-10-27T10:00:00Z',
-        status: 'PENDING'
+        requestedAt: '2023-10-27T10:00:00Z',
+        sellerStatus: 'PENDING'
       }
     ];
 
@@ -82,16 +77,16 @@ describe('US-11-3: View Seller Application Queue', () => {
     cy.visit('/admin/seller-applications');
     cy.wait('@getApplicationsSuccess');
 
-    // Verify table exists
-    cy.get('table').should('be.visible');
+    // Verify table exists (but might be hidden on mobile, so we don't strictly require be.visible if we run headlessly)
+    cy.get('table').should('exist');
 
     // Verify columns (these can be the headers or the data)
-    cy.contains('John Doe').should('be.visible');
-    cy.contains('john@example.com').should('be.visible');
-    cy.contains("John's Cards").should('be.visible');
+    cy.get('table').contains('John Doe').should('be.visible');
+    cy.get('table').contains('john@example.com').should('be.visible');
+    cy.get('table').contains("John's Cards").should('be.visible');
     
     // Verify Approve and Reject buttons exist
-    cy.get('button').contains(/Approve/i).should('be.visible');
-    cy.get('button').contains(/Reject/i).should('be.visible');
+    cy.get('table').contains('button', /Approve/i).should('be.visible');
+    cy.get('table').contains('button', /Reject/i).should('be.visible');
   });
 });

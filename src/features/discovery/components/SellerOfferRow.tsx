@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Store } from 'lucide-react';
 import type { CardListing } from '@/entities/card/model/types';
+import { formatCondition } from '@/entities/card/model/condition';
 import { ListingActionButtons } from './ListingActionButtons';
 
 interface SellerOfferRowProps {
@@ -20,12 +21,12 @@ export function SellerOfferRow({ offer, isLoading, onAddToCart, onReserveNow }: 
             {offer.sellerName || `Seller ${offer.sellerId}`}
           </Link>
         </div>
-        <p className="mt-1 text-sm text-gray-400">{[offer.condition, offer.language].filter(Boolean).join(' · ') || 'Card listing'}</p>
+        <p className="mt-1 text-sm text-gray-400">{[offer.condition ? formatCondition(offer.condition) : undefined, offer.language].filter(Boolean).join(' · ') || 'Card listing'}</p>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 lg:justify-end">
         <div className="min-w-28">
           <p className="text-lg font-bold">฿{offer.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          <p className={`text-xs ${offer.stock > 0 ? 'text-gray-400' : 'text-status-danger'}`}>{offer.stock > 0 ? `${offer.stock} in stock` : 'Out of stock'}</p>
+          {offer.stock <= 0 && <p className="text-xs text-status-danger">Out of stock</p>}
         </div>
         <ListingActionButtons offer={offer} isLoading={isLoading} onAddToCart={onAddToCart} onReserveNow={onReserveNow} />
       </div>

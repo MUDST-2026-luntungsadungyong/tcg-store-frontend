@@ -10,25 +10,20 @@ describe('Core Journey 4: Buyer Purchase to Seller Fast-Forward Shipment & Local
 
     // Seed sample item in reservation cart if empty
     window.localStorage.setItem(
-      'tcg_cart_storage',
-      JSON.stringify({
-        state: {
-          items: [
-            {
-              listing: {
-                id: 'listing-pop4-4',
-                sellerId: '2',
-                name: 'Mew - POP Series 4 (Near Mint)',
-                price: 3500.0,
-                stock: 5,
-                image: 'https://images.pokemontcg.io/pop4/4.png',
-              },
-              quantity: 1,
-            },
-          ],
-        },
-        version: 0,
-      })
+      'mythix_reservation_cart_v2:usr-1',
+      JSON.stringify([
+        {
+          listing: {
+            id: 'prd-22',
+            sellerId: 'usr-3',
+            name: 'Mew - POP Series 4 (Near Mint)',
+            price: 3500.0,
+            stock: 5,
+            image: 'https://images.pokemontcg.io/pop4/4.png',
+          },
+          quantity: 1,
+        }
+      ])
     );
   });
 
@@ -40,7 +35,7 @@ describe('Core Journey 4: Buyer Purchase to Seller Fast-Forward Shipment & Local
       cy.cleanTestOrder(createdOrderId);
     }
     // Clean client-side test session
-    window.localStorage.removeItem('tcg_cart_storage');
+    window.localStorage.removeItem('mythix_reservation_cart_v2:usr-1');
   });
 
   it('completes buyer checkout and verifies order status transitions to Sent after seller API fast-forward', () => {

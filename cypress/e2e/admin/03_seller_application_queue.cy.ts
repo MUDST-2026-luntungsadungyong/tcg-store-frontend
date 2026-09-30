@@ -37,7 +37,7 @@ describe('US-11-3: View Seller Application Queue', () => {
     cy.contains(/Please try again/i).should('be.visible');
 
     // Click Retry
-    cy.get('button').contains(/Retry/i).click();
+    cy.contains('button', /Retry/i).click();
     
     // Should succeed on second try and show empty state (since body is [])
     cy.wait('@getApplicationsFailThenSuccess');
@@ -81,12 +81,12 @@ describe('US-11-3: View Seller Application Queue', () => {
     cy.get('table').should('exist');
 
     // Verify columns (these can be the headers or the data)
-    cy.contains('John Doe').should('be.visible');
-    cy.contains('john@example.com').should('be.visible');
-    cy.contains("John's Cards").should('be.visible');
+    cy.get('table').contains('John Doe').should('be.visible');
+    cy.get('table').contains('john@example.com').should('be.visible');
+    cy.get('table').contains("John's Cards").should('be.visible');
     
     // Verify Approve and Reject buttons exist
-    cy.get('button').contains(/Approve/i).should('be.visible');
-    cy.get('button').contains(/Reject/i).should('be.visible');
+    cy.get('table').contains('button', /Approve/i).should('be.visible');
+    cy.get('table').contains('button', /Reject/i).should('be.visible');
   });
 });

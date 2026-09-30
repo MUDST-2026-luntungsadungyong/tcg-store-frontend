@@ -20,10 +20,9 @@ describe('Auth Journey 2: New User Registration & Sign-Up Validation', () => {
     cy.visit('/register');
     cy.get('#password').focus();
     cy.contains('At least 8 characters').should('be.visible');
-    cy.contains('At least one uppercase letter').should('be.visible');
-    cy.contains('At least one lowercase letter').should('be.visible');
-    cy.contains('At least one number').should('be.visible');
-    cy.contains('At least one special character').should('be.visible');
+    cy.contains('No more than 72 characters').should('be.visible');
+    cy.contains('One uppercase letter').should('be.visible');
+    cy.contains('One number').should('be.visible');
   });
 
   it('shows validation error when passwords do not match', () => {

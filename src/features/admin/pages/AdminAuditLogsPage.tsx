@@ -476,6 +476,33 @@ export function AdminAuditLogsPage() {
                 logs.map((log) => <AuditLogCard key={log.id} log={log} onClick={() => setViewing(log)} />)
               )}
             </div>
+
+            {/* Pagination */}
+            {info.totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between rounded-xl border border-white/10 bg-bg-elevated px-4 py-3 text-sm">
+                <span className="text-gray-400">
+                  Page <strong className="text-white">{info.number + 1}</strong> of <strong className="text-white">{info.totalPages}</strong>
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(p - 1, 0))}
+                    className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-white/10 px-3 text-xs font-semibold text-gray-300 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
+                  >
+                    <ChevronLeft size={14} /> Previous
+                  </button>
+                  <button
+                    type="button"
+                    disabled={page + 1 >= info.totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                    className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-white/10 px-3 text-xs font-semibold text-gray-300 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
+                  >
+                    Next <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </section>

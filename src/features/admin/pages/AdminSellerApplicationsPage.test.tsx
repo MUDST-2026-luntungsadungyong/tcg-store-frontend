@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { AdminSellerApplicationsPage } from './AdminSellerApplicationsPage';
@@ -13,6 +13,7 @@ vi.mock('../api/sellerApplications', () => ({
 }));
 
 describe('AdminSellerApplicationsPage', () => {
+  const writeText = vi.fn();
   const mockApplications: SellerApplication[] = [
     {
       id: 'app-1',
@@ -21,6 +22,9 @@ describe('AdminSellerApplicationsPage', () => {
       applicantEmail: 'misty@mythix.com',
       shopName: 'Cerulean Water Gym Cards',
       shopDescription: 'Official Water Pokemon Cards',
+      phone: '0812345678',
+      line: 'misty.cards',
+      facebook: 'misty.cards',
       sellerStatus: 'PENDING',
       requestedAt: '2026-09-24T10:00:00Z',
     },
@@ -28,6 +32,7 @@ describe('AdminSellerApplicationsPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
   });
 
   it('renders application list with applicant details and review count', async () => {
@@ -38,13 +43,12 @@ describe('AdminSellerApplicationsPage', () => {
     expect(screen.getByRole('heading', { name: 'Seller applications' })).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('Misty Cerulean')).toBeInTheDocument();
+      expect(screen.getAllByText('Misty Cerulean')).toHaveLength(2);
     });
 
-    expect(screen.getByText('Cerulean Water Gym Cards')).toBeInTheDocument();
-    expect(screen.getByText('Official Water Pokemon Cards')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Reject' })).toBeInTheDocument();
+    expect(screen.getAllByText('Cerulean Water Gym Cards')).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Approve' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Reject' })).toHaveLength(2);
   });
 
   it('displays empty queue state when there are no applications awaiting review', async () => {
@@ -59,6 +63,23 @@ describe('AdminSellerApplicationsPage', () => {
     expect(screen.getByText(/New seller applications will appear here/i)).toBeInTheDocument();
   });
 
+  it('opens seller details before a decision', async () => {
+    vi.mocked(sellerApplicationsApi.listPending).mockResolvedValueOnce(mockApplications);
+    render(<AdminSellerApplicationsPage />);
+    await userEvent.click(await screen.findByRole('row', { name: 'View details for Cerulean Water Gym Cards' }));
+    expect(screen.getByRole('heading', { name: 'Seller details' })).toBeInTheDocument();
+    const modal = screen.getByTestId('modal-backdrop');
+    expect(within(modal).getByText('Email')).toBeInTheDocument();
+    expect(within(modal).getByText('Description')).toBeInTheDocument();
+    expect(within(modal).getByText('Official Water Pokemon Cards')).toBeInTheDocument();
+    expect(within(modal).getByText('0812345678')).toBeInTheDocument();
+    expect(within(modal).getAllByText('misty.cards')).toHaveLength(2);
+    await userEvent.click(within(modal).getByRole('button', { name: 'Copy Email' }));
+    expect(writeText).toHaveBeenCalledWith('misty@mythix.com');
+    await userEvent.click(modal);
+    expect(screen.queryByRole('heading', { name: 'Seller details' })).not.toBeInTheDocument();
+  });
+
   it('approves an application and removes it from the list', async () => {
     vi.mocked(sellerApplicationsApi.listPending).mockResolvedValueOnce([...mockApplications]);
     vi.mocked(sellerApplicationsApi.approve).mockResolvedValueOnce({
@@ -69,16 +90,16 @@ describe('AdminSellerApplicationsPage', () => {
     render(<AdminSellerApplicationsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Misty Cerulean')).toBeInTheDocument();
+      expect(screen.getAllByText('Misty Cerulean')).toHaveLength(2);
     });
 
-    const approveButton = screen.getByRole('button', { name: 'Approve' });
+    const approveButton = screen.getAllByRole('button', { name: 'Approve' })[0];
     await userEvent.click(approveButton);
 
     expect(sellerApplicationsApi.approve).toHaveBeenCalledWith('app-1');
 
     await waitFor(() => {
-      expect(screen.queryByText('Misty Cerulean')).not.toBeInTheDocument();
+      expect(screen.queryAllByText('Misty Cerulean')).toHaveLength(0);
     });
     expect(screen.getByText('The review queue is clear')).toBeInTheDocument();
   });
@@ -93,10 +114,10 @@ describe('AdminSellerApplicationsPage', () => {
     render(<AdminSellerApplicationsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Misty Cerulean')).toBeInTheDocument();
+      expect(screen.getAllByText('Misty Cerulean')).toHaveLength(2);
     });
 
-    const rejectButton = screen.getByRole('button', { name: 'Reject' });
+    const rejectButton = screen.getAllByRole('button', { name: 'Reject' })[0];
     await userEvent.click(rejectButton);
 
     // Modal should be open
@@ -117,7 +138,7 @@ describe('AdminSellerApplicationsPage', () => {
     expect(sellerApplicationsApi.reject).toHaveBeenCalledWith('app-1', 'เอกสารบัตรประชาชนไม่ชัดเจน');
 
     await waitFor(() => {
-      expect(screen.queryByText('Misty Cerulean')).not.toBeInTheDocument();
+      expect(screen.queryAllByText('Misty Cerulean')).toHaveLength(0);
     });
   });
 

@@ -2,7 +2,7 @@
 
 // Custom command to bypass or mock authentication
 Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
-  const token = role === 'SELLER' ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer';
+  const token = role === 'ADMIN' ? 'mock-jwt-token-admin' : (role === 'SELLER' ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer');
   window.localStorage.setItem('token', token);
   window.localStorage.setItem(
     'tcg_auth_storage',
@@ -10,7 +10,7 @@ Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
       state: {
         token,
         user: {
-          id: role === 'SELLER' ? '2' : '1',
+          id: role === 'ADMIN' ? '99' : (role === 'SELLER' ? '2' : '1'),
           email: `${role.toLowerCase()}@mythix.com`,
           fullName: `Test ${role}`,
           role: role === 'ADMIN' ? 'ADMIN' : 'USER',
@@ -64,6 +64,8 @@ Cypress.Commands.add('loginByUI', (email: string, password = 'password123') => {
   cy.get('#email').clear().type(email);
   cy.get('#password').clear().type(password);
   cy.get('button[type="submit"]').click();
+  // Wait for login request to complete and redirect away from login page
+  cy.url().should('not.include', '/login');
 });
 
 Cypress.Commands.add('registerNewUser', (name: string, email: string, password = 'Password123!') => {
@@ -73,6 +75,8 @@ Cypress.Commands.add('registerNewUser', (name: string, email: string, password =
   cy.get('#password').clear().type(password);
   cy.get('#confirm-password').clear().type(password);
   cy.get('button[type="submit"]').click();
+  // Wait for redirect
+  cy.url().should('not.include', '/register');
 });
 
 Cypress.Commands.add('requestPasswordReset', (email: string) => {
@@ -97,6 +101,7 @@ Cypress.Commands.add('updateProfileContact', (contact: { phone?: string; line?: 
 
 Cypress.Commands.add('loginAsAdmin', () => {
   cy.loginByUI('admin@mythix.com', 'admin123');
+  cy.url().should('eq', Cypress.config().baseUrl + '/');
 });
 
 declare global {

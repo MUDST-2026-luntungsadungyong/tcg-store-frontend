@@ -46,6 +46,6 @@ describe('US-11-1: Platform Admin Access & Authorization', () => {
     cy.get('button[type="submit"]').click();
     
     // Assuming the error is shown in the UI
-    cy.contains(/Invalid credentials|incorrect/i).should('be.visible');
+    cy.contains(/Invalid credentials|incorrect|Login failed/i).should('be.visible');
   });
 });

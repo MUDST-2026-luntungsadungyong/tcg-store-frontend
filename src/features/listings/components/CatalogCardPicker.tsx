@@ -16,13 +16,19 @@ type CatalogCardPickerProps = {
 
 export function CatalogCardImageFrame({
   card,
+  fillHeight = false,
 }: {
   card: CatalogCard | null;
+  fillHeight?: boolean;
 }) {
   const image = card?.imageSmall || card?.imageLarge;
 
   return (
-    <div className="flex aspect-[5/7] w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/20 bg-bg-input">
+    <div
+      className={`flex w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/20 bg-bg-input ${
+        fillHeight ? 'h-full' : 'aspect-[5/7]'
+      }`}
+    >
       {image ? (
         <img
           src={image}

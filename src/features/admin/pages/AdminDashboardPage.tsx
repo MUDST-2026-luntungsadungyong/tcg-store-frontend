@@ -25,6 +25,45 @@ type Dashboard = {
 type AdminUser = { id: string; name: string; email: string; role: string; sellerStatus: string };
 type AuditLog = { id: string; action: string; actorName: string; details: string; createdAt: string };
 type AuditLogPage = { content: AuditLog[] };
+type AdminOrder = { id: string; orderNumber: string; status: string; totalAmount: number; createdAt: string };
+type AdminOrderPage = { content: AdminOrder[] };
+
+function computeClientTrends(orders: AdminOrder[]): DailyTrend[] {
+  const now = new Date();
+  const days: DailyTrend[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${day}`;
+
+    const dayOrders = orders.filter((o) => {
+      if (!o.createdAt) return false;
+      try {
+        const od = new Date(o.createdAt);
+        const oy = od.getFullYear();
+        const om = String(od.getMonth() + 1).padStart(2, '0');
+        const oday = String(od.getDate()).padStart(2, '0');
+        return `${oy}-${om}-${oday}` === dateStr;
+      } catch {
+        return o.createdAt.startsWith(dateStr);
+      }
+    });
+
+    const gmv = dayOrders
+      .filter((o) => !o.status || ['PAID', 'FULFILLED'].includes(o.status.toUpperCase()))
+      .reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
+
+    days.push({
+      date: dateStr,
+      gmv,
+      orders: dayOrders.length,
+    });
+  }
+  return days;
+}
 
 const money = (v: number) => `฿${Number(v || 0).toLocaleString()}`;
 const card = 'rounded-2xl border border-white/10 bg-bg-surface';
@@ -220,6 +259,7 @@ export function AdminDashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [sellers, setSellers] = useState<AdminUser[]>([]);
   const [activity, setActivity] = useState<AuditLog[]>([]);
+  const [orderTrends, setOrderTrends] = useState<DailyTrend[]>([]);
   const [error, setError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -231,6 +271,14 @@ export function AdminDashboardPage() {
       setData(response.data);
     } catch {
       setError(true);
+    }
+
+    try {
+      const ordersRes = await apiClient.get<AdminOrderPage>('/admin/orders', { params: { size: 100 } });
+      const ordersList = ordersRes.data.content || [];
+      setOrderTrends(computeClientTrends(ordersList));
+    } catch {
+      // Non-critical
     }
 
     try {
@@ -253,6 +301,16 @@ export function AdminDashboardPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const activeTrends = useMemo(() => {
+    if (data?.trends && data.trends.some((t) => Number(t.gmv) > 0 || Number(t.orders) > 0)) {
+      return data.trends;
+    }
+    if (orderTrends.some((t) => Number(t.gmv) > 0 || Number(t.orders) > 0)) {
+      return orderTrends;
+    }
+    return data?.trends && data.trends.length > 0 ? data.trends : orderTrends;
+  }, [data?.trends, orderTrends]);
 
   const metrics = data
     ? [
@@ -359,7 +417,7 @@ export function AdminDashboardPage() {
                 </div>
 
                 {/* Interactive SVG Chart */}
-                <GmvOrdersChart trends={data.trends} />
+                <GmvOrdersChart trends={activeTrends} />
               </div>
 
               <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-slate-400">

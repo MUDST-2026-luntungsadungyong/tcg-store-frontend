@@ -38,7 +38,7 @@ describe('collection API adapter', () => {
     expect(get).toHaveBeenCalledWith('/collection');
   });
 
-  it('calls POST /collection with cardId when adding a catalog card', async () => {
+  it('calls POST /collection with cardId and quantity when adding a catalog card', async () => {
     post.mockResolvedValueOnce({
       data: {
         id: 'col-new',
@@ -55,8 +55,8 @@ describe('collection API adapter', () => {
       marketPrice: 1500,
     };
 
-    const result = await collectionApi.addCatalogCardToCollection(mockCatalogCard);
-    expect(post).toHaveBeenCalledWith('/collection', { cardId: 'card-1' });
+    const result = await collectionApi.addCatalogCardToCollection(mockCatalogCard, 3);
+    expect(post).toHaveBeenCalledWith('/collection', { cardId: 'card-1', quantity: 3 });
     expect(result).toMatchObject({ id: 'col-new' });
   });
 });

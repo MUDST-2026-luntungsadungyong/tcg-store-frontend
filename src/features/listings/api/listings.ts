@@ -57,6 +57,18 @@ function normalizeStatus(value: unknown): ListingVisibility {
   );
 }
 
+function optionalString(record: Record<string, unknown>, key: string): string | undefined {
+  return typeof record[key] === 'string' ? record[key] : undefined;
+}
+
+function optionalNumber(record: Record<string, unknown>, key: string): number | undefined {
+  if (record[key] === null || record[key] === undefined || record[key] === '') {
+    return undefined;
+  }
+  const value = Number(record[key]);
+  return Number.isFinite(value) ? value : undefined;
+}
+
 export function normalizeManagedListing(value: unknown): ManagedListing {
   const record = asRecord(value);
 
@@ -106,8 +118,19 @@ export function normalizeManagedListing(value: unknown): ManagedListing {
     status: normalizeStatus(record.status),
     condition:
       typeof record.condition === 'string' ? record.condition : undefined,
+    language: optionalString(record, 'language'),
     set: typeof record.set === 'string' ? record.set : undefined,
     rarity: typeof record.rarity === 'string' ? record.rarity : undefined,
+    cardId: optionalString(record, 'cardId'),
+    cardNumber: optionalString(record, 'cardNumber'),
+    supertype: optionalString(record, 'supertype'),
+    subtypes: optionalString(record, 'subtypes'),
+    hp: optionalString(record, 'hp'),
+    types: optionalString(record, 'types'),
+    artist: optionalString(record, 'artist'),
+    imageSmall: optionalString(record, 'imageSmall'),
+    imageLarge: optionalString(record, 'imageLarge'),
+    marketPrice: optionalNumber(record, 'marketPrice'),
     activeReservationCount:
       Number.isSafeInteger(activeReservationCount) && activeReservationCount >= 0
         ? activeReservationCount
@@ -278,6 +301,7 @@ function fileToDataUrl(file: File): Promise<string> {
 
 function toFormData(input: ManagedListingInput, file: File): FormData {
   const formData = new FormData();
+  if (input.cardId) formData.append('cardId', input.cardId);
   formData.append('name', input.name);
   formData.append('game', input.game);
   formData.append('price', String(input.price));

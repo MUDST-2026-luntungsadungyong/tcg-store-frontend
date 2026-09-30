@@ -10,7 +10,7 @@ interface CardCollectPanelProps {
 export function CardCollectPanel({ card, isLoading, onCollect }: CardCollectPanelProps) {
   return (
     <section className="w-full rounded-xl border border-white/10 bg-[#131D2D] p-5" aria-label="Collect card">
-      <p className="text-sm text-gray-300">Add this card to your personal collection.</p>
+      <p className="text-sm text-gray-300">Already own this card? Add it to your personal collection!</p>
       <button
         type="button"
         onClick={onCollect}

@@ -25,28 +25,16 @@ Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
 
 // Helper command to fast-forward order status via Seller API without switching UI accounts
 Cypress.Commands.add('sellerFastForwardOrder', (orderId: string, status = 'FULFILLED') => {
-  // Try authenticating with backend API or use mock token
-  cy.request({
-    method: 'POST',
-    url: 'http://localhost:8080/api/auth/login',
-    body: {
-      email: 'seller@mythix.com',
-      password: 'password123',
-    },
-    failOnStatusCode: false,
-  }).then((loginRes) => {
-    const sellerToken = loginRes.status === 200 ? loginRes.body.token : 'mock-jwt-token-seller';
-
-    // Call seller update status endpoint
-    cy.request({
-      method: 'PATCH',
-      url: `http://localhost:8080/api/seller/orders/${orderId}/status`,
-      headers: {
-        Authorization: `Bearer ${sellerToken}`,
-      },
-      body: { status },
-      failOnStatusCode: false,
-    });
+  cy.window().then((win) => {
+    // Modify local storage directly for the mock API scenario
+    const mockReservationsStr = win.localStorage.getItem('mythix_mock_reservations_v1');
+    if (mockReservationsStr) {
+      const mockReservations = JSON.parse(mockReservationsStr);
+      const updated = mockReservations.map((order: any) => 
+        order.id === orderId ? { ...order, status } : order
+      );
+      win.localStorage.setItem('mythix_mock_reservations_v1', JSON.stringify(updated));
+    }
   });
 });
 

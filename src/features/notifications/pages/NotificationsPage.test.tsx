@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { Notification } from '@/entities/notification/model/types';
 
 const { list, markRead, deleteNotification } = vi.hoisted(() => ({
   list: vi.fn(),
@@ -14,9 +17,9 @@ vi.mock('../api/notifications', () => ({
 
 import { NotificationsPage } from './NotificationsPage';
 
-const notification = {
+const notification: Notification = {
   id: '5',
-  type: 'ORDER_RESERVED' as const,
+  type: 'ORDER_RESERVED',
   title: 'New card reservation',
   message: 'A buyer reserved cards from your listings.',
   orderId: '19',
@@ -24,7 +27,7 @@ const notification = {
   createdAt: '2026-09-20T10:00:00',
 };
 
-function page(content = [notification], values: Partial<{
+function page(content: Notification[] = [notification], values: Partial<{
   totalElements: number; totalPages: number; number: number; size: number; first: boolean; last: boolean;
 }> = {}) {
   return {
@@ -38,9 +41,50 @@ function page(content = [notification], values: Partial<{
   };
 }
 
-function renderPage() {
-  return render(<MemoryRouter><NotificationsPage /></MemoryRouter>);
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => { resolve = res; });
+  return { promise, resolve };
 }
+
+function DestinationProbe() {
+  const location = useLocation();
+  return <output data-testid="destination">{location.pathname}</output>;
+}
+
+function renderPage() {
+  return render(
+    <MemoryRouter initialEntries={['/notifications']}>
+      <Routes>
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="*" element={<DestinationProbe />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+const routingCases: Array<{
+  name: string;
+  type: Notification['type'];
+  title: string;
+  message: string;
+  destination: '/workspace/orders' | '/orders';
+}> = [
+  {
+    name: 'a seller reservation',
+    type: 'ORDER_RESERVED',
+    title: 'New card reservation',
+    message: 'A buyer reserved cards from your listings.',
+    destination: '/workspace/orders',
+  },
+  {
+    name: 'a seller buying a card as a normal buyer',
+    type: 'ORDER_STATUS_CHANGED',
+    title: 'Your order status changed',
+    message: 'Your card purchase is ready for pickup.',
+    destination: '/orders',
+  },
+];
 
 describe('NotificationsPage', () => {
   beforeEach(() => {
@@ -68,6 +112,23 @@ describe('NotificationsPage', () => {
     await waitFor(() => expect(markRead).toHaveBeenCalledWith('5'));
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Mark New card reservation as read' })).not.toBeInTheDocument());
     expect(screen.getByText(/Order #19/)).toBeInTheDocument();
+  });
+
+  it.each(routingCases)('marks $name as read before navigating by notification type', async ({ type, title, message, destination }) => {
+    const currentNotification: Notification = { ...notification, type, title, message };
+    const readRequest = deferred<Notification>();
+    list.mockResolvedValue(page([currentNotification]));
+    markRead.mockReturnValue(readRequest.promise);
+    renderPage();
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'View order' }));
+
+    expect(markRead).toHaveBeenCalledWith(currentNotification.id);
+    expect(screen.queryByTestId('destination')).not.toBeInTheDocument();
+
+    readRequest.resolve({ ...currentNotification, readAt: '2026-09-20T11:00:00' });
+    expect(await screen.findByTestId('destination')).toHaveTextContent(destination);
   });
 
   it('shows the empty state when the backend returns no notifications', async () => {

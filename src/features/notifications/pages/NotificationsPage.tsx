@@ -84,7 +84,7 @@ export function NotificationsPage() {
 
   const openOrder = async (notification: Notification) => {
     await markRead(notification);
-    navigate('/orders');
+    navigate(notification.type === 'ORDER_RESERVED' ? '/workspace/orders' : '/orders');
   };
 
   return (
@@ -103,16 +103,16 @@ export function NotificationsPage() {
         {actionError && <p role="alert" className="rounded-lg border border-status-danger/30 bg-status-danger/10 p-3 text-sm text-red-200">{actionError}</p>}
 
         {loading && (
-          <div role="status" aria-label="Loading notifications" className="space-y-3 rounded-2xl border border-white/10 bg-[#192338] p-5">
+          <div role="status" aria-label="Loading notifications" className="space-y-3 rounded-2xl border border-[#D9E0EA] bg-white p-5 text-bg-card shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
             <span className="sr-only">Loading notifications</span>
-            {[0, 1, 2].map((item) => <Skeleton key={item} className="h-20 w-full" />)}
+            {[0, 1, 2].map((item) => <Skeleton key={item} className="h-20 w-full bg-[#E5EAF2]" />)}
           </div>
         )}
 
         {!loading && error && (
-          <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/30 bg-[#192338] p-8 text-center">
+          <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/40 bg-white p-8 text-center text-bg-card shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
             <AlertCircle className="size-10 text-status-danger" aria-hidden="true" />
-            <p className="text-gray-300">{error}</p>
+            <p className="text-[#4B5567]">{error}</p>
             {unauthorized ? (
               <Button onClick={() => navigate('/login', { state: { from: '/notifications' } })}>Sign in</Button>
             ) : (
@@ -122,27 +122,27 @@ export function NotificationsPage() {
         )}
 
         {!loading && !error && result?.content.length === 0 && (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-[#192338] px-6 py-16 text-center">
-            <Bell className="size-12 text-gray-500" aria-hidden="true" />
-            <h2 className="text-xl font-semibold">You’re all caught up</h2>
-            <p className="text-sm text-gray-400">New reservation and order updates will appear here.</p>
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#D9E0EA] bg-white px-6 py-16 text-center text-bg-card shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
+            <Bell className="size-12 text-[#8A94A8]" aria-hidden="true" />
+            <h2 className="text-xl font-semibold text-[#151B2B]">You’re all caught up</h2>
+            <p className="text-sm text-[#596173]">New reservation and order updates will appear here.</p>
           </div>
         )}
 
         {!loading && !error && Boolean(result?.content.length) && (
           <>
-            <ul aria-label="Notification list" className="divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-[#192338]">
+            <ul aria-label="Notification list" className="space-y-3">
               {result?.content.map((notification) => (
-                <li key={notification.id} className={`flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between ${notification.readAt ? '' : 'bg-brand-blue/[0.06]'}`}>
+                <li key={notification.id} className={`flex flex-col gap-4 rounded-2xl border bg-white p-5 text-bg-card shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-shadow hover:shadow-[0_12px_28px_rgba(0,0,0,0.18)] sm:flex-row sm:items-start sm:justify-between ${notification.readAt ? 'border-[#D9E0EA]' : 'border-brand-blue ring-1 ring-brand-blue/20'}`}>
                   <div className="flex min-w-0 gap-3">
                     <span className={`mt-1 size-2 shrink-0 rounded-full ${notification.readAt ? 'bg-transparent' : 'bg-brand-blue'}`} aria-label={notification.readAt ? 'Read' : 'Unread'} />
                     <div className="min-w-0">
-                      <h2 className="font-semibold">{notification.title}</h2>
-                      <p className="mt-1 text-sm text-gray-300">{notification.message}</p>
-                      <p className="mt-2 text-xs text-gray-500">
+                      <h2 className="font-semibold text-[#151B2B]">{notification.title}</h2>
+                      <p className="mt-1 text-sm text-[#4B5567]">{notification.message}</p>
+                      <p className="mt-2 text-xs text-[#6B7280]">
                         Order #{notification.orderId} · {new Date(notification.createdAt).toLocaleString()}
                       </p>
-                      <button type="button" onClick={() => void openOrder(notification)} className="mt-3 text-sm font-semibold text-brand-blue hover:text-white">
+                      <button type="button" onClick={() => void openOrder(notification)} className="mt-3 text-sm font-semibold text-[#2B53A9] hover:text-[#151B2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue">
                         View order
                       </button>
                     </div>

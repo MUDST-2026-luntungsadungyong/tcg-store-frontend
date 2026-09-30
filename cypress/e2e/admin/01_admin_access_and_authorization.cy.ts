@@ -16,6 +16,9 @@ describe('US-11-1: Platform Admin Access & Authorization', () => {
     // Login as a normal USER
     cy.loginByUI('ash@mythix.com', 'password123');
     
+    // Wait for login to finish and redirect to home
+    cy.url().should('eq', Cypress.config().baseUrl + '/');
+    
     cy.visit('/admin');
     // Guard should prevent access and redirect to home
     cy.url().should('eq', Cypress.config().baseUrl + '/');
@@ -25,7 +28,8 @@ describe('US-11-1: Platform Admin Access & Authorization', () => {
     // Using the custom command we just created
     cy.loginAsAdmin();
     
-    // Visit admin dashboard directly or verify redirection
+    // Wait for login to finish and redirect to admin
+    cy.url().should('include', '/admin');
     cy.visit('/admin');
     cy.url().should('include', '/admin');
     

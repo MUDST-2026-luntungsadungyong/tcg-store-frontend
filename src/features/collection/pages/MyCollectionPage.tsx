@@ -6,7 +6,6 @@ import { collectionApi } from '../api/collection';
 import { CollectionCard } from '../components/CollectionCard';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { Modal } from '@/shared/components/Modal';
-import { Input } from '@/shared/components/Input';
 import { Button } from '@/shared/components/Button';
 import { useToastStore } from '@/shared/model/useToastStore';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
@@ -450,7 +449,7 @@ export function MyCollectionPage() {
 
                 <div className="min-h-0 flex-1 overflow-y-auto p-4">
                   <div className="space-y-5">
-                    <div className="grid gap-5 md:grid-cols-[180px_minmax(0,1fr)]">
+                    <div className="grid gap-5 md:grid-cols-[240px_minmax(0,1fr)]">
                       <CatalogCardImageFrame card={selectedCard} />
 
                       <div className="space-y-4">
@@ -461,16 +460,6 @@ export function MyCollectionPage() {
                             setSelectedCard(card);
                             setAddCardError(null);
                           }}
-                        />
-
-                        <Input
-                          id="collection-card-market-price"
-                          type="number"
-                          label="Market price (฿)"
-                          value={selectedCard?.marketPrice ?? ''}
-                          disabled
-                          placeholder="—"
-                          onChange={() => undefined}
                         />
 
                         {selectedCard && <CatalogCardDetails card={selectedCard} />}

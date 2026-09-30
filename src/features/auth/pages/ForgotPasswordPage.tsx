@@ -17,8 +17,9 @@ export function ForgotPasswordPage() {
     setError('');
     setIsLoading(true);
     try {
-      await authApi.forgotPassword(email);
-      navigate('/check-email');
+      const found = await authApi.forgotPassword(email);
+      if (found) navigate('/reset-password');
+      else setError('No account found for this email.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -29,7 +30,7 @@ export function ForgotPasswordPage() {
   return (
     <AuthLayout title="Forgot Password">
       <p className="mt-3 text-center text-sm text-gray-400">
-        Enter your email and we'll send you a link to reset your password.
+        Demo flow: enter an existing account email to change its password. No email will be sent.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
@@ -57,7 +58,7 @@ export function ForgotPasswordPage() {
         )}
 
         <Button type="submit" variant="primary" size="lg" className="w-full font-semibold" isLoading={isLoading}>
-          {isLoading ? 'Sending…' : 'Send Reset Link'}
+          {isLoading ? 'Checking…' : 'Continue'}
         </Button>
       </form>
 

@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type { CardListing } from '@/entities/card/model/types';
-import { listingDiscoveryApi } from '@/features/discovery/api/listings';
 import { CardListingCard } from '@/features/discovery/components/CardListingCard';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { storesApi, type StoreProfile } from '../api/stores';
+import { groupListingsByCard } from '@/features/discovery/lib/groupListings';
 
 export function PublicStorePage() {
   const { sellerId = '' } = useParams();
@@ -12,6 +12,7 @@ export function PublicStorePage() {
   const [listings, setListings] = useState<CardListing[]>([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const cards = useMemo(() => groupListingsByCard(listings), [listings]);
 
   useEffect(() => {
     let cancelled = false;
@@ -20,12 +21,12 @@ export function PublicStorePage() {
 
     Promise.all([
       storesApi.public(sellerId),
-      listingDiscoveryApi.getListings({ sellerId, page: 0, size: 100, sortBy: 'price', sortDir: 'asc' }),
+      storesApi.availableListings(sellerId),
     ])
-      .then(([profile, result]) => {
+      .then(([profile, availableListings]) => {
         if (cancelled) return;
         setStore(profile);
-        setListings(result.items);
+        setListings(availableListings);
       })
       .catch(() => {
         if (!cancelled) setError('Store not found.');
@@ -71,12 +72,12 @@ export function PublicStorePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-blue">Available now</p>
             <h2 id="store-listings-heading" className="mt-1 text-2xl font-bold">Cards from this seller</h2>
           </div>
-          <p className="text-sm text-gray-400">{listings.length} listing{listings.length === 1 ? '' : 's'}</p>
+          <p className="text-sm text-gray-400">{cards.length} card{cards.length === 1 ? '' : 's'}</p>
         </div>
 
         {listings.length > 0 ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {listings.map(listing => <CardListingCard key={listing.id} listing={listing} />)}
+            {cards.map(card => <CardListingCard key={card.cardId || card.id} listing={card} sellerCount={card.sellerCount} />)}
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-white/15 p-12 text-center text-gray-400">

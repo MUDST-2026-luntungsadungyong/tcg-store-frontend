@@ -38,6 +38,9 @@ jobs:
       - name: Run Linting (Typecheck & Oxlint)
         run: npm run lint
 
+      - name: Run Security & Dependency Audit (npm audit)
+        run: npm run audit
+
       - name: Run Unit and Component Tests
         run: npm run test
 

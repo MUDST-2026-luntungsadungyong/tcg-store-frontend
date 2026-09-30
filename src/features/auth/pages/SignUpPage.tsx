@@ -7,12 +7,8 @@ import { Button } from '@/shared/components/Button';
 import { authApi, getAuthErrorMessage } from '@/features/auth/api/auth';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { getPostAuthDestination } from '@/features/auth/lib/postAuthNavigation';
+import { PASSWORD_RULES } from '@/features/auth/lib/passwordRules';
 
-const PASSWORD_RULES = [
-  { label: 'At least 8 characters', test: (v: string) => v.length >= 8 },
-  { label: 'One uppercase letter', test: (v: string) => /[A-Z]/.test(v) },
-  { label: 'One number', test: (v: string) => /[0-9]/.test(v) },
-];
 const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
 
 export function SignUpPage() {

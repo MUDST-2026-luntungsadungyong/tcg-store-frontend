@@ -41,12 +41,15 @@ export function CatalogCardImageFrame({
 
 export function CatalogCardDetails({ card }: { card: CatalogCard }) {
   const details = [
-    card.setName,
-    card.cardNumber && `#${card.cardNumber}`,
-    card.rarity,
-    card.supertype,
-    card.types,
-  ].filter(Boolean);
+    ['Set', card.setName],
+    ['Card number', card.cardNumber && `#${card.cardNumber}`],
+    ['Rarity', card.rarity],
+    ['Card type', card.supertype],
+    ['Stage', card.subtypes],
+    ['HP', card.hp && `HP ${card.hp}`],
+    ['Energy type', card.types],
+    ['Artist', card.artist],
+  ].filter((detail): detail is [string, string] => Boolean(detail[1]));
 
   return (
     <div className="rounded-xl border border-brand-blue/30 bg-brand-blue/5 p-4">
@@ -55,7 +58,14 @@ export function CatalogCardDetails({ card }: { card: CatalogCard }) {
       </p>
       <p className="mt-1 font-semibold text-white">{card.name}</p>
       {details.length > 0 && (
-        <p className="mt-1 text-sm text-gray-400">{details.join(' · ')}</p>
+        <dl className="mt-3 grid gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
+          {details.map(([label, value]) => (
+            <div key={label}>
+              <dt className="text-xs text-gray-500">{label}</dt>
+              <dd className="mt-0.5 text-gray-300">{value}</dd>
+            </div>
+          ))}
+        </dl>
       )}
       {typeof card.marketPrice === 'number' && (
         <p className="mt-2 text-xs text-brand-gold">

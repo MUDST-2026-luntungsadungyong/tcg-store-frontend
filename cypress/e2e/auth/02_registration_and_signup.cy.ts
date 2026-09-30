@@ -12,18 +12,17 @@ describe('Auth Journey 2: New User Registration & Sign-Up Validation', () => {
     cy.get('#email').should('be.visible').and('have.attr', 'type', 'email');
     cy.get('#password').should('be.visible');
     cy.get('#confirm-password').should('be.visible');
-    cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Create account');
-    cy.contains('Sign in').should('be.visible').and('have.attr', 'href', '/login');
+    cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Sign Up');
+    cy.contains('a', 'Login').should('be.visible').and('have.attr', 'href', '/login');
   });
 
   it('shows password requirements checklist when focusing on password field', () => {
     cy.visit('/register');
     cy.get('#password').focus();
     cy.contains('At least 8 characters').should('be.visible');
-    cy.contains('At least one uppercase letter').should('be.visible');
-    cy.contains('At least one lowercase letter').should('be.visible');
-    cy.contains('At least one number').should('be.visible');
-    cy.contains('At least one special character').should('be.visible');
+    cy.contains('No more than 72 characters').should('be.visible');
+    cy.contains('One uppercase letter').should('be.visible');
+    cy.contains('One number').should('be.visible');
   });
 
   it('shows validation error when passwords do not match', () => {
@@ -52,7 +51,7 @@ describe('Auth Journey 2: New User Registration & Sign-Up Validation', () => {
 
   it('allows user to navigate back to login page from registration', () => {
     cy.visit('/register');
-    cy.contains('Sign in').click();
+    cy.contains('a', 'Login').click();
     cy.url().should('include', '/login');
   });
 });

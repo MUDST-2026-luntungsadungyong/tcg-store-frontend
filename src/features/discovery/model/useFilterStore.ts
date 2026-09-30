@@ -27,7 +27,7 @@ const initialState: FilterState = {
   searchQuery: '',
   game: [],
   condition: [],
-  priceRange: [0, 9999999],
+  priceRange: [0, 9999999999],
   qcOnly: false,
   rating: 0,
   rarity: [],

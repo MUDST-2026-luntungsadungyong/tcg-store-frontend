@@ -19,6 +19,13 @@ describe('auth API contract adapters', () => {
     });
   });
 
+  it('maps an approved backend seller to a user account with seller capability', () => {
+    expect(toFrontendUser({ id: '44', name: 'Seller', email: 'seller@example.com', role: 'USER', sellerStatus: 'APPROVED' })).toMatchObject({
+      role: 'USER',
+      isSeller: true,
+    });
+  });
+
   it('rejects an unknown backend role instead of granting a default role', () => {
     expect(() => toFrontendUser({
       id: '1',

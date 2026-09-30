@@ -13,7 +13,7 @@ describe('Auth Journey 1: Login, Form Validations & Route Protection', () => {
     cy.get('#password').should('be.visible').and('have.attr', 'type', 'password');
     cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Login');
     cy.contains('Forgot password?').should('be.visible').and('have.attr', 'href', '/forgot-password');
-    cy.contains('Create one').should('be.visible').and('have.attr', 'href', '/register');
+    cy.contains('Sign up').should('be.visible').and('have.attr', 'href', '/register');
   });
 
   it('toggles password visibility between text and password on eye icon click', () => {

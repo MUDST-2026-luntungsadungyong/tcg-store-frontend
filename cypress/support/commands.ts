@@ -2,7 +2,7 @@
 
 // Custom command to bypass or mock authentication
 Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
-  const token = role === 'SELLER' ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer';
+  const token = role === 'ADMIN' ? 'mock-jwt-token-admin' : (role === 'SELLER' ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer');
   window.localStorage.setItem('token', token);
   window.localStorage.setItem(
     'tcg_auth_storage',
@@ -10,7 +10,7 @@ Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
       state: {
         token,
         user: {
-          id: role === 'SELLER' ? '2' : '1',
+          id: role === 'ADMIN' ? '99' : (role === 'SELLER' ? '2' : '1'),
           email: `${role.toLowerCase()}@mythix.com`,
           fullName: `Test ${role}`,
           role: role === 'ADMIN' ? 'ADMIN' : 'USER',
@@ -25,28 +25,16 @@ Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
 
 // Helper command to fast-forward order status via Seller API without switching UI accounts
 Cypress.Commands.add('sellerFastForwardOrder', (orderId: string, status = 'FULFILLED') => {
-  // Try authenticating with backend API or use mock token
-  cy.request({
-    method: 'POST',
-    url: 'http://localhost:8080/api/auth/login',
-    body: {
-      email: 'seller@mythix.com',
-      password: 'password123',
-    },
-    failOnStatusCode: false,
-  }).then((loginRes) => {
-    const sellerToken = loginRes.status === 200 ? loginRes.body.token : 'mock-jwt-token-seller';
-
-    // Call seller update status endpoint
-    cy.request({
-      method: 'PATCH',
-      url: `http://localhost:8080/api/seller/orders/${orderId}/status`,
-      headers: {
-        Authorization: `Bearer ${sellerToken}`,
-      },
-      body: { status },
-      failOnStatusCode: false,
-    });
+  cy.window().then((win) => {
+    // Modify local storage directly for the mock API scenario
+    const mockReservationsStr = win.localStorage.getItem('mythix_mock_reservations_v1');
+    if (mockReservationsStr) {
+      const mockReservations = JSON.parse(mockReservationsStr);
+      const updated = mockReservations.map((order: any) => 
+        order.id === orderId ? { ...order, status } : order
+      );
+      win.localStorage.setItem('mythix_mock_reservations_v1', JSON.stringify(updated));
+    }
   });
 });
 
@@ -64,6 +52,8 @@ Cypress.Commands.add('loginByUI', (email: string, password = 'password123') => {
   cy.get('#email').clear().type(email);
   cy.get('#password').clear().type(password);
   cy.get('button[type="submit"]').click();
+  // Wait for login request to complete and redirect away from login page
+  cy.url().should('not.include', '/login');
 });
 
 Cypress.Commands.add('registerNewUser', (name: string, email: string, password = 'Password123!') => {
@@ -73,6 +63,8 @@ Cypress.Commands.add('registerNewUser', (name: string, email: string, password =
   cy.get('#password').clear().type(password);
   cy.get('#confirm-password').clear().type(password);
   cy.get('button[type="submit"]').click();
+  // Wait for redirect
+  cy.url().should('not.include', '/register');
 });
 
 Cypress.Commands.add('requestPasswordReset', (email: string) => {
@@ -95,6 +87,11 @@ Cypress.Commands.add('updateProfileContact', (contact: { phone?: string; line?: 
   cy.get('button[type="submit"]').click();
 });
 
+Cypress.Commands.add('loginAsAdmin', () => {
+  cy.loginByUI('admin@mythix.com', 'admin123');
+  cy.url().should('eq', Cypress.config().baseUrl + '/');
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -106,6 +103,7 @@ declare global {
       requestPasswordReset(email: string): Chainable<void>;
       updateProfileName(name: string): Chainable<void>;
       updateProfileContact(contact: { phone?: string; line?: string; facebook?: string }): Chainable<void>;
+      loginAsAdmin(): Chainable<void>;
     }
   }
 }

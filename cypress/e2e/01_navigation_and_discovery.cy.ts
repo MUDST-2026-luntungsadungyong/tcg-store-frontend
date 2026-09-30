@@ -1,24 +1,73 @@
-describe('Core Journey 1: Home, Navigation & Card Discovery', () => {
+/// <reference types="cypress" />
+
+describe('Core Journey 1: Home, Navigation & Card Discovery (US-02)', () => {
   beforeEach(() => {
     cy.visit('/');
   });
 
-  it('successfully loads the homepage and displays main navigation header', () => {
-    cy.get('header, nav').should('exist');
-    cy.title().should('not.be.empty');
+  it('navigates to marketplace and searches by keyword', () => {
+    cy.get('a[href="/cards"]').first().click({ force: true });
+    cy.url().should('include', '/cards');
+    
+    // Search by keyword
+    cy.get('input[data-testid="search-input"]').first().clear().type('Pikachu');
+    cy.get('button[data-testid="search-button"]').click();
+    
+    // Wait for mock data to resolve and display the items
+    cy.contains('Pikachu').should('be.visible');
   });
 
-  it('navigates to card discovery / marketplace page', () => {
-    // Check if there is a link to browse or cards
-    cy.get('a[href*="browse"], a[href*="discover"], a[href*="cards"]').first().click({ force: true });
-    cy.url().should('include', '/');
+  it('filters by rarity, stage, condition, and in-stock', () => {
+    cy.visit('/cards');
+    
+    // Rarity
+    cy.contains('button', 'Rarity:').click();
+    cy.contains('button', 'Rare').click();
+    cy.get('body').click(0, 0); // Click away to close dropdown
+    
+    // Stage
+    cy.contains('button', 'Stage:').click();
+    cy.contains('button', 'Basic').click();
+    cy.get('body').click(0, 0); 
+    
+    // Condition
+    cy.contains('button', 'Condition:').click();
+    cy.contains('button', 'Mint').click();
+    cy.get('body').click(0, 0); 
+    
+    // In stock
+    cy.contains('label', 'In Stock Only').click();
+
+    cy.get('button[data-testid="search-button"]').click();
+    // After search, filter tags should appear
+    cy.contains('Rarity: Rare').should('be.visible');
+    cy.contains('Stage: Basic').should('be.visible');
+    cy.contains(/Condition:.*Mint/i).should('be.visible');
   });
 
-  it('has a responsive search input in the navigation', () => {
-    cy.get('input[type="search"], input[placeholder*="Search"], input[placeholder*="ค้นหา"]')
-      .first()
-      .should('be.visible')
-      .type('Pikachu{enter}');
+  it('filters by valid price range', () => {
+    cy.visit('/cards');
+    cy.get('input[data-testid="min-price-input"]').clear().type('10');
+    cy.get('input[data-testid="max-price-input"]').clear().type('100');
+    cy.get('button[data-testid="search-button"]').click();
+    cy.contains(/Price:.*10.*100/i).should('be.visible');
+  });
+
+  it('shows error on invalid price range (Min > Max)', () => {
+    cy.visit('/cards');
+    cy.get('input[data-testid="min-price-input"]').clear().type('500');
+    cy.get('input[data-testid="max-price-input"]').clear().type('100');
+    
+    // search-button is disabled, error should appear automatically
+    cy.get('[data-testid="price-error-msg"]').should('contain.text', 'Min price cannot be greater than Max price');
+  });
+
+  it('displays not found message when search yields no results', () => {
+    cy.visit('/cards');
+    cy.get('input[data-testid="search-input"]').first().clear().type('NonExistentCardName123');
+    cy.get('button[data-testid="search-button"]').click();
+    cy.get('[data-testid="empty-state"]').should('be.visible');
+    cy.contains('No cards found').should('be.visible');
   });
 
   it('protects the notifications inbox from unauthenticated users', () => {

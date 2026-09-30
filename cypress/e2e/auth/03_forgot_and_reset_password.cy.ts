@@ -12,7 +12,7 @@ describe('Auth Journey 3: Forgot Password & Password Reset Flow', () => {
     cy.get('#email').should('be.visible').and('have.attr', 'type', 'email');
     cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Continue');
     cy.contains('Remember your password?').should('be.visible');
-    cy.contains('Login').should('be.visible').and('have.attr', 'href', '/login');
+    cy.contains('a', 'Login').should('be.visible').and('have.attr', 'href', '/login');
   });
 
   it('redirects user to /forgot-password when visiting /reset-password without prior initiation', () => {
@@ -30,7 +30,7 @@ describe('Auth Journey 3: Forgot Password & Password Reset Flow', () => {
     cy.contains('Reset Password').should('be.visible');
     cy.get('#new-password').should('be.visible');
     cy.get('#confirm-password').should('be.visible');
-    cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Reset password');
+    cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Reset Password');
   });
 
   it('validates password mismatch on reset password page', () => {
@@ -48,8 +48,8 @@ describe('Auth Journey 3: Forgot Password & Password Reset Flow', () => {
   it('renders reset success page and allows user to proceed to login', () => {
     cy.visit('/reset-success');
     cy.get('body').should('be.visible');
-    cy.contains('Password reset').should('be.visible');
-    cy.contains('Sign in').should('be.visible').click();
+    cy.contains('Password Changed Successfully').should('be.visible');
+    cy.contains('Go to Login').should('be.visible').click();
     cy.url().should('include', '/login');
   });
 });

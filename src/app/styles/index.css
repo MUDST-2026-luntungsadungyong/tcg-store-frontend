@@ -11,6 +11,11 @@
   }
 }
 
+/* The order-log booking-style date picker needs enough room for a readable 7-day grid. */
+button[aria-label="Select order date range"] + div {
+  width: min(28rem, calc(100vw - 2rem)) !important;
+}
+
 @layer components {
   /* Glassmorphism Utilities */
   .glass-card {

@@ -93,7 +93,7 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-40 w-full bg-[#1b2336] border-b border-[rgba(143,179,226,0.2)]">
-      <div className="max-w-[1440px] mx-auto px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
         <div className="flex items-center justify-between h-16 overflow-visible">
 
           {/* Logo */}
@@ -154,11 +154,11 @@ export function Navbar() {
           )}
 
           {/* Right Actions */}
-          <div className="flex items-center gap-6 text-sm font-semibold text-gray-300">
-            <Link to="/" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-3 sm:gap-6 text-sm font-semibold text-gray-300">
+            <Link to="/" className="hidden sm:inline hover:text-white transition-colors">
               Home
             </Link>
-            <Link to="/cards" className="hover:text-white transition-colors">
+            <Link to="/cards" className="hidden sm:inline hover:text-white transition-colors">
               Cards
             </Link>
 

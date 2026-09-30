@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { catalogApi, type CatalogCard } from '@/features/discovery/api/catalog';
-import { CatalogCardPicker } from './CatalogCardPicker';
+import { CatalogCardDetails, CatalogCardPicker } from './CatalogCardPicker';
 
 vi.mock('@/features/discovery/api/catalog', () => ({
   catalogApi: {
@@ -40,5 +40,36 @@ describe('CatalogCardPicker', () => {
     expect(catalogApi.searchCards).toHaveBeenCalledWith('Charizard');
     expect(onSelect).toHaveBeenCalledWith(card);
     expect(screen.getByRole('textbox', { name: 'Card' })).toHaveValue('Charizard');
+  });
+
+  it('renders the expanded catalog metadata and market price', () => {
+    render(
+      <CatalogCardDetails
+        card={{
+          id: 'base1-4',
+          name: 'Charizard',
+          setName: 'Base',
+          cardNumber: '4',
+          rarity: 'Rare Holo',
+          supertype: 'Pokémon',
+          subtypes: 'Stage 2',
+          hp: '120',
+          types: 'Fire',
+          artist: 'Mitsuhiro Arita',
+          marketPrice: 31401.65,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Charizard')).toBeInTheDocument();
+    expect(screen.getByText('Base')).toBeInTheDocument();
+    expect(screen.getByText('#4')).toBeInTheDocument();
+    expect(screen.getByText('Rare Holo')).toBeInTheDocument();
+    expect(screen.getByText('Pokémon')).toBeInTheDocument();
+    expect(screen.getByText('Stage 2')).toBeInTheDocument();
+    expect(screen.getByText('HP 120')).toBeInTheDocument();
+    expect(screen.getByText('Fire')).toBeInTheDocument();
+    expect(screen.getByText('Mitsuhiro Arita')).toBeInTheDocument();
+    expect(screen.getByText('Database market price ฿31,401.65')).toBeInTheDocument();
   });
 });

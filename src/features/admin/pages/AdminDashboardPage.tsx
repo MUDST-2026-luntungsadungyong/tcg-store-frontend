@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Bell, Boxes, CalendarDays, CheckCircle2, ClipboardCheck, Info, RefreshCw, ShoppingBag, Store } from 'lucide-react';
+import { ArrowRight, Boxes, CalendarDays, CheckCircle2, ClipboardCheck, Info, RefreshCw, ShoppingBag, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import apiClient from '@/shared/api/client';
 
@@ -361,13 +361,6 @@ export function AdminDashboardPage() {
           >
             <CalendarDays size={16} />
             All-time snapshot
-          </button>
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="inline-flex size-11 items-center justify-center rounded-xl border border-white/10 text-slate-300 transition hover:bg-white/[.05] focus:outline-none focus:ring-2 focus:ring-brand-blue"
-          >
-            <Bell size={18} />
           </button>
           <button
             type="button"

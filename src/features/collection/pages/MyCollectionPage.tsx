@@ -7,6 +7,7 @@ import { CollectionCard } from '../components/CollectionCard';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { Modal } from '@/shared/components/Modal';
 import { Button } from '@/shared/components/Button';
+import { Input } from '@/shared/components/Input';
 import { useToastStore } from '@/shared/model/useToastStore';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import type { CardListing, CollectionEntry } from '@/entities/card/model/types';
@@ -39,6 +40,8 @@ export function MyCollectionPage() {
 
   const [addCardOpen, setAddCardOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<CatalogCard | null>(null);
+  const [addQuantity, setAddQuantity] = useState('1');
+  const [addQuantityError, setAddQuantityError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [addCardError, setAddCardError] = useState<string | null>(null);
   const addCardDialogRef = useRef<HTMLDivElement>(null);
@@ -112,6 +115,8 @@ export function MyCollectionPage() {
 
   const openAddCard = () => {
     setSelectedCard(null);
+    setAddQuantity('1');
+    setAddQuantityError(null);
     setAddCardError(null);
     setAddCardOpen(true);
   };
@@ -120,6 +125,8 @@ export function MyCollectionPage() {
     if (isAdding) return;
     setAddCardOpen(false);
     setSelectedCard(null);
+    setAddQuantity('1');
+    setAddQuantityError(null);
     setAddCardError(null);
   };
 
@@ -128,11 +135,17 @@ export function MyCollectionPage() {
       setAddCardError('Select a card from the database.');
       return;
     }
+    const quantity = Number(addQuantity);
+    if (!Number.isSafeInteger(quantity) || quantity < 1) {
+      setAddQuantityError('Enter a whole number of cards to add.');
+      return;
+    }
     if (isAdding) return;
     setIsAdding(true);
     setAddCardError(null);
+    setAddQuantityError(null);
     try {
-      const entry = await collectionApi.addCatalogCardToCollection(selectedCard);
+      const entry = await collectionApi.addCatalogCardToCollection(selectedCard, quantity);
       setCollection((prev) => {
         const exists = prev.find((item) => item.id === entry.id);
         if (exists) return prev.map((item) => (item.id === entry.id ? entry : item));
@@ -141,7 +154,7 @@ export function MyCollectionPage() {
       addToast({
         type: 'success',
         title: 'Card added',
-        message: `"${selectedCard.name}" was added to your collection.`,
+        message: `${quantity} × "${selectedCard.name}" was added to your collection.`,
       });
       closeAddCard();
     } catch (err) {
@@ -459,6 +472,22 @@ export function MyCollectionPage() {
                           onSelect={(card) => {
                             setSelectedCard(card);
                             setAddCardError(null);
+                          }}
+                        />
+
+                        <Input
+                          id="collection-card-quantity"
+                          label="Quantity"
+                          type="number"
+                          min="1"
+                          step="1"
+                          inputMode="numeric"
+                          value={addQuantity}
+                          disabled={isAdding}
+                          error={addQuantityError ?? undefined}
+                          onChange={(event) => {
+                            setAddQuantity(event.target.value);
+                            setAddQuantityError(null);
                           }}
                         />
 

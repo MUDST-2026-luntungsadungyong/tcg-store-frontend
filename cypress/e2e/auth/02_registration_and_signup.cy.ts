@@ -13,7 +13,7 @@ describe('Auth Journey 2: New User Registration & Sign-Up Validation', () => {
     cy.get('#password').should('be.visible');
     cy.get('#confirm-password').should('be.visible');
     cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Create account');
-    cy.contains('Sign in').should('be.visible').and('have.attr', 'href', '/login');
+    cy.contains('a', 'Sign in').should('be.visible').and('have.attr', 'href', '/login');
   });
 
   it('shows password requirements checklist when focusing on password field', () => {
@@ -51,7 +51,7 @@ describe('Auth Journey 2: New User Registration & Sign-Up Validation', () => {
 
   it('allows user to navigate back to login page from registration', () => {
     cy.visit('/register');
-    cy.contains('Sign in').click();
+    cy.contains('a', 'Sign in').click();
     cy.url().should('include', '/login');
   });
 });

@@ -1,7 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ArrowRight, Bell, Boxes, CalendarDays, CheckCircle2, ClipboardCheck, Info, LineChart, RefreshCw, ShoppingBag, Store } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ArrowRight, Bell, Boxes, CalendarDays, CheckCircle2, ClipboardCheck, Info, RefreshCw, ShoppingBag, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import apiClient from '@/shared/api/client';
+
+type DailyTrend = {
+  date: string;
+  gmv: number;
+  orders: number;
+};
 
 type Dashboard = {
   totalUsers: number;
@@ -13,14 +19,202 @@ type Dashboard = {
   listedCards: number;
   totalOrders: number;
   totalOrderAmount: number;
+  trends?: DailyTrend[];
 };
 
 type AdminUser = { id: string; name: string; email: string; role: string; sellerStatus: string };
 type AuditLog = { id: string; action: string; actorName: string; details: string; createdAt: string };
 type AuditLogPage = { content: AuditLog[] };
 
-const money = (v: number) => `฿${v.toLocaleString()}`;
+const money = (v: number) => `฿${Number(v || 0).toLocaleString()}`;
 const card = 'rounded-2xl border border-white/10 bg-bg-surface';
+
+function formatShortDate(dateStr: string) {
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    }
+    return new Date(dateStr).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  } catch {
+    return dateStr;
+  }
+}
+
+function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  const items: DailyTrend[] = useMemo(() => {
+    if (trends && trends.length > 0) return trends;
+    const now = new Date();
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(now);
+      d.setDate(d.getDate() - (6 - i));
+      return { date: d.toISOString().slice(0, 10), gmv: 0, orders: 0 };
+    });
+  }, [trends]);
+
+  const maxGmv = useMemo(() => Math.max(...items.map((t) => Number(t.gmv || 0)), 100), [items]);
+  const maxOrders = useMemo(() => Math.max(...items.map((t) => Number(t.orders || 0)), 1), [items]);
+
+  const width = 560;
+  const height = 170;
+  const padTop = 15;
+  const padBottom = 26;
+  const padLeft = 8;
+  const padRight = 8;
+  const chartHeight = height - padTop - padBottom;
+  const chartWidth = width - padLeft - padRight;
+  const step = chartWidth / items.length;
+
+  const points = items.map((item, idx) => {
+    const x = padLeft + idx * step + step / 2;
+    const gmvVal = Number(item.gmv || 0);
+    const orderVal = Number(item.orders || 0);
+
+    const gmvRatio = maxGmv > 0 ? gmvVal / maxGmv : 0;
+    const barHeight = Math.max(gmvRatio * chartHeight, gmvVal > 0 ? 6 : 2);
+    const yBar = padTop + chartHeight - barHeight;
+
+    const orderRatio = maxOrders > 0 ? orderVal / maxOrders : 0;
+    const yOrder = padTop + chartHeight - orderRatio * (chartHeight - 12);
+
+    return { ...item, gmv: gmvVal, orders: orderVal, x, barHeight, yBar, yOrder };
+  });
+
+  const linePath = points
+    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.yOrder}`)
+    .join(' ');
+
+  return (
+    <div className="relative mt-3 w-full">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full h-44 select-none"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id="gmvBarGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#d4af37" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#d4af37" stopOpacity="0.2" />
+          </linearGradient>
+          <linearGradient id="gmvBarGradHover" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f59e0b" stopOpacity="1" />
+            <stop offset="100%" stopColor="#d4af37" stopOpacity="0.4" />
+          </linearGradient>
+        </defs>
+
+        {/* Grid horizontal lines */}
+        {[0, 0.5, 1].map((ratio) => {
+          const y = padTop + chartHeight * (1 - ratio);
+          return (
+            <line
+              key={ratio}
+              x1={padLeft}
+              y1={y}
+              x2={width - padRight}
+              y2={y}
+              stroke="rgba(255,255,255,0.08)"
+              strokeDasharray="3 3"
+            />
+          );
+        })}
+
+        {/* GMV Bars */}
+        {points.map((p, i) => {
+          const isHovered = hoveredIdx === i;
+          const barW = Math.min(step * 0.42, 28);
+          return (
+            <g
+              key={p.date}
+              className="cursor-pointer"
+              onMouseEnter={() => setHoveredIdx(i)}
+              onMouseLeave={() => setHoveredIdx(null)}
+            >
+              <rect
+                x={p.x - step / 2}
+                y={padTop}
+                width={step}
+                height={chartHeight + padBottom}
+                fill="transparent"
+              />
+              <rect
+                x={p.x - barW / 2}
+                y={p.yBar}
+                width={barW}
+                height={p.barHeight}
+                rx={3}
+                fill={isHovered ? 'url(#gmvBarGradHover)' : 'url(#gmvBarGrad)'}
+                className="transition-all duration-150"
+              />
+            </g>
+          );
+        })}
+
+        {/* Orders Line */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke="#38bdf8"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="pointer-events-none"
+        />
+
+        {/* Orders Dots */}
+        {points.map((p, i) => {
+          const isHovered = hoveredIdx === i;
+          return (
+            <circle
+              key={`dot-${p.date}`}
+              cx={p.x}
+              cy={p.yOrder}
+              r={isHovered ? 5 : 3.5}
+              fill="#0f172a"
+              stroke="#38bdf8"
+              strokeWidth={isHovered ? 2.5 : 2}
+              className="pointer-events-none transition-all duration-150"
+            />
+          );
+        })}
+
+        {/* X-axis Day Labels */}
+        {points.map((p) => (
+          <text
+            key={`lbl-${p.date}`}
+            x={p.x}
+            y={height - 6}
+            textAnchor="middle"
+            fill="rgba(148, 163, 184, 0.85)"
+            fontSize="10"
+            className="pointer-events-none font-medium"
+          >
+            {formatShortDate(p.date)}
+          </text>
+        ))}
+      </svg>
+
+      {/* Floating Tooltip */}
+      {hoveredIdx !== null && points[hoveredIdx] && (
+        <div
+          className="pointer-events-none absolute top-2 z-20 -translate-x-1/2 rounded-lg border border-white/20 bg-bg-elevated/95 px-3 py-1.5 shadow-2xl text-xs backdrop-blur"
+          style={{
+            left: `${(points[hoveredIdx].x / width) * 100}%`,
+          }}
+        >
+          <div className="font-semibold text-white">{formatShortDate(points[hoveredIdx].date)}</div>
+          <div className="mt-0.5 flex items-center gap-2">
+            <span className="text-brand-gold font-medium">GMV: ฿{Number(points[hoveredIdx].gmv).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span className="text-gray-500">|</span>
+            <span className="text-brand-blue font-medium">{points[hoveredIdx].orders} order{points[hoveredIdx].orders === 1 ? '' : 's'}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function AdminDashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null);
@@ -151,34 +345,38 @@ export function AdminDashboardPage() {
           </section>
 
           <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(19rem,.85fr)]">
-            {/* GMV & Orders */}
-            <article className={`${card} min-h-[330px] p-5 sm:p-6`}>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="font-semibold text-white">GMV &amp; Orders</h2>
-                  <p className="mt-1 text-sm text-slate-400">Marketplace performance over time</p>
+            {/* GMV & Orders Chart Card */}
+            <article className={`${card} min-h-[330px] p-5 sm:p-6 flex flex-col justify-between`}>
+              <div>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="font-semibold text-white">GMV &amp; Orders</h2>
+                    <p className="mt-1 text-sm text-slate-400">Marketplace performance over the last 7 days</p>
+                  </div>
+                  <span className="rounded-lg border border-white/10 bg-white/[.04] px-2.5 py-1 text-xs font-medium text-slate-300">
+                    Last 7 days
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  disabled
-                  title="Time-series data is not available from the current dashboard API"
-                  className="rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-slate-400 disabled:cursor-not-allowed"
-                >
-                  Last 7 days
-                </button>
+
+                {/* Interactive SVG Chart */}
+                <GmvOrdersChart trends={data.trends} />
               </div>
-              <div className="mt-5 flex h-52 flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-bg-base/40 px-6 text-center">
-                <LineChart size={28} className="text-slate-500" />
-                <p className="mt-3 text-sm font-medium text-white">No trend data available</p>
-                <p className="mt-1 max-w-sm text-sm leading-5 text-slate-400">
-                  GMV is {money(data.totalOrderAmount)} across {data.totalOrders} completed orders. Daily history will appear when the reporting API provides it.
-                </p>
+
+              <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-slate-400">
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-2.5 rounded-full bg-brand-gold inline-block" />
+                    GMV (฿)
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-2.5 rounded-full bg-brand-blue inline-block" />
+                    Orders
+                  </span>
+                </div>
+                <span className="text-slate-500">
+                  Total {money(data.totalOrderAmount)} across {data.totalOrders} order{data.totalOrders === 1 ? '' : 's'}
+                </span>
               </div>
-              <p className="mt-4 flex items-center gap-2 text-xs text-slate-400">
-                <span className="size-2 rounded-full bg-brand-gold" />
-                GMV <span className="ml-3 size-2 rounded-full bg-brand-blue" />
-                Orders
-              </p>
             </article>
 
             {/* Recent Activity */}

@@ -180,4 +180,43 @@ describe('AdminDashboardPage', () => {
     expect(screen.getByText('Brock Pewter')).toBeInTheDocument();
     expect(screen.getByText('brock@pewter.com')).toBeInTheDocument();
   });
+
+  it('renders GMV and Orders chart with daily trends', async () => {
+    get.mockResolvedValueOnce({
+      data: {
+        totalUsers: 10,
+        totalAdmins: 1,
+        pendingSellerApplications: 0,
+        approvedSellers: 1,
+        totalCards: 100,
+        listedCards: 3,
+        totalOrders: 5,
+        totalOrderAmount: 2690,
+        trends: [
+          { date: '2026-09-24', gmv: 500, orders: 1 },
+          { date: '2026-09-25', gmv: 0, orders: 0 },
+          { date: '2026-09-26', gmv: 1200, orders: 2 },
+          { date: '2026-09-27', gmv: 0, orders: 0 },
+          { date: '2026-09-28', gmv: 450, orders: 1 },
+          { date: '2026-09-29', gmv: 0, orders: 0 },
+          { date: '2026-09-30', gmv: 540, orders: 1 },
+        ],
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminDashboardPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Marketplace performance over the last 7 days')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Last 7 days')).toBeInTheDocument();
+    expect(screen.getByText('Sep 24')).toBeInTheDocument();
+    expect(screen.getByText('Sep 26')).toBeInTheDocument();
+    expect(screen.getByText('Sep 30')).toBeInTheDocument();
+    expect(screen.getByText('Total ฿2,690 across 5 orders')).toBeInTheDocument();
+  });
 });

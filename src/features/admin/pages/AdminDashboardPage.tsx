@@ -97,12 +97,12 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
   const maxGmv = useMemo(() => Math.max(...items.map((t) => Number(t.gmv || 0)), 100), [items]);
   const maxOrders = useMemo(() => Math.max(...items.map((t) => Number(t.orders || 0)), 1), [items]);
 
-  const width = 560;
-  const height = 170;
-  const padTop = 15;
-  const padBottom = 26;
-  const padLeft = 8;
-  const padRight = 8;
+  const width = 800;
+  const height = 220;
+  const padTop = 20;
+  const padBottom = 32;
+  const padLeft = 24;
+  const padRight = 24;
   const chartHeight = height - padTop - padBottom;
   const chartWidth = width - padLeft - padRight;
   const step = chartWidth / items.length;
@@ -113,11 +113,11 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
     const orderVal = Number(item.orders || 0);
 
     const gmvRatio = maxGmv > 0 ? gmvVal / maxGmv : 0;
-    const barHeight = Math.max(gmvRatio * chartHeight, gmvVal > 0 ? 6 : 2);
+    const barHeight = Math.max(gmvRatio * chartHeight, gmvVal > 0 ? 8 : 2);
     const yBar = padTop + chartHeight - barHeight;
 
     const orderRatio = maxOrders > 0 ? orderVal / maxOrders : 0;
-    const yOrder = padTop + chartHeight - orderRatio * (chartHeight - 12);
+    const yOrder = padTop + chartHeight - orderRatio * (chartHeight - 16);
 
     return { ...item, gmv: gmvVal, orders: orderVal, x, barHeight, yBar, yOrder };
   });
@@ -127,20 +127,20 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
     .join(' ');
 
   return (
-    <div className="relative mt-3 w-full">
+    <div className="relative mt-4 w-full overflow-hidden">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-44 select-none"
+        className="w-full h-48 sm:h-64 md:h-72 select-none"
         preserveAspectRatio="none"
       >
         <defs>
           <linearGradient id="gmvBarGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#d4af37" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="#d4af37" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#d4af37" stopOpacity="0.15" />
           </linearGradient>
           <linearGradient id="gmvBarGradHover" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#f59e0b" stopOpacity="1" />
-            <stop offset="100%" stopColor="#d4af37" stopOpacity="0.4" />
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="1" />
+            <stop offset="100%" stopColor="#d4af37" stopOpacity="0.3" />
           </linearGradient>
         </defs>
 
@@ -155,7 +155,7 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
               x2={width - padRight}
               y2={y}
               stroke="rgba(255,255,255,0.08)"
-              strokeDasharray="3 3"
+              strokeDasharray="4 4"
             />
           );
         })}
@@ -163,7 +163,7 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
         {/* GMV Bars */}
         {points.map((p, i) => {
           const isHovered = hoveredIdx === i;
-          const barW = Math.min(step * 0.42, 28);
+          const barW = Math.min(step * 0.38, 44);
           return (
             <g
               key={p.date}
@@ -183,7 +183,7 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
                 y={p.yBar}
                 width={barW}
                 height={p.barHeight}
-                rx={3}
+                rx={4}
                 fill={isHovered ? 'url(#gmvBarGradHover)' : 'url(#gmvBarGrad)'}
                 className="transition-all duration-150"
               />
@@ -196,10 +196,10 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
           d={linePath}
           fill="none"
           stroke="#38bdf8"
-          strokeWidth="2.5"
+          strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="pointer-events-none"
+          className="pointer-events-none drop-shadow-[0_0_6px_rgba(56,189,248,0.4)]"
         />
 
         {/* Orders Dots */}
@@ -210,10 +210,10 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
               key={`dot-${p.date}`}
               cx={p.x}
               cy={p.yOrder}
-              r={isHovered ? 5 : 3.5}
+              r={isHovered ? 6 : 4}
               fill="#0f172a"
               stroke="#38bdf8"
-              strokeWidth={isHovered ? 2.5 : 2}
+              strokeWidth={isHovered ? 3 : 2.5}
               className="pointer-events-none transition-all duration-150"
             />
           );
@@ -224,10 +224,10 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
           <text
             key={`lbl-${p.date}`}
             x={p.x}
-            y={height - 6}
+            y={height - 8}
             textAnchor="middle"
             fill="rgba(148, 163, 184, 0.85)"
-            fontSize="10"
+            fontSize="11"
             className="pointer-events-none font-medium"
           >
             {formatShortDate(p.date)}
@@ -238,13 +238,13 @@ function GmvOrdersChart({ trends }: { trends?: DailyTrend[] }) {
       {/* Floating Tooltip */}
       {hoveredIdx !== null && points[hoveredIdx] && (
         <div
-          className="pointer-events-none absolute top-2 z-20 -translate-x-1/2 rounded-lg border border-white/20 bg-bg-elevated/95 px-3 py-1.5 shadow-2xl text-xs backdrop-blur"
+          className="pointer-events-none absolute top-2 z-20 -translate-x-1/2 rounded-lg border border-white/20 bg-bg-elevated/95 px-3.5 py-2 shadow-2xl text-xs backdrop-blur whitespace-nowrap"
           style={{
-            left: `${(points[hoveredIdx].x / width) * 100}%`,
+            left: `${Math.min(Math.max((points[hoveredIdx].x / width) * 100, 15), 85)}%`,
           }}
         >
           <div className="font-semibold text-white">{formatShortDate(points[hoveredIdx].date)}</div>
-          <div className="mt-0.5 flex items-center gap-2">
+          <div className="mt-1 flex items-center gap-2.5">
             <span className="text-brand-gold font-medium">GMV: ฿{Number(points[hoveredIdx].gmv).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             <span className="text-gray-500">|</span>
             <span className="text-brand-blue font-medium">{points[hoveredIdx].orders} order{points[hoveredIdx].orders === 1 ? '' : 's'}</span>
@@ -395,13 +395,13 @@ export function AdminDashboardPage() {
             ))}
           </section>
 
-          <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(19rem,.85fr)]">
-            {/* GMV & Orders Chart Card */}
-            <article className={`${card} min-h-[330px] p-5 sm:p-6 flex flex-col justify-between`}>
+          {/* Full-width GMV & Orders Chart Card */}
+          <section className="mt-6">
+            <article className={`${card} min-h-[350px] p-5 sm:p-6 flex flex-col justify-between`}>
               <div>
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="font-semibold text-white">GMV &amp; Orders</h2>
+                    <h2 className="text-lg font-semibold text-white">GMV &amp; Orders</h2>
                     <p className="mt-1 text-sm text-slate-400">Marketplace performance over the last 7 days</p>
                   </div>
                   <span className="rounded-lg border border-white/10 bg-white/[.04] px-2.5 py-1 text-xs font-medium text-slate-300">
@@ -413,82 +413,87 @@ export function AdminDashboardPage() {
                 <GmvOrdersChart trends={activeTrends} />
               </div>
 
-              <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-slate-400">
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-white/10 pt-3 text-xs text-slate-400">
                 <div className="flex items-center gap-4">
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 font-medium">
                     <span className="size-2.5 rounded-full bg-brand-gold inline-block" />
                     GMV (฿)
                   </span>
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 font-medium">
                     <span className="size-2.5 rounded-full bg-brand-blue inline-block" />
                     Orders
                   </span>
                 </div>
-                <span className="text-slate-500">
+                <span className="text-slate-400">
                   Total {money(data.totalOrderAmount)} across {data.totalOrders} order{data.totalOrders === 1 ? '' : 's'}
                 </span>
               </div>
             </article>
-
-            {/* Recent Activity */}
-            <article className={`${card} p-5 sm:p-6`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-white">Recent activity</h2>
-                  <p className="mt-1 text-sm text-slate-400">Latest administrator events</p>
-                </div>
-                <Link
-                  to="/admin/audit-logs"
-                  className="text-sm font-medium text-brand-gold hover:text-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                >
-                  View all
-                </Link>
-              </div>
-              {activity.length ? (
-                <ol className="mt-5 divide-y divide-white/10">
-                  {activity.map((entry) => (
-                    <li key={entry.id} className="flex gap-3 py-3 first:pt-0">
-                      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/[.04]">
-                        <ClipboardCheck size={18} className="text-brand-blue" />
-                      </span>
-                      <span className="min-w-0">
-                        <strong className="block text-sm text-white">{entry.action.replaceAll('_', ' ')}</strong>
-                        <span className="mt-0.5 block truncate text-sm text-slate-400">{entry.details || `By ${entry.actorName}`}</span>
-                        <time className="mt-1 block text-xs text-slate-500">{new Date(entry.createdAt).toLocaleString()}</time>
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <div className="mt-8 rounded-xl border border-dashed border-white/10 p-5 text-center">
-                  <Info size={20} className="mx-auto text-slate-500" />
-                  <p className="mt-2 text-sm font-medium text-white">No recent events</p>
-                  <p className="mt-1 text-sm text-slate-400">Administrator activity will be recorded here.</p>
-                </div>
-              )}
-            </article>
           </section>
 
-          <section className="mt-6 grid gap-6 lg:grid-cols-3">
-            {/* Pending Seller Approvals */}
-            <article className={`${card} p-5`}>
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-white">Pending seller approvals</h2>
-                <ClipboardCheck size={18} className="text-brand-gold" />
+          {/* Bottom Management Cards (2x2 on desktop/tablet, stacked on mobile) */}
+          <section className="mt-6 grid gap-6 md:grid-cols-2">
+            {/* Recent Activity */}
+            <article className={`${card} p-5 sm:p-6 flex flex-col justify-between`}>
+              <div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-semibold text-white">Recent activity</h2>
+                    <p className="mt-1 text-sm text-slate-400">Latest administrator events</p>
+                  </div>
+                  <Link
+                    to="/admin/audit-logs"
+                    className="text-sm font-medium text-brand-gold hover:text-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                  >
+                    View all
+                  </Link>
+                </div>
+                {activity.length ? (
+                  <ol className="mt-4 divide-y divide-white/10">
+                    {activity.map((entry) => (
+                      <li key={entry.id} className="flex gap-3 py-3 first:pt-0">
+                        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/[.04]">
+                          <ClipboardCheck size={18} className="text-brand-blue" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <strong className="block text-sm text-white">{entry.action.replaceAll('_', ' ')}</strong>
+                          <span className="mt-0.5 block truncate text-sm text-slate-400">{entry.details || `By ${entry.actorName}`}</span>
+                          <time className="mt-1 block text-xs text-slate-500">{new Date(entry.createdAt).toLocaleString()}</time>
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <div className="mt-6 rounded-xl border border-dashed border-white/10 p-5 text-center">
+                    <Info size={20} className="mx-auto text-slate-500" />
+                    <p className="mt-2 text-sm font-medium text-white">No recent events</p>
+                    <p className="mt-1 text-sm text-slate-400">Administrator activity will be recorded here.</p>
+                  </div>
+                )}
               </div>
-              {data.pendingSellerApplications === 0 ? (
-                <div className="mt-6 rounded-xl border border-dashed border-white/10 px-4 py-6 text-center">
-                  <CheckCircle2 size={22} className="mx-auto text-status-success" />
-                  <p className="mt-3 text-sm font-medium text-white">No pending applications</p>
-                  <p className="mt-1 text-sm text-slate-400">All seller applications have been reviewed.</p>
-                  <p className="sr-only">No seller applications are waiting for review.</p>
+            </article>
+
+            {/* Pending Seller Approvals */}
+            <article className={`${card} p-5 sm:p-6 flex flex-col justify-between`}>
+              <div>
+                <div className="flex items-center justify-between">
+                  <h2 className="font-semibold text-white">Pending seller approvals</h2>
+                  <ClipboardCheck size={18} className="text-brand-gold" />
                 </div>
-              ) : (
-                <div className="mt-6">
-                  <p className="text-3xl font-semibold text-white">{data.pendingSellerApplications}</p>
-                  <p className="mt-1 text-sm text-slate-400">{data.pendingSellerApplications} seller applications await review.</p>
-                </div>
-              )}
+                {data.pendingSellerApplications === 0 ? (
+                  <div className="mt-6 rounded-xl border border-dashed border-white/10 px-4 py-6 text-center">
+                    <CheckCircle2 size={22} className="mx-auto text-status-success" />
+                    <p className="mt-3 text-sm font-medium text-white">No pending applications</p>
+                    <p className="mt-1 text-sm text-slate-400">All seller applications have been reviewed.</p>
+                    <p className="sr-only">No seller applications are waiting for review.</p>
+                  </div>
+                ) : (
+                  <div className="mt-6">
+                    <p className="text-3xl font-semibold text-white">{data.pendingSellerApplications}</p>
+                    <p className="mt-1 text-sm text-slate-400">{data.pendingSellerApplications} seller applications await review.</p>
+                  </div>
+                )}
+              </div>
               <Link
                 to="/admin/seller-applications"
                 className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-brand-gold hover:text-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-blue"
@@ -498,7 +503,7 @@ export function AdminDashboardPage() {
             </article>
 
             {/* Approved Sellers */}
-            <article className={`${card} p-5`}>
+            <article className={`${card} p-5 sm:p-6`}>
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold text-white">Approved sellers</h2>
                 <Store size={18} className="text-status-success" />
@@ -525,29 +530,31 @@ export function AdminDashboardPage() {
             </article>
 
             {/* Catalog Summary */}
-            <article className={`${card} p-5`}>
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-white">Catalog summary</h2>
-                <Boxes size={18} className="text-violet-300" />
+            <article className={`${card} p-5 sm:p-6 flex flex-col justify-between`}>
+              <div>
+                <div className="flex items-center justify-between">
+                  <h2 className="font-semibold text-white">Catalog summary</h2>
+                  <Boxes size={18} className="text-violet-300" />
+                </div>
+                <dl className="mt-5 space-y-3.5">
+                  <div className="flex justify-between">
+                    <dt className="text-sm text-slate-400">Products (Total Cards)</dt>
+                    <dd className="font-semibold tabular-nums text-white">{data.totalCards.toLocaleString()}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-sm text-slate-400">Active Listings</dt>
+                    <dd className="font-semibold tabular-nums text-brand-gold">{data.listedCards.toLocaleString()}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-sm text-slate-400">Categories</dt>
+                    <dd className="text-sm text-white font-medium">Pokémon, Trainer, Energy</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-sm text-slate-400">Brand</dt>
+                    <dd className="text-sm text-white font-medium">Pokémon TCG</dd>
+                  </div>
+                </dl>
               </div>
-              <dl className="mt-5 space-y-4">
-                <div className="flex justify-between">
-                  <dt className="text-sm text-slate-400">Products (Total Cards)</dt>
-                  <dd className="font-semibold tabular-nums text-white">{data.totalCards.toLocaleString()}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-sm text-slate-400">Active Listings</dt>
-                  <dd className="font-semibold tabular-nums text-brand-gold">{data.listedCards.toLocaleString()}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-sm text-slate-400">Categories</dt>
-                  <dd className="text-sm text-white font-medium">Pokémon, Trainer, Energy</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-sm text-slate-400">Brand</dt>
-                  <dd className="text-sm text-white font-medium">Pokémon TCG</dd>
-                </div>
-              </dl>
               <Link
                 to="/cards"
                 className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-brand-gold hover:text-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-blue"

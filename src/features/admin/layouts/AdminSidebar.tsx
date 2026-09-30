@@ -373,7 +373,7 @@ export function AdminSidebar() {
       <aside
         aria-label="Platform administration"
         className={cn(
-          'sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 self-start flex-col border-r border-white/10 bg-bg-elevated transition-[width] duration-300 ease-in-out md:flex',
+          'hidden h-full shrink-0 flex-col border-r border-white/10 bg-bg-elevated transition-[width] duration-300 ease-in-out md:flex',
           collapsed ? 'w-[72px]' : 'w-[270px]'
         )}
       >

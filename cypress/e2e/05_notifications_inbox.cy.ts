@@ -42,7 +42,7 @@ describe('Notification inbox', () => {
   }
 
   beforeEach(() => {
-    cy.intercept('GET', '**/api/users/profile', profile).as('profile');
+    cy.intercept('GET', '**/api/users/profile', profile);
     cy.intercept('GET', '**/api/products*', {
       items: [],
       page: { page: 0, size: 100, totalElements: 0, totalPages: 0 },
@@ -52,14 +52,13 @@ describe('Notification inbox', () => {
       items: [],
       totalItems: 0,
       totalAmount: 0,
-    }).as('cart');
+    });
     cy.visit('/', {
       onBeforeLoad(win) {
-        win.localStorage.setItem('token', 'notification-e2e-token');
+        win.localStorage.setItem('token', 'mock-jwt-token-customer');
       },
     });
-    cy.wait('@profile');
-    cy.wait('@cart');
+    cy.get('a[aria-label="Notifications"]').should('be.visible');
   });
 
   it('shows the navbar bell and completes the read/delete inbox flow', () => {
@@ -140,7 +139,7 @@ describe('Notification inbox', () => {
   it('renders seller and similar cards as white bubbles', () => {
     const sellerOffer = {
       id: 'listing-1',
-      cardId: 'card-1',
+      cardId: 'prd-1',
       sellerId: 'seller-1',
       sellerName: 'Seller Demo',
       name: 'Pikachu VMAX',
@@ -159,7 +158,7 @@ describe('Notification inbox', () => {
     const similarListing = {
       ...sellerOffer,
       id: 'listing-2',
-      cardId: 'card-2',
+      cardId: 'prd-2',
       sellerId: 'seller-2',
       sellerName: 'Similar Seller',
       name: 'Raichu V',
@@ -167,7 +166,7 @@ describe('Notification inbox', () => {
     };
 
     cy.intercept('GET', '**/api/products*', (request) => {
-      if (request.query.cardId === 'card-1') {
+      if (request.query.cardId === 'prd-1') {
         request.reply({
           items: [sellerOffer],
           pageNumber: 0,
@@ -189,12 +188,16 @@ describe('Notification inbox', () => {
       });
     }).as('listingRequests');
 
-    cy.visit('/cards/card-1');
+    cy.visit('/cards/prd-1');
     cy.contains('h2', 'Seller offers').should('be.visible');
-    cy.contains('a', 'Seller Demo').parents('article').should('have.css', 'background-color', 'rgb(255, 255, 255)');
+    cy.get('section[aria-labelledby="seller-offers-heading"] article')
+      .first()
+      .should('have.css', 'background-color', 'rgb(255, 255, 255)');
 
     cy.contains('h2', 'Similar cards').should('be.visible');
-    cy.contains('a', 'Raichu V').should('have.css', 'background-color', 'rgb(255, 255, 255)');
+    cy.get('section[aria-labelledby="similar-cards-heading"] a')
+      .first()
+      .should('have.css', 'background-color', 'rgb(255, 255, 255)');
   });
 
   it('keeps the bell visible for guests and redirects the protected inbox to login', () => {

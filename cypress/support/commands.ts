@@ -3,19 +3,24 @@
 // Custom command to bypass or mock authentication
 Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
   const token = role === 'ADMIN' ? 'mock-jwt-token-admin' : (role === 'SELLER' ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer');
+  const userObj = {
+    id: role === 'ADMIN' ? '99' : (role === 'SELLER' ? '2' : '1'),
+    email: `${role.toLowerCase()}@mythix.com`,
+    name: `Test ${role}`,
+    role: role === 'ADMIN' ? 'ADMIN' : 'USER',
+    isSeller: role === 'SELLER',
+  };
+
+  cy.intercept('GET', '**/auth/me', { statusCode: 200, body: userObj });
+  cy.intercept('GET', '**/api/users/profile', { statusCode: 200, body: userObj });
+  
   window.localStorage.setItem('token', token);
   window.localStorage.setItem(
     'tcg_auth_storage',
     JSON.stringify({
       state: {
         token,
-        user: {
-          id: role === 'ADMIN' ? '99' : (role === 'SELLER' ? '2' : '1'),
-          email: `${role.toLowerCase()}@mythix.com`,
-          fullName: `Test ${role}`,
-          role: role === 'ADMIN' ? 'ADMIN' : 'USER',
-          isSeller: role === 'SELLER',
-        },
+        user: userObj,
         isAuthenticated: true,
       },
       version: 0,

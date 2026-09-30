@@ -98,7 +98,9 @@ npm run dev
 
 ```env
 VITE_ENABLE_MOCK_API=true
+VITE_PORT=3000
 ```
+> **Note:** `VITE_PORT=3000` is required when running E2E Cypress tests (`npm run test:e2e`), as the tests are configured to visit `http://localhost:3000`.
 
 บัญชี mock:
 

@@ -14,6 +14,7 @@
     "test:e2e:smoke": "cypress run --spec \"cypress/e2e/01_*,cypress/e2e/auth/01_*\"",
     "test:e2e:auth": "cypress run --spec \"cypress/e2e/auth/**/*.cy.ts\"",
     "test:e2e:auth:open": "cypress open",
+    "test:e2e:admin": "cypress run --spec \"cypress/e2e/admin/**/*.cy.ts\"",
     "test:e2e:order": "cypress run --spec \"cypress/e2e/04_order_fastforward_lifecycle.cy.ts\"",
     "test:e2e:open": "cypress open",
     "test:e2e:headless": "cypress run --headless",

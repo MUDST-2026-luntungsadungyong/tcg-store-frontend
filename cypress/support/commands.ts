@@ -95,6 +95,10 @@ Cypress.Commands.add('updateProfileContact', (contact: { phone?: string; line?: 
   cy.get('button[type="submit"]').click();
 });
 
+Cypress.Commands.add('loginAsAdmin', () => {
+  cy.loginByUI('admin@mythix.com', 'admin123');
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -106,6 +110,7 @@ declare global {
       requestPasswordReset(email: string): Chainable<void>;
       updateProfileName(name: string): Chainable<void>;
       updateProfileContact(contact: { phone?: string; line?: string; facebook?: string }): Chainable<void>;
+      loginAsAdmin(): Chainable<void>;
     }
   }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, ChevronLeft, ChevronRight, Layers, RefreshCw, Sparkles } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Layers, Medal, RefreshCw, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getTopCollectors, type CollectorRanking } from '@/features/collection/api/leaderboard';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
@@ -225,13 +225,11 @@ function ExpensiveCards({ cards, loading, error, onRetry }: { cards: CardListing
 
 function Leaderboard({ collectors, loading, error, onRetry }: { collectors: CollectorRanking[]; loading: boolean; error: string | null; onRetry: () => void }) {
   return (
-    <section className="bg-bg-base py-16">
+    <section className="bg-bg-surface py-16">
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
         <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-brand-gold/30 bg-brand-gold/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-brand-gold">
-              <Sparkles size={13} /> Leaderboard
-            </span>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand-gold">Leaderboard</p>
             <h2 className="mt-2 text-3xl font-bold text-white">The Best Collections</h2>
             <p className="mt-1 text-sm text-text-secondary">Top 10 collectors ranked by the number of rare Pokémon cards they own</p>
           </div>
@@ -260,10 +258,26 @@ function Leaderboard({ collectors, loading, error, onRetry }: { collectors: Coll
         {!loading && !error && collectors.length > 0 && (
           <div className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar">
             {collectors.map((collector) => (
-              <article key={collector.userId} className="flex min-w-[320px] snap-center shrink-0 flex-col rounded-3xl border border-[#D9E0EA] bg-white p-6 text-bg-card shadow-glow transition-transform hover:-translate-y-1 sm:min-w-[390px] md:min-w-[430px]">
+              <article key={collector.userId} className="flex min-w-[320px] snap-center shrink-0 flex-col rounded-3xl border border-[#D9E0EA] bg-white p-6 text-bg-card shadow-[0_14px_40px_rgba(15,23,42,0.16)] transition-transform hover:-translate-y-1 sm:min-w-[390px] md:min-w-[430px]">
                 <div className="flex items-start justify-between gap-4 border-b border-[#D9E0EA] pb-5">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-black ${collector.rank === 1 ? 'bg-brand-gold text-bg-base' : 'bg-[#E5E9F0] text-bg-card'}`}>#{collector.rank}</span>
+                    <span
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center gap-1 rounded-2xl text-lg font-black ${
+                        collector.rank === 1
+                          ? 'bg-[#FFF4C2] text-[#9A7410]'
+                          : collector.rank === 2
+                            ? 'bg-[#EEF1F5] text-[#667085]'
+                            : collector.rank === 3
+                              ? 'bg-[#F8E2D2] text-[#9A5B31]'
+                              : 'bg-[#E5E9F0] text-bg-card'
+                      }`}
+                    >
+                      {collector.rank === 1 && <Trophy size={22} strokeWidth={2.4} aria-hidden="true" />}
+                      {collector.rank === 2 && <Medal size={22} strokeWidth={2.4} aria-hidden="true" />}
+                      {collector.rank === 3 && <Medal size={22} strokeWidth={2.4} aria-hidden="true" />}
+                      {collector.rank > 3 && collector.rank}
+                      <span className="sr-only">Rank {collector.rank}</span>
+                    </span>
                     <div className="min-w-0">
                       <h3 className="truncate text-lg font-bold text-bg-card">{collector.displayName}</h3>
                       <p className="text-xs text-[#596173]">{collector.distinctRareCardCount} unique rare cards</p>
@@ -271,7 +285,7 @@ function Leaderboard({ collectors, loading, error, onRetry }: { collectors: Coll
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="block text-[10px] font-bold uppercase tracking-wider text-[#596173]">Rare cards</span>
-                    <span className="text-2xl font-black text-brand-gold">{collector.rareCardCount}</span>
+                    <span className="text-2xl font-black text-[#8A6D1F]">{collector.rareCardCount}</span>
                   </div>
                 </div>
                 <div className="mt-5">

@@ -73,15 +73,20 @@ const listingToForm = (listing: ManagedListing): ListingForm => ({
 });
 
 const listingToCatalogCard = (listing: ManagedListing): CatalogCard => ({
-  id: listing.id,
+  id: listing.cardId ?? listing.id,
   name: listing.name,
   game: listing.game,
   rarity: listing.rarity,
   setName: listing.set,
   cardNumber: listing.cardNumber,
-  imageLarge: listing.image,
+  imageSmall: listing.imageSmall,
+  imageLarge: listing.imageLarge ?? listing.image,
   marketPrice: listing.marketPrice ?? listing.price,
-  supertype: listing.stage,
+  supertype: listing.supertype,
+  subtypes: listing.subtypes ?? listing.stage,
+  hp: listing.hp,
+  types: listing.types,
+  artist: listing.artist,
 });
 
 const formatBaht = (amount: number) =>
@@ -261,6 +266,7 @@ export function ListingManagementPage() {
     if (!card && !editingListing) return;
 
     const payload: ManagedListingInput = {
+      cardId: editingListing?.cardId ?? card!.id,
       name: editingListing?.name ?? card!.name,
       game: editingListing?.game ?? card!.game ?? 'Pokemon',
       image:

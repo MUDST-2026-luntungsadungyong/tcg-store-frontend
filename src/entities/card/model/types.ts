@@ -16,7 +16,14 @@ export interface CardListing {
   language?: string;
   set?: string;
   rarity?: string;
+  supertype?: string;
+  subtypes?: string;
   stage?: string;
+  hp?: string;
+  types?: string;
+  artist?: string;
+  imageSmall?: string;
+  imageLarge?: string;
   marketPrice?: number;
   subtitle?: string;
   cardNumber?: string;

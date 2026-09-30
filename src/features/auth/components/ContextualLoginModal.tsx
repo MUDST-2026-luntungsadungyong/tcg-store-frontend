@@ -1,7 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
-import { Button } from '@/shared/components/Button';
-import { Modal } from '@/shared/components/Modal';
+import { FeedbackPopup } from '@/shared/components/FeedbackPopup';
 
 interface ContextualLoginModalProps {
   isOpen: boolean;
@@ -12,7 +10,7 @@ interface ContextualLoginModalProps {
 export function ContextualLoginModal({
   isOpen,
   onClose,
-  message = 'Log in to continue',
+  message = 'Log in to save cards and reserve seller listings.',
 }: ContextualLoginModalProps) {
   const navigate = useNavigate();
 
@@ -22,26 +20,14 @@ export function ContextualLoginModal({
   }
 
   return (
-    <Modal
+    <FeedbackPopup
       isOpen={isOpen}
-      onClose={onClose}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleLogin}>
-            Login
-          </Button>
-        </>
-      }
-    >
-      <div className="flex flex-col items-center gap-3 py-2 text-center">
-        <span className="flex size-12 items-center justify-center rounded-full bg-brand-blue/20 text-brand-blue ring-1 ring-brand-blue/40">
-          <LogIn size={22} />
-        </span>
-        <p className="text-sm text-gray-300">{message}</p>
-      </div>
-    </Modal>
+      tone="auth"
+      title="Sign in to collect this card"
+      message={message}
+      meta="You'll return to this card after login."
+      primaryAction={{ label: 'Log in', onClick: handleLogin }}
+      secondaryAction={{ label: 'Not now', onClick: onClose }}
+    />
   );
 }

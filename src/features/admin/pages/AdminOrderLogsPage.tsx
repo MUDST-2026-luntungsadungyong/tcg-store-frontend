@@ -153,26 +153,30 @@ export function AdminOrderLogsPage() {
       <div className="space-y-4">
        <div className="rounded-lg border border-white/10 bg-white/[.02] p-4 text-sm">
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Items ({(viewing.items ?? []).length})</h3>
-        <div className="space-y-3">
-         {(viewing.items ?? []).map((item) => (
-          <div key={item.id} className="rounded-lg border border-white/10 bg-white/[.03] p-3">
-           <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-             <p className="font-medium text-white">{item.productName}</p>
-             {item.cardId && <p className="mt-0.5 text-xs text-gray-400">Card ID: {item.cardId}</p>}
+        {!viewing.items || viewing.items.length === 0 ? (
+          <p className="text-sm text-gray-400">Item details will appear after the order-log API is updated.</p>
+        ) : (
+          <div className="space-y-3">
+           {viewing.items.map((item) => (
+            <div key={item.id} className="rounded-lg border border-white/10 bg-white/[.03] p-3">
+             <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+               <p className="font-medium text-white">{item.productName}</p>
+               {item.cardId && <p className="mt-0.5 text-xs text-gray-400">Card ID: {item.cardId}</p>}
+              </div>
+              <span className="shrink-0 font-medium text-white">{money(item.price)}</span>
+             </div>
+             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
+              <span>Seller: <span className="text-gray-300">{item.sellerName}</span></span>
+              <span>Email: <span className="text-gray-300">{item.sellerEmail}</span></span>
+              {item.shopName && <span>Shop: <span className="text-gray-300">{item.shopName}</span></span>}
+              <span>Qty: <span className="text-gray-300">{item.quantity}</span></span>
+              <span>Subtotal: <span className="text-white font-medium">{money(item.price * item.quantity)}</span></span>
+             </div>
             </div>
-            <span className="shrink-0 font-medium text-white">{money(item.price)}</span>
-           </div>
-           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
-            <span>Seller: <span className="text-gray-300">{item.sellerName}</span></span>
-            <span>Email: <span className="text-gray-300">{item.sellerEmail}</span></span>
-            {item.shopName && <span>Shop: <span className="text-gray-300">{item.shopName}</span></span>}
-            <span>Qty: <span className="text-gray-300">{item.quantity}</span></span>
-            <span>Subtotal: <span className="text-white font-medium">{money(item.price * item.quantity)}</span></span>
-           </div>
+           ))}
           </div>
-         ))}
-        </div>
+        )}
        </div>
       </div>
 

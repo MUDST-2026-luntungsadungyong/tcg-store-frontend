@@ -27,11 +27,11 @@ type NavItem = {
 const mainLinks: NavItem[] = [
   { name: 'Overview', to: '/admin', icon: LayoutDashboard },
   { name: 'Seller approvals', to: '/admin/seller-applications', icon: ShieldCheck },
-  { name: 'Order monitoring', to: '/admin/orders', icon: ReceiptText },
   { name: 'Admin management', to: '/admin/users', icon: UsersRound },
 ];
 
-const systemLinks: NavItem[] = [
+const monitoringLinks: NavItem[] = [
+  { name: 'Order monitoring', to: '/admin/orders', icon: ReceiptText },
   { name: 'Audit trail', to: '/admin/audit-logs', icon: ClipboardList },
 ];
 
@@ -392,7 +392,7 @@ export function AdminSidebar() {
           />
           <NavigationSection
             label="Monitoring & Logs"
-            items={systemLinks}
+            items={monitoringLinks}
             collapsed={collapsed}
           />
         </nav>
@@ -466,7 +466,7 @@ export function AdminSidebar() {
             />
             <NavigationSection
               label="Monitoring & Logs"
-              items={systemLinks}
+              items={monitoringLinks}
               collapsed={false}
               onNavigate={() => setOpen(false)}
             />

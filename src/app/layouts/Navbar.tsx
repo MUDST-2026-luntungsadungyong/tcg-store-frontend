@@ -185,7 +185,12 @@ export function Navbar() {
               )}
             </Link>
 
-            <Link to="/notifications" aria-label="Notifications" className="relative text-gray-300 hover:text-white transition-colors">
+            <Link
+              to="/notifications"
+              aria-label="Notifications"
+              className="relative text-gray-300 hover:text-white transition-colors"
+              title="Notifications"
+            >
               <Bell className="h-5 w-5" />
             </Link>
 

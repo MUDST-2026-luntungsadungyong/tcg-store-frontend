@@ -69,4 +69,10 @@ describe('Core Journey 1: Home, Navigation & Card Discovery (US-02)', () => {
     cy.get('[data-testid="empty-state"]').should('be.visible');
     cy.contains('No cards found').should('be.visible');
   });
+
+  it('protects the notifications inbox from unauthenticated users', () => {
+    cy.visit('/notifications');
+    cy.url().should('include', '/login');
+    cy.get('#email').should('be.visible');
+  });
 });

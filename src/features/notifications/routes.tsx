@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router-dom';
-import { PlaceholderPage } from '@/shared/components/PlaceholderPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 
 export const notificationRoutes: RouteObject[] = [
-  { path: 'notifications', element: <PlaceholderPage title="Notifications" /> },
+  { path: 'notifications', element: <NotificationsPage /> },
 ];

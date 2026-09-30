@@ -5,13 +5,19 @@ import { listingDiscoveryApi } from '@/features/discovery/api/listings';
 import type { CardListing } from '@/entities/card/model/types';
 import { CardListingCard } from '@/features/discovery/components/CardListingCard';
 import { Skeleton } from '@/shared/components/Skeleton';
-import { useFilterStore } from '@/features/discovery/model/useFilterStore';
 import { FilterDropdown } from '@/shared/components/FilterDropdown';
+import {
+  CONDITION_OPTIONS,
+  formatCondition,
+  normalizeConditionToCode,
+} from '@/entities/card/model/condition';
 import { groupListingsByCard } from '@/features/discovery/lib/groupListings';
 
 const RARITIES = ['Common', 'Uncommon', 'Rare', 'Holo', 'Rare Holo', 'Ultra Rare', 'Secret Rare'];
 const STAGES = ['Basic', 'Stage 1', 'Stage 2', 'V', 'VMAX', 'VSTAR'];
-const CONDITIONS = ['Mint', 'Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played', 'Damaged'];
+const CONDITIONS = [...CONDITION_OPTIONS];
+const MAX_PRICE_LIMIT = 9999999999;
+const MAX_PRICE_DIGITS = 10;
 
 export function CardDiscoveryPage() {
   const [searchParams] = useSearchParams();
@@ -24,33 +30,35 @@ export function CardDiscoveryPage() {
   const [page, setPage] = useState(0);
   const pageSize = 12;
 
-  // Local filter controls
+  // Draft filter controls (what user selects before clicking Search)
   const [searchInput, setSearchInput] = useState(urlSearch);
-  const [condition, setCondition] = useState<string[]>([]);
+  const [selectedRarity, setSelectedRarity] = useState<string[]>([]);
+  const [selectedStage, setSelectedStage] = useState<string[]>([]);
+  const [selectedCondition, setSelectedCondition] = useState<string[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
-
-  const { 
-    rarity, toggleRarity,
-    stage, toggleStage,
-    priceRange, setPriceRange,
-    resetFilters
-  } = useFilterStore();
-
-  const [localMin, setLocalMin] = useState(priceRange[0] === 0 ? '' : priceRange[0].toString());
-  const [localMax, setLocalMax] = useState(priceRange[1] === 9999999 ? '' : priceRange[1].toString());
+  const [localMin, setLocalMin] = useState('');
+  const [localMax, setLocalMax] = useState('');
   const [priceError, setPriceError] = useState<string | null>(null);
+
+  // Applied filter controls (what is actually queried / filtered)
+  const [appliedSearch, setAppliedSearch] = useState(urlSearch);
+  const [appliedRarity, setAppliedRarity] = useState<string[]>([]);
+  const [appliedStage, setAppliedStage] = useState<string[]>([]);
+  const [appliedCondition, setAppliedCondition] = useState<string[]>([]);
+  const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, MAX_PRICE_LIMIT]);
+  const [appliedInStockOnly, setAppliedInStockOnly] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const minP = priceRange[0] > 0 ? priceRange[0] : undefined;
-      const maxP = priceRange[1] < 9999999 ? priceRange[1] : undefined;
+      const minP = appliedPriceRange[0] > 0 ? appliedPriceRange[0] : undefined;
+      const maxP = appliedPriceRange[1] < MAX_PRICE_LIMIT ? appliedPriceRange[1] : undefined;
       const params = {
-        search: searchInput.trim() || undefined,
-        rarity: rarity.length === 1 ? rarity[0] : undefined,
-        stage: stage.length === 1 ? stage[0] : undefined,
-        condition: condition.length === 1 ? condition[0] : undefined,
+        search: appliedSearch.trim() || undefined,
+        rarity: appliedRarity.length === 1 ? appliedRarity[0] : undefined,
+        stage: appliedStage.length === 1 ? appliedStage[0] : undefined,
+        condition: appliedCondition.length === 1 ? normalizeConditionToCode(appliedCondition[0]) : undefined,
         minPrice: minP,
         maxPrice: maxP,
         page: 0,
@@ -68,27 +76,28 @@ export function CardDiscoveryPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchInput, rarity, stage, condition, priceRange]);
+  }, [appliedSearch, appliedRarity, appliedStage, appliedCondition, appliedPriceRange]);
 
   useEffect(() => {
     void fetchProducts();
   }, [fetchProducts]);
 
-  // Accept searches submitted from the global Navbar when arriving on /cards.
+  // Accept searches submitted from the global Navbar when arriving on /cards
   useEffect(() => {
     setSearchInput(urlSearch);
+    setAppliedSearch(urlSearch);
     setPage(0);
   }, [urlSearch]);
 
   // Handle price input changes with validation
   const handleMinChange = (val: string) => {
-    const clean = val.replace(/[^0-9]/g, '');
+    const clean = val.replace(/[^0-9]/g, '').slice(0, MAX_PRICE_DIGITS);
     setLocalMin(clean);
     validatePriceRange(clean, localMax);
   };
 
   const handleMaxChange = (val: string) => {
-    const clean = val.replace(/[^0-9]/g, '');
+    const clean = val.replace(/[^0-9]/g, '').slice(0, MAX_PRICE_DIGITS);
     setLocalMax(clean);
     validatePriceRange(localMin, clean);
   };
@@ -106,37 +115,63 @@ export function CardDiscoveryPage() {
     return true;
   };
 
-  const handlePriceApply = () => {
+  // Commit draft filters and trigger search
+  const handleSearch = () => {
     const isValid = validatePriceRange(localMin, localMax);
     if (!isValid) return;
 
     const min = localMin ? parseInt(localMin, 10) : 0;
-    const max = localMax ? parseInt(localMax, 10) : 9999999;
-    setPriceRange(min, max);
+    const max = localMax ? parseInt(localMax, 10) : MAX_PRICE_LIMIT;
+
+    setAppliedSearch(searchInput.trim());
+    setAppliedRarity([...selectedRarity]);
+    setAppliedStage([...selectedStage]);
+    setAppliedCondition([...selectedCondition]);
+    setAppliedPriceRange([min, max]);
+    setAppliedInStockOnly(inStockOnly);
     setPage(0);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(0);
+    handleSearch();
   };
 
   const handleReset = () => {
-    resetFilters();
     setSearchInput('');
-    setCondition([]);
+    setSelectedRarity([]);
+    setSelectedStage([]);
+    setSelectedCondition([]);
     setInStockOnly(false);
     setLocalMin('');
     setLocalMax('');
     setPriceError(null);
+
+    setAppliedSearch('');
+    setAppliedRarity([]);
+    setAppliedStage([]);
+    setAppliedCondition([]);
+    setAppliedInStockOnly(false);
+    setAppliedPriceRange([0, MAX_PRICE_LIMIT]);
     setPage(0);
   };
 
+  const toggleRarityOption = (val: string) => {
+    setSelectedRarity(prev =>
+      prev.includes(val) ? prev.filter(r => r !== val) : [...prev, val]
+    );
+  };
+
+  const toggleStageOption = (val: string) => {
+    setSelectedStage(prev =>
+      prev.includes(val) ? prev.filter(s => s !== val) : [...prev, val]
+    );
+  };
+
   const toggleConditionOption = (cond: string) => {
-    setCondition(prev => 
+    setSelectedCondition(prev =>
       prev.includes(cond) ? prev.filter(c => c !== cond) : [...prev, cond]
     );
-    setPage(0);
   };
 
   // Client-side additional filtering for multi-select values or in-stock toggle
@@ -148,52 +183,55 @@ export function CardDiscoveryPage() {
       if (p.status !== 'SHOW') return false;
 
       // In-stock toggle
-      if (inStockOnly && p.stock <= 0) return false;
+      if (appliedInStockOnly && p.stock <= 0) return false;
 
       // Search match
-      if (searchInput.trim()) {
-        const q = searchInput.trim().toLowerCase();
+      if (appliedSearch.trim()) {
+        const q = appliedSearch.trim().toLowerCase();
         if (!p.name.toLowerCase().includes(q)) return false;
       }
 
       // Multi-select rarity match if more than 1 selected
-      if (rarity.length > 0 && (!p.rarity || !rarity.includes(p.rarity))) {
+      if (appliedRarity.length > 0 && (!p.rarity || !appliedRarity.includes(p.rarity))) {
         return false;
       }
 
       // Multi-select stage match
-      if (stage.length > 0 && (!p.stage || !stage.some(s => p.stage?.toLowerCase().includes(s.toLowerCase())))) {
+      if (appliedStage.length > 0 && (!p.stage || !appliedStage.some(s => p.stage?.toLowerCase().includes(s.toLowerCase())))) {
         return false;
       }
 
-      // Multi-select condition match
-      if (condition.length > 0 && (!p.condition || !condition.includes(p.condition))) {
-        return false;
+      // Multi-select condition match (supports codes like 'NM' and full names like 'Near Mint')
+      if (appliedCondition.length > 0) {
+        const normalizedCodes = appliedCondition.map(normalizeConditionToCode);
+        const cardCode = normalizeConditionToCode(p.condition);
+        if (!cardCode || !normalizedCodes.includes(cardCode)) {
+          return false;
+        }
       }
 
       // Price range
-      if (p.price < priceRange[0] || p.price > priceRange[1]) {
+      if (p.price < appliedPriceRange[0] || p.price > appliedPriceRange[1]) {
         return false;
       }
 
       return true;
     });
-  }, [canonicalProducts, inStockOnly, searchInput, rarity, stage, condition, priceRange]);
+  }, [canonicalProducts, appliedInStockOnly, appliedSearch, appliedRarity, appliedStage, appliedCondition, appliedPriceRange]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const pageProducts = filteredProducts.slice(page * pageSize, (page + 1) * pageSize);
 
-  const activeFiltersCount = 
-    (searchInput.trim() ? 1 : 0) +
-    rarity.length + 
-    stage.length + 
-    condition.length + 
-    (inStockOnly ? 1 : 0) +
-    (priceRange[0] > 0 || priceRange[1] < 9999999 ? 1 : 0);
+  const activeFiltersCount =
+    (appliedSearch.trim() ? 1 : 0) +
+    appliedRarity.length +
+    appliedStage.length +
+    appliedCondition.length +
+    (appliedInStockOnly ? 1 : 0) +
+    (appliedPriceRange[0] > 0 || appliedPriceRange[1] < MAX_PRICE_LIMIT ? 1 : 0);
 
   return (
     <div className="w-full flex flex-col items-center">
-      
       {/* Title */}
       <div className="mt-14 mb-8 text-center w-full max-w-[1440px] px-8">
         <h1 className="text-4xl md:text-[48px] font-bold text-[#DBE3F3] tracking-tight text-left md:text-center">
@@ -206,26 +244,20 @@ export function CardDiscoveryPage() {
 
       {/* Search Input Bar */}
       <div className="w-full max-w-[1440px] px-8 mb-6">
-        <form onSubmit={handleSearchSubmit} className="relative w-full max-w-[600px] mx-auto">
+        <form onSubmit={handleSearchSubmit} className="relative w-full max-w-[640px] mx-auto">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A6ADC7] w-5 h-5 pointer-events-none" />
           <input
             type="text"
             data-testid="search-input"
             placeholder="Search cards by name..."
             value={searchInput}
-            onChange={(e) => {
-              setSearchInput(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="w-full bg-[#242938] border border-[#40475C] focus:border-brand-blue rounded-xl pl-12 pr-10 py-3 text-sm text-white placeholder:text-[#A6ADC7] focus:outline-none transition-colors"
           />
           {searchInput && (
             <button
               type="button"
-              onClick={() => {
-                setSearchInput('');
-                setPage(0);
-              }}
+              onClick={() => setSearchInput('')}
               aria-label="Clear search input"
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A6ADC7] hover:text-white transition-colors"
             >
@@ -237,47 +269,49 @@ export function CardDiscoveryPage() {
 
       {/* Filter Bar */}
       <div className="w-full max-w-[1440px] px-8 mb-4 flex flex-wrap justify-start md:justify-center items-center gap-3">
-        <FilterDropdown 
-          label="Rarity" 
-          options={RARITIES} 
-          selectedValues={rarity} 
-          onToggle={toggleRarity} 
+        <FilterDropdown
+          label="Rarity"
+          options={RARITIES}
+          selectedValues={selectedRarity}
+          onToggle={toggleRarityOption}
         />
 
-        <FilterDropdown 
-          label="Stage" 
-          options={STAGES} 
-          selectedValues={stage} 
-          onToggle={toggleStage} 
+        <FilterDropdown
+          label="Stage"
+          options={STAGES}
+          selectedValues={selectedStage}
+          onToggle={toggleStageOption}
         />
 
-        <FilterDropdown 
-          label="Condition" 
-          options={CONDITIONS} 
-          selectedValues={condition} 
-          onToggle={toggleConditionOption} 
+        <FilterDropdown
+          label="Condition"
+          options={CONDITIONS}
+          selectedValues={selectedCondition}
+          onToggle={toggleConditionOption}
         />
-        
+
         {/* Price Min/Max Input with validation error styling */}
         <div className="flex flex-col">
           <div className={`flex items-center gap-2 bg-[#242938] border rounded-lg px-3 py-1.5 h-[42px] transition-colors ${
             priceError ? 'border-[#EF4444]' : 'border-[#40475C]'
           }`}>
-            <input 
+            <input
               type="text"
               inputMode="numeric"
+              maxLength={MAX_PRICE_DIGITS}
               data-testid="min-price-input"
-              placeholder="Min THB" 
+              placeholder="Min THB"
               value={localMin}
               onChange={e => handleMinChange(e.target.value)}
               className="w-20 md:w-24 bg-transparent text-sm text-white focus:outline-none placeholder:text-[#A6ADC7]"
             />
             <span className="text-[#A6ADC7] text-sm font-medium">–</span>
-            <input 
+            <input
               type="text"
               inputMode="numeric"
+              maxLength={MAX_PRICE_DIGITS}
               data-testid="max-price-input"
-              placeholder="Max THB" 
+              placeholder="Max THB"
               value={localMax}
               onChange={e => handleMaxChange(e.target.value)}
               className="w-20 md:w-24 bg-transparent text-sm text-white focus:outline-none placeholder:text-[#A6ADC7]"
@@ -290,18 +324,6 @@ export function CardDiscoveryPage() {
           )}
         </div>
 
-        <button 
-          onClick={handlePriceApply}
-          disabled={Boolean(priceError)}
-          className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors h-[42px] ${
-            priceError 
-              ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
-              : 'bg-[#D9DEF2] text-[#1A1A26] hover:bg-white cursor-pointer'
-          }`}
-        >
-          Apply Filters
-        </button>
-
         {/* In-Stock Only Toggle */}
         <label className="flex items-center gap-2 cursor-pointer select-none bg-[#242938] border border-[#40475C] px-3.5 rounded-lg h-[42px] text-sm text-[#EDF0F7] hover:border-brand-blue/50 transition-colors">
           <input
@@ -313,8 +335,25 @@ export function CardDiscoveryPage() {
           <span>In Stock Only</span>
         </label>
 
+        {/* Search / Apply Filters button */}
+        <button
+          type="button"
+          onClick={handleSearch}
+          disabled={Boolean(priceError)}
+          data-testid="search-button"
+          aria-label="Apply Filters"
+          className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors h-[42px] flex items-center gap-2 ${
+            priceError
+              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              : 'bg-[#D9DEF2] text-[#1A1A26] hover:bg-white cursor-pointer'
+          }`}
+        >
+          <Search size={15} />
+          <span>Search</span>
+        </button>
+
         {activeFiltersCount > 0 && (
-          <button 
+          <button
             onClick={handleReset}
             className="text-[#A6ADC7] text-sm px-3 hover:text-white transition-colors"
           >
@@ -328,53 +367,110 @@ export function CardDiscoveryPage() {
         <span className="text-sm text-[#A6ADC7] mr-2">
           {filteredProducts.length} {filteredProducts.length === 1 ? 'result' : 'results'}
         </span>
-        
-        {searchInput.trim() && (
+
+        {appliedSearch.trim() && (
           <div className="flex items-center gap-1.5 bg-[#2E364D] rounded-full px-3 py-1">
-            <span className="text-xs text-[#EDF0F7]">Search: "{searchInput.trim()}"</span>
-            <button onClick={() => setSearchInput('')} aria-label="Remove search filter" className="text-[#A6ADC7] hover:text-white"><X size={12} /></button>
+            <span className="text-xs text-[#EDF0F7]">Search: "{appliedSearch.trim()}"</span>
+            <button
+              onClick={() => {
+                setSearchInput('');
+                setAppliedSearch('');
+                setPage(0);
+              }}
+              aria-label="Remove search filter"
+              className="text-[#A6ADC7] hover:text-white"
+            >
+              <X size={12} />
+            </button>
           </div>
         )}
 
-        {rarity.map(r => (
+        {appliedRarity.map(r => (
           <div key={`r-${r}`} className="flex items-center gap-1.5 bg-[#2E364D] rounded-full px-3 py-1">
             <span className="text-xs text-[#EDF0F7]">Rarity: {r}</span>
-            <button onClick={() => toggleRarity(r)} aria-label={`Remove ${r} rarity filter`} className="text-[#A6ADC7] hover:text-white"><X size={12} /></button>
+            <button
+              onClick={() => {
+                setSelectedRarity(prev => prev.filter(x => x !== r));
+                setAppliedRarity(prev => prev.filter(x => x !== r));
+                setPage(0);
+              }}
+              aria-label={`Remove ${r} rarity filter`}
+              className="text-[#A6ADC7] hover:text-white"
+            >
+              <X size={12} />
+            </button>
           </div>
         ))}
 
-        {stage.map(s => (
+        {appliedStage.map(s => (
           <div key={`s-${s}`} className="flex items-center gap-1.5 bg-[#2E364D] rounded-full px-3 py-1">
             <span className="text-xs text-[#EDF0F7]">Stage: {s}</span>
-            <button onClick={() => toggleStage(s)} aria-label={`Remove ${s} stage filter`} className="text-[#A6ADC7] hover:text-white"><X size={12} /></button>
+            <button
+              onClick={() => {
+                setSelectedStage(prev => prev.filter(x => x !== s));
+                setAppliedStage(prev => prev.filter(x => x !== s));
+                setPage(0);
+              }}
+              aria-label={`Remove ${s} stage filter`}
+              className="text-[#A6ADC7] hover:text-white"
+            >
+              <X size={12} />
+            </button>
           </div>
         ))}
 
-        {condition.map(c => (
+        {appliedCondition.map(c => (
           <div key={`c-${c}`} className="flex items-center gap-1.5 bg-[#2E364D] rounded-full px-3 py-1">
-            <span className="text-xs text-[#EDF0F7]">Condition: {c}</span>
-            <button onClick={() => toggleConditionOption(c)} aria-label={`Remove ${c} condition filter`} className="text-[#A6ADC7] hover:text-white"><X size={12} /></button>
+            <span className="text-xs text-[#EDF0F7]">Condition: {formatCondition(c)}</span>
+            <button
+              onClick={() => {
+                setSelectedCondition(prev => prev.filter(x => x !== c));
+                setAppliedCondition(prev => prev.filter(x => x !== c));
+                setPage(0);
+              }}
+              aria-label={`Remove ${c} condition filter`}
+              className="text-[#A6ADC7] hover:text-white"
+            >
+              <X size={12} />
+            </button>
           </div>
         ))}
 
-        {inStockOnly && (
+        {appliedInStockOnly && (
           <div className="flex items-center gap-1.5 bg-[#2E364D] rounded-full px-3 py-1">
             <span className="text-xs text-[#EDF0F7]">In Stock Only</span>
-            <button onClick={() => setInStockOnly(false)} aria-label="Remove in stock filter" className="text-[#A6ADC7] hover:text-white"><X size={12} /></button>
+            <button
+              onClick={() => {
+                setInStockOnly(false);
+                setAppliedInStockOnly(false);
+                setPage(0);
+              }}
+              aria-label="Remove in stock filter"
+              className="text-[#A6ADC7] hover:text-white"
+            >
+              <X size={12} />
+            </button>
           </div>
         )}
 
-        {(priceRange[0] > 0 || priceRange[1] < 9999999) && (
+        {(appliedPriceRange[0] > 0 || appliedPriceRange[1] < MAX_PRICE_LIMIT) && (
           <div className="flex items-center gap-1.5 bg-[#2E364D] rounded-full px-3 py-1">
             <span className="text-xs text-[#EDF0F7]">
-              Price: ฿{priceRange[0]}–{priceRange[1] === 9999999 ? 'Max' : `฿${priceRange[1]}`}
+              Price: ฿{appliedPriceRange[0]}–{appliedPriceRange[1] === MAX_PRICE_LIMIT ? 'Max' : `฿${appliedPriceRange[1]}`}
             </span>
-            <button onClick={() => {
-              setPriceRange(0, 9999999);
-              setLocalMin('');
-              setLocalMax('');
-              setPriceError(null);
-            }} aria-label="Remove price filter" className="text-[#A6ADC7] hover:text-white"><X size={12} /></button>
+            <button
+              onClick={() => {
+                setLocalMin('');
+                setLocalMax('');
+                setPriceError(null);
+                setAppliedPriceRange([0, MAX_PRICE_LIMIT]);
+                setPage(0);
+              }}
+              aria-label="Remove price filter"
+              className="text-[#A6ADC7] hover:text-white"
+            >
+              <X size={12} />
+            </button>
           </div>
         )}
       </div>
@@ -413,7 +509,7 @@ export function CardDiscoveryPage() {
           /* Product Grid */
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-                  {pageProducts.map(product => (
+              {pageProducts.map(product => (
                 <CardListingCard key={product.cardId || product.id} listing={product} sellerCount={product.sellerCount} />
               ))}
             </div>

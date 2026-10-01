@@ -5,7 +5,7 @@ import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
 import { reservationOrdersApi } from './reservationOrders';
 
-export type SellerOrderStatus = 'PENDING' | 'SENT' | 'FULFILLED' | 'CANCELLED';
+export type SellerOrderStatus = 'PENDING' | 'PAID' | 'SENT' | 'FULFILLED' | 'CANCELLED';
 
 export interface SellerOrderItem {
   itemId: number | string;
@@ -109,7 +109,7 @@ export async function fetchSellerOrders(
       const upper = status.toUpperCase();
       filtered = filtered.filter((order) => {
         if (upper === 'PENDING' || upper === 'RESERVED') {
-          return order.status === 'PENDING';
+          return order.status === 'PENDING' || order.status === 'PAID';
         }
         if (upper === 'SENT' || upper === 'FULFILLED') {
           return order.status === 'SENT';
@@ -183,7 +183,7 @@ export async function fetchProfitSummary(): Promise<SellerProfitSummary> {
       totalCost,
       netProfit: totalRevenue - totalCost,
       totalOrders: orders.length,
-      pendingOrders: orders.filter((order) => order.status === 'PENDING').length,
+      pendingOrders: orders.filter((order) => order.status === 'PENDING' || order.status === 'PAID').length,
       fulfilledOrders: orders.filter((order) => order.status === 'SENT' || order.status === 'FULFILLED').length,
       cancelledOrders: orders.filter((order) => order.status === 'CANCELLED').length,
     };

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import apiClient from '@/shared/api/client';
 import { Modal } from '@/shared/components/Modal';
@@ -21,10 +21,25 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 
 function DateRangePicker({ from, to, onChange }: { from: string; to: string; onChange: (from: string, to: string) => void }) {
  const [open, setOpen] = useState(false); const [cursor, setCursor] = useState(() => new Date()); const [draftFrom, setDraftFrom] = useState(from); const [draftTo, setDraftTo] = useState(to);
+ const containerRef = useRef<HTMLDivElement>(null);
+
+ useEffect(() => {
+  if (!open) return;
+  function handleClickOutside(event: MouseEvent) {
+   if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+    setOpen(false);
+   }
+  }
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => {
+   document.removeEventListener('mousedown', handleClickOutside);
+  };
+ }, [open]);
+
  const days = useMemo(() => { const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1); const offset = first.getDay(); const start = new Date(first); start.setDate(1 - offset); return Array.from({ length: 42 }, (_, i) => { const day = new Date(start); day.setDate(start.getDate() + i); return day; }); }, [cursor]);
  const label = from ? `${fmt(from)}${to ? ` – ${fmt(to)}` : ' – Select end date'}` : 'Order date range';
  function choose(day: Date) { const value = toIso(day); if (!draftFrom || draftTo || value < draftFrom) { setDraftFrom(value); setDraftTo(''); } else setDraftTo(value); }
- return <div className="relative"><button type="button" aria-expanded={open} aria-label="Select order date range" onClick={() => { setDraftFrom(from); setDraftTo(to); setOpen(!open); }} className="flex h-10 min-w-56 items-center gap-2 rounded-lg border border-white/10 bg-bg-input px-3 text-left text-sm text-white hover:bg-white/[.04] focus:outline-none focus:ring-2 focus:ring-brand-blue"><CalendarDays size={16} className="text-gray-400" /><span className={from ? '' : 'text-gray-400'}>{label}</span></button>{open && <div className="absolute right-0 z-30 mt-2 w-[20rem] rounded-xl border border-white/10 bg-bg-elevated p-3 shadow-2xl"><div className="mb-3 flex items-center justify-between"><button type="button" aria-label="Previous month" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))} className="flex size-9 items-center justify-center rounded-lg hover:bg-white/10"><ChevronLeft size={16} /></button><strong className="text-sm text-white">{cursor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</strong><button type="button" aria-label="Next month" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} className="flex size-9 items-center justify-center rounded-lg hover:bg-white/10"><ChevronRight size={16} /></button></div><div className="grid text-center text-[11px] text-gray-400" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>{['S','M','T','W','T','F','S'].map((d, i) => <span key={`${d}${i}`} className="py-1">{d}</span>)}</div><div className="grid gap-0.5" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>{days.map((day) => { const value = toIso(day); const selected = value === draftFrom || value === draftTo; const between = draftFrom && draftTo && value > draftFrom && value < draftTo; return <button key={value} type="button" onClick={() => choose(day)} className={cn('flex h-9 items-center justify-center rounded-lg text-sm transition', day.getMonth() !== cursor.getMonth() && 'text-gray-600', selected && 'bg-brand-blue text-bg-base font-bold', between && 'bg-brand-blue/20 text-white', !selected && !between && 'hover:bg-white/10')}>{day.getDate()}</button>; })}</div><div className="mt-3 flex justify-between border-t border-white/10 pt-3"><button type="button" onClick={() => { setDraftFrom(''); setDraftTo(''); onChange('', ''); setOpen(false); }} className="min-h-10 px-2 text-sm text-gray-300 hover:text-white">Clear</button><button type="button" disabled={!draftFrom || !draftTo} onClick={() => { onChange(draftFrom, draftTo); setOpen(false); }} className="min-h-10 rounded-lg bg-brand-blue px-3 text-sm font-semibold text-bg-base disabled:opacity-40">Apply</button></div></div>}</div>;
+ return <div ref={containerRef} className="relative"><button type="button" aria-expanded={open} aria-label="Select order date range" onClick={() => { setDraftFrom(from); setDraftTo(to); setOpen(!open); }} className="flex h-10 min-w-56 items-center gap-2 rounded-lg border border-white/10 bg-bg-input px-3 text-left text-sm text-white hover:bg-white/[.04] focus:outline-none focus:ring-2 focus:ring-brand-blue"><CalendarDays size={16} className="text-gray-400" /><span className={from ? '' : 'text-gray-400'}>{label}</span></button>{open && <div className="absolute right-0 z-30 mt-2 w-[20rem] rounded-xl border border-white/10 bg-bg-elevated p-3 shadow-2xl"><div className="mb-3 flex items-center justify-between"><button type="button" aria-label="Previous month" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))} className="flex size-9 items-center justify-center rounded-lg hover:bg-white/10"><ChevronLeft size={16} /></button><strong className="text-sm text-white">{cursor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</strong><button type="button" aria-label="Next month" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} className="flex size-9 items-center justify-center rounded-lg hover:bg-white/10"><ChevronRight size={16} /></button></div><div className="grid text-center text-[11px] text-gray-400" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>{['S','M','T','W','T','F','S'].map((d, i) => <span key={`${d}${i}`} className="py-1">{d}</span>)}</div><div className="grid gap-0.5" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>{days.map((day) => { const value = toIso(day); const selected = value === draftFrom || value === draftTo; const between = draftFrom && draftTo && value > draftFrom && value < draftTo; return <button key={value} type="button" onClick={() => choose(day)} className={cn('flex h-9 items-center justify-center rounded-lg text-sm transition', day.getMonth() !== cursor.getMonth() && 'text-gray-600', selected && 'bg-brand-blue text-bg-base font-bold', between && 'bg-brand-blue/20 text-white', !selected && !between && 'hover:bg-white/10')}>{day.getDate()}</button>; })}</div><div className="mt-3 flex justify-between border-t border-white/10 pt-3"><button type="button" onClick={() => { setDraftFrom(''); setDraftTo(''); onChange('', ''); setOpen(false); }} className="min-h-10 px-2 text-sm text-gray-300 hover:text-white">Clear</button><button type="button" disabled={!draftFrom || !draftTo} onClick={() => { onChange(draftFrom, draftTo); setOpen(false); }} className="min-h-10 rounded-lg bg-brand-blue px-3 text-sm font-semibold text-bg-base disabled:opacity-40">Apply</button></div></div>}</div>;
 }
 
 /* ── Mobile card for a single order row ── */
@@ -109,6 +124,33 @@ export function AdminOrderLogsPage() {
       <div className="flex flex-col gap-3 md:hidden">
        {orders.map((order) => <OrderCard key={order.id} order={order} onClick={() => setViewing(order)} />)}
       </div>
+
+      {/* Pagination */}
+      {info.totalPages > 1 && (
+       <div className="mt-4 flex items-center justify-between rounded-xl border border-white/10 bg-bg-elevated px-4 py-3 text-sm">
+        <span className="text-gray-400">
+         Page <strong className="text-white">{info.number + 1}</strong> of <strong className="text-white">{info.totalPages}</strong>
+        </span>
+        <div className="flex gap-2">
+         <button
+          type="button"
+          disabled={page === 0}
+          onClick={() => setPage((p) => Math.max(p - 1, 0))}
+          className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-white/10 px-3 text-xs font-semibold text-gray-300 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
+         >
+          <ChevronLeft size={14} /> Previous
+         </button>
+         <button
+          type="button"
+          disabled={page + 1 >= info.totalPages}
+          onClick={() => setPage((p) => p + 1)}
+          className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-white/10 px-3 text-xs font-semibold text-gray-300 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
+         >
+          Next <ChevronRight size={14} />
+         </button>
+        </div>
+       </div>
+      )}
      </>
     )}
    </section>

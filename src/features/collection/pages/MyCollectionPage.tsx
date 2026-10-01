@@ -462,7 +462,7 @@ export function MyCollectionPage() {
 
                 <div className="min-h-0 flex-1 overflow-y-auto p-4">
                   <div className="space-y-5">
-                    <div className="grid gap-5 md:grid-cols-[320px_minmax(0,1fr)]">
+                    <div className="grid gap-5 md:grid-cols-[180px_minmax(0,1fr)]">
                       <CatalogCardImageFrame card={selectedCard} />
 
                       <div className="space-y-4">
@@ -476,19 +476,13 @@ export function MyCollectionPage() {
                         />
 
                         <Input
-                          id="collection-card-quantity"
-                          label="Quantity"
+                          id="collection-card-market-price"
                           type="number"
-                          min="1"
-                          step="1"
-                          inputMode="numeric"
-                          value={addQuantity}
-                          disabled={isAdding}
-                          error={addQuantityError ?? undefined}
-                          onChange={(event) => {
-                            setAddQuantity(event.target.value);
-                            setAddQuantityError(null);
-                          }}
+                          label="Market price (฿)"
+                          value={selectedCard?.marketPrice ?? ''}
+                          disabled
+                          placeholder="—"
+                          onChange={() => undefined}
                         />
 
                         {selectedCard && <CatalogCardDetails card={selectedCard} />}

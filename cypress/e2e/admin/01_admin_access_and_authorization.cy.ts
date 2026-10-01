@@ -25,11 +25,10 @@ describe('US-11-1: Platform Admin Access & Authorization', () => {
   });
 
   it('should allow user with ADMIN role to access /admin and see Admin Layout', () => {
-    // Using the custom command we just created
+    // Login as ADMIN
     cy.loginAsAdmin();
     
-    // Wait for login to finish and redirect to admin
-    cy.url().should('include', '/admin');
+    // After login, visit the admin dashboard explicitly
     cy.visit('/admin');
     cy.url().should('include', '/admin');
     

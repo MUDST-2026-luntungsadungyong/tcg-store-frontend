@@ -119,4 +119,104 @@ describe('AdminDashboardPage', () => {
     });
     expect(screen.getByText('฿1,500')).toBeInTheDocument();
   });
+
+  it('renders recent administrator activity and approved sellers when fetched', async () => {
+    get.mockImplementation((url: string) => {
+      if (url === '/admin/dashboard') {
+        return Promise.resolve({
+          data: {
+            totalUsers: 10,
+            totalAdmins: 1,
+            pendingSellerApplications: 0,
+            approvedSellers: 1,
+            totalCards: 100,
+            listedCards: 3,
+            totalOrders: 2,
+            totalOrderAmount: 1500,
+          },
+        });
+      }
+      if (url === '/admin/audit-logs') {
+        return Promise.resolve({
+          data: {
+            content: [
+              {
+                id: '1',
+                action: 'APPROVE_SELLER',
+                actorName: 'Admin Guide',
+                details: 'Approved Brock shop',
+                createdAt: '2026-09-30T10:00:00Z',
+              },
+            ],
+          },
+        });
+      }
+      if (url === '/admin/users') {
+        return Promise.resolve({
+          data: [
+            {
+              id: '2',
+              name: 'Brock Pewter',
+              email: 'brock@pewter.com',
+              role: 'USER',
+              sellerStatus: 'APPROVED',
+            },
+          ],
+        });
+      }
+      return Promise.reject(new Error('not found'));
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminDashboardPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('APPROVE SELLER')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Approved Brock shop')).toBeInTheDocument();
+    expect(screen.getByText('Brock Pewter')).toBeInTheDocument();
+    expect(screen.getByText('brock@pewter.com')).toBeInTheDocument();
+  });
+
+  it('renders GMV and Orders chart with daily trends', async () => {
+    get.mockResolvedValueOnce({
+      data: {
+        totalUsers: 10,
+        totalAdmins: 1,
+        pendingSellerApplications: 0,
+        approvedSellers: 1,
+        totalCards: 100,
+        listedCards: 3,
+        totalOrders: 5,
+        totalOrderAmount: 2690,
+        trends: [
+          { date: '2026-09-24', gmv: 500, orders: 1 },
+          { date: '2026-09-25', gmv: 0, orders: 0 },
+          { date: '2026-09-26', gmv: 1200, orders: 2 },
+          { date: '2026-09-27', gmv: 0, orders: 0 },
+          { date: '2026-09-28', gmv: 450, orders: 1 },
+          { date: '2026-09-29', gmv: 0, orders: 0 },
+          { date: '2026-09-30', gmv: 540, orders: 1 },
+        ],
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminDashboardPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Marketplace performance over the last 7 days')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Last 7 days')).toBeInTheDocument();
+    expect(screen.getByText('Sep 24')).toBeInTheDocument();
+    expect(screen.getByText('Sep 26')).toBeInTheDocument();
+    expect(screen.getByText('Sep 30')).toBeInTheDocument();
+    expect(screen.getByText('Total ฿2,690 across 5 orders')).toBeInTheDocument();
+  });
 });

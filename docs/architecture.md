@@ -98,6 +98,8 @@ Target endpoints:
 | `PATCH` | `/seller/orders/:id/payment-received` | `RESERVED → FULFILLED` |
 | `PATCH` | `/seller/orders/:id/sent` | `FULFILLED → SENT` + ownership transfer |
 | `GET` | `/collection` | current user collection |
-| `GET` | `/notifications` | current user notifications |
+| `GET` | `/notifications?page=0&size=20` | current user's notifications; newest first, page size 1–100 |
+| `PATCH` | `/notifications/:id/read` | idempotently mark an owned notification as read |
+| `DELETE` | `/notifications/:id` | delete an owned notification |
 
-Endpoint names เป็น proposed contract เท่านั้น ยังไม่ได้ implement ใน restructure นี้ และต้อง review กับ backend ก่อน production integration
+Notifications endpoints are implemented in the frontend adapter and backend API. Other endpoints in this table remain target contracts and require review with the backend before production integration.

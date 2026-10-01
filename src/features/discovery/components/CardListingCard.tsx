@@ -20,7 +20,7 @@ export function CardListingCard({ listing, sellerCount = 1 }: CardListingCardPro
   return (
     <Link 
       to={`/cards/${encodeURIComponent(listing.cardId || listing.id)}`}
-      className={`w-full bg-white rounded-[16px] p-4 flex gap-4 h-[180px] md:h-[200px] cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-[#8B5CF6] group ${
+      className={`w-full bg-white rounded-[16px] p-4 flex gap-4 h-[180px] md:h-[200px] cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-[#2B53A9] focus-visible:border-[#2B53A9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2B53A9]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base group ${
         !inStock ? 'opacity-60' : ''
       }`}
     >

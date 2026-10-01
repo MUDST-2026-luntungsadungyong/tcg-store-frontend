@@ -54,14 +54,14 @@ export function SimilarCardsSection({ card }: SimilarCardsSectionProps) {
   return (
     <section className="mt-12" aria-labelledby="similar-cards-heading">
       <h2 id="similar-cards-heading" className="text-2xl font-bold">Similar cards</h2>
-      {loading ? <p role="status" className="mt-4 text-sm text-gray-400">Loading similar cards…</p> : failed ? <p className="mt-4 text-sm text-gray-400">Similar cards are unavailable right now.</p> : similarCards.length ? (
+      {loading ? <p role="status" className="mt-4 text-sm text-gray-400">Loading similar cards…</p> : failed ? <p role="alert" className="mt-4 text-sm text-gray-400">Similar cards are unavailable right now.</p> : similarCards.length ? (
         <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {similarCards.map(item => <Link key={canonicalCardKey(item)} to={`/cards/${encodeURIComponent(item.cardId || item.id)}`} className="flex min-w-0 items-center gap-4 rounded-xl border border-white/10 bg-white/[.03] p-3 transition-colors hover:border-brand-blue/50">
-            <img src={item.image || '/assets/expensive_card_1.png'} alt="" className="h-24 w-20 shrink-0 rounded-lg bg-white object-contain" />
-            <span className="min-w-0"><span className="block truncate font-semibold text-white">{item.name}</span><span className="mt-1 block text-sm text-gray-400">{item.sellerCount} {item.sellerCount === 1 ? 'seller' : 'sellers'} · From ฿{item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
+          {similarCards.map(item => <Link key={canonicalCardKey(item)} to={`/cards/${encodeURIComponent(item.cardId || item.id)}`} className="flex min-w-0 items-center gap-4 rounded-2xl border border-[#D9E0EA] bg-white p-3 text-bg-card shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-shadow hover:border-[#8FB3E2] hover:shadow-[0_12px_28px_rgba(0,0,0,0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue">
+            <img src={item.image || '/assets/expensive_card_1.png'} alt="" className="h-24 w-20 shrink-0 rounded-lg bg-[#F4F6FA] object-contain" />
+            <span className="min-w-0"><span className="block truncate font-semibold text-[#151B2B]">{item.name}</span><span className="mt-1 block text-sm text-[#596173]">{item.sellerCount} {item.sellerCount === 1 ? 'seller' : 'sellers'} · From ฿{item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
           </Link>)}
         </div>
-      ) : <p className="mt-4 text-sm text-gray-400">No similar listings found.</p>}
+      ) : <p role="status" className="mt-4 text-sm text-gray-400">No similar listings found.</p>}
     </section>
   );
 }

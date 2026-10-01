@@ -2,7 +2,7 @@
 
 สถานะ: approved direction สำหรับ frontend restructure วันที่ 2026-09-09
 
-Implementation status: เอกสารนี้กำหนด target behavior เท่านั้น งาน restructure ไม่ได้ implement flow นี้
+Implementation status: เอกสารนี้กำหนด target behavior ของ reservation flow; Notifications implementation และ API contract บันทึกไว้ในหัวข้อ In-app notifications.
 
 ## Product intent
 
@@ -61,8 +61,15 @@ Mythix เปลี่ยนจาก marketplace checkout เป็น trading 
 - buyer collection หลัง ownership transfer
 - profile display name และ phone
 
-## Explicitly out of scope
+### In-app notifications
 
+- Notify each seller on a successfully reserved order and notify the buyer when the seller marks the order as sent.
+- The authenticated user sees only their own notification items.
+- Notifications remain in the inbox until the user deletes them; there is no automatic time-based expiry.
+- Users can mark a notification as read and delete it. The inbox uses zero-based pages of 20 items by default (maximum 100), newest first.
+- Notification creation is atomic with checkout and the seller's sent action. Email, push, and other delivery channels are out of scope.
+
+## Explicitly out of scope
 - payment gateway, stored card, payment verification by Mythix
 - shipping address, shipping rate, carrier integration, label printing, tracking number
 - delivery SLA, `PREPARED`, buyer received confirmation

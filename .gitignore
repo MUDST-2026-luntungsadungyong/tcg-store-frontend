@@ -18,3 +18,5 @@ dist-ssr/
 # IDE & OS
 .DS_Store
 Thumbs.db
+
+cypress/screenshots

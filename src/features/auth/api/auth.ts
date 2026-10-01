@@ -71,7 +71,7 @@ export const authApi = {
       if (user && password === 'admin123' && user.role === 'ADMIN') {
          return { token: 'mock-jwt-token-admin', user };
       }
-      if (user && user.role === 'USER' && password === (user.isSeller ? 'seller123' : 'password123')) {
+      if (user && user.role === 'USER' && (password === 'password123' || password === 'seller123')) {
          return { token: user.isSeller ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer', user };
       }
       throw new Error('Invalid credentials');

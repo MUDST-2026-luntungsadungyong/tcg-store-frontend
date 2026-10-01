@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/shared/lib';
 import { CheckCircle2, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { useToastStore, type ToastMessage } from '@/shared/model/useToastStore';
@@ -31,7 +32,14 @@ function Toast({ toast, onClose }: ToastProps) {
   };
 
   return (
-    <div className={cn('glass-card flex items-start gap-3 p-4 rounded-lg min-w-[300px] border shadow-xl animate-in slide-in-from-right-full', bgs[toast.type])}>
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: 32, scale: 0.96 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 32, scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+      className={cn('glass-card flex min-w-[300px] items-start gap-3 rounded-lg border p-4 shadow-xl', bgs[toast.type])}
+    >
       <div className="shrink-0">{icons[toast.type]}</div>
       <div className="flex-1">
         {toast.title && <h3 className="text-sm font-medium text-white">{toast.title}</h3>}
@@ -40,7 +48,7 @@ function Toast({ toast, onClose }: ToastProps) {
       <button onClick={() => onClose(toast.id)} className="shrink-0 text-gray-400 hover:text-white">
         <X size={16} />
       </button>
-    </div>
+    </motion.div>
   );
 }
 
@@ -49,9 +57,11 @@ export function ToastProvider() {
 
   return (
     <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
-      {toasts.map((toast) => (
-        <Toast key={toast.id} toast={toast} onClose={removeToast} />
-      ))}
+      <AnimatePresence initial={false}>
+        {toasts.map((toast) => (
+          <Toast key={toast.id} toast={toast} onClose={removeToast} />
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

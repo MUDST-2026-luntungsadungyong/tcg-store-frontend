@@ -76,8 +76,8 @@ describe('AdminSellerApplicationsPage', () => {
     expect(within(modal).getAllByText('misty.cards')).toHaveLength(2);
     await userEvent.click(within(modal).getByRole('button', { name: 'Copy Email' }));
     expect(writeText).toHaveBeenCalledWith('misty@mythix.com');
-    await userEvent.click(modal);
-    expect(screen.queryByRole('heading', { name: 'Seller details' })).not.toBeInTheDocument();
+    await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Seller details' })).not.toBeInTheDocument());
   });
 
   it('approves an application and removes it from the list', async () => {

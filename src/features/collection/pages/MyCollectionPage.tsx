@@ -20,6 +20,8 @@ import {
   CatalogCardImageFrame,
   CatalogCardPicker,
 } from '@/features/listings/components/CatalogCardPicker';
+import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 9 + 11
+
 
 export function MyCollectionPage() {
   const user = useAuthStore((state) => state.user);
@@ -37,6 +39,10 @@ export function MyCollectionPage() {
   const [storeLoaded, setStoreLoaded] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedEntryForDelete, setSelectedEntryForDelete] = useState<CollectionEntry | null>(null);
+  const [showSaveErrorPopup, setShowSaveErrorPopup] = useState(false);         // CASE 9: error
+  const [showDeleteCardPopup, setShowDeleteCardPopup] = useState(false);       // CASE 11: destructive
+  const [saveErrorMessage, setSaveErrorMessage] = useState('');
+
 
   const [addCardOpen, setAddCardOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<CatalogCard | null>(null);
@@ -146,10 +152,9 @@ export function MyCollectionPage() {
       });
       closeAddCard();
     } catch (err) {
-      addToast({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Failed to add card to collection.',
-      });
+      const msg = err instanceof Error ? err.message : 'Failed to add card to collection.';
+      setSaveErrorMessage(msg);
+      setShowSaveErrorPopup(true); // CASE 9: show error popup
     } finally {
       setIsAdding(false);
     }
@@ -180,6 +185,7 @@ export function MyCollectionPage() {
   };
 
   return (
+    <>
     <div className="w-full min-h-[calc(100vh-64px)] bg-[#0B141F] text-white font-['IBM_Plex_Sans_Thai',sans-serif] px-4 md:px-8 py-10">
       <div className="max-w-[1400px] mx-auto flex flex-col gap-6">
         
@@ -503,5 +509,26 @@ export function MyCollectionPage() {
 
       </div>
     </div>
+      {/* CASE 9: Save failed popup — Figma: Collection → Save failed */}
+      <FeedbackPopup
+        isOpen={showSaveErrorPopup}
+        tone="error"
+        title="We couldn't add this card"
+        message={saveErrorMessage || 'Something went wrong while saving it to your collection.'}
+        meta="Your current page and inputs are safe."
+        primaryAction={{ label: "Try again", onClick: () => { setShowSaveErrorPopup(false); void handleAddCard(); } }}
+        secondaryAction={{ label: "Close", onClick: () => setShowSaveErrorPopup(false) }}
+      />
+      {/* CASE 11: Remove card popup — Figma: Collection → Remove card */}
+      <FeedbackPopup
+        isOpen={showDeleteCardPopup}
+        tone="destructive"
+        title="Remove this card?"
+        message={`${selectedEntryForDelete?.listing.name ?? 'This card'} will be removed from your personal collection.`}
+        meta="This does not affect active seller listings."
+        primaryAction={{ label: "Remove card", onClick: async () => { setShowDeleteCardPopup(false); await handleConfirmDelete(); } }}
+        secondaryAction={{ label: "Cancel", onClick: () => { setShowDeleteCardPopup(false); setSelectedEntryForDelete(null); } }}
+      />
+    </>
   );
 }

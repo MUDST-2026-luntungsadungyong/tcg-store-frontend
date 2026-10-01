@@ -306,6 +306,10 @@ function Leaderboard({ collectors, loading, error, onRetry }: { collectors: Coll
 }
 
 export function HomePage() {
+  // --- FOR TESTING ERROR BOUNDARY (CASE 2) ---
+  // UNCOMMENT THE LINE BELOW TO TEST THE REACT ERROR BOUNDARY
+  // throw new Error("Test ErrorBoundary (Case 2): Simulated React crash");
+  // ---------------------------------------------
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
   const [bannerPaused, setBannerPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);

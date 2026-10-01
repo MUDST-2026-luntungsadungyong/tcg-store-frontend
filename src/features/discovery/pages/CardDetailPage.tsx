@@ -13,6 +13,8 @@ import { catalogApi, type CatalogCard } from '@/features/discovery/api/catalog';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { useToastStore } from '@/shared/model/useToastStore';
+import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 7: success popup
+
 
 export function CardDetailPage() {
   const { id = '' } = useParams<{ id: string }>();
@@ -25,6 +27,8 @@ export function CardDetailPage() {
   const [loadingOfferId, setLoadingOfferId] = useState<string | null>(null);
   const [isCollecting, setIsCollecting] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCollectSuccessPopup, setShowCollectSuccessPopup] = useState(false); // CASE 7
+
   const addToast = useToastStore(state => state.addToast);
   const addItem = useReservationCartStore(state => state.addItem);
   const token = useAuthStore(state => state.token);
@@ -129,7 +133,7 @@ export function CardDetailPage() {
     try {
       if (catalogCard) await collectionApi.addCatalogCardToCollection(catalogCard);
       else await collectionApi.addToCollection(card);
-      addToast({ type: 'success', message: `Saved "${card.name}" to your collection!` });
+      setShowCollectSuccessPopup(true); // CASE 7: show success popup
     } catch { addToast({ type: 'error', message: 'Failed to add card to collection.' }); }
     finally { setIsCollecting(false); }
   };
@@ -219,6 +223,16 @@ export function CardDetailPage() {
         <SimilarCardsSection card={card} />
       </div>
       <ContextualLoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} message="Log in to collect or reserve cards" />
+      {/* CASE 7: Collect success popup — Figma: Card Detail → Collect success */}
+      <FeedbackPopup
+        isOpen={showCollectSuccessPopup}
+        tone="success"
+        title="Added to your collection"
+        message={`${card?.name ?? 'This card'} is now saved to My Collection.`}
+        meta={[card?.set, card?.condition ? formatCondition(card.condition) : undefined].filter(Boolean).join(' · ') || undefined}
+        primaryAction={{ label: "View collection", onClick: () => { setShowCollectSuccessPopup(false); void navigate('/collection'); } }}
+        secondaryAction={{ label: "Keep browsing", onClick: () => setShowCollectSuccessPopup(false) }}
+      />
     </main>
   );
 }

@@ -58,4 +58,12 @@ describe("ProfilePage editors", () => {
     expect(screen.getByRole("button", { name: "Show name and email side of business card" })).toBeInTheDocument();
     expect(screen.getAllByText(user.line).length).toBeGreaterThan(0);
   });
+
+  it("replaces the seller CTA with a pending status after an application is submitted", () => {
+    useAuthStore.setState({ user: { ...user, sellerStatus: "PENDING" } });
+    render(<MemoryRouter><ProfilePage /></MemoryRouter>);
+
+    expect(screen.getByRole("heading", { name: "Seller application pending" })).toBeInTheDocument();
+    expect(screen.queryByText("Become a seller")).not.toBeInTheDocument();
+  });
 });

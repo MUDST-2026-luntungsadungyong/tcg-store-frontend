@@ -26,6 +26,13 @@ describe('auth API contract adapters', () => {
     });
   });
 
+  it('keeps a pending seller application without granting seller capability', () => {
+    expect(toFrontendUser({ id: '45', name: 'Pending', email: 'pending@example.com', role: 'USER', sellerStatus: 'PENDING' })).toMatchObject({
+      isSeller: false,
+      sellerStatus: 'PENDING',
+    });
+  });
+
   it('rejects an unknown backend role instead of granting a default role', () => {
     expect(() => toFrontendUser({
       id: '1',

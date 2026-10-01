@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ElementType, type FormEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { Check, ChevronRight, Copy, Edit3, Mail, Phone, Store } from "lucide-react";
+import { Check, ChevronRight, Clock3, Copy, Edit3, Mail, Phone, Store } from "lucide-react";
 import { useAuthStore } from "@/features/auth/model/useAuthStore";
 import { isSellerUser } from "@/entities/account/model/types";
 import { useToastStore } from "@/shared/model/useToastStore";
@@ -225,6 +225,7 @@ export function ProfilePage() {
 
   const contactButtonClassName =
     "group flex min-h-24 items-center justify-between px-5 text-left transition-[background-color,transform] duration-150 motion-safe:active:scale-[0.98] hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-blue disabled:cursor-not-allowed disabled:opacity-55";
+  const hasPendingSellerApplication = user?.sellerStatus?.toUpperCase() === "PENDING";
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -275,7 +276,18 @@ export function ProfilePage() {
           {copiedLabel ? `${copiedLabel} copied to clipboard.` : ""}
         </p>
       </section>
-      {user?.role === "USER" && !isSellerUser(user) && (
+      {user?.role === "USER" && !isSellerUser(user) && (hasPendingSellerApplication ? (
+        <section className="mt-5 flex min-h-28 items-center justify-between gap-5 rounded-2xl border border-status-warning/35 bg-status-warning/[0.07] px-5 py-5 sm:px-7" aria-labelledby="seller-application-pending-heading">
+          <span className="flex min-w-0 items-start gap-3">
+            <Clock3 size={21} className="mt-1 shrink-0 text-status-warning" aria-hidden="true" />
+            <span>
+              <h2 id="seller-application-pending-heading" className="text-xl font-semibold text-white">Seller application pending</h2>
+              <span className="mt-1 block text-sm text-gray-300">Your store details are waiting for an administrator to review.</span>
+            </span>
+          </span>
+          <span className="shrink-0 rounded-full border border-status-warning/40 bg-status-warning/10 px-3 py-2 text-xs font-semibold text-status-warning">Pending review</span>
+        </section>
+      ) : (
         <Link
           className="group relative mt-5 flex min-h-28 items-center justify-between overflow-hidden rounded-2xl border border-brand-gold/35 bg-brand-gold/10 px-5 py-5 text-gray-100 transition-[border-color,background-color,box-shadow] duration-300 hover:border-brand-gold/65 hover:bg-brand-gold/[0.14] hover:shadow-[0_16px_36px_rgba(191,166,89,0.12)] focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-bg-base sm:px-7"
           to="/profile/seller-application"
@@ -293,7 +305,7 @@ export function ProfilePage() {
             <ChevronRight size={16} className="transition-transform duration-200 ease-out group-hover:translate-x-1" aria-hidden="true" />
           </span>
         </Link>
-      )}
+      ))}
         </div>
       </div>
       <Modal

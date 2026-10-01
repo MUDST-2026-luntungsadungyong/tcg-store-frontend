@@ -43,6 +43,7 @@ export function toFrontendUser(user: BackendUser): User {
     isSeller:
       user.role.toUpperCase() === 'SELLER' ||
       ['VERIFIED', 'APPROVED'].includes(user.sellerStatus?.toUpperCase() ?? ''),
+    ...(user.sellerStatus ? { sellerStatus: user.sellerStatus } : {}),
   };
 }
 

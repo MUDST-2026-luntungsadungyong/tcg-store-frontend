@@ -67,7 +67,7 @@ describe('AdminAuditLogsPage', () => {
     render(<AdminAuditLogsPage />);
     await screen.findAllByText('APPROVE_SELLER');
 
-    const tableRow = screen.getAllByText('Platform Administrator')[0];
+    const tableRow = (await screen.findAllByText('Platform Administrator'))[0];
     await userEvent.click(tableRow);
 
     const modal = screen.getByTestId('modal-backdrop');
@@ -124,4 +124,3 @@ describe('AdminAuditLogsPage', () => {
     expect(screen.getAllByText('SYSTEM')[0]).toBeInTheDocument();
   });
 });
-

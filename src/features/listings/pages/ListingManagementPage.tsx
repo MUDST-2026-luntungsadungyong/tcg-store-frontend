@@ -351,14 +351,6 @@ export function ListingManagementPage() {
   };
 
   const requestDelete = (listing: ManagedListing) => {
-    if (listing.status !== 'HIDE') {
-      addToast({
-        type: 'error',
-        title: 'Hide listing first',
-        message: `${listing.name} must be hidden before it can be deleted.`,
-      });
-      return;
-    }
     setDeleteTarget(listing);
   };
 
@@ -625,11 +617,7 @@ export function ListingManagementPage() {
                           size="sm"
                           variant="ghost"
                           aria-label={`Delete ${listing.name}`}
-                          title={
-                            listing.status === 'SHOW'
-                              ? 'Hide this listing before deleting it'
-                              : 'Delete listing'
-                          }
+                          title="Delete listing"
                           className="text-status-danger hover:text-status-danger"
                           disabled={busy}
                           onClick={() => requestDelete(listing)}
@@ -777,11 +765,7 @@ export function ListingManagementPage() {
                             variant="ghost"
                             className="gap-1.5 text-status-danger hover:text-status-danger"
                             disabled={busy}
-                            title={
-                              listing.status === 'SHOW'
-                                ? 'Hide this listing before deleting it'
-                                : 'Delete listing'
-                            }
+                            title="Delete listing"
                             onClick={() => requestDelete(listing)}
                           >
                             <Trash2 size={15} /> Delete

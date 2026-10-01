@@ -165,13 +165,6 @@ export const useListingStore = create<ListingStoreState>(
       if (!listing) {
         throw new ListingError('NOT_FOUND', 'This listing no longer exists.');
       }
-      if (listing.status !== 'HIDE') {
-        throw new ListingError(
-          'VALIDATION',
-          'Hide this listing before deleting it.',
-        );
-      }
-
       set((state) => ({
         error: null,
         pendingIds: [...state.pendingIds, id],

@@ -136,6 +136,17 @@ describe('ListingManagementPage', () => {
     expect(screen.getByText('Database market price ฿31,401.65')).toBeInTheDocument();
   });
 
+  it('opens the existing delete confirmation for a visible listing', async () => {
+    const user = userEvent.setup();
+    render(<ListingManagementPage />);
+
+    await screen.findByRole('row', { name: /Pikachu Illustrator/ });
+    await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+
+    expect(screen.getByRole('heading', { name: 'Delete listing?' })).toBeInTheDocument();
+    expect(screen.getAllByText('Pikachu Illustrator')).toHaveLength(2);
+  });
+
   it('applies seller query/status filters and switches between table and grid views', async () => {
     const user = userEvent.setup();
     render(<ListingManagementPage />);

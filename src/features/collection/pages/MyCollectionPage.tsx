@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Layers, AlertCircle, Plus, RefreshCw, ShoppingBag, Store, X } from 'lucide-react';
+import { Layers, AlertCircle, Minus, Plus, RefreshCw, ShoppingBag, Store, X } from 'lucide-react';
 import { collectionApi } from '../api/collection';
 import { CollectionCard } from '../components/CollectionCard';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { Modal } from '@/shared/components/Modal';
 import { Button } from '@/shared/components/Button';
-import { Input } from '@/shared/components/Input';
 import { useToastStore } from '@/shared/model/useToastStore';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import type { CardListing, CollectionEntry } from '@/entities/card/model/types';
@@ -198,9 +197,14 @@ export function MyCollectionPage() {
         {/* Header Section from Figma 641:1898 */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
-              {activeView === 'store' ? 'My Store' : 'My Collection'}
-            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                {activeView === 'store' ? 'My Store' : 'My Collection'}
+              </h1>
+              <span className="rounded-full border border-white/10 bg-bg-surface px-3 py-1 text-sm font-medium text-gray-300">
+                {activeView === 'store' ? `${storeCards.length} listed` : `${collection.length} cards`}
+              </span>
+            </div>
             <p className="text-sm md:text-base text-gray-400 mt-2 max-w-2xl leading-relaxed">
               {activeView === 'store'
                 ? 'Cards you currently have listed for sale in your store.'
@@ -372,7 +376,7 @@ export function MyCollectionPage() {
 
         {/* Collection cards */}
         {activeView === 'collection' && !loading && !error && collection.length > 0 && (
-          <div id="seller-inventory-panel" role={isSeller ? 'tabpanel' : undefined} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+          <div id="seller-inventory-panel" role={isSeller ? 'tabpanel' : undefined} className="grid grid-cols-3 gap-3 pt-2 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
             {collection.map((entry) => (
               <CollectionCard
                 key={entry.id}
@@ -475,21 +479,15 @@ export function MyCollectionPage() {
                           }}
                         />
 
-                        <Input
-                          id="collection-card-quantity"
-                          label="Quantity"
-                          type="number"
-                          min="1"
-                          step="1"
-                          inputMode="numeric"
-                          value={addQuantity}
-                          disabled={isAdding}
-                          error={addQuantityError ?? undefined}
-                          onChange={(event) => {
-                            setAddQuantity(event.target.value);
-                            setAddQuantityError(null);
-                          }}
-                        />
+                        <div>
+                          <label htmlFor="collection-card-quantity" className="mb-1 block text-sm font-medium text-gray-300">Quantity</label>
+                          <div className="flex h-12 w-full overflow-hidden rounded-xl border border-[rgba(165,201,249,0.3)] bg-bg-input focus-within:border-brand-gold focus-within:ring-1 focus-within:ring-brand-gold">
+                            <button type="button" aria-label="Decrease quantity" disabled={isAdding || Number(addQuantity) <= 1} onClick={() => { setAddQuantity((current) => String(Math.max(1, (Number(current) || 1) - 1))); setAddQuantityError(null); }} className="flex w-12 shrink-0 items-center justify-center border-r border-white/10 text-gray-300 transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-blue disabled:cursor-not-allowed disabled:opacity-35"><Minus size={17} aria-hidden="true" /></button>
+                            <input id="collection-card-quantity" aria-invalid={Boolean(addQuantityError)} aria-describedby={addQuantityError ? 'collection-card-quantity-error' : undefined} type="number" min="1" step="1" inputMode="numeric" value={addQuantity} disabled={isAdding} onChange={(event) => { setAddQuantity(event.target.value); setAddQuantityError(null); }} className="min-w-0 flex-1 appearance-none bg-transparent px-3 text-center text-sm font-semibold text-gray-100 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+                            <button type="button" aria-label="Increase quantity" disabled={isAdding} onClick={() => { setAddQuantity((current) => String(Math.max(1, Number(current) || 1) + 1)); setAddQuantityError(null); }} className="flex w-12 shrink-0 items-center justify-center border-l border-white/10 text-brand-blue transition-colors hover:bg-brand-blue/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-blue disabled:cursor-not-allowed disabled:opacity-35"><Plus size={17} aria-hidden="true" /></button>
+                          </div>
+                          {addQuantityError && <p id="collection-card-quantity-error" className="mt-1 text-sm text-status-danger">{addQuantityError}</p>}
+                        </div>
 
                         {selectedCard && <CatalogCardDetails card={selectedCard} />}
                       </div>

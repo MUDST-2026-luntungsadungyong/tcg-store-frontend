@@ -191,8 +191,9 @@ describe('MyCollectionPage seller collection/store toggle', () => {
     await user.type(screen.getByRole('textbox', { name: 'Card' }), 'Pikachu');
     await user.click(await screen.findByRole('option', { name: /Pikachu/ }));
     const quantity = screen.getByRole('spinbutton', { name: 'Quantity' });
-    await user.clear(quantity);
-    await user.type(quantity, '3');
+    await user.click(screen.getByRole('button', { name: 'Increase quantity' }));
+    await user.click(screen.getByRole('button', { name: 'Increase quantity' }));
+    expect(quantity).toHaveValue(3);
     await user.click(screen.getByRole('button', { name: 'Add to Collection' }));
 
     await waitFor(() => {

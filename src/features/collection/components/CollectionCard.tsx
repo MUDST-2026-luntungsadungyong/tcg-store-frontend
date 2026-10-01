@@ -12,60 +12,59 @@ export function CollectionCard({ entry, onDelete, isDeleting }: CollectionCardPr
   const card = entry.listing;
 
   return (
-    <div className="group bg-white rounded-2xl p-5 shadow-[0_4px_16px_rgba(0,0,0,0.12)] flex flex-row items-center gap-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
-      {/* Left: Card Art (Clickable) */}
+    <article className="group relative flex flex-col gap-2 overflow-hidden rounded-xl border border-white/80 bg-white p-2 shadow-[0_16px_34px_rgba(0,0,0,0.16)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-brand-blue/45 hover:shadow-[0_20px_42px_rgba(0,0,0,0.26)] sm:flex-row sm:items-center sm:gap-4 sm:rounded-2xl sm:p-4">
       <Link
         to={`/cards/${card.id}`}
-        className="relative w-28 h-36 bg-[#0B141F] rounded-xl border border-gray-200/60 p-2 flex items-center justify-center shrink-0 shadow-inner overflow-hidden cursor-pointer"
+        className="relative flex aspect-[2.5/3.5] w-full shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-[#0B141F] p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:h-36 sm:w-28 sm:aspect-auto sm:rounded-xl sm:p-2"
         title={`View details of ${card.name}`}
       >
         <img
           src={card.image || '/assets/expensive_card_1.png'}
           alt={card.name}
-          className="w-full h-full object-contain filter drop-shadow transition-transform duration-300 group-hover:scale-105"
+          className="h-full w-full object-contain drop-shadow-[0_14px_16px_rgba(0,0,0,0.38)] transition-transform duration-300 group-hover:scale-[1.035]"
         />
-        <span className="absolute top-2 left-2 bg-[#1B2B48] text-[#90B7EC] text-[10px] font-bold px-2 py-0.5 rounded shadow z-10">
-          OWNED {entry.quantity > 1 ? `×${entry.quantity}` : ''}
-        </span>
       </Link>
 
-      {/* Right: Info (Clickable) and Delete Action */}
-      <div className="flex-1 flex flex-col justify-between h-full min-w-0 py-1">
+      <div className="flex min-w-0 w-full flex-1 items-start justify-between gap-3 py-1 sm:w-auto sm:self-stretch">
         <Link
           to={`/cards/${card.id}`}
-          className="block group/link cursor-pointer"
+          className="min-w-0 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           title={`View details of ${card.name}`}
         >
-          <h3 className="text-base font-bold text-gray-900 group-hover/link:text-brand-blue line-clamp-1 transition-colors">
+          <h3 className="truncate pr-7 text-xs font-semibold text-gray-900 transition-colors group-hover:text-brand-blue sm:pr-0 sm:text-xl">
             {card.name}
           </h3>
-
-          <p className="text-xs text-gray-500 font-medium mt-0.5 line-clamp-1">
+          <p className="mt-1 hidden truncate text-sm text-gray-600 sm:block">
             {card.set || card.game || 'Promo Set'}
           </p>
-
-          <p className="text-xs text-gray-400 mt-2 line-clamp-1">
+          <p className="mt-3 hidden truncate text-xs text-gray-500 sm:block">
             {card.tournament || card.condition || 'Mint Condition'}
           </p>
         </Link>
 
         {onDelete && (
-          <div className="pt-3">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(entry.id);
-              }}
-              disabled={isDeleting}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-status-danger/10 hover:bg-status-danger/20 text-status-danger border border-status-danger/30 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
-            >
-              <Trash2 size={13} />
-              Delete from Collection
-            </button>
-          </div>
+          <button
+            type="button"
+            aria-label={`Remove ${card.name} from collection`}
+            title="Remove from collection"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(entry.id);
+            }}
+            disabled={isDeleting}
+            className="absolute right-1 top-1 flex size-8 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-500 transition-colors hover:border-status-danger/50 hover:bg-status-danger/10 hover:text-status-danger focus:outline-none focus:ring-2 focus:ring-status-danger focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 sm:static sm:size-10 sm:shrink-0"
+          >
+            <Trash2 size={16} aria-hidden="true" />
+          </button>
         )}
       </div>
-    </div>
+
+      <span
+        aria-label={`${entry.quantity} ${entry.quantity === 1 ? 'card' : 'cards'} owned`}
+        className="pointer-events-none absolute bottom-2 right-2 flex size-8 items-center justify-center rounded-full bg-brand-blue text-base font-bold tabular-nums text-white sm:bottom-4 sm:right-4 sm:size-11 sm:text-xl"
+      >
+        {entry.quantity}
+      </span>
+    </article>
   );
 }

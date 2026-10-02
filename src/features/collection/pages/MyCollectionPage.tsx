@@ -5,7 +5,6 @@ import { Layers, AlertCircle, Minus, Plus, RefreshCw, ShoppingBag, Store, X } fr
 import { collectionApi } from '../api/collection';
 import { CollectionCard } from '../components/CollectionCard';
 import { Skeleton } from '@/shared/components/Skeleton';
-import { Modal } from '@/shared/components/Modal';
 import { Button } from '@/shared/components/Button';
 import { useToastStore } from '@/shared/model/useToastStore';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';

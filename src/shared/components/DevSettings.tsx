@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Settings, Bug } from 'lucide-react';
 
 export function DevSettings() {

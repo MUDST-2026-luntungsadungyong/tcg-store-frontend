@@ -1,4 +1,4 @@
-﻿import { createBrowserRouter, type RouteObject } from 'react-router-dom';
+import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 
 import { PublicLayout } from '@/app/layouts/PublicLayout';
 import { WorkspaceLayout } from '@/app/layouts/WorkspaceLayout';
@@ -24,6 +24,7 @@ import { AdminUsersPage } from '@/features/admin/pages/AdminUsersPage';
 
 import { NotFoundPage } from './NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
+import { RouteErrorBoundary } from '@/shared/components/ErrorBoundary';
 
 const accountRoutes: RouteObject = {
   element: <ProtectedRoute />,
@@ -58,6 +59,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <PublicLayout />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       ...discoveryRoutes,
       ...authRoutes,
@@ -67,6 +69,6 @@ export const router = createBrowserRouter([
       { path: '*', element: <NotFoundPage /> },
     ],
   },
-  workspaceRoute,
+  { ...workspaceRoute, errorElement: <RouteErrorBoundary /> },
   adminRoute,
 ]);

@@ -123,6 +123,13 @@ export const collectionApi = {
   ): Promise<CollectionEntry> => {
     if (ENV.ENABLE_MOCK_API) {
       await new Promise((resolve) => setTimeout(resolve, 300));
+      
+      // --- QA TEST SETTING FOR CASE 9 ---
+      if (localStorage.getItem('DEV_SIMULATE_API_ERROR') === 'true') {
+        throw new Error('500 Internal Server Error: Database connection lost while saving.');
+      }
+      // ----------------------------------
+
       const token = localStorage.getItem('token');
       const userId = token?.includes('admin') ? 'usr-2' : token?.includes('seller') ? 'usr-3' : 'usr-1';
       const all = storage.getCollection();

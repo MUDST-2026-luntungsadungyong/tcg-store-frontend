@@ -7,6 +7,10 @@ export const discoveryRoutes: RouteObject[] = [
   },
   {
     path: 'cards',
+    // --- FOR TESTING ROUTE ERROR BOUNDARY (CASE 3) ---
+    // UNCOMMENT THE LOADER BELOW TO TEST THE ROUTE ERROR BOUNDARY
+    // loader: () => { throw new Error("Test RouteErrorBoundary (Case 3): Simulated route crash"); },
+    // -------------------------------------------------
     lazy: async () => ({ Component: (await import('./pages/CardDiscoveryPage')).CardDiscoveryPage }),
   },
   {

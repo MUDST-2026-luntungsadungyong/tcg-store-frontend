@@ -5,7 +5,6 @@ import { Layers, AlertCircle, Minus, Plus, RefreshCw, ShoppingBag, Store, X } fr
 import { collectionApi } from '../api/collection';
 import { CollectionCard } from '../components/CollectionCard';
 import { Skeleton } from '@/shared/components/Skeleton';
-import { Modal } from '@/shared/components/Modal';
 import { Button } from '@/shared/components/Button';
 import { useToastStore } from '@/shared/model/useToastStore';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
@@ -19,6 +18,8 @@ import {
   CatalogCardImageFrame,
   CatalogCardPicker,
 } from '@/features/listings/components/CatalogCardPicker';
+import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 9 + 11
+
 
 export function MyCollectionPage() {
   const user = useAuthStore((state) => state.user);
@@ -36,6 +37,10 @@ export function MyCollectionPage() {
   const [storeLoaded, setStoreLoaded] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedEntryForDelete, setSelectedEntryForDelete] = useState<CollectionEntry | null>(null);
+  const [showSaveErrorPopup, setShowSaveErrorPopup] = useState(false);         // CASE 9: error
+  const [showDeleteCardPopup, setShowDeleteCardPopup] = useState(false);       // CASE 11: destructive
+  const [saveErrorMessage, setSaveErrorMessage] = useState('');
+
 
   const [addCardOpen, setAddCardOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<CatalogCard | null>(null);
@@ -157,10 +162,9 @@ export function MyCollectionPage() {
       });
       closeAddCard();
     } catch (err) {
-      addToast({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Failed to add card to collection.',
-      });
+      const msg = err instanceof Error ? err.message : 'Failed to add card to collection.';
+      setSaveErrorMessage(msg);
+      setShowSaveErrorPopup(true); // CASE 9: show error popup
     } finally {
       setIsAdding(false);
     }
@@ -191,6 +195,7 @@ export function MyCollectionPage() {
   };
 
   return (
+    <>
     <div className="w-full min-h-[calc(100vh-64px)] bg-[#0B141F] text-white font-['IBM_Plex_Sans_Thai',sans-serif] px-4 md:px-8 py-10">
       <div className="max-w-[1400px] mx-auto flex flex-col gap-6">
         
@@ -381,7 +386,7 @@ export function MyCollectionPage() {
               <CollectionCard
                 key={entry.id}
                 entry={entry}
-                onDelete={() => setSelectedEntryForDelete(entry)}
+                onDelete={() => { setSelectedEntryForDelete(entry); setShowDeleteCardPopup(true); }}
                 isDeleting={deletingId === entry.id}
               />
             ))}
@@ -396,38 +401,6 @@ export function MyCollectionPage() {
             ))}
           </div>
         )}
-
-        {/* Confirmation Modal before Deleting */}
-        <Modal
-          isOpen={selectedEntryForDelete !== null}
-          onClose={() => setSelectedEntryForDelete(null)}
-          title="Delete from Collection"
-        >
-          <div className="flex flex-col gap-4">
-            <p className="text-sm text-gray-300">
-              Are you sure you want to remove{' '}
-              <strong className="text-white font-semibold">"{selectedEntryForDelete?.listing.name}"</strong> from your
-              personal collection?
-            </p>
-            <div className="flex items-center justify-end gap-3 mt-4">
-              <button
-                type="button"
-                onClick={() => setSelectedEntryForDelete(null)}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-medium rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                disabled={deletingId !== null}
-                className="px-4 py-2 bg-status-danger hover:bg-status-danger/90 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
-              >
-                {deletingId ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </Modal>
 
         {/* Add Card Dialog */}
         {addCardOpen &&
@@ -519,5 +492,26 @@ export function MyCollectionPage() {
 
       </div>
     </div>
+      {/* CASE 9: Save failed popup — Figma: Collection → Save failed */}
+      <FeedbackPopup
+        isOpen={showSaveErrorPopup}
+        tone="error"
+        title="We couldn't add this card"
+        message={saveErrorMessage || 'Something went wrong while saving it to your collection.'}
+        meta="Your current page and inputs are safe."
+        primaryAction={{ label: "Try again", onClick: () => { setShowSaveErrorPopup(false); void handleAddCard(); } }}
+        secondaryAction={{ label: "Close", onClick: () => setShowSaveErrorPopup(false) }}
+      />
+      {/* CASE 11: Remove card popup — Figma: Collection → Remove card */}
+      <FeedbackPopup
+        isOpen={showDeleteCardPopup}
+        tone="destructive"
+        title="Remove this card?"
+        message={`${selectedEntryForDelete?.listing.name ?? 'This card'} will be removed from your personal collection.`}
+        meta="This does not affect active seller listings."
+        primaryAction={{ label: "Remove card", onClick: async () => { setShowDeleteCardPopup(false); await handleConfirmDelete(); } }}
+        secondaryAction={{ label: "Cancel", onClick: () => { setShowDeleteCardPopup(false); setSelectedEntryForDelete(null); } }}
+      />
+    </>
   );
 }

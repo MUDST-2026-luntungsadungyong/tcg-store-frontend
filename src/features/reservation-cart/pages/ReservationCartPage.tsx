@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 
 import { useReservationCartStore } from '../model/useReservationCartStore';
+import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 8: warning popup
 
 const money = (value: number) => `฿${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 
@@ -15,6 +16,8 @@ export function ReservationCartPage() {
   const updateQuantity = useReservationCartStore((state) => state.updateQuantity);
   const removeItem = useReservationCartStore((state) => state.removeItem);
   const [pendingListingId, setPendingListingId] = useState<string | null>(null);
+  const [showStockWarningPopup, setShowStockWarningPopup] = useState(false); // CASE 8
+
 
   useEffect(() => {
     if (ownerId) void loadCart();
@@ -22,8 +25,15 @@ export function ReservationCartPage() {
 
   const handleUpdateQuantity = async (listingId: string, quantity: number) => {
     setPendingListingId(listingId);
-    await updateQuantity(listingId, quantity);
-    setPendingListingId(null);
+    try {
+      await updateQuantity(listingId, quantity);
+    } catch (err) {
+      if (err instanceof Error && err.message === 'STOCK_CHANGED') {
+        setShowStockWarningPopup(true); // CASE 8: Realistically triggered
+      }
+    } finally {
+      setPendingListingId(null);
+    }
   };
 
   const handleRemove = async (listingId: string) => {
@@ -93,6 +103,7 @@ export function ReservationCartPage() {
   }
 
   return (
+    <>
     <main className="min-h-[calc(100vh-64px)] bg-[#0B141F] px-4 py-10 text-white md:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="mb-8">
@@ -153,5 +164,16 @@ export function ReservationCartPage() {
         </div>
       </div>
     </main>
+      {/* CASE 8: Stock warning popup — Figma: Reservation → Stock changed */}
+      <FeedbackPopup
+        isOpen={showStockWarningPopup}
+        tone="warning"
+        title="This card is no longer available"
+        message="Stock changed while you were reserving it. No reservation was created."
+        meta="Try another seller or refresh offers."
+        primaryAction={{ label: "View other offers", onClick: () => setShowStockWarningPopup(false) }}
+        secondaryAction={{ label: "Close", onClick: () => setShowStockWarningPopup(false) }}
+      />
+    </>
   );
 }

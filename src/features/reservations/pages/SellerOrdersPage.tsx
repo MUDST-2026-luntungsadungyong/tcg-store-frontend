@@ -24,6 +24,7 @@ import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
 import { Modal } from '@/shared/components/Modal';
+import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 10
 
 export function SellerOrdersPage() {
   const [orders, setOrders] = useState<SellerOrder[]>([]);
@@ -43,6 +44,9 @@ export function SellerOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<SellerOrder | null>(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | number | null>(null);
+  const [showPaymentConfirmPopup, setShowPaymentConfirmPopup] = useState(false); // CASE 10a
+  const [showMarkSentPopup, setShowMarkSentPopup] = useState(false);             // CASE 10b
+  const [pendingOrderAction, setPendingOrderAction] = useState<{ orderId: string | number; status: string } | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -343,7 +347,16 @@ export function SellerOrdersPage() {
                                 size="sm"
                                 variant="primary"
                                 disabled={isActionLoading}
-                                onClick={() => handleStatusUpdate(order.id, 'SENT')}
+                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'PAID' }); setShowPaymentConfirmPopup(true); }}
+                                className="w-28 text-xs bg-brand-blue hover:bg-brand-blue/90 mb-1"
+                              >
+                                Confirm Payment
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                disabled={isActionLoading}
+                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'SENT' }); setShowMarkSentPopup(true); }}
                                 className="w-28 text-xs bg-status-success hover:bg-status-success/90"
                               >
                                 Mark as Sent
@@ -428,6 +441,34 @@ export function SellerOrdersPage() {
           </div>
         </Modal>
       )}
+      {/* CASE 10a: Confirm payment popup — Figma: Seller Orders → Payment */}
+      <FeedbackPopup
+        isOpen={showPaymentConfirmPopup}
+        tone="confirm"
+        title="Confirm payment received?"
+        message="Only confirm after the buyer has paid you outside Mythix."
+        meta={pendingOrderAction ? `Order ${String(pendingOrderAction.orderId)}` : undefined}
+        primaryAction={{ label: "Confirm payment", onClick: async () => {
+          if (pendingOrderAction) await handleStatusUpdate(pendingOrderAction.orderId, pendingOrderAction.status);
+          setShowPaymentConfirmPopup(false);
+          setPendingOrderAction(null);
+        } }}
+        secondaryAction={{ label: "Back", onClick: () => { setShowPaymentConfirmPopup(false); setPendingOrderAction(null); } }}
+      />
+      {/* CASE 10b: Mark sent popup — Figma: Seller Orders → Mark sent */}
+      <FeedbackPopup
+        isOpen={showMarkSentPopup}
+        tone="confirm"
+        title="Mark this order as sent?"
+        message="This transfers card ownership to the buyer's collection."
+        meta={pendingOrderAction ? `Order ${String(pendingOrderAction.orderId)} · This cannot be reversed here.` : undefined}
+        primaryAction={{ label: "Mark as sent", onClick: async () => {
+          if (pendingOrderAction) await handleStatusUpdate(pendingOrderAction.orderId, pendingOrderAction.status);
+          setShowMarkSentPopup(false);
+          setPendingOrderAction(null);
+        } }}
+        secondaryAction={{ label: "Back", onClick: () => { setShowMarkSentPopup(false); setPendingOrderAction(null); } }}
+      />
     </div>
   );
 }

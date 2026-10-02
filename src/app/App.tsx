@@ -8,6 +8,7 @@ import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { configureApiClientAuth } from '@/shared/api/client';
 import { ToastProvider } from '@/shared/components/Toast';
 import { initMockStorage } from '@/infrastructure/mock-db/storage';
+import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 
 configureApiClientAuth({
   getAccessToken: () => useAuthStore.getState().token,
@@ -18,6 +19,8 @@ configureApiClientAuth({
     }
   },
 });
+
+import { DevSettings } from '@/shared/components/DevSettings';
 
 if (ENV.ENABLE_MOCK_API) {
   initMockStorage();
@@ -40,10 +43,11 @@ function App() {
   }, []);
 
   return (
-    <>
+    <ErrorBoundary>
       <RouterProvider router={router} />
       <ToastProvider />
-    </>
+      <DevSettings />
+    </ErrorBoundary>
   );
 }
 

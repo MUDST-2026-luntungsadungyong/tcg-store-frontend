@@ -40,6 +40,8 @@ import { Modal } from '@/shared/components/Modal';
 import { Select } from '@/shared/components/Select';
 import { useToastStore } from '@/shared/model/useToastStore';
 import type { ListingVisibility } from '@/entities/card/model/types';
+import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 11
+
 
 const STATUS_FILTER_OPTIONS = [
   { value: 'ALL', label: 'All statuses' },
@@ -156,6 +158,7 @@ export function ListingManagementPage() {
   const [formErrors, setFormErrors] = useState<ListingFormErrors>({});
   const [selectedCard, setSelectedCard] = useState<CatalogCard | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ManagedListing | null>(null);
+  const [showDeleteListingPopup, setShowDeleteListingPopup] = useState(false); // CASE 11
 
   useEffect(() => {
     void fetchListings().catch(() => undefined);
@@ -352,6 +355,7 @@ export function ListingManagementPage() {
 
   const requestDelete = (listing: ManagedListing) => {
     setDeleteTarget(listing);
+    setShowDeleteListingPopup(true); // CASE 11: open destructive popup
   };
 
   return (
@@ -985,6 +989,19 @@ export function ListingManagementPage() {
           </div>
         </div>
       </Modal>
+      {/* CASE 11: Delete listing popup — Figma: Listing → Delete */}
+      <FeedbackPopup
+        isOpen={showDeleteListingPopup}
+        tone="destructive"
+        title="Delete this listing?"
+        message="This permanently removes the hidden listing from your inventory."
+        meta={deleteTarget ? `${deleteTarget.name} · Hidden listing` : undefined}
+        primaryAction={{ label: "Delete listing", onClick: async () => {
+          setShowDeleteListingPopup(false);
+          await confirmDelete();
+        } }}
+        secondaryAction={{ label: "Cancel", onClick: () => { setShowDeleteListingPopup(false); setDeleteTarget(null); } }}
+      />
     </div>
   );
 }

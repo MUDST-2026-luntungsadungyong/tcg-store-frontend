@@ -20,6 +20,8 @@ configureApiClientAuth({
   },
 });
 
+import { DevSettings } from '@/shared/components/DevSettings';
+
 function App() {
   useEffect(() => {
     if (ENV.ENABLE_MOCK_API) {
@@ -38,6 +40,7 @@ function App() {
     <ErrorBoundary>
       <RouterProvider router={router} />
       <ToastProvider />
+      <DevSettings />
     </ErrorBoundary>
   );
 }

@@ -9,6 +9,7 @@ Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
     name: `Test ${role}`,
     role: role === 'ADMIN' ? 'ADMIN' : 'USER',
     isSeller: role === 'SELLER',
+    sellerStatus: role === 'SELLER' ? 'APPROVED' : undefined
   };
 
   cy.intercept('GET', '**/auth/me', { statusCode: 200, body: userObj });

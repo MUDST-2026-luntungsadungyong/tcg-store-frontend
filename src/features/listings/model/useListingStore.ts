@@ -49,7 +49,7 @@ export const useListingStore = create<ListingStoreState>(
     pendingIds: [],
     error: null,
     searchQuery: '',
-    gameFilter: 'ALL',
+    gameFilter: 'Pokemon',
     statusFilter: 'ALL',
     viewMode: 'table',
     currentPage: 1,
@@ -165,13 +165,6 @@ export const useListingStore = create<ListingStoreState>(
       if (!listing) {
         throw new ListingError('NOT_FOUND', 'This listing no longer exists.');
       }
-      if (listing.status !== 'HIDE') {
-        throw new ListingError(
-          'VALIDATION',
-          'Hide this listing before deleting it.',
-        );
-      }
-
       set((state) => ({
         error: null,
         pendingIds: [...state.pendingIds, id],

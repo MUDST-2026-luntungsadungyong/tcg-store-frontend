@@ -1,4 +1,4 @@
-/// <reference types="cypress" />
+﻿/// <reference types="cypress" />
 
 describe('US-11-3: View Seller Application Queue', () => {
   beforeEach(() => {
@@ -88,5 +88,72 @@ describe('US-11-3: View Seller Application Queue', () => {
     // Verify Approve and Reject buttons exist
     cy.get('table').contains('button', /Approve/i).should('be.visible');
     cy.get('table').contains('button', /Reject/i).should('be.visible');
+  });
+  it('should allow admin to approve a seller application', () => {
+    const mockApplications = [
+      {
+        id: '1',
+        applicantName: 'Approve Me',
+        applicantEmail: 'approve@example.com',
+        shopName: "Approve's Cards",
+        sellerStatus: 'PENDING'
+      }
+    ];
+    cy.intercept('GET', '**/api/admin/seller-applications', {
+      statusCode: 200,
+      body: mockApplications,
+    }).as('getApplications');
+    
+    cy.intercept('PATCH', '**/api/admin/seller-applications/1/approve', {
+      statusCode: 200,
+      body: { ...mockApplications[0], sellerStatus: 'APPROVED' },
+    }).as('approveApp');
+
+    cy.visit('/admin/seller-applications');
+    cy.wait('@getApplications');
+
+    cy.get('table').contains('button', /Approve/i).click();
+    cy.wait('@approveApp');
+
+    // After approval, the table row should be removed from pending list
+    cy.get('table').should('not.exist');
+  });
+
+  it('should allow admin to reject a seller application', () => {
+    const mockApplications = [
+      {
+        id: '2',
+        applicantName: 'Reject Me',
+        applicantEmail: 'reject@example.com',
+        shopName: "Reject's Cards",
+        sellerStatus: 'PENDING'
+      }
+    ];
+    cy.intercept('GET', '**/api/admin/seller-applications', {
+      statusCode: 200,
+      body: mockApplications,
+    }).as('getApplications');
+    
+    cy.intercept('PATCH', '**/api/admin/seller-applications/2/reject', {
+      statusCode: 200,
+      body: { ...mockApplications[0], sellerStatus: 'REJECTED' },
+    }).as('rejectApp');
+
+    cy.visit('/admin/seller-applications');
+    cy.wait('@getApplications');
+
+    cy.get('table').contains('button', /Reject/i).click();
+
+    // Verify modal pops up
+    cy.get('[role="dialog"]').should('be.visible');
+    cy.get('textarea').should('be.visible').type('Shop name violates policy.');
+    
+    // Confirm rejection
+    cy.get('[role="dialog"]').contains('button', /Reject application/i).click();
+    
+    cy.wait('@rejectApp').its('request.body').should('deep.equal', { reason: 'Shop name violates policy.' });
+
+    // After rejection, the table row should be removed
+    cy.get('table').should('not.exist');
   });
 });

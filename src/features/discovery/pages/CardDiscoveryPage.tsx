@@ -481,11 +481,17 @@ export function CardDiscoveryPage() {
         {isLoading ? (
           <div data-testid="loading-state" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="w-full flex flex-col gap-3 p-4 bg-[#1e2538] rounded-2xl">
-                <Skeleton className="aspect-[4/3] w-full rounded-xl" />
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-6 w-1/3" />
+              <div key={i} className="w-full bg-bg-elevated rounded-[16px] p-4 flex gap-4 h-[180px] md:h-[200px] border-2 border-transparent">
+                <Skeleton className="relative w-[110px] md:w-[130px] h-full shrink-0 rounded-lg" />
+                <div className="flex flex-col flex-1 py-1 overflow-hidden">
+                  <Skeleton className="h-4 md:h-5 w-3/4 mb-2" />
+                  <Skeleton className="h-3 w-1/2 mb-2" />
+                  <Skeleton className="h-3 w-2/3 mb-auto" />
+                  <div className="mt-2">
+                    <Skeleton className="h-6 md:h-7 w-2/3 mb-2" />
+                    <Skeleton className="h-3 w-full" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>

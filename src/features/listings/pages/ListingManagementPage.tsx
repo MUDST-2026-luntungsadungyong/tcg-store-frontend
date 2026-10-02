@@ -50,11 +50,7 @@ const STATUS_FILTER_OPTIONS = [
 ];
 
 const GAME_FILTER_OPTIONS = [
-  { value: 'ALL', label: 'All games' },
   { value: 'Pokemon', label: 'Pokemon' },
-  { value: 'YGO', label: 'Yu-Gi-Oh!' },
-  { value: 'MTG', label: 'Magic: The Gathering' },
-  { value: 'One Piece', label: 'One Piece' },
 ];
 
 type ListingForm = {
@@ -75,15 +71,20 @@ const listingToForm = (listing: ManagedListing): ListingForm => ({
 });
 
 const listingToCatalogCard = (listing: ManagedListing): CatalogCard => ({
-  id: listing.id,
+  id: listing.cardId ?? listing.id,
   name: listing.name,
   game: listing.game,
   rarity: listing.rarity,
   setName: listing.set,
   cardNumber: listing.cardNumber,
-  imageLarge: listing.image,
+  imageSmall: listing.imageSmall,
+  imageLarge: listing.imageLarge ?? listing.image,
   marketPrice: listing.marketPrice ?? listing.price,
-  supertype: listing.stage,
+  supertype: listing.supertype,
+  subtypes: listing.subtypes ?? listing.stage,
+  hp: listing.hp,
+  types: listing.types,
+  artist: listing.artist,
 });
 
 const formatBaht = (amount: number) =>
@@ -264,6 +265,7 @@ export function ListingManagementPage() {
     if (!card && !editingListing) return;
 
     const payload: ManagedListingInput = {
+      cardId: editingListing?.cardId ?? card!.id,
       name: editingListing?.name ?? card!.name,
       game: editingListing?.game ?? card!.game ?? 'Pokemon',
       image:
@@ -352,14 +354,6 @@ export function ListingManagementPage() {
   };
 
   const requestDelete = (listing: ManagedListing) => {
-    if (listing.status !== 'HIDE') {
-      addToast({
-        type: 'error',
-        title: 'Hide listing first',
-        message: `${listing.name} must be hidden before it can be deleted.`,
-      });
-      return;
-    }
     setDeleteTarget(listing);
     setShowDeleteListingPopup(true); // CASE 11: open destructive popup
   };
@@ -627,11 +621,7 @@ export function ListingManagementPage() {
                           size="sm"
                           variant="ghost"
                           aria-label={`Delete ${listing.name}`}
-                          title={
-                            listing.status === 'SHOW'
-                              ? 'Hide this listing before deleting it'
-                              : 'Delete listing'
-                          }
+                          title="Delete listing"
                           className="text-status-danger hover:text-status-danger"
                           disabled={busy}
                           onClick={() => requestDelete(listing)}
@@ -779,11 +769,7 @@ export function ListingManagementPage() {
                             variant="ghost"
                             className="gap-1.5 text-status-danger hover:text-status-danger"
                             disabled={busy}
-                            title={
-                              listing.status === 'SHOW'
-                                ? 'Hide this listing before deleting it'
-                                : 'Delete listing'
-                            }
+                            title="Delete listing"
                             onClick={() => requestDelete(listing)}
                           >
                             <Trash2 size={15} /> Delete
@@ -880,7 +866,7 @@ export function ListingManagementPage() {
 
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <form className="space-y-5" onSubmit={handleSave} noValidate>
-          <div className="grid gap-5 md:grid-cols-[180px_minmax(0,1fr)]">
+          <div className="grid gap-5 md:grid-cols-[320px_minmax(0,1fr)]">
             <CatalogCardImageFrame card={selectedCard} />
 
             <div className="space-y-4">

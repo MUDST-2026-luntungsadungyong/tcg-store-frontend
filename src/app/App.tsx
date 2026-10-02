@@ -22,18 +22,24 @@ configureApiClientAuth({
 
 import { DevSettings } from '@/shared/components/DevSettings';
 
+if (ENV.ENABLE_MOCK_API) {
+  initMockStorage();
+}
+
 function App() {
   useEffect(() => {
-    if (ENV.ENABLE_MOCK_API) {
-      initMockStorage();
-    }
-
+    let mounted = true;
     const token = useAuthStore.getState().token;
     if (token) {
       (ENV.ENABLE_MOCK_API ? authApi.getProfile() : profileApi.get())
-        .then((user) => useAuthStore.getState().completeHydration(user))
-        .catch(() => useAuthStore.getState().logout());
+        .then((user) => {
+          if (mounted) useAuthStore.getState().completeHydration(user);
+        })
+        .catch(() => {
+          if (mounted) useAuthStore.getState().logout();
+        });
     }
+    return () => { mounted = false; };
   }, []);
 
   return (

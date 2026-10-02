@@ -6,6 +6,7 @@ export interface User {
   email: string;
   role: Role;
   isSeller: boolean;
+  sellerStatus?: string;
   phone?: string;
   line?: string;
   facebook?: string;

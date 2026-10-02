@@ -3,6 +3,15 @@
 describe('US-11-2: View and Refresh Admin Dashboard', () => {
   beforeEach(() => {
     cy.loginByMock('ADMIN');
+    
+    // Prevent 401s from real backend for unmocked APIs (using strict host matching to avoid intercepting Vite .ts assets)
+    cy.intercept('GET', 'http://localhost:8080/api/notifications*', { statusCode: 200, body: { content: [] } });
+    cy.intercept('GET', 'http://localhost:8080/api/collections/leaderboard*', { statusCode: 200, body: [] });
+    cy.intercept('GET', 'http://localhost:8080/api/admin/metrics*', { statusCode: 200, body: {} });
+    // Note: /admin/dashboard is intercepted in the tests individually
+    cy.intercept('GET', 'http://localhost:8080/api/admin/orders*', { statusCode: 200, body: { content: [] } });
+    cy.intercept('GET', 'http://localhost:8080/api/admin/audit-logs*', { statusCode: 200, body: { content: [] } });
+    cy.intercept('GET', 'http://localhost:8080/api/admin/users*', { statusCode: 200, body: [] });
   });
 
   it('should show loading skeleton while fetching dashboard data', () => {

@@ -40,7 +40,10 @@ export function toFrontendUser(user: BackendUser): User {
     name: user.name,
     email: user.email,
     role,
-    isSeller: user.role.toUpperCase() === 'SELLER' || user.sellerStatus?.toUpperCase() === 'VERIFIED',
+    isSeller:
+      user.role.toUpperCase() === 'SELLER' ||
+      ['VERIFIED', 'APPROVED'].includes(user.sellerStatus?.toUpperCase() ?? ''),
+    ...(user.sellerStatus ? { sellerStatus: user.sellerStatus } : {}),
   };
 }
 
@@ -69,7 +72,7 @@ export const authApi = {
       if (user && password === 'admin123' && user.role === 'ADMIN') {
          return { token: 'mock-jwt-token-admin', user };
       }
-      if (user && user.role === 'USER' && password === (user.isSeller ? 'seller123' : 'password123')) {
+      if (user && user.role === 'USER' && (password === 'password123' || password === 'seller123')) {
          return { token: user.isSeller ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer', user };
       }
       throw new Error('Invalid credentials');

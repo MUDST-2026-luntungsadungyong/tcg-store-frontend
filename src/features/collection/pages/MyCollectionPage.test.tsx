@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import type { CardListing, CollectionEntry } from '@/entities/card/model/types';
 import { listingsApi } from '@/features/listings/api/listings';
+import { catalogApi, type CatalogCard } from '@/features/discovery/api/catalog';
 import { collectionApi } from '../api/collection';
 
 import { MyCollectionPage } from './MyCollectionPage';
@@ -21,6 +22,12 @@ vi.mock('../api/collection', () => ({
 vi.mock('@/features/listings/api/listings', () => ({
   listingsApi: {
     getListings: vi.fn(),
+  },
+}));
+
+vi.mock('@/features/discovery/api/catalog', () => ({
+  catalogApi: {
+    searchCards: vi.fn(),
   },
 }));
 
@@ -64,6 +71,14 @@ const collectionEntry: CollectionEntry = {
   acquiredAt: '2026-09-26T00:00:00.000Z',
 };
 
+const catalogCard: CatalogCard = {
+  id: 'base1-25',
+  name: 'Pikachu',
+  game: 'Pokemon',
+  setName: 'Base Set',
+  cardNumber: '25',
+};
+
 function LocationProbe() {
   const location = useLocation();
   return <output data-testid="location">{location.pathname}{location.search}</output>;
@@ -74,7 +89,9 @@ describe('MyCollectionPage seller collection/store toggle', () => {
     vi.clearAllMocks();
     useAuthStore.setState({ token: 'test-token', user: seller, isHydrating: false });
     vi.mocked(collectionApi.getMyCollection).mockResolvedValue([]);
+    vi.mocked(collectionApi.addCatalogCardToCollection).mockResolvedValue(collectionEntry);
     vi.mocked(listingsApi.getListings).mockResolvedValue([]);
+    vi.mocked(catalogApi.searchCards).mockResolvedValue([]);
   });
 
   it('lets sellers switch to My Store through the query view state and loads available listings', async () => {
@@ -158,5 +175,29 @@ describe('MyCollectionPage seller collection/store toggle', () => {
       expect(screen.getByText('Your collection is empty')).toBeInTheDocument();
     });
     expect(screen.getByRole('link', { name: 'Browse Cards' })).toHaveAttribute('href', '/cards');
+  });
+
+  it('adds the selected quantity of a catalog card to the collection', async () => {
+    const user = userEvent.setup();
+    vi.mocked(catalogApi.searchCards).mockResolvedValue([catalogCard]);
+
+    render(
+      <MemoryRouter initialEntries={['/collection']}>
+        <MyCollectionPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Add Card' }));
+    await user.type(screen.getByRole('textbox', { name: 'Card' }), 'Pikachu');
+    await user.click(await screen.findByRole('option', { name: /Pikachu/ }));
+    const quantity = screen.getByRole('spinbutton', { name: 'Quantity' });
+    await user.click(screen.getByRole('button', { name: 'Increase quantity' }));
+    await user.click(screen.getByRole('button', { name: 'Increase quantity' }));
+    expect(quantity).toHaveValue(3);
+    await user.click(screen.getByRole('button', { name: 'Add to Collection' }));
+
+    await waitFor(() => {
+      expect(collectionApi.addCatalogCardToCollection).toHaveBeenCalledWith(catalogCard, 3);
+    });
   });
 });

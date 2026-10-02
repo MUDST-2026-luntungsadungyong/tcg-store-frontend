@@ -38,6 +38,15 @@ const listings: ManagedListing[] = [
     status: 'SHOW',
     condition: 'NM',
     set: 'Promo',
+    cardId: 'base1-4',
+    cardNumber: '4',
+    rarity: 'Rare Holo',
+    supertype: 'Pokémon',
+    subtypes: 'Stage 2',
+    hp: '120',
+    types: 'Fire',
+    artist: 'Mitsuhiro Arita',
+    marketPrice: 31401.65,
   },
   {
     id: 'listing-hide',
@@ -62,7 +71,7 @@ function resetListingStore() {
     pendingIds: [],
     error: null,
     searchQuery: '',
-    gameFilter: 'ALL',
+    gameFilter: 'Pokemon',
     statusFilter: 'ALL',
     viewMode: 'table',
     currentPage: 1,
@@ -108,6 +117,34 @@ describe('ListingManagementPage', () => {
       expect(listingsApi.setVisibility).toHaveBeenCalledWith('listing-show', 'HIDE');
       expect(toggle).toHaveAttribute('aria-checked', 'false');
     });
+  });
+
+  it('shows the same catalog details when editing a listing', async () => {
+    const user = userEvent.setup();
+    render(<ListingManagementPage />);
+
+    await screen.findByRole('row', { name: /Pikachu Illustrator/ });
+    await user.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
+
+    expect(screen.getByText('Card details')).toBeInTheDocument();
+    expect(screen.getByText('Promo')).toBeInTheDocument();
+    expect(screen.getByText('#4')).toBeInTheDocument();
+    expect(screen.getByText('Stage 2')).toBeInTheDocument();
+    expect(screen.getByText('HP 120')).toBeInTheDocument();
+    expect(screen.getByText('Fire')).toBeInTheDocument();
+    expect(screen.getByText('Mitsuhiro Arita')).toBeInTheDocument();
+    expect(screen.getByText('Database market price ฿31,401.65')).toBeInTheDocument();
+  });
+
+  it('opens the existing delete confirmation for a visible listing', async () => {
+    const user = userEvent.setup();
+    render(<ListingManagementPage />);
+
+    await screen.findByRole('row', { name: /Pikachu Illustrator/ });
+    await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+
+    expect(screen.getByRole('heading', { name: 'Delete listing?' })).toBeInTheDocument();
+    expect(screen.getAllByText('Pikachu Illustrator')).toHaveLength(2);
   });
 
   it('applies seller query/status filters and switches between table and grid views', async () => {

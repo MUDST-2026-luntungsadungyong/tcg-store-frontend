@@ -138,4 +138,19 @@ describe('Navbar', () => {
 
     expect(screen.queryByRole('searchbox', { name: 'Search cards' })).not.toBeInTheDocument();
   });
+
+  it('keeps the notifications entry visible for guests so the protected route can request sign-in', () => {
+    useAuthStore.setState({ token: null, user: null, isHydrating: false });
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Navbar />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Notifications' })).toHaveAttribute(
+      'href',
+      '/notifications',
+    );
+  });
 });

@@ -92,3 +92,29 @@ jobs:
           format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
+  e2e-test:
+    name: Cypress E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run Cypress E2E tests
+        uses: cypress-io/github-action@v6
+        env:
+          VITE_ENABLE_MOCK_API: 'true'
+          VITE_PORT: '3000'
+        with:
+          start: npm run dev
+          wait-on: 'http://localhost:3000'
+          wait-on-timeout: 120

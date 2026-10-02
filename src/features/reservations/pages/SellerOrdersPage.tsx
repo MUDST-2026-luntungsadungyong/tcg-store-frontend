@@ -96,9 +96,10 @@ export function SellerOrdersPage() {
     switch (status.toUpperCase()) {
       case 'PENDING':
       case 'RESERVED':
+      case 'PAID':
         return (
           <Badge variant="warning" className="flex items-center gap-1">
-            <Clock size={12} /> Pending
+            <Clock size={12} /> {status === 'PAID' ? 'Paid' : 'Pending'}
           </Badge>
         );
       case 'SENT':
@@ -340,7 +341,7 @@ export function SellerOrdersPage() {
                       {/* Actions */}
                       <td className="p-4 align-top text-right whitespace-nowrap">
                         <div className="flex flex-col gap-1.5 items-end">
-                          {(order.status === 'PENDING' || (order.status as string) === 'RESERVED') && (
+                          {(order.status === 'PENDING' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
                             <>
                               <Button
                                 size="sm"

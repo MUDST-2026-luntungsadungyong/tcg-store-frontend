@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -93,7 +94,7 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-40 w-full bg-[#1b2336] border-b border-[rgba(143,179,226,0.2)]">
-      <div className="max-w-[1440px] mx-auto px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
         <div className="flex items-center justify-between h-16 overflow-visible">
 
           {/* Logo */}
@@ -124,41 +125,43 @@ export function Navbar() {
                   }}
                   className="block w-[320px] h-[44px] rounded-[22px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors"
                 />
-                {searchOpen && searchQuery.trim() && (
-                  <div role="listbox" aria-label="Card search suggestions" className="absolute left-0 top-[calc(100%+8px)] z-50 w-[360px] overflow-hidden rounded-xl border border-white/10 bg-bg-elevated p-2 shadow-2xl">
-                    {isSearchLoading ? (
-                      <p className="px-3 py-3 text-sm text-text-secondary">Searching cards...</p>
-                    ) : searchSuggestions.length > 0 ? (
-                      searchSuggestions.map((card) => (
-                        <Link
-                          key={card.id}
-                          to={`/cards/${card.id}`}
-                          role="option"
-                          onClick={() => setSearchOpen(false)}
-                          className="flex items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-white/10"
-                        >
-                          <img src={card.image || '/assets/expensive_card_1.png'} alt="" className="size-12 shrink-0 rounded-md bg-bg-base object-contain p-1" />
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-semibold text-white">{card.name}</span>
-                            <span className="block truncate text-xs text-text-secondary">{card.set || card.game || 'Card'} · ฿{card.price.toLocaleString()}</span>
-                          </span>
-                        </Link>
-                      ))
-                    ) : (
-                      <p className="px-3 py-3 text-sm text-text-secondary">No matching cards</p>
-                    )}
-                  </div>
-                )}
+                <AnimatePresence>
+                  {searchOpen && searchQuery.trim() && (
+                    <motion.div role="listbox" aria-label="Card search suggestions" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }} transition={{ duration: 0.16, ease: 'easeOut' }} className="absolute left-0 top-[calc(100%+8px)] z-50 w-[360px] origin-top overflow-hidden rounded-xl border border-white/10 bg-bg-elevated p-2 shadow-2xl">
+                      {isSearchLoading ? (
+                        <p className="px-3 py-3 text-sm text-text-secondary">Searching cards...</p>
+                      ) : searchSuggestions.length > 0 ? (
+                        searchSuggestions.map((card) => (
+                          <Link
+                            key={card.id}
+                            to={`/cards/${card.id}`}
+                            role="option"
+                            onClick={() => setSearchOpen(false)}
+                            className="flex items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-white/10"
+                          >
+                            <img src={card.image || '/assets/expensive_card_1.png'} alt="" className="size-12 shrink-0 rounded-md bg-bg-base object-contain p-1" />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-semibold text-white">{card.name}</span>
+                              <span className="block truncate text-xs text-text-secondary">{card.set || card.game || 'Card'} · ฿{card.price.toLocaleString()}</span>
+                            </span>
+                          </Link>
+                        ))
+                      ) : (
+                        <p className="px-3 py-3 text-sm text-text-secondary">No matching cards</p>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </form>
           )}
 
           {/* Right Actions */}
-          <div className="flex items-center gap-6 text-sm font-semibold text-gray-300">
-            <Link to="/" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-3 sm:gap-6 text-sm font-semibold text-gray-300">
+            <Link to="/" className="hidden sm:inline hover:text-white transition-colors">
               Home
             </Link>
-            <Link to="/cards" className="hover:text-white transition-colors">
+            <Link to="/cards" className="hidden sm:inline hover:text-white transition-colors">
               Cards
             </Link>
 
@@ -185,7 +188,12 @@ export function Navbar() {
               )}
             </Link>
 
-            <Link to="/notifications" aria-label="Notifications" className="relative text-gray-300 hover:text-white transition-colors">
+            <Link
+              to="/notifications"
+              aria-label="Notifications"
+              className="relative text-gray-300 hover:text-white transition-colors"
+              title="Notifications"
+            >
               <Bell className="h-5 w-5" />
             </Link>
 
@@ -221,10 +229,15 @@ export function Navbar() {
                   <ChevronDown size={16} className={`transition-transform ${menuOpen ? 'rotate-180 text-white' : ''}`} />
                 </button>
 
-                {menuOpen && (
-                  <div
+                <AnimatePresence>
+                  {menuOpen && (
+                  <motion.div
                     role="menu"
-                    className="absolute right-0 top-[calc(100%+8px)] w-60 rounded-xl bg-bg-elevated border border-white/10 shadow-xl py-1.5 z-50"
+                    initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className="absolute right-0 top-[calc(100%+8px)] z-50 w-60 origin-top-right rounded-xl border border-white/10 bg-bg-elevated py-1.5 shadow-xl"
                   >
                     {user.role === 'ADMIN' && <>
                       <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">Administration</p>
@@ -294,8 +307,9 @@ export function Navbar() {
                       <LogOut size={16} />
                       Logout
                     </button>
-                  </div>
-                )}
+                  </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
               <Link to="/login">

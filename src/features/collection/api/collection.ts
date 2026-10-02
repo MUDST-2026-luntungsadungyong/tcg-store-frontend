@@ -117,7 +117,10 @@ export const collectionApi = {
     return response.data;
   },
 
-  addCatalogCardToCollection: async (card: CatalogCard): Promise<CollectionEntry> => {
+  addCatalogCardToCollection: async (
+    card: CatalogCard,
+    quantity = 1,
+  ): Promise<CollectionEntry> => {
     if (ENV.ENABLE_MOCK_API) {
       await new Promise((resolve) => setTimeout(resolve, 300));
       
@@ -132,7 +135,7 @@ export const collectionApi = {
       const all = storage.getCollection();
       const existing = all.find((item) => item.ownerId === userId && item.listing.id === card.id);
       if (existing) {
-        existing.quantity += 1;
+        existing.quantity += quantity;
         storage.setCollection(all);
         return existing;
       }
@@ -154,14 +157,17 @@ export const collectionApi = {
         id: `col-${Date.now()}`,
         ownerId: userId,
         listing,
-        quantity: 1,
+        quantity,
         sourceOrderId: `ord-direct-${Date.now()}`,
         acquiredAt: new Date().toISOString(),
       };
       storage.setCollection([newEntry, ...all]);
       return newEntry;
     }
-    const response = await apiClient.post<CollectionEntry>('/collection', { cardId: card.id });
+    const response = await apiClient.post<CollectionEntry>('/collection', {
+      cardId: card.id,
+      quantity,
+    });
     return response.data;
   },
 

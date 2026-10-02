@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import type { CardListing } from '@/entities/card/model/types';
 import { CardListingCard } from '@/features/discovery/components/CardListingCard';
 import { Skeleton } from '@/shared/components/Skeleton';
+import { ErrorState } from '@/shared/components/ErrorState';
 import { storesApi, type StoreProfile } from '../api/stores';
 import { groupListingsByCard } from '@/features/discovery/lib/groupListings';
 
@@ -14,31 +15,27 @@ export function PublicStorePage() {
   const [isLoading, setIsLoading] = useState(true);
   const cards = useMemo(() => groupListingsByCard(listings), [listings]);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadStoreData = useCallback(async () => {
     setIsLoading(true);
     setError('');
 
-    Promise.all([
-      storesApi.public(sellerId),
-      storesApi.availableListings(sellerId),
-    ])
-      .then(([profile, availableListings]) => {
-        if (cancelled) return;
-        setStore(profile);
-        setListings(availableListings);
-      })
-      .catch(() => {
-        if (!cancelled) setError('Store not found.');
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const [profile, availableListings] = await Promise.all([
+        storesApi.public(sellerId),
+        storesApi.availableListings(sellerId),
+      ]);
+      setStore(profile);
+      setListings(availableListings);
+    } catch {
+      setError('Store not found or unavailable.');
+    } finally {
+      setIsLoading(false);
+    }
   }, [sellerId]);
+
+  useEffect(() => {
+    loadStoreData();
+  }, [loadStoreData]);
 
   if (isLoading) {
     return (
@@ -51,7 +48,13 @@ export function PublicStorePage() {
     );
   }
 
-  if (error || !store) return <main className="p-8 text-center text-gray-300">{error || 'Store not found.'}</main>;
+  if (error || !store) {
+    return (
+      <main className="mx-auto max-w-7xl p-8 pt-20">
+        <ErrorState message={error || 'Store not found.'} onRetry={loadStoreData} />
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-7xl p-6 md:p-8">

@@ -120,6 +120,9 @@ export function ReservationCartPage() {
               <span>{money(total)}</span>
             </div>
             <p className="mt-4 text-xs leading-5 text-gray-400">This phase reserves inventory only. Payment and shipping details will be added when their backend contracts are approved.</p>
+            <button type="button" onClick={() => setShowStockWarningPopup(true)} className="mt-4 w-full rounded border border-status-warning/50 bg-status-warning/10 py-1.5 text-xs text-status-warning hover:bg-status-warning/20">
+              [Dev Test] Simulate Stock Error (Case 8)
+            </button>
             <Link to="/checkout" className="mt-6 flex w-full items-center justify-center rounded-full bg-brand-blue px-5 py-3 font-semibold text-white hover:bg-[#4a85e0]">Review reservation</Link>
           </aside>
         </div>

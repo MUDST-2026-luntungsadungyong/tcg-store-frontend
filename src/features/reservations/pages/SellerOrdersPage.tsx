@@ -346,7 +346,16 @@ export function SellerOrdersPage() {
                                 size="sm"
                                 variant="primary"
                                 disabled={isActionLoading}
-                                onClick={() => handleStatusUpdate(order.id, 'SENT')}
+                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'PAID' }); setShowPaymentConfirmPopup(true); }}
+                                className="w-28 text-xs bg-brand-blue hover:bg-brand-blue/90 mb-1"
+                              >
+                                Confirm Payment
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                disabled={isActionLoading}
+                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'SENT' }); setShowMarkSentPopup(true); }}
                                 className="w-28 text-xs bg-status-success hover:bg-status-success/90"
                               >
                                 Mark as Sent

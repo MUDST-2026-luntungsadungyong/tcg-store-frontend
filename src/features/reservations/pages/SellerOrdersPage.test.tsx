@@ -180,6 +180,13 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     const sentBtns = screen.getAllByRole('button', { name: /Mark as Sent/i });
     await user.click(sentBtns[0]);
 
+    // Wait for the popup and click the confirm button
+    const popupTitle = await screen.findByText('Mark this order as sent?');
+    expect(popupTitle).toBeInTheDocument();
+
+    const allSentBtns = screen.getAllByRole('button', { name: /Mark as Sent/i });
+    await user.click(allSentBtns[allSentBtns.length - 1]);
+
     expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT');
   });
 });

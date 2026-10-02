@@ -371,7 +371,7 @@ export function MyCollectionPage() {
               <CollectionCard
                 key={entry.id}
                 entry={entry}
-                onDelete={() => setSelectedEntryForDelete(entry)}
+                onDelete={() => { setSelectedEntryForDelete(entry); setShowDeleteCardPopup(true); }}
                 isDeleting={deletingId === entry.id}
               />
             ))}
@@ -386,38 +386,6 @@ export function MyCollectionPage() {
             ))}
           </div>
         )}
-
-        {/* Confirmation Modal before Deleting */}
-        <Modal
-          isOpen={selectedEntryForDelete !== null}
-          onClose={() => setSelectedEntryForDelete(null)}
-          title="Delete from Collection"
-        >
-          <div className="flex flex-col gap-4">
-            <p className="text-sm text-gray-300">
-              Are you sure you want to remove{' '}
-              <strong className="text-white font-semibold">"{selectedEntryForDelete?.listing.name}"</strong> from your
-              personal collection?
-            </p>
-            <div className="flex items-center justify-end gap-3 mt-4">
-              <button
-                type="button"
-                onClick={() => setSelectedEntryForDelete(null)}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-medium rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                disabled={deletingId !== null}
-                className="px-4 py-2 bg-status-danger hover:bg-status-danger/90 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
-              >
-                {deletingId ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </Modal>
 
         {/* Add Card Dialog */}
         {addCardOpen &&

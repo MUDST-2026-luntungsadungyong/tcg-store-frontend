@@ -136,7 +136,7 @@ export async function fetchSellerOrders(
 
   const params: Record<string, unknown> = { page, size };
   if (status && status !== 'ALL') {
-    params.status = status === 'SENT' ? 'FULFILLED' : status;
+    params.status = status;
   }
   const response = await apiClient.get('/seller/orders', { params });
   const data = response.data;
@@ -144,10 +144,7 @@ export async function fetchSellerOrders(
     throw new Error('The server returned an invalid seller orders response.');
   }
   return {
-    orders: (data.content as SellerOrder[]).map((order) => ({
-      ...order,
-      status: (order.status === 'FULFILLED' ? 'SENT' : order.status) as SellerOrderStatus,
-    })),
+    orders: data.content as SellerOrder[],
     totalPages: data.totalPages ?? 1,
     totalElements: data.totalElements ?? data.content.length,
     currentPage: data.number ?? page,

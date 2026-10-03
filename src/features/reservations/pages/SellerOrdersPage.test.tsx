@@ -9,7 +9,7 @@ const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
     {
       id: 1,
       orderNumber: 'ORD-2026-001',
-      status: 'PENDING',
+      status: 'CONFIRMED',
       buyerId: 101,
       buyerName: 'Kittipong Wongsuwan',
       buyerEmail: 'kittipong@example.com',
@@ -82,7 +82,7 @@ vi.mock('../api/sellerOrders', () => ({
   fetchSellerOrders: vi.fn().mockImplementation(async (_page, _size, status) => {
     let filtered = [...mockOrdersList];
     if (status && status !== 'ALL') {
-      filtered = filtered.filter((o) => o.status.toUpperCase() === status.toUpperCase());
+      if (status.toUpperCase() === 'PENDING') { filtered = filtered.filter(o => o.status === 'PENDING' || o.status === 'CONFIRMED'); } else { filtered = filtered.filter((o) => o.status.toUpperCase() === status.toUpperCase()); }
     }
     return {
       orders: filtered,
@@ -187,6 +187,6 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     const allSentBtns = screen.getAllByRole('button', { name: /Mark as Sent/i });
     await user.click(allSentBtns[allSentBtns.length - 1]);
 
-    expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT');
+    expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT', undefined);
   });
 });

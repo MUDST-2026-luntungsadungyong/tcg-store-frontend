@@ -2,6 +2,7 @@ import type { CardListing } from '@/entities/card/model/types';
 
 export type ReservationStatus =
   | 'PENDING'
+  | 'CONFIRMED'
   | 'RESERVED'
   | 'FULFILLED'
   | 'SENT'
@@ -10,7 +11,7 @@ export type ReservationStatus =
 /** Statuses accepted by the real backend order API. */
 export type BackendReservationStatus = Extract<
   ReservationStatus,
-  'PENDING' | 'FULFILLED' | 'CANCELLED'
+  'PENDING' | 'CONFIRMED' | 'SENT' | 'FULFILLED' | 'CANCELLED'
 >;
 
 /** Legacy statuses used only by the explicitly gated local mock adapter. */
@@ -71,6 +72,8 @@ export interface ReservationOrder {
   sentAt?: string;
   ownershipTransferredAt?: string;
   cancelledAt?: string;
+  logs?: any[];
+  orderNumber?: string;
 }
 
 export interface ReservationCheckoutItem {

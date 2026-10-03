@@ -86,6 +86,7 @@ interface BackendOrderResponse {
   sentAt?: string;
   ownershipTransferredAt?: string;
   cancelledAt?: string;
+  logs?: any[];
 }
 
 const ORDER_ENDPOINT = '/orders';

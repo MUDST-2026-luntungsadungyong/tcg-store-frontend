@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+﻿import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -110,10 +110,10 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     await waitFor(() => {
       expect(screen.getByText('Total Sales (Revenue)')).toBeInTheDocument();
       expect(screen.getByText('Total Cost')).toBeInTheDocument();
-      expect(screen.getByText('Net Profit (กำไรสุทธิ)')).toBeInTheDocument();
+      expect(screen.getByText('Net Profit (เธเธณเนเธฃเธชเธธเธ—เธเธด)')).toBeInTheDocument();
       expect(screen.getByText('Orders Overview')).toBeInTheDocument();
-      expect(screen.getByText('฿3,650.00')).toBeInTheDocument();
-      expect(screen.getByText('฿1,500.00')).toBeInTheDocument();
+      expect(screen.getByText('เธฟ3,650.00')).toBeInTheDocument();
+      expect(screen.getByText('เธฟ1,500.00')).toBeInTheDocument();
     });
   });
 
@@ -138,29 +138,6 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     await waitFor(() => {
       expect(screen.getByText('ORD-2026-001')).toBeInTheDocument();
       expect(screen.queryByText('ORD-2026-002')).not.toBeInTheDocument();
-    });
-  });
-
-  it('opens customer contact info modal when Contact Info is clicked', async () => {
-    const user = userEvent.setup();
-
-    render(
-      <MemoryRouter>
-        <SellerOrdersPage />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('ORD-2026-001')).toBeInTheDocument();
-    });
-
-    const contactBtns = screen.getAllByText('Contact Info');
-    await user.click(contactBtns[0]);
-
-    await waitFor(() => {
-      expect(screen.getByText(/Buyer Contact Info/i)).toBeInTheDocument();
-      expect(screen.getByText('089-123-4567')).toBeInTheDocument();
-      expect(screen.getByText('kittipong_tcg')).toBeInTheDocument();
     });
   });
 

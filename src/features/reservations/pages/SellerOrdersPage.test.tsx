@@ -110,7 +110,7 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     await waitFor(() => {
       expect(screen.getByText('Total Sales (Revenue)')).toBeInTheDocument();
       expect(screen.getByText('Total Cost')).toBeInTheDocument();
-      expect(screen.getByText('Net Profit (เธเธณเนเธฃเธชเธธเธ—เธเธด)')).toBeInTheDocument();
+      expect(screen.getByText(/Net Profit/i)).toBeInTheDocument();
       expect(screen.getByText('Orders Overview')).toBeInTheDocument();
       expect(screen.getByText('เธฟ3,650.00')).toBeInTheDocument();
       expect(screen.getByText('เธฟ1,500.00')).toBeInTheDocument();

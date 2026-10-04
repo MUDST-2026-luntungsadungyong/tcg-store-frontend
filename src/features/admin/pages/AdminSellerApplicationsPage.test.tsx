@@ -96,6 +96,13 @@ describe('AdminSellerApplicationsPage', () => {
     const approveButton = screen.getAllByRole('button', { name: 'Approve' })[0];
     await userEvent.click(approveButton);
 
+    // Wait for the confirmation modal
+    expect(await screen.findByRole('heading', { name: 'Approve seller application' })).toBeInTheDocument();
+
+    // Click the actual approve button inside the modal
+    const confirmApproveButton = screen.getByRole('button', { name: 'Approve application' });
+    await userEvent.click(confirmApproveButton);
+
     expect(sellerApplicationsApi.approve).toHaveBeenCalledWith('app-1');
 
     await waitFor(() => {

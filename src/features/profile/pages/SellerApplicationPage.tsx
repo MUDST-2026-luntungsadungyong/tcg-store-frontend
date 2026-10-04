@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Phone, ShieldCheck, Store } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/shared/components/Input";
 import { Button } from "@/shared/components/Button";
+import { Modal } from "@/shared/components/Modal";
 import { profileApi } from "../api/profile";
 import { useAuthStore } from "@/features/auth/model/useAuthStore";
 
 export function SellerApplicationPage() {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const [shopName, setShopName] = useState("");
   const [shopDescription, setShopDescription] = useState("");
@@ -23,6 +25,10 @@ export function SellerApplicationPage() {
       setError("Store name is required.");
       return;
     }
+    if (!phone.trim() && !line.trim() && !facebook.trim()) {
+      setError("Please provide at least one contact method.");
+      return;
+    }
     setError("");
     setSubmitted(false);
     setIsSubmitting(true);
@@ -33,8 +39,12 @@ export function SellerApplicationPage() {
       setShopName("");
       setShopDescription("");
       setSubmitted(true);
-    } catch {
-      setError("Unable to submit your seller application. Please try again.");
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        setError("You already have a pending seller application.");
+      } else {
+        setError("Unable to submit your seller application. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -75,13 +85,12 @@ export function SellerApplicationPage() {
             <fieldset className="space-y-5 border-t border-white/10 pt-7">
               <legend className="text-lg font-semibold text-white">Contact details</legend>
               <p className="-mt-3 text-sm leading-6 text-gray-300">These details are visible to buyers so you can arrange contact outside Mythix.</p>
-              <Input id="phone" label="Phone" value={phone} icon={Phone} placeholder="Your phone number" className="rounded-xl bg-bg-input" onChange={(event) => setPhone(event.target.value)} />
-              <Input id="line" label="LINE ID" value={line} iconUrl="https://cdn.simpleicons.org/line/06C755" placeholder="Your LINE ID" className="rounded-xl bg-bg-input" onChange={(event) => setLine(event.target.value)} />
-              <Input id="facebook" label="Facebook" value={facebook} iconUrl="https://cdn.simpleicons.org/facebook/1877F2" placeholder="Your Facebook name" className="rounded-xl bg-bg-input" onChange={(event) => setFacebook(event.target.value)} />
+              <Input id="phone" type="tel" maxLength={10} label="Phone" value={phone} icon={Phone} placeholder="Ex. 0812345678" className="rounded-xl bg-bg-input" onChange={(event) => setPhone(event.target.value.replace(/\D/g, ''))} />
+              <Input id="line" label="LINE ID" value={line} iconUrl="https://cdn.simpleicons.org/line/06C755" placeholder="Ex. @mystore" className="rounded-xl bg-bg-input" onChange={(event) => setLine(event.target.value)} />
+              <Input id="facebook" label="Facebook" value={facebook} iconUrl="https://cdn.simpleicons.org/facebook/1877F2" placeholder="Ex. MyStore TH" className="rounded-xl bg-bg-input" onChange={(event) => setFacebook(event.target.value)} />
             </fieldset>
 
             {error && <p role="alert" className="flex items-center gap-2 text-sm text-status-danger"><AlertCircle size={17} aria-hidden="true" />{error}</p>}
-            {submitted && <p role="status" className="flex items-center gap-2 text-sm text-status-success"><CheckCircle2 size={17} aria-hidden="true" />Application submitted. Your seller account will be activated once an administrator approves it.</p>}
 
             <div className="flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <Link to="/profile" className="inline-flex min-h-11 items-center justify-center px-3 text-sm font-medium text-gray-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 focus:ring-offset-bg-surface">Cancel</Link>
@@ -99,6 +108,33 @@ export function SellerApplicationPage() {
           </ol>
         </aside>
       </div>
+
+      <Modal
+        isOpen={submitted}
+        onClose={() => {
+          setSubmitted(false);
+          navigate("/profile");
+        }}
+        title="Application Submitted"
+        footer={
+          <Button
+            onClick={() => {
+              setSubmitted(false);
+              navigate("/profile");
+            }}
+            className="w-full"
+          >
+            Back to Profile
+          </Button>
+        }
+      >
+        <div className="flex flex-col items-center gap-4 py-4 text-center">
+          <CheckCircle2 size={48} className="text-status-success" aria-hidden="true" />
+          <p className="text-sm text-gray-300 leading-6">
+            Your application has been successfully submitted! Your seller workspace will be activated once an administrator reviews and approves it.
+          </p>
+        </div>
+      </Modal>
     </main>
   );
 }

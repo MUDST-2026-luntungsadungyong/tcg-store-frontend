@@ -1,4 +1,4 @@
-﻿/// <reference types="cypress" />
+/// <reference types="cypress" />
 
 describe('US-11-3: View Seller Application Queue', () => {
   beforeEach(() => {
@@ -113,6 +113,11 @@ describe('US-11-3: View Seller Application Queue', () => {
     cy.wait('@getApplications');
 
     cy.get('table').contains('button', /Approve/i).click();
+    
+    // Confirm approval in modal
+    cy.contains('Approve seller application').should('be.visible');
+    cy.contains('button', 'Approve application', { matchCase: false }).click();
+
     cy.wait('@approveApp');
 
     // After approval, the table row should be removed from pending list

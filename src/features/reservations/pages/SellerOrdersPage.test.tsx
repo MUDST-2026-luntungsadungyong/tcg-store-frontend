@@ -1,4 +1,4 @@
-﻿import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -110,10 +110,10 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     await waitFor(() => {
       expect(screen.getByText('Total Sales (Revenue)')).toBeInTheDocument();
       expect(screen.getByText('Total Cost')).toBeInTheDocument();
-      expect(screen.getByText(/Net Profit/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Net Profit/)).toBeInTheDocument();
       expect(screen.getByText('Orders Overview')).toBeInTheDocument();
-      expect(screen.getByText('เธฟ3,650.00')).toBeInTheDocument();
-      expect(screen.getByText('เธฟ1,500.00')).toBeInTheDocument();
+      expect(screen.getByText(/3,650\.00/)).toBeInTheDocument();
+      expect(screen.getByText(/1,500\.00/)).toBeInTheDocument();
     });
   });
 

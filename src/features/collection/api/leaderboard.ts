@@ -1,8 +1,5 @@
 import apiClient from '@/shared/api/client';
 import { ENV } from '@/shared/config/env';
-import { storage } from '@/infrastructure/mock-db/storage';
-import type { User } from '@/entities/user/model/types';
-import type { CollectionEntry } from '@/entities/card/model/types';
 
 export interface PublicRareCardHighlight {
   cardId: string;

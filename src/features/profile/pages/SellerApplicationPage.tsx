@@ -23,6 +23,10 @@ export function SellerApplicationPage() {
       setError("Store name is required.");
       return;
     }
+    if (!phone.trim() && !line.trim() && !facebook.trim()) {
+      setError("Please provide at least one contact method.");
+      return;
+    }
     setError("");
     setSubmitted(false);
     setIsSubmitting(true);

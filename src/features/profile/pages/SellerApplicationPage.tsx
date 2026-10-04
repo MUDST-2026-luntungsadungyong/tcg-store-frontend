@@ -37,8 +37,12 @@ export function SellerApplicationPage() {
       setShopName("");
       setShopDescription("");
       setSubmitted(true);
-    } catch {
-      setError("Unable to submit your seller application. Please try again.");
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        setError("You already have a pending seller application.");
+      } else {
+        setError("Unable to submit your seller application. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }

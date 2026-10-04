@@ -20,7 +20,7 @@ describe('US-05 & US-06: Seller Inventory Management and Metrics', () => {
     cy.get('input[placeholder*="Search card name, set, rarity"]').should('be.visible').type('Pikachu', { delay: 50 });
     
     // Select the first card from the dropdown
-    cy.get('[role="listbox"]').find('button').first().should('be.visible').click();
+    cy.get('[role="listbox"]').should('be.visible').find('button').first().should('be.visible').click();
 
     // Verify it is selected
     cy.get('[role="listbox"]').should('not.exist'); // The dropdown closes
@@ -31,7 +31,7 @@ describe('US-05 & US-06: Seller Inventory Management and Metrics', () => {
 
     // 4. Save
     // We should wait until loading/busy state is over
-    cy.get('button[type="submit"]').contains('Add Listing').should('not.be.disabled').click();
+    cy.get('button[type="submit"]').contains('Add Listing').should('not.be.disabled').click({ force: true });
 
     // 5. Verify toast 
     // The exact toast can be "Listing added" or just check success

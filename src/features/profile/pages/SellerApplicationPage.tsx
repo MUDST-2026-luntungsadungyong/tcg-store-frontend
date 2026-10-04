@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Phone, ShieldCheck, Store } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/shared/components/Input";
 import { Button } from "@/shared/components/Button";
+import { Modal } from "@/shared/components/Modal";
 import { profileApi } from "../api/profile";
 import { useAuthStore } from "@/features/auth/model/useAuthStore";
 
 export function SellerApplicationPage() {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const [shopName, setShopName] = useState("");
   const [shopDescription, setShopDescription] = useState("");
@@ -89,7 +91,6 @@ export function SellerApplicationPage() {
             </fieldset>
 
             {error && <p role="alert" className="flex items-center gap-2 text-sm text-status-danger"><AlertCircle size={17} aria-hidden="true" />{error}</p>}
-            {submitted && <p role="status" className="flex items-center gap-2 text-sm text-status-success"><CheckCircle2 size={17} aria-hidden="true" />Application submitted. Your seller account will be activated once an administrator approves it.</p>}
 
             <div className="flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <Link to="/profile" className="inline-flex min-h-11 items-center justify-center px-3 text-sm font-medium text-gray-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 focus:ring-offset-bg-surface">Cancel</Link>
@@ -107,6 +108,33 @@ export function SellerApplicationPage() {
           </ol>
         </aside>
       </div>
+
+      <Modal
+        isOpen={submitted}
+        onClose={() => {
+          setSubmitted(false);
+          navigate("/profile");
+        }}
+        title="Application Submitted"
+        footer={
+          <Button
+            onClick={() => {
+              setSubmitted(false);
+              navigate("/profile");
+            }}
+            className="w-full"
+          >
+            Back to Profile
+          </Button>
+        }
+      >
+        <div className="flex flex-col items-center gap-4 py-4 text-center">
+          <CheckCircle2 size={48} className="text-status-success" aria-hidden="true" />
+          <p className="text-sm text-gray-300 leading-6">
+            Your application has been successfully submitted! Your seller workspace will be activated once an administrator reviews and approves it.
+          </p>
+        </div>
+      </Modal>
     </main>
   );
 }

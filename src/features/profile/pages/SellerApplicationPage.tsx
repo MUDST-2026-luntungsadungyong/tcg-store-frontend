@@ -85,7 +85,7 @@ export function SellerApplicationPage() {
             <fieldset className="space-y-5 border-t border-white/10 pt-7">
               <legend className="text-lg font-semibold text-white">Contact details</legend>
               <p className="-mt-3 text-sm leading-6 text-gray-300">These details are visible to buyers so you can arrange contact outside Mythix.</p>
-              <Input id="phone" type="tel" label="Phone" value={phone} icon={Phone} placeholder="Ex. 0812345678" className="rounded-xl bg-bg-input" onChange={(event) => setPhone(event.target.value.replace(/\D/g, ''))} />
+              <Input id="phone" type="tel" maxLength={10} label="Phone" value={phone} icon={Phone} placeholder="Ex. 0812345678" className="rounded-xl bg-bg-input" onChange={(event) => setPhone(event.target.value.replace(/\D/g, ''))} />
               <Input id="line" label="LINE ID" value={line} iconUrl="https://cdn.simpleicons.org/line/06C755" placeholder="Ex. @mystore" className="rounded-xl bg-bg-input" onChange={(event) => setLine(event.target.value)} />
               <Input id="facebook" label="Facebook" value={facebook} iconUrl="https://cdn.simpleicons.org/facebook/1877F2" placeholder="Ex. MyStore TH" className="rounded-xl bg-bg-input" onChange={(event) => setFacebook(event.target.value)} />
             </fieldset>

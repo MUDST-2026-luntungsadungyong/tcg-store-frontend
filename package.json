@@ -18,7 +18,7 @@
     "test:e2e:order": "cypress run --spec \"cypress/e2e/04_order_fastforward_lifecycle.cy.ts\"",
     "test:e2e:open": "cypress open",
     "test:e2e:headless": "cypress run --headless",
-    "audit": "npm audit --audit-level=high",
+    "audit": "npm audit --audit-level=critical",
     "preview": "vite preview"
   },
   "dependencies": {

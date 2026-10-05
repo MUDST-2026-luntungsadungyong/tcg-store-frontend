@@ -5,7 +5,9 @@ import type { ReservationOrder, ReservationStatus } from '@/entities/reservation
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { Badge } from '@/shared/components/Badge';
 import { Skeleton } from '@/shared/components/Skeleton';
-import { fetchBuyerOrders } from '../api/buyerOrders';
+import { fetchBuyerOrders, updateBuyerOrderStatus } from '../api/buyerOrders';
+import { Modal } from '@/shared/components/Modal';
+import { Button } from '@/shared/components/Button';
 
 type FilterTab = 'ALL' | ReservationStatus;
 
@@ -17,6 +19,7 @@ interface StatusConfig {
 
 const STATUS_CONFIGS: Record<ReservationStatus, StatusConfig> = {
   PENDING: { label: 'Pending', variant: 'warning', icon: Clock },
+  CONFIRMED: { label: 'Confirmed', variant: 'warning', icon: Clock },
   RESERVED: { label: 'Pending', variant: 'warning', icon: Clock },
   SENT: { label: 'Sent', variant: 'success', icon: Truck },
   FULFILLED: { label: 'Sent', variant: 'success', icon: Truck },
@@ -25,7 +28,7 @@ const STATUS_CONFIGS: Record<ReservationStatus, StatusConfig> = {
 
 const FILTER_TABS: Array<{ key: FilterTab; label: string }> = [
   { key: 'ALL', label: 'All' },
-  { key: 'PENDING', label: 'Pending' },
+  { key: 'PENDING', label: 'Pending / Confirmed' },
   { key: 'SENT', label: 'Sent' },
   { key: 'CANCELLED', label: 'Cancelled' },
 ];
@@ -36,6 +39,11 @@ export function MyOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterTab>('ALL');
+  const [selectedOrder, setSelectedOrder] = useState<ReservationOrder | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [showCancelPopup, setShowCancelPopup] = useState(false);
+  const [cancelNote, setCancelNote] = useState('');
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const loadOrders = useCallback(async () => {
     if (!user) return;
@@ -54,6 +62,19 @@ export function MyOrdersPage() {
   useEffect(() => {
     void loadOrders();
   }, [loadOrders]);
+
+  const handleStatusUpdate = async (orderId: string, newStatus: string, note?: string) => {
+    setActionLoadingId(orderId);
+    try {
+      await updateBuyerOrderStatus(orderId, newStatus, note);
+      await loadOrders();
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      setError(err instanceof Error ? err.message : 'Unable to update order status.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
   const filteredOrders = useMemo(
     () =>
@@ -163,10 +184,11 @@ export function MyOrdersPage() {
         {!loading && !error && filteredOrders.length > 0 && (
           <div className="overflow-hidden rounded-2xl border border-[rgba(143,179,226,0.15)] bg-[#192338] shadow-xl">
             <div className="hidden grid-cols-12 gap-4 border-b border-white/10 bg-[#111A29] px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#99A6B8] md:grid">
-              <div className="col-span-3">Order ID & Date</div>
-              <div className="col-span-3">Seller</div>
-              <div className="col-span-4">Items</div>
-              <div className="col-span-2 text-right">Status</div>
+              <div className="col-span-2">Order ID & Date</div>
+              <div className="col-span-2">Seller</div>
+              <div className="col-span-3">Items</div>
+              <div className="col-span-2">Status</div>
+              <div className="col-span-3 text-right">Actions</div>
             </div>
 
             <div className="divide-y divide-white/5">
@@ -186,7 +208,7 @@ export function MyOrdersPage() {
                     key={order.id}
                     className="flex flex-col gap-4 p-5 transition-colors hover:bg-white/[0.02] md:grid md:grid-cols-12 md:items-center md:px-6 md:py-4"
                   >
-                    <div className="flex items-center justify-between md:col-span-3 md:block">
+                    <div className="flex items-center justify-between md:col-span-2 md:block">
                       <div className="flex flex-col">
                         <span className="text-base font-bold tracking-wide">#{order.id.toUpperCase()}</span>
                         <span className="mt-0.5 text-xs text-gray-400">{formattedDate}</span>
@@ -199,14 +221,14 @@ export function MyOrdersPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 md:col-span-3">
+                    <div className="flex items-center gap-2 md:col-span-2">
                       <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-blue/15 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/30">
                         {order.sellerId.charAt(0).toUpperCase()}
                       </div>
                       <span className="line-clamp-1 text-sm font-medium text-gray-200">Seller {order.sellerId}</span>
                     </div>
 
-                    <div className="flex items-center gap-3 md:col-span-4">
+                    <div className="flex items-center gap-3 md:col-span-3">
                       {primaryItem ? (
                         <>
                           <div className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-[#0B141F] p-1">
@@ -227,11 +249,46 @@ export function MyOrdersPage() {
                       )}
                     </div>
 
-                    <div className="hidden md:col-span-2 md:flex md:justify-end">
+                    <div className="hidden md:col-span-2 md:flex md:items-center">
                       <Badge variant={status.variant} className="flex items-center gap-1.5 px-3 py-1 text-xs">
                         <StatusIcon size={13} />
                         {status.label}
                       </Badge>
+                    </div>
+
+                    <div className="mt-4 md:mt-0 md:col-span-3 flex flex-col md:items-end gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => { setSelectedOrder(order); setIsDetailsModalOpen(true); }}
+                        className="w-full md:w-32 text-xs"
+                      >
+                        Order Details
+                      </Button>
+                      
+                      {order.status === 'SENT' && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          disabled={actionLoadingId === order.id}
+                          onClick={() => handleStatusUpdate(order.id, 'FULFILLED')}
+                          className="w-full md:w-32 text-xs bg-status-success hover:bg-status-success/90"
+                        >
+                          Mark Received
+                        </Button>
+                      )}
+                      
+                      {(order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED') && (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          disabled={actionLoadingId === order.id}
+                          onClick={() => { setSelectedOrder(order); setCancelNote(''); setShowCancelPopup(true); }}
+                          className="w-full md:w-32 text-xs"
+                        >
+                          Cancel Order
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
@@ -240,6 +297,92 @@ export function MyOrdersPage() {
           </div>
         )}
       </div>
+
+      {/* Cancel Order Popup with Note */}
+      <Modal
+        isOpen={showCancelPopup}
+        onClose={() => { setShowCancelPopup(false); setSelectedOrder(null); }}
+        title="Cancel Order"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-300">
+            Please provide a reason for cancelling this order.
+          </p>
+          <textarea
+            value={cancelNote}
+            onChange={(e) => setCancelNote(e.target.value)}
+            className="w-full h-24 p-3 rounded-lg border border-[#31405A] bg-[#192338] text-white text-sm"
+            placeholder="Reason for cancellation..."
+          />
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="secondary" onClick={() => { setShowCancelPopup(false); setSelectedOrder(null); }}>
+              Back
+            </Button>
+            <Button
+              variant="danger"
+              disabled={!cancelNote.trim()}
+              onClick={async () => {
+                if (selectedOrder) await handleStatusUpdate(selectedOrder.id, 'CANCELLED', cancelNote);
+                setShowCancelPopup(false);
+                setSelectedOrder(null);
+              }}
+            >
+              Cancel Order
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Order Details & Timeline Modal */}
+      {selectedOrder && (
+        <Modal
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
+          title={`Order Details - #${selectedOrder.id.toUpperCase()}`}
+        >
+          <div className="space-y-4 text-sm text-gray-200">
+            {/* Timeline */}
+            <div className="mt-2">
+              <h3 className="text-sm font-bold text-white mb-3">Order Timeline</h3>
+              {selectedOrder.logs && selectedOrder.logs.length > 0 ? (
+                <div className="space-y-3">
+                  {selectedOrder.logs.map((log, index) => (
+                    <div key={index} className="flex gap-3 text-xs">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2 h-2 rounded-full bg-brand-blue mt-1.5" />
+                        {index !== selectedOrder.logs!.length - 1 && <div className="w-px h-full bg-[#31405A] my-1" />}
+                      </div>
+                      <div className="flex-1 pb-2">
+                        <div className="flex justify-between items-start">
+                          <p className="font-semibold text-white">
+                            {log.toStatus} <span className="font-normal text-gray-400 text-[10px]">by {log.changedByRole}</span>
+                          </p>
+                          <p className="text-[10px] text-gray-400">{new Date(log.createdAt).toLocaleString()}</p>
+                        </div>
+                        {log.note && (
+                          <div className="mt-1 p-2 bg-[#192338] rounded text-gray-300 italic border border-[#31405A]">
+                            "{log.note}"
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 italic">No timeline logs available.</p>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button variant="secondary" size="sm" onClick={() => setIsDetailsModalOpen(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
+
+

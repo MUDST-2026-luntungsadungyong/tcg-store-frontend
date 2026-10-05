@@ -36,9 +36,12 @@ describe('US-05 & US-06: Seller Onboarding & Store Setup Journey', () => {
     cy.contains('button', 'Submit for review').click();
     cy.wait('@submitApplication');
 
-    // 6. Verify success message
-    cy.contains('Application submitted. Your seller account will be activated once an administrator approves it.')
-      .should('be.visible');
+    // 6. Verify success message (Modal changed in fix/seller-verification)
+    cy.contains('Application Submitted').should('be.visible');
+    cy.contains('Your application has been successfully submitted!').should('be.visible');
+    
+    // Close modal
+    cy.contains('button', 'Back to Profile').click();
   });
 
   it('Phase 2: Admin reviews and approves the application', () => {
@@ -78,6 +81,11 @@ describe('US-05 & US-06: Seller Onboarding & Store Setup Journey', () => {
 
     // 5. Approve the application
     cy.get('table').contains('button', /Approve/i).click();
+
+    // Confirm approval in modal (Added in fix/seller-verification)
+    cy.contains('Approve seller application').should('be.visible');
+    cy.contains('button', 'Approve application', { matchCase: false }).click();
+
     cy.wait('@approveApp');
 
     // 6. Verify the table is empty (since it was the only pending app)

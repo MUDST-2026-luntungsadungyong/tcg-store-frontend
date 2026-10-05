@@ -46,6 +46,8 @@ export function SellerOrdersPage() {
   const [actionLoadingId, setActionLoadingId] = useState<string | number | null>(null);
   const [showPaymentConfirmPopup, setShowPaymentConfirmPopup] = useState(false); // CASE 10a
   const [showMarkSentPopup, setShowMarkSentPopup] = useState(false);             // CASE 10b
+  const [showCancelPopup, setShowCancelPopup] = useState(false);
+  const [cancelNote, setCancelNote] = useState('');
   const [pendingOrderAction, setPendingOrderAction] = useState<{ orderId: string | number; status: string } | null>(null);
 
   const loadData = useCallback(async () => {
@@ -70,10 +72,10 @@ export function SellerOrdersPage() {
     void loadData();
   }, [loadData]);
 
-  const handleStatusUpdate = async (orderId: string | number, newStatus: string) => {
+  const handleStatusUpdate = async (orderId: string | number, newStatus: string, note?: string) => {
     setActionLoadingId(orderId);
     try {
-      await updateSellerOrderStatus(orderId, newStatus);
+      await updateSellerOrderStatus(orderId, newStatus, note);
       await loadData();
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -96,10 +98,15 @@ export function SellerOrdersPage() {
     switch (status.toUpperCase()) {
       case 'PENDING':
       case 'RESERVED':
-      case 'PAID':
         return (
           <Badge variant="warning" className="flex items-center gap-1">
-            <Clock size={12} /> {status === 'PAID' ? 'Paid' : 'Pending'}
+            <Clock size={12} /> Pending
+          </Badge>
+        );
+      case 'CONFIRMED':
+        return (
+          <Badge variant="warning" className="flex items-center gap-1">
+            <Clock size={12} /> Confirmed
           </Badge>
         );
       case 'SENT':
@@ -302,7 +309,7 @@ export function SellerOrdersPage() {
                           }}
                           className="text-xs text-brand-blue hover:underline mt-1.5 flex items-center gap-1"
                         >
-                          <Phone size={12} /> Contact Info
+                          <CheckCircle2 size={12} /> Order Details
                         </button>
                       </td>
 
@@ -341,31 +348,35 @@ export function SellerOrdersPage() {
                       {/* Actions */}
                       <td className="p-4 align-top text-right whitespace-nowrap">
                         <div className="flex flex-col gap-1.5 items-end">
-                          {(order.status === 'PENDING' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
+                          {(order.status === 'PENDING' || order.status === 'CONFIRMED' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
                             <>
-                              <Button
-                                size="sm"
-                                variant="primary"
-                                disabled={isActionLoading}
-                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'PAID' }); setShowPaymentConfirmPopup(true); }}
-                                className="w-28 text-xs bg-brand-blue hover:bg-brand-blue/90 mb-1"
-                              >
-                                Confirm Payment
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="primary"
-                                disabled={isActionLoading}
-                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'SENT' }); setShowMarkSentPopup(true); }}
-                                className="w-28 text-xs bg-status-success hover:bg-status-success/90"
-                              >
-                                Mark as Sent
-                              </Button>
+                              {(order.status === 'PENDING' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  disabled={isActionLoading}
+                                  onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'CONFIRMED' }); setShowPaymentConfirmPopup(true); }}
+                                  className="w-28 text-xs bg-brand-blue hover:bg-brand-blue/90 mb-1"
+                                >
+                                  Confirm Payment
+                                </Button>
+                              )}
+                              {order.status === 'CONFIRMED' && (
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  disabled={isActionLoading}
+                                  onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'SENT' }); setShowMarkSentPopup(true); }}
+                                  className="w-28 text-xs bg-status-success hover:bg-status-success/90 mb-1"
+                                >
+                                  Mark as Sent
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant="danger"
                                 disabled={isActionLoading}
-                                onClick={() => handleStatusUpdate(order.id, 'CANCELLED')}
+                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'CANCELLED' }); setCancelNote(''); setShowCancelPopup(true); }}
                                 className="w-28 text-xs"
                               >
                                 Cancel Order
@@ -393,14 +404,15 @@ export function SellerOrdersPage() {
         </div>
       </div>
 
-      {/* Customer Contact Details Modal */}
+      {/* Order Details & Contact Modal */}
       {selectedOrder && (
         <Modal
           isOpen={isContactModalOpen}
           onClose={() => setIsContactModalOpen(false)}
-          title={`Buyer Contact Info - ${selectedOrder.orderNumber}`}
+          title={`Order Details - ${selectedOrder.orderNumber}`}
         >
           <div className="space-y-4 text-sm text-gray-200">
+            {/* Customer Info */}
             <div className="p-3 bg-[#243350] rounded-lg border border-[#31405A]">
               <p className="text-xs font-semibold text-gray-400 uppercase">Customer Name</p>
               <p className="text-base font-bold text-white mt-1">{selectedOrder.buyerName || 'Not specified'}</p>
@@ -429,8 +441,36 @@ export function SellerOrdersPage() {
               </div>
             )}
 
-            <div className="p-3 bg-[#243350]/60 rounded-lg border border-[#31405A] text-xs text-gray-400">
-              💡 <strong>P2P Direct Handover Note:</strong> Reach out to the buyer directly using Line or Phone to coordinate card delivery or physical meetup. Once the buyer confirms receipt, mark the order as <strong>Sent</strong>.
+            {/* Timeline */}
+            <div className="mt-4 border-t border-[#31405A] pt-4">
+              <h3 className="text-sm font-bold text-white mb-3">Order Timeline</h3>
+              {selectedOrder.logs && selectedOrder.logs.length > 0 ? (
+                <div className="space-y-3">
+                  {selectedOrder.logs.map((log, index) => (
+                    <div key={index} className="flex gap-3 text-xs">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2 h-2 rounded-full bg-brand-blue mt-1.5" />
+                        {index !== selectedOrder.logs!.length - 1 && <div className="w-px h-full bg-[#31405A] my-1" />}
+                      </div>
+                      <div className="flex-1 pb-2">
+                        <div className="flex justify-between items-start">
+                          <p className="font-semibold text-white">
+                            {log.toStatus} <span className="font-normal text-gray-400 text-[10px]">by {log.changedByRole}</span>
+                          </p>
+                          <p className="text-[10px] text-gray-400">{new Date(log.createdAt).toLocaleString()}</p>
+                        </div>
+                        {log.note && (
+                          <div className="mt-1 p-2 bg-[#192338] rounded text-gray-300 italic border border-[#31405A]">
+                            "{log.note}"
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 italic">No timeline logs available.</p>
+              )}
             </div>
 
             <div className="flex justify-end pt-2">
@@ -469,6 +509,40 @@ export function SellerOrdersPage() {
         } }}
         secondaryAction={{ label: "Back", onClick: () => { setShowMarkSentPopup(false); setPendingOrderAction(null); } }}
       />
+      {/* Cancel Order Popup with Note */}
+      <Modal
+        isOpen={showCancelPopup}
+        onClose={() => { setShowCancelPopup(false); setPendingOrderAction(null); }}
+        title="Cancel Order"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-300">
+            Please provide a reason for cancelling this order. This note will be recorded in the order timeline.
+          </p>
+          <textarea
+            value={cancelNote}
+            onChange={(e) => setCancelNote(e.target.value)}
+            className="w-full h-24 p-3 rounded-lg border border-[#31405A] bg-[#192338] text-white text-sm"
+            placeholder="Reason for cancellation..."
+          />
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="secondary" onClick={() => { setShowCancelPopup(false); setPendingOrderAction(null); }}>
+              Back
+            </Button>
+            <Button
+              variant="danger"
+              disabled={!cancelNote.trim()}
+              onClick={async () => {
+                if (pendingOrderAction) await handleStatusUpdate(pendingOrderAction.orderId, pendingOrderAction.status, cancelNote);
+                setShowCancelPopup(false);
+                setPendingOrderAction(null);
+              }}
+            >
+              Cancel Order
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

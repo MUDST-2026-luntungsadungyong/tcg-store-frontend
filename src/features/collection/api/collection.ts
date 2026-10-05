@@ -186,6 +186,20 @@ export const collectionApi = {
     items: CollectionEntry[];
     page?: CollectionPageMetadata;
   }> => {
+    if (ENV.ENABLE_MOCK_API) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      return {
+        owner: {
+          userId,
+          displayName: userId === 'usr-4' ? 'Ash Ketchum' : 'Test Buyer',
+          avatarUrl: null,
+          rareCardCount: 10,
+          distinctRareCardCount: 5,
+        },
+        items: storage.getCollection().filter((item) => item.ownerId === userId) || [],
+      };
+    }
+
     const response = await apiClient.get<PublicCollectionResponse>(`/collections/${encodeURIComponent(userId)}`);
     const data = response.data ?? {};
     const owner = data.owner ?? {

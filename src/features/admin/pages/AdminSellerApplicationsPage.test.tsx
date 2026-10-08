@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { AdminSellerApplicationsPage } from './AdminSellerApplicationsPage';
 import { sellerApplicationsApi, type SellerApplication } from '../api/sellerApplications';
 
@@ -11,6 +12,10 @@ vi.mock('../api/sellerApplications', () => ({
     reject: vi.fn(),
   },
 }));
+
+function renderPage(initialEntry = '/admin/seller-applications') {
+  return render(<MemoryRouter initialEntries={[initialEntry]}><AdminSellerApplicationsPage /></MemoryRouter>);
+}
 
 describe('AdminSellerApplicationsPage', () => {
   const writeText = vi.fn();
@@ -38,7 +43,7 @@ describe('AdminSellerApplicationsPage', () => {
   it('renders application list with applicant details and review count', async () => {
     vi.mocked(sellerApplicationsApi.listPending).mockResolvedValueOnce(mockApplications);
 
-    render(<AdminSellerApplicationsPage />);
+    renderPage();
 
     expect(screen.getByRole('heading', { name: 'Seller applications' })).toBeInTheDocument();
 
@@ -54,7 +59,7 @@ describe('AdminSellerApplicationsPage', () => {
   it('displays empty queue state when there are no applications awaiting review', async () => {
     vi.mocked(sellerApplicationsApi.listPending).mockResolvedValueOnce([]);
 
-    render(<AdminSellerApplicationsPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByText('The review queue is clear')).toBeInTheDocument();
@@ -65,7 +70,7 @@ describe('AdminSellerApplicationsPage', () => {
 
   it('opens seller details before a decision', async () => {
     vi.mocked(sellerApplicationsApi.listPending).mockResolvedValueOnce(mockApplications);
-    render(<AdminSellerApplicationsPage />);
+    renderPage();
     await userEvent.click(await screen.findByRole('row', { name: 'View details for Cerulean Water Gym Cards' }));
     expect(screen.getByRole('heading', { name: 'Seller details' })).toBeInTheDocument();
     const modal = screen.getByTestId('modal-backdrop');
@@ -87,7 +92,7 @@ describe('AdminSellerApplicationsPage', () => {
       sellerStatus: 'APPROVED',
     });
 
-    render(<AdminSellerApplicationsPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getAllByText('Misty Cerulean')).toHaveLength(2);
@@ -118,7 +123,7 @@ describe('AdminSellerApplicationsPage', () => {
       sellerStatus: 'REJECTED',
     });
 
-    render(<AdminSellerApplicationsPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getAllByText('Misty Cerulean')).toHaveLength(2);
@@ -152,10 +157,39 @@ describe('AdminSellerApplicationsPage', () => {
   it('displays error alert when listing applications fails', async () => {
     vi.mocked(sellerApplicationsApi.listPending).mockRejectedValueOnce(new Error('API failed'));
 
-    render(<AdminSellerApplicationsPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Unable to load seller applications. Please try again.');
     });
+  });
+
+  it('opens a pending application from the applicationId deep link', async () => {
+    vi.mocked(sellerApplicationsApi.listPending).mockResolvedValueOnce(mockApplications);
+    renderPage('/admin/seller-applications?applicationId=app-1');
+
+    expect(await screen.findByRole('heading', { name: 'Seller details' })).toBeInTheDocument();
+    expect(screen.getByText('Official Water Pokemon Cards')).toBeInTheDocument();
+    expect(screen.queryByText(/no longer pending or is unavailable/i)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { url: '/admin/seller-applications?applicationId=app-2', pending: mockApplications },
+    { url: '/admin/seller-applications?applicationId=app-1', pending: [] },
+  ])('shows a non-destructive unavailable message when the linked application is not pending', async ({ url, pending }) => {
+    vi.mocked(sellerApplicationsApi.listPending).mockResolvedValueOnce(pending);
+    renderPage(url);
+
+    expect(await screen.findByText(/This application is no longer pending or is unavailable\./)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Seller applications' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Seller details' })).not.toBeInTheDocument();
+  });
+
+  it('ignores a missing or blank applicationId and keeps the pending list usable', async () => {
+    vi.mocked(sellerApplicationsApi.listPending).mockResolvedValueOnce(mockApplications);
+    renderPage('/admin/seller-applications?applicationId=%20');
+
+    expect(await screen.findAllByText('Cerulean Water Gym Cards')).toHaveLength(2);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

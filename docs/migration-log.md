@@ -40,12 +40,13 @@ Baseline before this migration: `a4cb492`
 | legacy `catalog`, `cart`, `orders`, `seller` paths | ถูกแทนด้วย feature names ใหม่ด้านบน |
 | `PREPARED`, shipping label, 2-day SLA, buyer received confirmation | product flow ระบุให้ลบ |
 
-## Planned behavior mapping (not implemented here)
+## Planned behavior mapping (historical; superseded by the canonical order lifecycle in `architecture.md`)
 
 - `/cart` จะสร้าง order และแจ้ง seller โดยไม่มี tax/shipping/payment step
 - cart ที่มีหลาย seller จะถูกแยกเป็นหลาย seller-scoped orders
-- seller จะกด **I have received the money** เพื่อเปลี่ยน `RESERVED → FULFILLED`
-- seller จะกด **Mark as sent** เพื่อเปลี่ยน `FULFILLED → SENT`
+- seller จะกด **I have received the money** เพื่อเปลี่ยน `PENDING → CONFIRMED`
+- seller จะกด **Mark as sent** เพื่อเปลี่ยน `CONFIRMED → SENT`; backend persists `SENT` and notifies buyer on this transition
+- buyer ยืนยันการได้รับสินค้าในภายหลังเพื่อเปลี่ยน `SENT → FULFILLED`
 - transition เป็น `SENT` จะสร้าง collection entries ของ buyer แบบ atomic
 - profile target แก้ได้เฉพาะ display name และ phone ตาม Miro
 - seller listing module ยังคงเป็น owner ของ add/edit/validation/delete/filter/visibility behavior
@@ -56,7 +57,7 @@ Baseline before this migration: `a4cb492`
 
 - Mock storage ใช้ keys รุ่นใหม่ (`mythix_mock_*_v1`) เพื่อไม่อ่าน marketplace schema เก่าโดยบังเอิญ
 - API paths ใน architecture เป็น proposed contract ต้อง review กับ backend
-- `FULFILLED` สะกดตาม requirement และใช้ความหมาย payment acknowledged
+- `FULFILLED` เป็นการยืนยันรับสินค้าของ buyer; payment acknowledgement คือ `CONFIRMED`
 - `CANCELLED` คงไว้เป็น operational terminal state แต่ยังไม่มี user-facing action
 
 ## Recovery

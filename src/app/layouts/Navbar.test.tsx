@@ -7,10 +7,25 @@ import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { useReservationCartStore } from '@/features/reservation-cart/model/useReservationCartStore';
 import { Navbar } from './Navbar';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
+import { notificationsApi } from '@/features/notifications/api/notifications';
+import { useNotificationStore } from '@/features/notifications/model/useNotificationStore';
 
 vi.mock('@/features/discovery/api/listings', () => ({
   listingDiscoveryApi: {
     getListings: vi.fn(),
+  },
+}));
+
+vi.mock('@/features/notifications/api/notifications', () => ({
+  notificationsApi: {
+    getUnreadCount: vi.fn(),
+  },
+}));
+
+vi.mock('motion/react', () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
+  motion: {
+    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
   },
 }));
 
@@ -24,6 +39,8 @@ const seller = {
 
 describe('Navbar', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
+    useNotificationStore.getState().reset();
     useAuthStore.setState({ token: 'seller-token', user: seller, isHydrating: false });
     useReservationCartStore.setState({ ownerId: seller.id, items: [] });
     vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
@@ -34,6 +51,7 @@ describe('Navbar', () => {
       totalPages: 1,
       last: true,
     });
+    vi.mocked(notificationsApi.getUnreadCount).mockResolvedValue(0);
   });
 
   it('keeps buyer navigation available to sellers and adds seller workspace navigation', async () => {
@@ -152,5 +170,19 @@ describe('Navbar', () => {
       'href',
       '/notifications',
     );
+    expect(notificationsApi.getUnreadCount).not.toHaveBeenCalled();
+  });
+
+  it('refreshes unread count for authenticated users and shows an accessible capped badge', async () => {
+    vi.mocked(notificationsApi.getUnreadCount).mockResolvedValue(120);
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Navbar />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('link', { name: 'Notifications, 120 unread' })).toBeInTheDocument();
+    expect(screen.getByText('99+')).toBeInTheDocument();
+    expect(notificationsApi.getUnreadCount).toHaveBeenCalledTimes(1);
   });
 });

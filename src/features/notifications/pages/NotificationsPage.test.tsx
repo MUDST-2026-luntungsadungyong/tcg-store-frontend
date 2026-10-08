@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Notification } from '@/entities/notification/model/types';
+import { useNotificationStore } from '../model/useNotificationStore';
 
 const { list, markRead, deleteNotification } = vi.hoisted(() => ({
   list: vi.fn(),
@@ -49,7 +50,7 @@ function deferred<T>() {
 
 function DestinationProbe() {
   const location = useLocation();
-  return <output data-testid="destination">{location.pathname}</output>;
+  return <output data-testid="destination">{location.pathname}{location.search}</output>;
 }
 
 function renderPage() {
@@ -68,7 +69,7 @@ const routingCases: Array<{
   type: Notification['type'];
   title: string;
   message: string;
-  destination: '/workspace/orders' | '/orders';
+  destination: '/workspace/orders' | '/orders' | '/profile' | '/admin/seller-applications?applicationId=app%2F1';
 }> = [
   {
     name: 'a seller reservation',
@@ -84,11 +85,15 @@ const routingCases: Array<{
     message: 'Your card purchase is ready for pickup.',
     destination: '/orders',
   },
+  { name: 'a submitted seller application', type: 'SELLER_APPLICATION_SUBMITTED', title: 'Application submitted', message: 'Review this application.', destination: '/admin/seller-applications?applicationId=app%2F1' },
+  { name: 'an approved seller application', type: 'SELLER_APPLICATION_APPROVED', title: 'Application approved', message: 'You are approved.', destination: '/profile' },
+  { name: 'a rejected seller application', type: 'SELLER_APPLICATION_REJECTED', title: 'Application rejected', message: 'Please review your profile.', destination: '/profile' },
 ];
 
 describe('NotificationsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useNotificationStore.setState({ unreadCount: 4 });
     list.mockResolvedValue(page());
     markRead.mockResolvedValue({ ...notification, readAt: '2026-09-20T11:00:00' });
     deleteNotification.mockResolvedValue(undefined);
@@ -115,20 +120,56 @@ describe('NotificationsPage', () => {
   });
 
   it.each(routingCases)('marks $name as read before navigating by notification type', async ({ type, title, message, destination }) => {
-    const currentNotification: Notification = { ...notification, type, title, message };
+    const currentNotification: Notification = {
+      ...notification,
+      type,
+      title,
+      message,
+      orderId: type === 'ORDER_RESERVED' || type === 'ORDER_STATUS_CHANGED' ? '19' : null,
+      sellerApplicationId: type === 'SELLER_APPLICATION_SUBMITTED' ? 'app/1' : null,
+    };
     const readRequest = deferred<Notification>();
     list.mockResolvedValue(page([currentNotification]));
     markRead.mockReturnValue(readRequest.promise);
     renderPage();
 
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'View order' }));
+    const actionName = type === 'SELLER_APPLICATION_SUBMITTED' ? 'Review application'
+      : type === 'SELLER_APPLICATION_APPROVED' || type === 'SELLER_APPLICATION_REJECTED' ? 'View profile'
+        : 'View order';
+    await user.click(await screen.findByRole('button', { name: actionName }));
 
     expect(markRead).toHaveBeenCalledWith(currentNotification.id);
     expect(screen.queryByTestId('destination')).not.toBeInTheDocument();
 
     readRequest.resolve({ ...currentNotification, readAt: '2026-09-20T11:00:00' });
     expect(await screen.findByTestId('destination')).toHaveTextContent(destination);
+  });
+
+  it.each([
+    { type: 'ORDER_RESERVED', orderId: null, sellerApplicationId: null },
+    { type: 'ORDER_STATUS_CHANGED', orderId: undefined, sellerApplicationId: null },
+    { type: 'SELLER_APPLICATION_SUBMITTED', orderId: null, sellerApplicationId: null },
+  ] as const)('renders $type without a CTA when its required reference is missing', async (values) => {
+    list.mockResolvedValue(page([{ ...notification, ...values }]));
+    renderPage();
+    await screen.findByText('A buyer reserved cards from your listings.');
+    expect(screen.queryByRole('button', { name: /View order|Review application/ })).not.toBeInTheDocument();
+  });
+
+  it('decrements unread count once after marking an unread item read', async () => {
+    renderPage();
+    await screen.findByText('A buyer reserved cards from your listings.');
+    await userEvent.click(screen.getByRole('button', { name: 'Mark New card reservation as read' }));
+    await waitFor(() => expect(useNotificationStore.getState().unreadCount).toBe(3));
+  });
+
+  it('decrements unread count after deleting an unread item and clamps at zero', async () => {
+    useNotificationStore.setState({ unreadCount: 0 });
+    renderPage();
+    await screen.findByText('A buyer reserved cards from your listings.');
+    await userEvent.click(screen.getByRole('button', { name: 'Delete New card reservation' }));
+    await waitFor(() => expect(useNotificationStore.getState().unreadCount).toBe(0));
   });
 
   it('shows the empty state when the backend returns no notifications', async () => {

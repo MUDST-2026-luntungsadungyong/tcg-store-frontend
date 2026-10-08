@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/shared/components/Button';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
+import { useNotificationStore } from '@/features/notifications/model/useNotificationStore';
 import { useReservationCartStore } from '@/features/reservation-cart';
 import { isSellerUser } from '@/entities/account/model/types';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
@@ -26,7 +27,12 @@ export function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
+  const isHydrating = useAuthStore((s) => s.isHydrating);
   const logout = useAuthStore((s) => s.logout);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const refreshUnreadCount = useNotificationStore((s) => s.refresh);
+  const resetNotifications = useNotificationStore((s) => s.reset);
   const totalItems = useReservationCartStore((s) => s.getTotalItems());
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,7 +42,17 @@ export function Navbar() {
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLFormElement>(null);
   const isSeller = isSellerUser(user);
+  const userId = user?.id;
   const isCardDiscoveryPage = location.pathname === '/cards';
+
+  useEffect(() => {
+    if (isHydrating) return;
+    if (!token || !userId) {
+      resetNotifications();
+      return;
+    }
+    void refreshUnreadCount(`${userId}:${token}`);
+  }, [isHydrating, token, userId, refreshUnreadCount, resetNotifications]);
 
   useEffect(() => {
     const query = searchQuery.trim();
@@ -190,11 +206,16 @@ export function Navbar() {
 
             <Link
               to="/notifications"
-              aria-label="Notifications"
+              aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
               className="relative text-gray-300 hover:text-white transition-colors"
               title="Notifications"
             >
               <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span aria-hidden="true" className="absolute -top-2 -right-2 min-w-4 h-4 px-1 bg-status-danger text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
 
             {user ? (

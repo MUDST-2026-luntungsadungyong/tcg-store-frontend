@@ -11,10 +11,15 @@ export interface NotificationsPage {
   last: boolean;
 }
 
-interface NotificationDto extends Omit<Notification, 'id' | 'orderId' | 'recipientId'> {
+interface NotificationDto extends Omit<Notification, 'id' | 'orderId' | 'sellerApplicationId' | 'recipientId'> {
   id: number | string;
-  orderId: number | string;
+  orderId?: number | string | null;
+  sellerApplicationId?: number | string | null;
   type: NotificationType;
+}
+
+interface UnreadCountDto {
+  unreadCount: number;
 }
 
 interface NotificationsPageDto {
@@ -31,11 +36,22 @@ function normalizeNotification(dto: NotificationDto): Notification {
   return {
     ...dto,
     id: String(dto.id),
-    orderId: String(dto.orderId),
+    orderId: dto.orderId == null ? null : String(dto.orderId),
+    sellerApplicationId: dto.sellerApplicationId == null
+      ? null
+      : String(dto.sellerApplicationId),
   };
 }
 
 export const notificationsApi = {
+  async getUnreadCount(): Promise<number> {
+    const response = await apiClient.get<UnreadCountDto>('/notifications/unread-count');
+    if (!response.data || !Number.isFinite(response.data.unreadCount) || response.data.unreadCount < 0) {
+      throw new Error('The server returned an invalid unread notifications count.');
+    }
+    return response.data.unreadCount;
+  },
+
   async list(page = 0, size = 20): Promise<NotificationsPage> {
     const response = await apiClient.get<NotificationsPageDto>('/notifications', {
       params: { page, size },

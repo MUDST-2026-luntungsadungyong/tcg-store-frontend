@@ -1,4 +1,9 @@
-export type NotificationType = 'ORDER_RESERVED' | 'ORDER_STATUS_CHANGED';
+export type NotificationType =
+  | 'ORDER_RESERVED'
+  | 'ORDER_STATUS_CHANGED'
+  | 'SELLER_APPLICATION_SUBMITTED'
+  | 'SELLER_APPLICATION_APPROVED'
+  | 'SELLER_APPLICATION_REJECTED';
 
 export interface Notification {
   id: string;
@@ -6,7 +11,8 @@ export interface Notification {
   type: NotificationType;
   title: string;
   message: string;
-  orderId: string;
+  orderId?: string | null;
+  sellerApplicationId?: string | null;
   readAt?: string | null;
   createdAt: string;
 }

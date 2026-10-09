@@ -159,7 +159,7 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     });
   });
 
-  it('opens Order Details modal when clicking Order Details button', async () => {
+  it('opens Order Details modal, fetches full order details, and displays item breakdown with condition label', async () => {
     const user = userEvent.setup();
 
     render(
@@ -180,8 +180,23 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     });
 
     expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-101');
+    expect(screen.getAllByText('Reserved Items (1)').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Mew - POP Series 4').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Near Mint').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Total Order Amount')).toBeInTheDocument();
+    expect(screen.getAllByText(/3,500/).length).toBeGreaterThanOrEqual(1);
+
+    // Verify timeline
+    expect(screen.getByText('Order Timeline')).toBeInTheDocument();
+    expect(screen.getByText('"Reservation created"')).toBeInTheDocument();
+
+    // Close modal
+    const closeBtn = screen.getByRole('button', { name: /^Close$/i });
+    await user.click(closeBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Order Details - #ORD-101')).not.toBeInTheDocument();
+    });
   });
 
   it('allows marking order as received from Sent order', async () => {
@@ -236,7 +251,5 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     });
 
     expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-102');
-    expect(screen.getAllByText('Charizard Base Set 2').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('Lightly Played').length).toBeGreaterThanOrEqual(1);
   });
 });

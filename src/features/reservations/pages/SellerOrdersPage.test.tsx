@@ -199,7 +199,6 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     expect(screen.getAllByText('Charizard ex - Obsidian Flames').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Near Mint').length).toBeGreaterThanOrEqual(1);
   });
-
   it('refetches orders when clicking Refresh button', async () => {
     const user = userEvent.setup();
 

@@ -34,10 +34,18 @@ describe('Condition Helpers', () => {
       expect(formatCondition('PSA 10 Gem Mint')).toBe('PSA 10 Gem Mint');
     });
 
-    it('returns empty string for nullish or empty condition', () => {
+    it('returns fallback string when provided for nullish or empty condition', () => {
+      expect(formatCondition('', 'Not specified')).toBe('Not specified');
+      expect(formatCondition(null, 'Not specified')).toBe('Not specified');
+      expect(formatCondition(undefined, 'Not specified')).toBe('Not specified');
+      expect(formatCondition('   ', 'Not specified')).toBe('Not specified');
+    });
+
+    it('returns empty string by default for nullish or empty condition', () => {
       expect(formatCondition('')).toBe('');
       expect(formatCondition(null)).toBe('');
       expect(formatCondition(undefined)).toBe('');
+      expect(formatCondition('   ')).toBe('');
     });
   });
 

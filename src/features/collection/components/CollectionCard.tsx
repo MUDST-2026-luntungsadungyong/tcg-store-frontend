@@ -1,6 +1,7 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
 import type { CollectionEntry } from '@/entities/card/model/types';
+import { ConditionLabel } from '@/shared/components/ConditionLabel';
 
 interface CollectionCardProps {
   entry: CollectionEntry;
@@ -34,12 +35,16 @@ export function CollectionCard({ entry, onDelete, isDeleting }: CollectionCardPr
           <h3 className="truncate pr-7 text-xs font-semibold text-gray-900 transition-colors group-hover:text-brand-blue sm:pr-0 sm:text-xl">
             {card.name}
           </h3>
-          <p className="mt-1 hidden truncate text-sm text-gray-600 sm:block">
+          <p className="mt-1 truncate text-xs text-gray-600 sm:text-sm">
             {card.set || card.game || 'Promo Set'}
           </p>
-          <p className="mt-3 hidden truncate text-xs text-gray-500 sm:block">
-            {card.tournament || card.condition || 'Mint Condition'}
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-[11px] font-medium text-gray-500 sm:text-xs">Condition:</span>
+            <ConditionLabel condition={card.condition} fallback="Not specified" size="xs" />
+            {card.tournament && (
+              <span className="truncate text-[11px] text-gray-500 sm:text-xs">· {card.tournament}</span>
+            )}
+          </div>
         </Link>
 
         {onDelete && (

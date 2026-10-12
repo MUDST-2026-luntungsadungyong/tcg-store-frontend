@@ -37,3 +37,27 @@ export async function fetchBuyerOrders(buyerId: string): Promise<ReservationOrde
   return orders.map((order) => normalizeReservationOrder(order, buyerId));
 }
 
+export async function fetchBuyerOrderById(orderId: string): Promise<ReservationOrder> {
+  const buyerId = useAuthStore.getState().user?.id ?? 'usr-1';
+  if (ENV.ENABLE_MOCK_API) {
+    initMockStorage();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const order = storage.getReservations().find((candidate) => candidate.id === orderId);
+    if (!order) {
+      throw new Error(`Order #${orderId} was not found.`);
+    }
+    // Prevent unauthorized IDOR access in mock mode
+    if (order.buyerId && order.buyerId !== buyerId) {
+      throw new Error('You do not have permission to view this order.');
+    }
+    return order;
+  }
+
+  const response = await apiClient.get(`/orders/${orderId}`);
+  if (!response.data) {
+    throw new Error('Empty response received for order details.');
+  }
+  return normalizeReservationOrder(response.data, buyerId);
+}
+
+

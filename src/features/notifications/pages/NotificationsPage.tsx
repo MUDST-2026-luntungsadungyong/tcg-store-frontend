@@ -6,6 +6,7 @@ import type { Notification } from '@/entities/notification/model/types';
 import { Button } from '@/shared/components/Button';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { notificationsApi, type NotificationsPage } from '../api/notifications';
+import { useNotificationStore } from '../model/useNotificationStore';
 
 const PAGE_SIZE = 20;
 
@@ -17,6 +18,7 @@ function isUnauthorized(error: unknown) {
 
 export function NotificationsPage() {
   const navigate = useNavigate();
+  const adjustUnread = useNotificationStore((state) => state.adjustUnread);
   const [page, setPage] = useState(0);
   const [result, setResult] = useState<NotificationsPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export function NotificationsPage() {
   }, [loadNotifications]);
 
   const markRead = async (notification: Notification) => {
-    if (notification.readAt) return;
+    if (notification.readAt || busyId === notification.id) return false;
     setBusyId(notification.id);
     setActionError(null);
     try {
@@ -59,18 +61,24 @@ export function NotificationsPage() {
         ...current,
         content: current.content.map((item) => item.id === updated.id ? updated : item),
       }));
+      if (updated.readAt) adjustUnread(-1);
+      return Boolean(updated.readAt);
     } catch {
       setActionError('Unable to mark this notification as read. Please try again.');
+      return false;
     } finally {
       setBusyId(null);
     }
   };
 
-  const deleteNotification = async (notificationId: string) => {
+  const deleteNotification = async (notification: Notification) => {
+    if (busyId === notification.id) return;
+    const notificationId = notification.id;
     setBusyId(notificationId);
     setActionError(null);
     try {
       await notificationsApi.delete(notificationId);
+      if (!notification.readAt) adjustUnread(-1);
       if (result?.content.length === 1 && page > 0) {
         setPage((current) => current - 1);
       } else {
@@ -82,9 +90,23 @@ export function NotificationsPage() {
     }
   };
 
-  const openOrder = async (notification: Notification) => {
+  const openNotification = async (notification: Notification, destination: string) => {
     await markRead(notification);
-    navigate(notification.type === 'ORDER_RESERVED' ? '/workspace/orders' : '/orders');
+    navigate(destination);
+  };
+
+  const getAction = (notification: Notification): { label: string; destination: string } | null => {
+    switch (notification.type) {
+      case 'ORDER_RESERVED':
+        return notification.orderId ? { label: 'View order', destination: '/workspace/orders' } : null;
+      case 'ORDER_STATUS_CHANGED':
+        return notification.orderId ? { label: 'View order', destination: '/orders' } : null;
+      case 'SELLER_APPLICATION_SUBMITTED':
+        return notification.sellerApplicationId ? { label: 'Review application', destination: `/admin/seller-applications?applicationId=${encodeURIComponent(notification.sellerApplicationId)}` } : null;
+      case 'SELLER_APPLICATION_APPROVED':
+      case 'SELLER_APPLICATION_REJECTED':
+        return { label: 'View profile', destination: '/profile' };
+    }
   };
 
   return (
@@ -96,7 +118,7 @@ export function NotificationsPage() {
             <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
           </div>
           <p className="mt-2 text-sm text-gray-400">
-            Updates about your card reservations and orders.
+            Updates about card orders and seller applications.
           </p>
         </header>
 
@@ -140,11 +162,13 @@ export function NotificationsPage() {
                       <h2 className="font-semibold text-[#151B2B]">{notification.title}</h2>
                       <p className="mt-1 text-sm text-[#4B5567]">{notification.message}</p>
                       <p className="mt-2 text-xs text-[#6B7280]">
-                        Order #{notification.orderId} · {new Date(notification.createdAt).toLocaleString()}
+                        {notification.orderId ? `Order #${notification.orderId} · ` : ''}
+                        {notification.sellerApplicationId ? `Application #${notification.sellerApplicationId} · ` : ''}
+                        {new Date(notification.createdAt).toLocaleString()}
                       </p>
-                      <button type="button" onClick={() => void openOrder(notification)} className="mt-3 text-sm font-semibold text-[#2B53A9] hover:text-[#151B2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue">
-                        View order
-                      </button>
+                      {getAction(notification) && <button type="button" onClick={() => void openNotification(notification, getAction(notification)!.destination)} className="mt-3 text-sm font-semibold text-[#2B53A9] hover:text-[#151B2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue">
+                        {getAction(notification)!.label}
+                      </button>}
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2 pl-5 sm:pl-0">
@@ -154,7 +178,7 @@ export function NotificationsPage() {
                         <span className="sr-only sm:not-sr-only">Mark read</span>
                       </Button>
                     )}
-                    <Button variant="secondary" size="sm" disabled={busyId === notification.id} onClick={() => void deleteNotification(notification.id)} aria-label={`Delete ${notification.title}`}>
+                    <Button variant="secondary" size="sm" disabled={busyId === notification.id} onClick={() => void deleteNotification(notification)} aria-label={`Delete ${notification.title}`}>
                       <Trash2 className="size-4" />
                       <span className="sr-only sm:not-sr-only">Delete</span>
                     </Button>

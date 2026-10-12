@@ -16,7 +16,7 @@ Mythix เปลี่ยนจาก marketplace checkout เป็น trading 
 4. ผู้ซื้อจ่ายเงินให้ผู้ขาย **นอกระบบ**
 5. ผู้ขายรับทราบแล้วกลับมาหน้าจัดการ Order
 6. ผู้ขายกด **ได้รับเงินแล้ว** ในระบบ
-7. ระบบเปลี่ยนสถานะเป็น `FULFILLED`
+7. ระบบเปลี่ยนสถานะเป็น `CONFIRMED`
 8. ~~ผู้ขายมีเวลาจัดส่ง 2 วันทำการ~~ — removed
 9. ผู้ขายจัดเตรียมสินค้า **นอกระบบ**
 10. ~~ผู้ขายพิมพ์ใบจ่าหน้า~~ — removed
@@ -31,12 +31,13 @@ Mythix เปลี่ยนจาก marketplace checkout เป็น trading 
 
 | Status | ผู้ทำ action | ความหมาย |
 | --- | --- | --- |
-| `RESERVED` | System | card ถูกจอง, stock ถูกกัน, seller ถูกแจ้งเตือน |
-| `FULFILLED` | Seller | seller ยืนยันว่าได้รับเงินนอกระบบแล้ว; ยังไม่โอน ownership |
-| `SENT` | Seller | seller ยืนยันการส่งนอกระบบ; ownership ถูกโอนไป buyer collection |
+| `PENDING` | System | order ถูกสร้าง, stock ถูกกัน, seller ถูกแจ้งเตือน |
+| `CONFIRMED` | Seller | seller ยืนยันว่าได้รับเงินนอกระบบแล้ว; ยังไม่โอน ownership |
+| `SENT` | Seller | seller ยืนยันการส่งนอกระบบ; backend persist `SENT`, แจ้ง buyer และโอน ownership |
+| `FULFILLED` | Buyer | buyer ยืนยันว่าได้รับสินค้าแล้ว |
 | `CANCELLED` | Operational/future | terminal escape hatch; ไม่ใช่ approved happy-path UI ในรอบนี้ |
 
-ชื่อ `FULFILLED` คงไว้ตาม requirement แม้ความหมายทางธุรกิจคือ payment acknowledged
+`FULFILLED` หมายถึง buyer ยืนยันว่าได้รับสินค้า หลัง seller เปลี่ยนสถานะเป็น `SENT` แล้ว
 
 ## Business invariants
 
@@ -44,9 +45,9 @@ Mythix เปลี่ยนจาก marketplace checkout เป็น trading 
 - listing ต้องเป็น `SHOW` และ stock ต้องเพียงพอขณะสร้าง order
 - หนึ่ง order มี buyer หนึ่งคนและ seller หนึ่งคน; cart ข้าม seller ถูก split เป็นหลาย orders
 - seller เฉพาะเจ้าของ order เท่านั้นที่เปลี่ยน status ได้
-- อนุญาต transition `RESERVED → FULFILLED → SENT` เท่านั้นใน happy path
+- อนุญาต transition `PENDING → CONFIRMED → SENT → FULFILLED` เท่านั้นใน happy path
 - ห้ามข้าม status หรือย้อน status
-- ownership transfer เกิดครั้งเดียวเมื่อ `FULFILLED → SENT`
+- ownership transfer เกิดครั้งเดียวเมื่อ `CONFIRMED → SENT`
 - การ create order/reserve stock/notify seller ต้อง atomic ใน production
 - การ mark sent/transfer ownership/notify buyer ต้อง atomic ใน production
 
@@ -64,10 +65,13 @@ Mythix เปลี่ยนจาก marketplace checkout เป็น trading 
 ### In-app notifications
 
 - Notify each seller on a successfully reserved order and notify the buyer when the seller marks the order as sent.
-- The authenticated user sees only their own notification items.
+- Supported types are `ORDER_RESERVED`, `ORDER_STATUS_CHANGED`, `SELLER_APPLICATION_SUBMITTED`, `SELLER_APPLICATION_APPROVED`, and `SELLER_APPLICATION_REJECTED`.
+- The authenticated user sees only their own notification items. Order notifications reference `orderId`; seller verification notifications reference `sellerApplicationId`. Both references are nullable on the shared notification item.
 - Notifications remain in the inbox until the user deletes them; there is no automatic time-based expiry.
 - Users can mark a notification as read and delete it. The inbox uses zero-based pages of 20 items by default (maximum 100), newest first.
-- Notification creation is atomic with checkout and the seller's sent action. Email, push, and other delivery channels are out of scope.
+- `GET /api/notifications/unread-count` returns the authenticated user's unread count.
+- Notification creation is atomic with checkout, the seller's `CONFIRMED → SENT` action, or a seller verification state change. A seller submission creates a `PENDING` application and notifies all admins. Admin approval or rejection notifies the seller; rejection includes its reason. The admins' submitted notifications are marked read/resolved after a decision.
+- Production delivery is in-app only. Email, push, realtime delivery, and a mock notification implementation are out of scope.
 
 ## Explicitly out of scope
 - payment gateway, stored card, payment verification by Mythix

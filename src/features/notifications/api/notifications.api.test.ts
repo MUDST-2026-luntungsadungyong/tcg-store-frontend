@@ -43,6 +43,44 @@ describe('notificationsApi', () => {
     expect(get).toHaveBeenCalledWith('/notifications', { params: { page: 1, size: 20 } });
   });
 
+  it('normalizes seller application ids and preserves nullable references', async () => {
+    get.mockResolvedValue({ data: {
+      content: [{
+        id: 42,
+        type: 'SELLER_APPLICATION_SUBMITTED',
+        title: 'Seller application submitted',
+        message: 'Review this application.',
+        orderId: null,
+        sellerApplicationId: 456,
+        readAt: null,
+        createdAt: '2026-09-20T10:00:00',
+      }, {
+        id: 43,
+        type: 'SELLER_APPLICATION_APPROVED',
+        title: 'Approved',
+        message: 'Application approved.',
+        orderId: undefined,
+        sellerApplicationId: null,
+        readAt: null,
+        createdAt: '2026-09-20T10:00:00',
+      }],
+      totalElements: 2, totalPages: 1, number: 0, size: 20, first: true, last: true,
+    } });
+
+    await expect(notificationsApi.list()).resolves.toMatchObject({
+      content: [
+        { id: '42', orderId: null, sellerApplicationId: '456' },
+        { id: '43', orderId: null, sellerApplicationId: null },
+      ],
+    });
+  });
+
+  it('loads the unread count from the backend', async () => {
+    get.mockResolvedValue({ data: { unreadCount: 7 } });
+    await expect(notificationsApi.getUnreadCount()).resolves.toBe(7);
+    expect(get).toHaveBeenCalledWith('/notifications/unread-count');
+  });
+
   it('marks a notification as read and deletes it through the backend API', async () => {
     patch.mockResolvedValue({ data: {
       id: 8,

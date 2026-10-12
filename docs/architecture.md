@@ -13,7 +13,7 @@
 - `reservation`: cart item, order, status และ state transition
 - `notification`: เหตุการณ์ที่ส่งให้ buyer/seller
 
-State vocabulary เช่น `RESERVED → FULFILLED → SENT` ถูกประกาศเป็น entity contract ส่วน transition implementation ต้องมากับ feature ticket และ backend contract
+Canonical order lifecycle: `PENDING → CONFIRMED → SENT → FULFILLED`. The seller sends `SENT`; the backend persists `SENT` and creates the buyer's `ORDER_STATUS_CHANGED` notification on the transition to `SENT`. The buyer later confirms receipt with `FULFILLED`.
 
 ### `src/features`
 
@@ -64,16 +64,15 @@ entities ────────────────→ shared (เฉพ�
 Order เป็น aggregate root และต้องมี seller เดียว:
 
 ```text
-RESERVED
-  └─ seller confirms off-platform payment → FULFILLED
-       └─ seller marks shipment sent → SENT
-            └─ transfer every order item to buyer collection
+PENDING → CONFIRMED (seller confirms off-platform payment)
+  → SENT (seller marks shipment sent; notify buyer)
+    → FULFILLED (buyer confirms receipt)
 ```
 
 Production backend ต้องทำ operation ต่อไปนี้ใน transaction เดียว:
 
 - create order + validate listing + reserve stock + create seller notification
-- `FULFILLED → SENT` + write `sentAt` + transfer ownership + create buyer notification
+- `CONFIRMED → SENT` + write `sentAt` + transfer ownership + create buyer notification exactly on this transition
 
 แผนภาพนี้เป็น target contract ไม่ใช่ implementation ใน restructure PR นี้ Frontend ทำ optimistic UX ได้เฉพาะ action ที่ rollback ชัดเจน และห้ามจำลอง ownership transfer แยกจาก status request ใน production
 
@@ -95,11 +94,14 @@ Target endpoints:
 | `POST` | `/orders` | one or more seller-scoped reservation orders |
 | `GET` | `/orders/me` | buyer orders |
 | `GET` | `/seller/orders` | seller orders |
-| `PATCH` | `/seller/orders/:id/payment-received` | `RESERVED → FULFILLED` |
-| `PATCH` | `/seller/orders/:id/sent` | `FULFILLED → SENT` + ownership transfer |
+| `PATCH` | `/seller/orders/:id/status` with `{ "status": "CONFIRMED" }` | `PENDING → CONFIRMED` |
+| `PATCH` | `/seller/orders/:id/status` with `{ "status": "SENT" }` | `CONFIRMED → SENT` + ownership transfer and buyer notification |
 | `GET` | `/collection` | current user collection |
 | `GET` | `/notifications?page=0&size=20` | current user's notifications; newest first, page size 1–100 |
+| `GET` | `/notifications/unread-count` | unread notification count for current user |
 | `PATCH` | `/notifications/:id/read` | idempotently mark an owned notification as read |
 | `DELETE` | `/notifications/:id` | delete an owned notification |
+
+Notification types are `ORDER_RESERVED`, `ORDER_STATUS_CHANGED`, `SELLER_APPLICATION_SUBMITTED`, `SELLER_APPLICATION_APPROVED`, and `SELLER_APPLICATION_REJECTED`. Notification items have nullable `orderId` and `sellerApplicationId`: order events reference an order, while seller verification events reference a seller application. Seller submission creates a `PENDING` application and notifies all admins. Admin approval or rejection notifies the seller; rejection includes the reason. After either decision, the admins' submitted notifications for that application are marked read/resolved. Production delivery is in-app only; email, push, realtime delivery, and a mock notification implementation are out of scope.
 
 Notifications endpoints are implemented in the frontend adapter and backend API. Other endpoints in this table remain target contracts and require review with the backend before production integration.

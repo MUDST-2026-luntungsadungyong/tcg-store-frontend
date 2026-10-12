@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 import apiClient from '@/shared/api/client';
 import { Button } from '@/shared/components/Button';
 import { Modal } from '@/shared/components/Modal';
@@ -44,7 +44,7 @@ export function AdminUsersPage() {
   const [error, setError] = useState('');
   const { addToast } = useToastStore();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       setError('');
@@ -55,9 +55,9 @@ export function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [query]);
 
-  useEffect(() => { void load(); }, [query]);
+  useEffect(() => { void load(); }, [load]);
 
   const createAdmin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -107,10 +107,21 @@ export function AdminUsersPage() {
           <h1 className="text-3xl font-bold text-white">Admin management</h1>
           <p className="mt-1 text-sm text-slate-400">Manage platform administrator accounts.</p>
         </div>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus size={16} />
-          Add admin
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            onClick={load}
+            isLoading={loading}
+            className="gap-2 shrink-0"
+          >
+            <RefreshCw size={16} aria-hidden="true" />
+            Refresh
+          </Button>
+          <Button onClick={() => setShowForm(true)}>
+            <Plus size={16} />
+            Add admin
+          </Button>
+        </div>
       </div>
 
       <input

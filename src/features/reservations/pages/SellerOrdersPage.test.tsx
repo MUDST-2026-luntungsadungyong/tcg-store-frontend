@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { SellerOrdersPage } from './SellerOrdersPage';
+import { fetchSellerOrders } from '../api/sellerOrders';
 
 const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
   const mockOrdersList = [
@@ -197,5 +198,26 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     // Modal contains the item name and Near Mint badge
     expect(screen.getAllByText('Charizard ex - Obsidian Flames').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Near Mint').length).toBeGreaterThanOrEqual(1);
+  });
+  it('refetches orders when clicking Refresh button', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <SellerOrdersPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('ORD-2026-001')).toBeInTheDocument();
+    });
+
+    const callCount = vi.mocked(fetchSellerOrders).mock.calls.length;
+    const refreshBtn = screen.getByRole('button', { name: /^Refresh$/i });
+    await user.click(refreshBtn);
+
+    await waitFor(() => {
+      expect(vi.mocked(fetchSellerOrders).mock.calls.length).toBeGreaterThan(callCount);
+    });
   });
 });

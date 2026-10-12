@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { SellerOrdersPage } from './SellerOrdersPage';
+import { fetchSellerOrders } from '../api/sellerOrders';
 
 const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
   const mockOrdersList = [
@@ -165,5 +166,27 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     await user.click(allSentBtns[allSentBtns.length - 1]);
 
     expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT', undefined);
+  });
+
+  it('refetches orders when clicking Refresh button', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <SellerOrdersPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('ORD-2026-001')).toBeInTheDocument();
+    });
+
+    const callCount = vi.mocked(fetchSellerOrders).mock.calls.length;
+    const refreshBtn = screen.getByRole('button', { name: /^Refresh$/i });
+    await user.click(refreshBtn);
+
+    await waitFor(() => {
+      expect(vi.mocked(fetchSellerOrders).mock.calls.length).toBeGreaterThan(callCount);
+    });
   });
 });

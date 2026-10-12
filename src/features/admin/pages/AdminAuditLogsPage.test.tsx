@@ -123,4 +123,15 @@ describe('AdminAuditLogsPage', () => {
     await waitFor(() => expect(screen.getAllByText('UPDATE_STOCK')[0]).toBeInTheDocument());
     expect(screen.getAllByText('SYSTEM')[0]).toBeInTheDocument();
   });
+
+  it('refetches audit logs when clicking Refresh button', async () => {
+    render(<AdminAuditLogsPage />);
+    await screen.findAllByText('APPROVE_SELLER');
+    expect(apiClient.get).toHaveBeenCalledTimes(1);
+
+    const refreshBtn = screen.getByRole('button', { name: /Refresh/i });
+    await userEvent.click(refreshBtn);
+
+    expect(apiClient.get).toHaveBeenCalledTimes(2);
+  });
 });

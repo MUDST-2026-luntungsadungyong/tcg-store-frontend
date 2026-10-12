@@ -33,4 +33,14 @@ describe('AdminOrderLogsPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /ORD-2026-001/i }));
     expect(screen.getByText('Item details will appear after the order-log API is updated.')).toBeInTheDocument();
   });
+  it('refetches order logs when clicking Refresh button', async () => {
+    render(<AdminOrderLogsPage />);
+    await screen.findAllByText('ORD-2026-001');
+    expect(apiClient.get).toHaveBeenCalledTimes(1);
+
+    const refreshBtn = screen.getByRole('button', { name: /Refresh/i });
+    await userEvent.click(refreshBtn);
+
+    expect(apiClient.get).toHaveBeenCalledTimes(2);
+  });
 });

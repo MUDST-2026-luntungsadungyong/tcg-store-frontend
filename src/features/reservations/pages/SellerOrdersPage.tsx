@@ -9,6 +9,7 @@ import {
   Search,
   MessageSquare,
   Phone,
+  RefreshCw,
   User as UserIcon,
   AlertCircle,
 } from 'lucide-react';
@@ -140,8 +141,15 @@ export function SellerOrdersPage() {
             Manage your card reservation orders, track fulfillment status, and monitor your net profit.
           </p>
         </div>
-        <Button variant="secondary" onClick={loadData} disabled={loading} size="sm">
-          Refresh Data
+        <Button
+          variant="secondary"
+          onClick={loadData}
+          isLoading={loading}
+          size="sm"
+          className="gap-2 shrink-0 h-fit"
+        >
+          <RefreshCw size={16} aria-hidden="true" />
+          Refresh
         </Button>
       </div>
 

@@ -16,6 +16,7 @@
     "test:e2e:auth:open": "cypress open",
     "test:e2e:admin": "cypress run --spec \"cypress/e2e/admin/**/*.cy.ts\"",
     "test:e2e:order": "cypress run --spec \"cypress/e2e/04_order_fastforward_lifecycle.cy.ts\"",
+    "test:e2e:notifications": "cypress run --spec \"cypress/e2e/05_notifications_inbox.cy.ts\"",
     "test:e2e:open": "cypress open",
     "test:e2e:headless": "cypress run --headless",
     "audit": "npm audit --audit-level=critical",

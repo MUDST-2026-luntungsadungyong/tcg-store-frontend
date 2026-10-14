@@ -151,7 +151,7 @@ describe('MyCollectionPage seller collection/store toggle', () => {
     expect(await screen.findByRole('heading', { name: 'My Collection' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: /My Store/ })).not.toBeInTheDocument();
     expect(listingsApi.getListings).not.toHaveBeenCalled();
-    expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
+    expect(await screen.findByText('Pikachu Illustrator')).toBeInTheDocument();
   });
 
   it('shows separate empty states for an empty seller store and empty buyer collection', async () => {

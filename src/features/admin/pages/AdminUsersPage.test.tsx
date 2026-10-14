@@ -59,4 +59,19 @@ describe('AdminUsersPage', () => {
     await waitFor(() => expect(del).toHaveBeenCalledWith('/admin/users/1'));
     await waitFor(() => expect(screen.queryByText('Platform Admin')).not.toBeInTheDocument());
   });
+
+  it('refetches administrators when clicking Refresh button', async () => {
+    get.mockResolvedValueOnce({ data: [{ id: '1', name: 'Platform Admin', email: 'admin@mythix.com', role: 'ADMIN', sellerStatus: 'NONE' }] });
+    get.mockResolvedValueOnce({ data: [{ id: '1', name: 'Platform Admin', email: 'admin@mythix.com', role: 'ADMIN', sellerStatus: 'NONE' }] });
+    const user = userEvent.setup();
+
+    render(<AdminUsersPage />);
+    await waitFor(() => expect(screen.getAllByText('Platform Admin')[0]).toBeInTheDocument());
+    expect(get).toHaveBeenCalledTimes(1);
+
+    const refreshBtn = screen.getByRole('button', { name: /Refresh/i });
+    await user.click(refreshBtn);
+
+    await waitFor(() => expect(get).toHaveBeenCalledTimes(2));
+  });
 });

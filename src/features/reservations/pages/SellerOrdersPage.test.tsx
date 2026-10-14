@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { SellerOrdersPage } from './SellerOrdersPage';
+import { fetchSellerOrders } from '../api/sellerOrders';
 
 const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
   const mockOrdersList = [
@@ -30,6 +31,7 @@ const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
           itemProfit: 500,
           quantity: 1,
           itemTotal: 1250,
+          condition: 'NM',
         },
       ],
     },
@@ -55,6 +57,7 @@ const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
           itemProfit: 500,
           quantity: 2,
           itemTotal: 2400,
+          condition: 'LP',
         },
       ],
     },
@@ -165,5 +168,56 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     await user.click(allSentBtns[allSentBtns.length - 1]);
 
     expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT', undefined);
+  });
+
+  it('displays card condition badge in items list and inside Order Details modal', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <SellerOrdersPage />
+      </MemoryRouter>
+    );
+
+    // Verify condition labels are rendered in the table
+    await waitFor(() => {
+      expect(screen.getByText('Near Mint')).toBeInTheDocument();
+      expect(screen.getByText('Lightly Played')).toBeInTheDocument();
+    });
+
+    // Click "Order Details" button for the first order
+    const orderDetailsBtns = screen.getAllByRole('button', { name: /Order Details/i });
+    await user.click(orderDetailsBtns[0]);
+
+    // Modal appears with items and condition
+    await waitFor(() => {
+      expect(screen.getByText('Order Details - ORD-2026-001')).toBeInTheDocument();
+      expect(screen.getByText('Reserved Items (1)')).toBeInTheDocument();
+    });
+
+    // Modal contains the item name and Near Mint badge
+    expect(screen.getAllByText('Charizard ex - Obsidian Flames').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Near Mint').length).toBeGreaterThanOrEqual(1);
+  });
+  it('refetches orders when clicking Refresh button', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <SellerOrdersPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('ORD-2026-001')).toBeInTheDocument();
+    });
+
+    const callCount = vi.mocked(fetchSellerOrders).mock.calls.length;
+    const refreshBtn = screen.getByRole('button', { name: /^Refresh$/i });
+    await user.click(refreshBtn);
+
+    await waitFor(() => {
+      expect(vi.mocked(fetchSellerOrders).mock.calls.length).toBeGreaterThan(callCount);
+    });
   });
 });

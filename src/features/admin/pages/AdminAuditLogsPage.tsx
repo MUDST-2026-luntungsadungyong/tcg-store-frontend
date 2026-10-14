@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Search, UserCheck, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CalendarDays, ChevronLeft, ChevronRight, RefreshCw, Search, UserCheck, X } from 'lucide-react';
 import apiClient from '@/shared/api/client';
+import { Button } from '@/shared/components/Button';
 import { Modal } from '@/shared/components/Modal';
 import { cn } from '@/shared/lib';
 
@@ -300,11 +301,10 @@ export function AdminAuditLogsPage() {
 
   useEffect(() => setPage(0), [query, searchBy, selectedActions, from, to]);
 
-  useEffect(() => {
-    let active = true;
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
-    void apiClient
-      .get<Page>('/admin/audit-logs', {
+    try {
+      const { data } = await apiClient.get<Page>('/admin/audit-logs', {
         params: {
           query: query || undefined,
           searchBy,
@@ -315,24 +315,19 @@ export function AdminAuditLogsPage() {
           size: 20,
         },
         paramsSerializer: { indexes: null },
-      })
-      .then(({ data }) => {
-        if (active) {
-          setLogs(data.content || []);
-          setInfo(data);
-        }
-      })
-      .catch(() => {
-        if (active) setLogs([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
       });
+      setLogs(data.content || []);
+      setInfo(data);
+    } catch {
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [from, page, query, searchBy, selectedActions, to]);
 
-    return () => {
-      active = false;
-    };
-  }, [page, query, searchBy, selectedActions, from, to]);
+  useEffect(() => {
+    void fetchLogs();
+  }, [fetchLogs]);
 
   const toggleAction = (action: string) =>
     setSelectedActions((all) => (all.includes(action) ? all.filter((x) => x !== action) : [...all, action]));
@@ -348,9 +343,20 @@ export function AdminAuditLogsPage() {
 
   return (
     <main id="main-content" className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-      <header className="border-b border-white/10 pb-5">
-        <p className="text-xs font-semibold uppercase tracking-[.16em] text-brand-gold">Platform administration</p>
-        <h1 className="mt-1 text-3xl font-bold text-white">Audit trail</h1>
+      <header className="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-brand-gold">Platform administration</p>
+          <h1 className="mt-1 text-3xl font-bold text-white">Audit trail</h1>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={() => void fetchLogs()}
+          isLoading={loading}
+          className="gap-2 shrink-0 h-fit"
+        >
+          <RefreshCw size={16} aria-hidden="true" />
+          Refresh
+        </Button>
       </header>
 
       {/* Filters */}

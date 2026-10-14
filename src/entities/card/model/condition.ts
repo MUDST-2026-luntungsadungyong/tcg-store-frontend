@@ -33,10 +33,11 @@ export const CONDITION_LABEL_TO_CODE: Record<string, string> = {
 /**
  * Formats a condition abbreviation or string (e.g. 'NM', 'LP', 'Near Mint')
  * into its user-friendly full display name (e.g. 'Near Mint', 'Lightly Played').
- * Preserves custom/graded strings (e.g. 'NM-MT 8 (Near Mint-Mint 8)') if not an abbreviation.
+ * Preserves custom/graded strings (e.g. 'PSA 10 Gem Mint', 'NM-MT 8 (Near Mint-Mint 8)') if not an abbreviation.
+ * Allows custom fallback when condition is missing/empty (defaulting to empty string).
  */
-export function formatCondition(condition?: string | null): string {
-  if (!condition) return '';
+export function formatCondition(condition?: string | null, fallback = ''): string {
+  if (!condition || !condition.trim()) return fallback;
   const trimmed = condition.trim();
   const normalized = trimmed.toUpperCase().replace(/[-_]/g, ' ');
 

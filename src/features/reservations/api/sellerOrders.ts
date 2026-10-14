@@ -24,6 +24,8 @@ export interface SellerOrderItem {
   itemProfit: number;
   quantity: number;
   itemTotal: number;
+  condition?: string;
+  image?: string;
 }
 
 export interface SellerOrder {
@@ -73,6 +75,8 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     itemProfit: (item.listing.price - item.listing.cost) * item.quantity,
     quantity: item.quantity,
     itemTotal: item.listing.price * item.quantity,
+    condition: item.listing.condition,
+    image: item.listing.image,
   }));
   const sellerRevenue = order.totalAmount;
   const sellerCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
@@ -144,7 +148,14 @@ export async function fetchSellerOrders(
     throw new Error('The server returned an invalid seller orders response.');
   }
   return {
-    orders: data.content as SellerOrder[],
+    orders: (data.content as any[]).map((raw) => ({
+      ...raw,
+      items: (raw.items || []).map((item: any) => ({
+        ...item,
+        condition: item.condition ?? item.listing?.condition,
+        image: item.image ?? item.imageUrl ?? item.listing?.image,
+      })),
+    })),
     totalPages: data.totalPages ?? 1,
     totalElements: data.totalElements ?? data.content.length,
     currentPage: data.number ?? page,

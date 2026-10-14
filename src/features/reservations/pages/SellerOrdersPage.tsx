@@ -9,6 +9,7 @@ import {
   Search,
   MessageSquare,
   Phone,
+  RefreshCw,
   User as UserIcon,
   AlertCircle,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
 import { Modal } from '@/shared/components/Modal';
 import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 10
+import { ConditionLabel } from '@/shared/components/ConditionLabel';
 
 export function SellerOrdersPage() {
   const [orders, setOrders] = useState<SellerOrder[]>([]);
@@ -140,8 +142,15 @@ export function SellerOrdersPage() {
             Manage your card reservation orders, track fulfillment status, and monitor your net profit.
           </p>
         </div>
-        <Button variant="secondary" onClick={loadData} disabled={loading} size="sm">
-          Refresh Data
+        <Button
+          variant="secondary"
+          onClick={loadData}
+          isLoading={loading}
+          size="sm"
+          className="gap-2 shrink-0 h-fit"
+        >
+          <RefreshCw size={16} aria-hidden="true" />
+          Refresh
         </Button>
       </div>
 
@@ -318,7 +327,12 @@ export function SellerOrdersPage() {
                         <div className="space-y-1.5 max-w-sm">
                           {order.items.map((item, idx) => (
                             <div key={idx} className="text-xs">
-                              <span className="font-medium text-white">{item.productName}</span>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="font-medium text-white">{item.productName}</span>
+                                {item.condition && (
+                                  <ConditionLabel condition={item.condition} fallback="Not specified" size="xs" />
+                                )}
+                              </div>
                               <div className="text-gray-400">
                                 {item.quantity}x @ ฿{item.unitPrice.toLocaleString()} (Cost: ฿{item.unitCost.toLocaleString()})
                               </div>
@@ -440,6 +454,41 @@ export function SellerOrdersPage() {
                 <p className="font-semibold text-white mt-1">{selectedOrder.buyerContactFacebook}</p>
               </div>
             )}
+
+            {/* Order Items Breakdown */}
+            <div className="mt-4 border-t border-[#31405A] pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold text-white">
+                  Reserved Items ({selectedOrder.items?.reduce((sum, item) => sum + item.quantity, 0) || 0})
+                </h3>
+                <span className="text-xs font-semibold text-brand-gold">
+                  Revenue: ฿{selectedOrder.sellerRevenue.toLocaleString()}
+                </span>
+              </div>
+              <div className="space-y-2.5">
+                {selectedOrder.items?.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between gap-3 p-3 bg-[#192338] rounded-lg border border-[#31405A]"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-white">{item.productName}</span>
+                        {item.condition && (
+                          <ConditionLabel condition={item.condition} fallback="Not specified" size="xs" />
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Qty: {item.quantity} × ฿{item.unitPrice.toLocaleString()} · Subtotal: ฿{item.itemTotal.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-semibold text-brand-gold">+฿{item.itemProfit.toLocaleString()} profit</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Timeline */}
             <div className="mt-4 border-t border-[#31405A] pt-4">

@@ -84,11 +84,13 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     ? 'SENT'
     : order.status === 'CANCELLED'
       ? 'CANCELLED'
-      : 'PENDING';
+      : order.status === 'CONFIRMED'
+        ? 'CONFIRMED'
+        : 'PENDING';
 
   return {
     id: order.id,
-    orderNumber: order.id.toUpperCase(),
+    orderNumber: order.orderNumber ?? String(order.id).toUpperCase(),
     status,
     buyerId: order.buyerId,
     buyerName: buyer?.name ?? `Buyer ${order.buyerId}`,
@@ -100,8 +102,9 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     sellerCost,
     sellerProfit: sellerRevenue - sellerCost,
     items,
+    logs: order.logs,
     createdAt: order.createdAt,
-    updatedAt: order.sentAt ?? order.createdAt,
+    updatedAt: order.sentAt ?? order.paymentConfirmedAt ?? order.cancelledAt ?? order.createdAt,
   };
 }
 
@@ -172,10 +175,38 @@ export async function updateSellerOrderStatus(
     throw new Error(`Unsupported seller order status: ${newStatus}`);
   }
 
-  if (ENV.ENABLE_MOCK_API && (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED')) {
+  if (ENV.ENABLE_MOCK_API) {
     const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
-    const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
-    return mapReservationOrder(updated);
+    if (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED') {
+      const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
+      return mapReservationOrder(updated);
+    }
+    initMockStorage();
+    const reservations = storage.getReservations();
+    const orderIndex = reservations.findIndex((o) => String(o.id) === String(orderId));
+    if (orderIndex >= 0) {
+      const existing = reservations[orderIndex];
+      const timestamp = new Date().toISOString();
+      const updated: ReservationOrder = {
+        ...existing,
+        status: normalizedStatus as any,
+        paymentConfirmedAt: normalizedStatus === 'CONFIRMED' ? timestamp : existing.paymentConfirmedAt,
+        cancelledAt: normalizedStatus === 'CANCELLED' ? timestamp : existing.cancelledAt,
+        logs: [
+          ...(existing.logs ?? []),
+          {
+            fromStatus: existing.status,
+            toStatus: normalizedStatus,
+            changedByRole: 'SELLER',
+            note: note ?? null,
+            createdAt: timestamp,
+          },
+        ],
+      };
+      reservations[orderIndex] = updated;
+      storage.setReservations([...reservations]);
+      return mapReservationOrder(updated);
+    }
   }
 
   const payload: any = { status: normalizedStatus };

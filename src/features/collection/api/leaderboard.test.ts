@@ -1,4 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/shared/config/env', () => ({
+  ENV: { ENABLE_MOCK_API: false, API_BASE_URL: 'http://localhost:8080/api' },
+}));
+
 import apiClient from '@/shared/api/client';
 import { getTopCollectors } from './leaderboard';
 

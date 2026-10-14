@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Clock, Package, RefreshCw, Truck, XCircle } from 'lucide-react';
 
 import type { ReservationOrder, ReservationStatus } from '@/entities/reservation/model/types';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { Badge } from '@/shared/components/Badge';
 import { Skeleton } from '@/shared/components/Skeleton';
-import { fetchBuyerOrders, fetchBuyerOrderById, updateBuyerOrderStatus } from '../api/buyerOrders';
+import { fetchBuyerOrders, updateBuyerOrderStatus } from '../api/buyerOrders';
 import { Modal } from '@/shared/components/Modal';
 import { Button } from '@/shared/components/Button';
 import { ConditionLabel } from '@/shared/components/ConditionLabel';
@@ -37,15 +37,12 @@ const FILTER_TABS: Array<{ key: FilterTab; label: string }> = [
 
 export function MyOrdersPage() {
   const user = useAuthStore((state) => state.user);
-  const { orderId: routeOrderId } = useParams<{ orderId?: string }>();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<ReservationOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterTab>('ALL');
   const [selectedOrder, setSelectedOrder] = useState<ReservationOrder | null>(null);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [detailsLoading, setDetailsLoading] = useState(false);
   const [showCancelPopup, setShowCancelPopup] = useState(false);
   const [cancelNote, setCancelNote] = useState('');
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -68,48 +65,8 @@ export function MyOrdersPage() {
     void loadOrders();
   }, [loadOrders]);
 
-  useEffect(() => {
-    if (!routeOrderId) return;
-    let isCancelled = false;
-    const fetchDirect = async () => {
-      setDetailsLoading(true);
-      try {
-        const directOrder = await fetchBuyerOrderById(routeOrderId);
-        if (!isCancelled) {
-          setSelectedOrder(directOrder);
-          setIsDetailsModalOpen(true);
-        }
-      } catch (err) {
-        console.error('Failed to load direct order by ID', err);
-      } finally {
-        if (!isCancelled) setDetailsLoading(false);
-      }
-    };
-    void fetchDirect();
-    return () => {
-      isCancelled = true;
-    };
-  }, [routeOrderId]);
-
-  const handleOpenDetails = async (order: ReservationOrder) => {
-    setSelectedOrder(order);
-    setIsDetailsModalOpen(true);
-    setDetailsLoading(true);
-    try {
-      const detailed = await fetchBuyerOrderById(order.id);
-      setSelectedOrder(detailed);
-    } catch {
-      // Keep existing order details if fetch fails
-    } finally {
-      setDetailsLoading(false);
-    }
-  };
-
-  const handleCloseDetails = () => {
-    setIsDetailsModalOpen(false);
-    if (routeOrderId) {
-      navigate('/orders', { replace: true });
-    }
+  const handleOpenDetails = (order: ReservationOrder) => {
+    navigate(`/orders/${order.id}`);
   };
 
   const handleStatusUpdate = async (orderId: string, newStatus: string, note?: string) => {
@@ -322,7 +279,10 @@ export function MyOrdersPage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => void handleOpenDetails(order)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenDetails(order);
+                        }}
                         className="w-full md:w-32 text-xs"
                       >
                         Order Details
@@ -403,190 +363,6 @@ export function MyOrdersPage() {
         </div>
       </Modal>
 
-      {/* Order Details & Timeline Modal */}
-      {selectedOrder && (
-        <Modal
-          isOpen={isDetailsModalOpen}
-          onClose={handleCloseDetails}
-          title={`Order Details - #${selectedOrder.id.toUpperCase()}`}
-          className="md:max-w-2xl"
-        >
-          <div className="space-y-5 text-sm text-gray-200">
-            {/* Order Header / Metadata */}
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#111A29] p-4">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-gray-400">Order Placed</p>
-                <p className="font-semibold text-white">
-                  {new Date(selectedOrder.createdAt).toLocaleDateString('en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={STATUS_CONFIGS[selectedOrder.status].variant}
-                  className="flex items-center gap-1.5 px-3 py-1 text-xs"
-                >
-                  {STATUS_CONFIGS[selectedOrder.status].label}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Seller Information */}
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#111A29]/70 px-4 py-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-blue/15 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/30">
-                  {selectedOrder.sellerId.charAt(0).toUpperCase()}
-                </div>
-                <span className="font-medium text-white">Seller: {selectedOrder.sellerId}</span>
-              </div>
-            </div>
-
-            {/* Reserved Items Section */}
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white">
-                  Reserved Items ({selectedOrder.items?.reduce((acc, it) => acc + it.quantity, 0) ?? 0})
-                </h3>
-                {detailsLoading && (
-                  <span className="flex items-center gap-1 text-xs text-gray-400">
-                    <RefreshCw size={12} className="animate-spin" /> Updating...
-                  </span>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                {selectedOrder.items && selectedOrder.items.length > 0 ? (
-                  selectedOrder.items.map((item, idx) => {
-                    const lineTotal = item.listing.price * item.quantity;
-                    return (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#111A29]/50 p-3.5 transition-colors hover:bg-white/[0.02]"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-[#0B141F] p-1">
-                            <img
-                              src={item.listing.image}
-                              alt={item.listing.name}
-                              className="size-full object-contain"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate font-semibold text-white">{item.listing.name}</p>
-                            <p className="text-xs text-gray-400">
-                              {item.listing.set || item.listing.game || 'Card'}
-                              {item.listing.cardNumber ? ` · #${item.listing.cardNumber}` : ''}
-                            </p>
-                            <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                              <span className="text-[11px] text-gray-400">Condition:</span>
-                              <ConditionLabel
-                                condition={item.listing.condition}
-                                fallback="Not specified"
-                                size="xs"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="shrink-0 text-right">
-                          <p className="font-semibold text-brand-blue">฿{lineTotal.toLocaleString()}</p>
-                          <p className="text-xs text-gray-400">
-                            {item.quantity} × ฿{item.listing.price.toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-xs italic text-gray-400">No items available.</p>
-                )}
-              </div>
-
-              {/* Financial Totals */}
-              <div className="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-[#111A29] px-4 py-3">
-                <span className="text-sm font-medium text-gray-300">Total Order Amount</span>
-                <span className="text-lg font-bold text-[#EFA025]">
-                  ฿{selectedOrder.totalAmount.toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            {/* Timeline */}
-            <div className="rounded-xl border border-white/10 bg-[#111A29]/50 p-4">
-              <h3 className="mb-3 text-sm font-bold text-white">Order Timeline</h3>
-              {selectedOrder.logs && selectedOrder.logs.length > 0 ? (
-                <div className="space-y-3">
-                  {selectedOrder.logs.map((log, index) => (
-                    <div key={index} className="flex gap-3 text-xs">
-                      <div className="flex flex-col items-center">
-                        <div className="mt-1.5 size-2 rounded-full bg-brand-blue" />
-                        {index !== selectedOrder.logs!.length - 1 && <div className="my-1 h-full w-px bg-[#31405A]" />}
-                      </div>
-                      <div className="flex-1 pb-2">
-                        <div className="flex items-start justify-between">
-                          <p className="font-semibold text-white">
-                            {log.toStatus} <span className="text-[10px] font-normal text-gray-400">by {log.changedByRole}</span>
-                          </p>
-                          <p className="text-[10px] text-gray-400">{new Date(log.createdAt).toLocaleString()}</p>
-                        </div>
-                        {log.note && (
-                          <div className="mt-1 rounded border border-[#31405A] bg-[#192338] p-2 italic text-gray-300">
-                            "{log.note}"
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs italic text-gray-500">No timeline logs available.</p>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
-              {selectedOrder.status === 'SENT' && (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  disabled={actionLoadingId === selectedOrder.id}
-                  onClick={() => {
-                    void handleStatusUpdate(selectedOrder.id, 'FULFILLED');
-                    handleCloseDetails();
-                  }}
-                  className="bg-status-success text-xs hover:bg-status-success/90"
-                >
-                  Mark Received
-                </Button>
-              )}
-
-              {(selectedOrder.status === 'PENDING' || selectedOrder.status === 'CONFIRMED' || selectedOrder.status === 'RESERVED') && (
-                <Button
-                  variant="danger"
-                  size="sm"
-                  disabled={actionLoadingId === selectedOrder.id}
-                  onClick={() => {
-                    handleCloseDetails();
-                    setCancelNote('');
-                    setShowCancelPopup(true);
-                  }}
-                  className="text-xs"
-                >
-                  Cancel Order
-                </Button>
-              )}
-
-              <Button variant="secondary" size="sm" onClick={handleCloseDetails}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 }

@@ -159,12 +159,15 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     });
   });
 
-  it('opens Order Details modal, fetches full order details, and displays item breakdown with condition label', async () => {
+  it('navigates to /orders/:orderId when clicking Order Details', async () => {
     const user = userEvent.setup();
 
     render(
-      <MemoryRouter>
-        <MyOrdersPage />
+      <MemoryRouter initialEntries={['/orders']}>
+        <Routes>
+          <Route path="/orders" element={<MyOrdersPage />} />
+          <Route path="/orders/:orderId" element={<div data-testid="detail-page">Order Detail View</div>} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -175,27 +178,7 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     const orderDetailsButtons = screen.getAllByRole('button', { name: /Order Details/i });
     await user.click(orderDetailsButtons[0]);
 
-    await waitFor(() => {
-      expect(screen.getByText('Order Details - #ORD-101')).toBeInTheDocument();
-    });
-
-    expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-101');
-    expect(screen.getAllByText('Reserved Items (1)').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('Mew - POP Series 4').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('Near Mint').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Total Order Amount')).toBeInTheDocument();
-    expect(screen.getAllByText(/3,500/).length).toBeGreaterThanOrEqual(1);
-
-    // Verify timeline
-    expect(screen.getByText('Order Timeline')).toBeInTheDocument();
-    expect(screen.getByText('"Reservation created"')).toBeInTheDocument();
-
-    // Close modal
-    const closeBtn = screen.getByRole('button', { name: /^Close$/i });
-    await user.click(closeBtn);
-
-    await waitFor(() => {
-      expect(screen.queryByText('Order Details - #ORD-101')).not.toBeInTheDocument();
+      expect(screen.getByTestId('detail-page')).toBeInTheDocument();
     });
   });
 
@@ -230,12 +213,15 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     });
   });
 
-  it('opens Order Details modal when clicking the entire order row', async () => {
+  it('navigates to detail page when clicking the entire order row', async () => {
     const user = userEvent.setup();
 
     render(
-      <MemoryRouter>
-        <MyOrdersPage />
+      <MemoryRouter initialEntries={['/orders']}>
+        <Routes>
+          <Route path="/orders" element={<MyOrdersPage />} />
+          <Route path="/orders/:orderId" element={<div data-testid="detail-page">Order Detail View</div>} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -247,9 +233,7 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     await user.click(orderRow);
 
     await waitFor(() => {
-      expect(screen.getByText('Order Details - #ORD-102')).toBeInTheDocument();
+      expect(screen.getByTestId('detail-page')).toBeInTheDocument();
     });
-
-    expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-102');
   });
 });

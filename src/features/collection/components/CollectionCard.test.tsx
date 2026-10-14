@@ -92,6 +92,7 @@ describe('CollectionCard', () => {
     await user.click(deleteBtn);
     expect(onDelete).toHaveBeenCalledWith('col-1');
   });
+
   it('renders clear owned quantity badge with "× [qty]" and accessible label', () => {
     const entry = createMockEntry('NM');
     render(

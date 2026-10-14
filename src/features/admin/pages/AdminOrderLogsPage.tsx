@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CalendarDays, ChevronLeft, ChevronRight, RefreshCw, Search, X } from 'lucide-react';
 import apiClient from '@/shared/api/client';
+import { Button } from '@/shared/components/Button';
 import { Modal } from '@/shared/components/Modal';
 import { cn } from '@/shared/lib';
 
@@ -64,14 +65,54 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
 
 export function AdminOrderLogsPage() {
  const [orders, setOrders] = useState<Order[]>([]); const [query, setQuery] = useState(''); const [searchBy, setSearchBy] = useState<SearchBy>('ORDER_NUMBER'); const [statuses, setStatuses] = useState<Status[]>([]); const [from, setFrom] = useState(''); const [to, setTo] = useState(''); const [page, setPage] = useState(0); const [info, setInfo] = useState<Page>({ content: [], number: 0, totalPages: 0, totalElements: 0 }); const [loading, setLoading] = useState(true); const [viewing, setViewing] = useState<Order | null>(null);
- useEffect(() => setPage(0), [query, searchBy, statuses, from, to]); useEffect(() => { let active = true; setLoading(true); void apiClient.get<Page>('/admin/orders', { params: { query: query || undefined, searchBy, statuses: statuses.length ? statuses : undefined, fromDate: from || undefined, toDate: to || undefined, page, size: 20 }, paramsSerializer: { indexes: null } }).then(({ data }) => active && (setOrders(data.content), setInfo(data))).finally(() => active && setLoading(false)); return () => { active = false; }; }, [page, query, searchBy, statuses, from, to]);
+ useEffect(() => setPage(0), [query, searchBy, statuses, from, to]);
+
+ const fetchOrders = useCallback(async () => {
+  setLoading(true);
+  try {
+   const { data } = await apiClient.get<Page>('/admin/orders', {
+    params: {
+     query: query || undefined,
+     searchBy,
+     statuses: statuses.length ? statuses : undefined,
+     fromDate: from || undefined,
+     toDate: to || undefined,
+     page,
+     size: 20,
+    },
+    paramsSerializer: { indexes: null },
+   });
+   setOrders(data.content || []);
+   setInfo(data);
+  } catch {
+   setOrders([]);
+  } finally {
+   setLoading(false);
+  }
+ }, [from, page, query, searchBy, statuses, to]);
+
+ useEffect(() => {
+  void fetchOrders();
+ }, [fetchOrders]);
+
  const toggle = (status: Status) => setStatuses((all) => all.includes(status) ? all.filter((x) => x !== status) : [...all, status]); const placeholder = searchBy === 'SELLER' ? 'Search seller or store' : searchBy === 'BUYER' ? 'Search buyer name or email' : 'Search order number';
 
  return (
   <main id="main-content" className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-   <header className="border-b border-white/10 pb-5">
-    <p className="text-xs font-semibold uppercase tracking-[.16em] text-brand-gold">Platform administration</p>
-    <h1 className="mt-1 text-3xl font-bold text-white">Order logs</h1>
+   <header className="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+     <p className="text-xs font-semibold uppercase tracking-[.16em] text-brand-gold">Platform administration</p>
+     <h1 className="mt-1 text-3xl font-bold text-white">Order logs</h1>
+    </div>
+    <Button
+     variant="secondary"
+     onClick={() => void fetchOrders()}
+     isLoading={loading}
+     className="gap-2 shrink-0 h-fit"
+    >
+     <RefreshCw size={16} aria-hidden="true" />
+     Refresh
+    </Button>
    </header>
 
    {/* Filters */}

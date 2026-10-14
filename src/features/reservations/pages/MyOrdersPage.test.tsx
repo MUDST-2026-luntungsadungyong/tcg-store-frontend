@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReservationOrder } from '@/entities/reservation/model/types';
 import { MyOrdersPage } from './MyOrdersPage';
@@ -157,15 +157,12 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     });
   });
 
-  it('navigates to /orders/:orderId when clicking Order Details', async () => {
+  it('opens Order Details modal when clicking Order Details button', async () => {
     const user = userEvent.setup();
 
     render(
-      <MemoryRouter initialEntries={['/orders']}>
-        <Routes>
-          <Route path="/orders" element={<MyOrdersPage />} />
-          <Route path="/orders/:orderId" element={<div data-testid="detail-page">Order Detail View</div>} />
-        </Routes>
+      <MemoryRouter>
+        <MyOrdersPage />
       </MemoryRouter>
     );
 
@@ -177,8 +174,12 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     await user.click(orderDetailsButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByTestId('detail-page')).toBeInTheDocument();
+      expect(screen.getByText('Order Details - #ORD-101')).toBeInTheDocument();
     });
+
+    expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-101');
+    expect(screen.getAllByText('Mew - POP Series 4').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Near Mint').length).toBeGreaterThanOrEqual(1);
   });
 
   it('allows marking order as received from Sent order', async () => {
@@ -204,15 +205,12 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     expect(mockUpdateBuyerOrderStatus).toHaveBeenCalledWith('ord-102', 'FULFILLED', undefined);
   });
 
-  it('navigates to detail page when clicking the entire order row', async () => {
+  it('opens Order Details modal when clicking the entire order row', async () => {
     const user = userEvent.setup();
 
     render(
-      <MemoryRouter initialEntries={['/orders']}>
-        <Routes>
-          <Route path="/orders" element={<MyOrdersPage />} />
-          <Route path="/orders/:orderId" element={<div data-testid="detail-page">Order Detail View</div>} />
-        </Routes>
+      <MemoryRouter>
+        <MyOrdersPage />
       </MemoryRouter>
     );
 
@@ -224,7 +222,11 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     await user.click(orderRow);
 
     await waitFor(() => {
-      expect(screen.getByTestId('detail-page')).toBeInTheDocument();
+      expect(screen.getByText('Order Details - #ORD-102')).toBeInTheDocument();
     });
+
+    expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-102');
+    expect(screen.getAllByText('Charizard Base Set 2').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Lightly Played').length).toBeGreaterThanOrEqual(1);
   });
 });

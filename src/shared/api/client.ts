@@ -41,7 +41,7 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !ENV.ENABLE_MOCK_API) {
       authHooks.onUnauthorized();
     }
     return Promise.reject(error);

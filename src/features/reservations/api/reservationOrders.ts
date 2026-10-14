@@ -311,10 +311,15 @@ export function normalizeReservationOrder(
     totalAmount: Number(record.totalAmount ?? record.totalPrice ?? 0),
     status: normalizeStatus(record.status),
     createdAt: String(record.createdAt ?? new Date(0).toISOString()),
+    updatedAt: (record as any).updatedAt ? String((record as any).updatedAt) : undefined,
     paymentConfirmedAt: record.paymentConfirmedAt,
     sentAt: record.sentAt,
     ownershipTransferredAt: record.ownershipTransferredAt,
     cancelledAt: record.cancelledAt,
+    orderNumber: (record as any).orderNumber ? String((record as any).orderNumber) : undefined,
+    sellerName: (record as any).sellerName ? String((record as any).sellerName) : undefined,
+    cancellationReason: (record as any).cancellationReason ? String((record as any).cancellationReason) : undefined,
+    logs: Array.isArray((record as any).logs) ? (record as any).logs : undefined,
   };
 }
 

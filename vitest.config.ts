@@ -14,5 +14,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     fileParallelism: false,
     maxWorkers: 1,
+    env: {
+      VITE_ENABLE_MOCK_API: 'false',
+    },
   },
 });

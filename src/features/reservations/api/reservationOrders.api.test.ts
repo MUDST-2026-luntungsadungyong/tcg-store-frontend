@@ -12,7 +12,7 @@ vi.mock('@/shared/config/env', () => ({
   ENV: { ENABLE_MOCK_API: false, API_BASE_URL: 'http://localhost:8080/api' },
 }));
 
-import { createReservationOrders, markOrderSent } from './reservationOrders';
+import { createReservationOrders, markOrderSent, normalizeReservationOrder } from './reservationOrders';
 
 const cartItem: ReservationCartItem = {
   listing: {
@@ -81,5 +81,15 @@ describe('reservation order API adapter', () => {
       code: 'INVALID_TRANSITION',
     });
     expect(patch).not.toHaveBeenCalled();
+  });
+
+  it('normalizes CONFIRMED status without throwing an unsupported status error', () => {
+    const normalized = normalizeReservationOrder({
+      id: 'order-confirmed-1',
+      status: 'CONFIRMED',
+      totalAmount: 1500,
+      items: [{ listingId: 'listing-1', sellerId: 'seller-1', name: 'Charizard', price: 1500, quantity: 1, subtotal: 1500 }],
+    });
+    expect(normalized.status).toBe('CONFIRMED');
   });
 });

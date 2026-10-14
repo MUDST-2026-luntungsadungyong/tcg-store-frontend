@@ -245,6 +245,9 @@ function normalizeStatus(status: string): ReservationStatus {
   if (status === 'PENDING' || status === 'RESERVED') {
     return 'PENDING';
   }
+  if (status === 'CONFIRMED') {
+    return 'CONFIRMED';
+  }
   if (status === 'SENT' || status === 'FULFILLED') {
     return 'SENT';
   }

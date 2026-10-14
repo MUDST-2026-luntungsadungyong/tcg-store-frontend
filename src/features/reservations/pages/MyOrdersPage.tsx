@@ -131,7 +131,7 @@ export function MyOrdersPage() {
         ? orders
         : orders.filter((order) => {
             if (activeTab === 'PENDING') {
-              return order.status === 'PENDING' || order.status === 'RESERVED';
+              return order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED';
             }
             if (activeTab === 'SENT') {
               return order.status === 'SENT' || order.status === 'FULFILLED';

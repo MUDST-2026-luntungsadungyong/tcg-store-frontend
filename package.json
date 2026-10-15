@@ -18,6 +18,7 @@
     "test:e2e:order": "cypress run --spec \"cypress/e2e/04_order_fastforward_lifecycle.cy.ts\"",
     "test:e2e:notifications": "cypress run --spec \"cypress/e2e/05_notifications_inbox.cy.ts\"",
     "test:e2e:collection": "cypress run --spec \"cypress/e2e/10_collection_and_leaderboard.cy.ts\"",
+    "test:e2e:seller-inventory": "cypress run --spec \"cypress/e2e/09_seller_inventory_management.cy.ts\"",
     "test:e2e:open": "cypress open",
     "test:e2e:headless": "cypress run --headless",
     "audit": "npm audit --audit-level=critical",

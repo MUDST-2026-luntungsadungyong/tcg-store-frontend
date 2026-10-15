@@ -255,7 +255,17 @@ export function MyOrdersPage() {
                 return (
                   <div
                     key={order.id}
-                    className="flex flex-col gap-4 p-5 transition-colors hover:bg-white/[0.02] md:grid md:grid-cols-12 md:items-center md:px-6 md:py-4"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`View details for order #${order.id}`}
+                    onClick={() => handleOpenDetails(order)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleOpenDetails(order);
+                      }
+                    }}
+                    className="cursor-pointer flex flex-col gap-4 p-5 transition-colors hover:bg-white/[0.04] focus:outline-none focus-visible:ring-1 focus-visible:ring-brand-blue md:grid md:grid-cols-12 md:items-center md:px-6 md:py-4"
                   >
                     <div className="flex items-center justify-between md:col-span-2 md:block">
                       <div className="flex flex-col">
@@ -323,7 +333,10 @@ export function MyOrdersPage() {
                           variant="primary"
                           size="sm"
                           disabled={actionLoadingId === order.id}
-                          onClick={() => handleStatusUpdate(order.id, 'FULFILLED')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleStatusUpdate(order.id, 'FULFILLED');
+                          }}
                           className="w-full md:w-32 text-xs bg-status-success hover:bg-status-success/90"
                         >
                           Mark Received
@@ -335,7 +348,12 @@ export function MyOrdersPage() {
                           variant="danger"
                           size="sm"
                           disabled={actionLoadingId === order.id}
-                          onClick={() => { setSelectedOrder(order); setCancelNote(''); setShowCancelPopup(true); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedOrder(order);
+                            setCancelNote('');
+                            setShowCancelPopup(true);
+                          }}
                           className="w-full md:w-32 text-xs"
                         >
                           Cancel Order

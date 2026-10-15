@@ -76,6 +76,9 @@ export interface ReservationOrder {
   cancelledAt?: string;
   logs?: any[];
   orderNumber?: string;
+  sellerName?: string;
+  updatedAt?: string;
+  cancellationReason?: string;
 }
 
 export interface ReservationCheckoutItem {

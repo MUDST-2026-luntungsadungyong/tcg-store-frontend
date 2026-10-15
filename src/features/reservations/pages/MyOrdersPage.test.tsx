@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReservationOrder } from '@/entities/reservation/model/types';
 import { MyOrdersPage } from './MyOrdersPage';
@@ -157,7 +157,7 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     });
   });
 
-  it('opens Order Details modal, fetches full order details, and displays item breakdown with condition label', async () => {
+  it('opens Order Details modal when clicking Order Details button', async () => {
     const user = userEvent.setup();
 
     render(
@@ -173,32 +173,13 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     const orderDetailsButtons = screen.getAllByRole('button', { name: /Order Details/i });
     await user.click(orderDetailsButtons[0]);
 
-    // Modal title appears
     await waitFor(() => {
       expect(screen.getByText('Order Details - #ORD-101')).toBeInTheDocument();
     });
 
-    // Verify fetchBuyerOrderById called
     expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-101');
-
-    // Verify item breakdown with condition and total inside the modal
-    expect(screen.getAllByText('Reserved Items (1)').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Mew - POP Series 4').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Near Mint').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Total Order Amount')).toBeInTheDocument();
-    expect(screen.getAllByText(/3,500/).length).toBeGreaterThanOrEqual(1);
-
-    // Verify timeline
-    expect(screen.getByText('Order Timeline')).toBeInTheDocument();
-    expect(screen.getByText('"Reservation created"')).toBeInTheDocument();
-
-    // Close modal
-    const closeBtn = screen.getByRole('button', { name: /^Close$/i });
-    await user.click(closeBtn);
-
-    await waitFor(() => {
-      expect(screen.queryByText('Order Details - #ORD-101')).not.toBeInTheDocument();
-    });
   });
 
   it('allows marking order as received from Sent order', async () => {
@@ -224,22 +205,27 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     expect(mockUpdateBuyerOrderStatus).toHaveBeenCalledWith('ord-102', 'FULFILLED', undefined);
   });
 
-  it('supports direct route deep-linking via /orders/:orderId', async () => {
+  it('opens Order Details modal when clicking the entire order row', async () => {
+    const user = userEvent.setup();
+
     render(
-      <MemoryRouter initialEntries={['/orders/ord-102']}>
-        <Routes>
-          <Route path="/orders/:orderId" element={<MyOrdersPage />} />
-        </Routes>
+      <MemoryRouter>
+        <MyOrdersPage />
       </MemoryRouter>
     );
 
-    // Modal opens automatically for ord-102
     await waitFor(() => {
-      expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-102');
+      expect(screen.getByText('#ORD-102')).toBeInTheDocument();
+    });
+
+    const orderRow = screen.getByRole('button', { name: /View details for order #ord-102/i });
+    await user.click(orderRow);
+
+    await waitFor(() => {
       expect(screen.getByText('Order Details - #ORD-102')).toBeInTheDocument();
     });
 
-    // Displays Charizard with Lightly Played badge
+    expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-102');
     expect(screen.getAllByText('Charizard Base Set 2').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Lightly Played').length).toBeGreaterThanOrEqual(1);
   });

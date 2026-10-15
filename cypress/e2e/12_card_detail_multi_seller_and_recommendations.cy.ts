@@ -187,8 +187,244 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
     }
   };
 
+  const setupNetworkIntercepts = () => {
+    const api = 'http://localhost:8080/api';
+
+    // 1. Listings by cardId for Charizard VMAX
+    cy.intercept('GET', `${api}/products*cardId=crd-charizard-vmax*`, {
+      statusCode: 200,
+      body: {
+        items: [mockListings[0], mockListings[1], mockListings[2]],
+        pageNumber: 0,
+        pageSize: 100,
+        totalElements: 3,
+        totalPages: 1,
+        last: true,
+      },
+    }).as('getCharizardListings');
+
+    // 2. Direct listing by ID for Charizard VMAX
+    cy.intercept('GET', `${api}/products/crd-charizard-vmax`, {
+      statusCode: 200,
+      body: mockListings[0],
+    }).as('getCharizardDirect');
+
+    // 3. Catalog card for Charizard VMAX
+    cy.intercept('GET', `${api}/cards/crd-charizard-vmax`, {
+      statusCode: 200,
+      body: {
+        id: 'crd-charizard-vmax',
+        name: 'Charizard VMAX',
+        game: 'Pokemon',
+        rarity: 'Secret Rare',
+        stage: 'VMAX',
+        setName: "Champion's Path",
+        cardNumber: '074/073',
+        imageLarge: 'https://images.pokemontcg.io/swsh45/sv107.png',
+        marketPrice: 3200,
+      },
+    }).as('getCharizardCatalog');
+
+    // 4. Similar cards queries for Secret Rare and VMAX
+    cy.intercept('GET', `${api}/products*rarity=Secret*`, {
+      statusCode: 200,
+      body: {
+        items: [mockListings[0], mockListings[3], mockListings[4]],
+        pageNumber: 0,
+        pageSize: 100,
+        totalElements: 3,
+        totalPages: 1,
+        last: true,
+      },
+    }).as('getSimilarRarity');
+
+    cy.intercept('GET', `${api}/products*stage=VMAX*`, {
+      statusCode: 200,
+      body: {
+        items: [mockListings[0], mockListings[3], mockListings[4]],
+        pageNumber: 0,
+        pageSize: 100,
+        totalElements: 3,
+        totalPages: 1,
+        last: true,
+      },
+    }).as('getSimilarStage');
+
+    // 5. Similar card detail: Rayquaza VMAX
+    cy.intercept('GET', `${api}/products*cardId=crd-rayquaza-vmax*`, {
+      statusCode: 200,
+      body: {
+        items: [mockListings[3]],
+        pageNumber: 0,
+        pageSize: 100,
+        totalElements: 1,
+        totalPages: 1,
+        last: true,
+      },
+    }).as('getRayquazaListings');
+
+    cy.intercept('GET', `${api}/products/crd-rayquaza-vmax`, {
+      statusCode: 200,
+      body: mockListings[3],
+    }).as('getRayquazaDirect');
+
+    cy.intercept('GET', `${api}/cards/crd-rayquaza-vmax`, {
+      statusCode: 200,
+      body: {
+        id: 'crd-rayquaza-vmax',
+        name: 'Rayquaza VMAX',
+        game: 'Pokemon',
+        rarity: 'Secret Rare',
+        stage: 'VMAX',
+        setName: 'Evolving Skies',
+        cardNumber: '218/203',
+        imageLarge: 'https://images.pokemontcg.io/swsh7/218.png',
+        marketPrice: 2500,
+      },
+    }).as('getRayquazaCatalog');
+
+    // 6. Zero offers card: Mew Ancient Promo
+    cy.intercept('GET', `${api}/products*cardId=crd-mew-promo*`, {
+      statusCode: 200,
+      body: {
+        items: [],
+        pageNumber: 0,
+        pageSize: 100,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      },
+    }).as('getMewListings');
+
+    cy.intercept('GET', `${api}/products/crd-mew-promo`, {
+      statusCode: 404,
+      body: { message: 'Not found' },
+    }).as('getMewDirect');
+
+    cy.intercept('GET', `${api}/cards/crd-mew-promo`, {
+      statusCode: 200,
+      body: {
+        id: 'crd-mew-promo',
+        name: 'Mew Ancient Promo',
+        game: 'Pokemon',
+        rarity: 'Promo',
+        stage: 'Basic',
+        setName: 'Promo',
+        cardNumber: '8',
+        imageLarge: 'https://images.pokemontcg.io/promo/8.png',
+        marketPrice: 999,
+      },
+    }).as('getMewCatalog');
+
+    // 7. Store profile for Brock Pewter (/stores/usr-3)
+    cy.intercept('GET', `${api}/stores/usr-3`, {
+      statusCode: 200,
+      body: {
+        sellerId: 'usr-3',
+        shopName: 'Brock Pewter Store',
+        shopDescription: 'Quality rock cards',
+        phone: '0899998888',
+      },
+    }).as('getStoreBrock');
+
+    // 8. Cart API
+    const cartItems = [
+      {
+        listingId: 'offer-chz-01',
+        sellerId: 'usr-3',
+        name: 'Charizard VMAX',
+        game: 'Pokemon',
+        image: 'https://images.pokemontcg.io/swsh45/sv107.png',
+        price: 3200,
+        condition: 'Near Mint',
+        set: "Champion's Path",
+        rarity: 'Secret Rare',
+        quantity: 2,
+        available: true,
+        availableQuantity: 3,
+        subtotal: 6400,
+      },
+    ];
+
+    cy.intercept('POST', `${api}/cart/items`, {
+      statusCode: 200,
+      body: {
+        items: cartItems,
+        totalItems: 2,
+        totalAmount: 6400,
+      },
+    }).as('addToCart');
+
+    cy.intercept('GET', `${api}/cart`, {
+      statusCode: 200,
+      body: {
+        items: cartItems,
+        totalItems: 2,
+        totalAmount: 6400,
+      },
+    }).as('getCart');
+
+    // 9. Collection API
+    cy.intercept('POST', `${api}/collection*`, {
+      statusCode: 200,
+      body: {
+        id: 'col-new',
+        ownerId: 'usr-1',
+        cardId: 'crd-charizard-vmax',
+        quantity: 1,
+        sourceOrderId: 'ord-test-1',
+        acquiredAt: new Date().toISOString(),
+      },
+    }).as('addToCollection');
+
+    cy.intercept('GET', `${api}/collection*`, {
+      statusCode: 200,
+      body: {
+        items: [],
+        page: { page: 0, size: 20, totalElements: 0, totalPages: 0 },
+      },
+    }).as('getCollection');
+
+    // 10. Auth endpoints
+    cy.intercept('GET', `${api}/auth/me`, { statusCode: 200, body: customerUser });
+    cy.intercept('GET', `${api}/users/profile`, {
+      statusCode: 200,
+      body: {
+        id: 'usr-1',
+        name: 'Ash Ketchum',
+        email: 'ash@mythix.com',
+        phone: '0811112222',
+        line: 'ash_line',
+        facebook: 'ash_fb',
+        avatarUrl: '',
+        role: 'USER',
+        sellerStatus: null,
+      },
+    }).as('getUserProfile');
+
+    // 11. Notifications API (prevents 401 unauth redirect from Navbar)
+    cy.intercept('GET', `${api}/notifications/unread-count`, {
+      statusCode: 200,
+      body: { unreadCount: 0 },
+    }).as('getNotificationsUnread');
+
+    cy.intercept('GET', `${api}/notifications*`, {
+      statusCode: 200,
+      body: {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        number: 0,
+        size: 20,
+        first: true,
+        last: true,
+      },
+    }).as('getNotificationsList');
+  };
+
   describe('Card Details & Metadata Presentation', () => {
     beforeEach(() => {
+      setupNetworkIntercepts();
       cy.visit('/cards/crd-charizard-vmax', {
         onBeforeLoad(win) {
           seedMockStorage(win, 'GUEST');
@@ -230,6 +466,7 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
 
   describe('Multi-Seller Listing Comparison (US-02-2)', () => {
     beforeEach(() => {
+      setupNetworkIntercepts();
       cy.visit('/cards/crd-charizard-vmax', {
         onBeforeLoad(win) {
           seedMockStorage(win, 'GUEST');
@@ -307,6 +544,10 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
   });
 
   describe('Cart & Reservation Actions from Card Detail', () => {
+    beforeEach(() => {
+      setupNetworkIntercepts();
+    });
+
     it('prompts unauthenticated guest to log in when clicking Add to Cart or Reserve Now', () => {
       cy.visit('/cards/crd-charizard-vmax', {
         onBeforeLoad(win) {
@@ -336,9 +577,6 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
     });
 
     it('allows authenticated customer to add selected quantity to reservation cart with feedback toast', () => {
-      cy.intercept('GET', '**/auth/me', { statusCode: 200, body: customerUser });
-      cy.intercept('GET', '**/api/users/profile', { statusCode: 200, body: customerUser });
-
       cy.visit('/cards/crd-charizard-vmax', {
         onBeforeLoad(win) {
           seedMockStorage(win, 'CUSTOMER');
@@ -358,9 +596,6 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
     });
 
     it('allows authenticated customer to use Reserve Now shortcut directly to /cart', () => {
-      cy.intercept('GET', '**/auth/me', { statusCode: 200, body: customerUser });
-      cy.intercept('GET', '**/api/users/profile', { statusCode: 200, body: customerUser });
-
       cy.visit('/cards/crd-charizard-vmax', {
         onBeforeLoad(win) {
           seedMockStorage(win, 'CUSTOMER');
@@ -379,6 +614,10 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
   });
 
   describe('Card Collect Panel', () => {
+    beforeEach(() => {
+      setupNetworkIntercepts();
+    });
+
     it('prompts unauthenticated guest to log in when clicking Collect Card', () => {
       cy.visit('/cards/crd-charizard-vmax', {
         onBeforeLoad(win) {
@@ -394,9 +633,6 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
     });
 
     it('adds card to personal collection and opens feedback popup for authenticated customer', () => {
-      cy.intercept('GET', '**/auth/me', { statusCode: 200, body: customerUser });
-      cy.intercept('GET', '**/api/users/profile', { statusCode: 200, body: customerUser });
-
       cy.visit('/cards/crd-charizard-vmax', {
         onBeforeLoad(win) {
           seedMockStorage(win, 'CUSTOMER');
@@ -419,6 +655,7 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
 
   describe('Similar Cards Recommendation Flow (US-02-3)', () => {
     beforeEach(() => {
+      setupNetworkIntercepts();
       cy.visit('/cards/crd-charizard-vmax', {
         onBeforeLoad(win) {
           seedMockStorage(win, 'GUEST');
@@ -460,6 +697,10 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
   });
 
   describe('Empty Seller Offers Handling', () => {
+    beforeEach(() => {
+      setupNetworkIntercepts();
+    });
+
     it('displays fallback banner when a card has no active seller offers', () => {
       cy.visit('/cards/crd-mew-promo', {
         onBeforeLoad(win) {

@@ -38,6 +38,18 @@ describe('US-06 & US-07: Public Store Browsing', () => {
       }
     }).as('getStore');
 
+    cy.intercept('GET', '**/api/products*sellerId=usr-999*', {
+      statusCode: 200,
+      body: {
+        items: [],
+        pageNumber: 0,
+        pageSize: 100,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      },
+    }).as('getEmptyStoreProducts');
+
     cy.visit('/stores/usr-999');
     cy.wait('@getStore');
 
@@ -61,6 +73,61 @@ describe('US-06 & US-07: Public Store Browsing', () => {
         shopDescription: 'Best cards in town.',
       }
     }).as('getStore');
+
+    const sampleProduct = {
+      id: 'prd-22',
+      cardId: 'crd-mew',
+      sellerId: 'usr-3',
+      name: 'Mew',
+      game: 'Pokemon',
+      image: 'https://images.pokemontcg.io/pop4/4.png',
+      price: 320,
+      cost: 180,
+      stock: 5,
+      status: 'SHOW',
+      set: 'POP Series 4',
+      condition: 'Near Mint',
+      rarity: 'Rare',
+    };
+
+    cy.intercept('GET', '**/api/products*sellerId=usr-3*', {
+      statusCode: 200,
+      body: {
+        items: [sampleProduct],
+        pageNumber: 0,
+        pageSize: 100,
+        totalElements: 1,
+        totalPages: 1,
+        last: true,
+      },
+    }).as('getStoreProducts');
+
+    cy.intercept('GET', '**/api/products*cardId=crd-mew*', {
+      statusCode: 200,
+      body: {
+        items: [sampleProduct],
+        pageNumber: 0,
+        pageSize: 100,
+        totalElements: 1,
+        totalPages: 1,
+        last: true,
+      },
+    }).as('getCardOffers');
+
+    cy.intercept('GET', '**/api/cards/crd-mew', {
+      statusCode: 200,
+      body: {
+        id: 'crd-mew',
+        name: 'Mew',
+        game: 'Pokemon',
+        rarity: 'Rare',
+        stage: 'Basic',
+        setName: 'POP Series 4',
+        cardNumber: '4',
+        imageLarge: 'https://images.pokemontcg.io/pop4/4.png',
+        marketPrice: 350,
+      },
+    }).as('getCardDetail');
 
     cy.visit('/stores/usr-3');
     cy.wait('@getStore');

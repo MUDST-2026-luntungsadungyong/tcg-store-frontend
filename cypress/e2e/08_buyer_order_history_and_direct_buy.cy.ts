@@ -1,9 +1,167 @@
 /// <reference types="cypress" />
 
 describe('US-04-2 & US-09: Buyer Order History, Direct Buy, and Filtering', () => {
+  const api = 'http://localhost:8080/api';
+
+  const mockMewListing = {
+    id: 'prd-22',
+    cardId: 'prd-22',
+    sellerId: '2',
+    sellerName: 'Pokemon Master',
+    name: 'Mew',
+    game: 'Pokemon',
+    image: 'https://images.pokemontcg.io/pop4/4.png',
+    price: 320,
+    cost: 180,
+    stock: 8,
+    status: 'SHOW',
+    condition: 'Mint',
+    language: 'English',
+    set: 'POP Series 4',
+    rarity: 'Rare',
+    stage: 'Basic',
+    cardNumber: '4',
+    marketPrice: 350,
+  };
+
+  const mockCartItem = {
+    listingId: 'prd-22',
+    sellerId: '2',
+    name: 'Mew',
+    game: 'Pokemon',
+    image: 'https://images.pokemontcg.io/pop4/4.png',
+    price: 320,
+    condition: 'Mint',
+    set: 'POP Series 4',
+    rarity: 'Rare',
+    quantity: 1,
+    available: true,
+    availableQuantity: 8,
+    subtotal: 320,
+  };
+
+  const mockOrders = [
+    {
+      id: 'ord-1001',
+      buyerId: '1',
+      sellerId: '2',
+      sellerName: 'Pokemon Master',
+      items: [
+        {
+          listing: mockMewListing,
+          quantity: 1,
+          price: 320,
+        },
+      ],
+      totalAmount: 320,
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'ord-1002',
+      buyerId: '1',
+      sellerId: '2',
+      sellerName: 'Pokemon Master',
+      items: [
+        {
+          listing: mockMewListing,
+          quantity: 1,
+          price: 320,
+        },
+      ],
+      totalAmount: 320,
+      status: 'SENT',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'ord-1003',
+      buyerId: '1',
+      sellerId: '2',
+      sellerName: 'Pokemon Master',
+      items: [
+        {
+          listing: mockMewListing,
+          quantity: 1,
+          price: 320,
+        },
+      ],
+      totalAmount: 320,
+      status: 'CANCELLED',
+      createdAt: new Date().toISOString(),
+    },
+  ];
+
+  let currentCart: {
+    items: typeof mockCartItem[];
+    totalItems: number;
+    totalAmount: number;
+  };
+
   beforeEach(() => {
+    currentCart = {
+      items: [],
+      totalItems: 0,
+      totalAmount: 0,
+    };
+
     cy.loginByMock('CUSTOMER');
-    window.localStorage.setItem('token', 'mock-jwt-token-customer');
+
+    // 1. Intercept Products API (for Card Detail & Similar Cards)
+    cy.intercept('GET', `${api}/products/prd-22`, {
+      statusCode: 200,
+      body: mockMewListing,
+    }).as('getProductDetail');
+
+    cy.intercept('GET', `${api}/products*`, (req) => {
+      req.reply({
+        statusCode: 200,
+        body: {
+          items: [mockMewListing],
+          pageNumber: 0,
+          pageSize: 20,
+          totalElements: 1,
+          totalPages: 1,
+          last: true,
+        },
+      });
+    }).as('getProducts');
+
+    // 2. Intercept Cart GET and POST
+    cy.intercept('GET', `${api}/cart`, (req) => {
+      req.reply({
+        statusCode: 200,
+        body: currentCart,
+      });
+    }).as('getCart');
+
+    cy.intercept('POST', `${api}/cart/items`, (req) => {
+      const quantity = req.body?.quantity ?? 1;
+      currentCart = {
+        items: [{ ...mockCartItem, quantity, subtotal: quantity * 320 }],
+        totalItems: quantity,
+        totalAmount: quantity * 320,
+      };
+      req.reply({
+        statusCode: 200,
+        body: currentCart,
+      });
+    }).as('addToCart');
+
+    // 3. Intercept Buyer Orders API
+    cy.intercept('GET', `${api}/orders/me`, {
+      statusCode: 200,
+      body: mockOrders,
+    }).as('getBuyerOrders');
+
+    cy.intercept('GET', `${api}/orders/*`, (req) => {
+      const parts = req.url.split('/');
+      const orderId = parts[parts.length - 1].split('?')[0];
+      const found = mockOrders.find((o) => o.id === orderId) || mockOrders[0];
+      req.reply({
+        statusCode: 200,
+        body: found,
+      });
+    }).as('getOrderById');
   });
 
   it('US-04-2: Place Order Directly (Reserve Now) shortcut', () => {
@@ -58,10 +216,11 @@ describe('US-04-2 & US-09: Buyer Order History, Direct Buy, and Filtering', () =
     cy.contains('button', 'All').click();
     
     // Test opening order details
-    // If there is an order, click "View Details"
+    // If there is an order, click "Order Details" or "View Details"
     cy.get('body').then(($body) => {
-      if ($body.find('button:contains("View Details")').length > 0) {
-        cy.contains('button', 'View Details').first().click();
+      const $btn = $body.find('button:contains("Order Details"), button:contains("View Details")');
+      if ($btn.length > 0) {
+        cy.wrap($btn.first()).click();
         
         // Modal should appear
         cy.get('[role="dialog"]').should('be.visible');

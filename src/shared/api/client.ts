@@ -41,7 +41,9 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401 && !ENV.ENABLE_MOCK_API) {
+    const token = authHooks.getAccessToken();
+    const isMockToken = Boolean(token?.startsWith('mock-'));
+    if (error.response?.status === 401 && !ENV.ENABLE_MOCK_API && !isMockToken) {
       authHooks.onUnauthorized();
     }
     return Promise.reject(error);

@@ -44,8 +44,9 @@ export function CheckoutPage() {
       const result = await checkoutReservationCart(user.id);
       const orderIds = result.orders.map((order) => order.id).join(',');
       navigate(`/checkout/confirmation?orderIds=${encodeURIComponent(orderIds)}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to reserve these cards. Please try again.');
+    } catch (err: any) {
+      const serverMessage = err?.response?.data?.message ?? err?.response?.data?.error;
+      setError(serverMessage || (err instanceof Error ? err.message : 'Unable to reserve these cards. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }

@@ -36,7 +36,9 @@ function App() {
           if (mounted) useAuthStore.getState().completeHydration(user);
         })
         .catch(() => {
-          if (mounted) useAuthStore.getState().logout();
+          if (mounted && !token.startsWith('mock-')) {
+            useAuthStore.getState().logout();
+          }
         });
     }
     return () => { mounted = false; };

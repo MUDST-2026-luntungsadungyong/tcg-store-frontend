@@ -12,8 +12,21 @@ Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
     sellerStatus: role === 'SELLER' ? 'APPROVED' : undefined
   };
 
+  const api = 'http://localhost:8080/api';
+
   cy.intercept('GET', '**/auth/me', { statusCode: 200, body: userObj });
+  cy.intercept('GET', `${api}/auth/me`, { statusCode: 200, body: userObj });
   cy.intercept('GET', '**/api/users/profile', { statusCode: 200, body: userObj });
+  cy.intercept('GET', `${api}/users/profile`, { statusCode: 200, body: userObj });
+  cy.intercept('GET', `${api}/notifications/unread-count`, { statusCode: 200, body: { unreadCount: 0 } });
+  cy.intercept('GET', `${api}/notifications*`, {
+    statusCode: 200,
+    body: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 20, first: true, last: true },
+  });
+  cy.intercept('GET', `${api}/cart`, {
+    statusCode: 200,
+    body: { items: [], totalItems: 0, totalAmount: 0 },
+  });
   
   window.localStorage.setItem('token', token);
   window.localStorage.setItem(

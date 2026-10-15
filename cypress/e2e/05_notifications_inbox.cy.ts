@@ -121,7 +121,7 @@ describe('Core Journey 5: In-App Notification Center (US-11)', () => {
     it('keeps the bell visible for guests and redirects to login when clicked', () => {
       cy.visit('/', {
         onBeforeLoad(win) {
-          win.localStorage.removeItem('token');
+          win.localStorage.clear();
         },
       });
 
@@ -283,8 +283,6 @@ describe('Core Journey 5: In-App Notification Center (US-11)', () => {
       cy.wait('@markNotificationRead');
       cy.get('button[aria-label="Mark Your order has been sent as read"]').should('not.exist');
       cy.get('[aria-label="Read"]').should('exist');
-
-      cy.screenshot('notifications-inbox-read-state', { capture: 'fullPage' });
 
       cy.get('button[aria-label="Delete Your order has been sent"]').click();
       cy.wait('@deleteNotification');

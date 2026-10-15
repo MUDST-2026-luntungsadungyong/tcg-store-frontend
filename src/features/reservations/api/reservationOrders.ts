@@ -296,6 +296,12 @@ export function normalizeReservationOrder(
   if (!value || typeof value !== 'object') {
     throw new ReservationOrderError('REQUEST_FAILED', 'The server returned an invalid reservation order response.');
   }
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      throw new ReservationOrderError('REQUEST_FAILED', 'The server returned an incomplete reservation order response.');
+    }
+    return normalizeReservationOrder(value[0], fallbackBuyerId);
+  }
   const record = value as BackendOrderResponse;
   if (!record.id || !record.status || !Array.isArray(record.items)) {
     throw new ReservationOrderError('REQUEST_FAILED', 'The server returned an incomplete reservation order response.');
@@ -326,11 +332,15 @@ async function createOrdersWithApi(
 ): Promise<ReservationOrder[]> {
   validateCartItems(input.items);
   const response = input.idempotencyKey
-    ? await apiClient.post<BackendOrderResponse>(ORDER_ENDPOINT, undefined, {
+    ? await apiClient.post<BackendOrderResponse | BackendOrderResponse[]>(ORDER_ENDPOINT, undefined, {
         headers: { 'Idempotency-Key': input.idempotencyKey },
       })
-    : await apiClient.post<BackendOrderResponse>(ORDER_ENDPOINT);
-  return [normalizeReservationOrder(response.data, input.buyerId)];
+    : await apiClient.post<BackendOrderResponse | BackendOrderResponse[]>(ORDER_ENDPOINT);
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return data.map((item) => normalizeReservationOrder(item, input.buyerId));
+  }
+  return [normalizeReservationOrder(data, input.buyerId)];
 }
 
 function assertSellerOrder(

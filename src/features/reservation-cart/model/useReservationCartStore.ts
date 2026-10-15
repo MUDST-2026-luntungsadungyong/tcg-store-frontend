@@ -154,6 +154,18 @@ export const useReservationCartStore = create<ReservationCartStore>()((set, get)
     const ownerId = syncOwner(get, set);
     if (!ownerId || !Number.isSafeInteger(quantity) || quantity <= 0) return false;
 
+    // --- QA TEST SETTING FOR CASE 8 ---
+    const targetItem = get().items.find((i) => i.listing.id === listingId);
+    if (
+      targetItem &&
+      typeof window !== 'undefined' &&
+      localStorage.getItem('DEV_SIMULATE_STOCK_ERROR') === 'true' &&
+      quantity > targetItem.quantity
+    ) {
+      throw new Error('STOCK_CHANGED');
+    }
+    // ----------------------------------
+
     if (!ENV.ENABLE_MOCK_API) {
       set({ isLoading: true, error: null });
       try {
@@ -167,13 +179,6 @@ export const useReservationCartStore = create<ReservationCartStore>()((set, get)
         set({ isLoading: false });
       }
     }
-
-    // --- QA TEST SETTING FOR CASE 8 ---
-    const targetItem = get().items.find(i => i.listing.id === listingId);
-    if (targetItem && localStorage.getItem('DEV_SIMULATE_STOCK_ERROR') === 'true' && quantity > targetItem.quantity) {
-      throw new Error('STOCK_CHANGED');
-    }
-    // ----------------------------------
 
     const updatedItems = get().items.map((item) =>
       item.listing.id === listingId

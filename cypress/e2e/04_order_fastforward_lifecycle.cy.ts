@@ -26,6 +26,28 @@ describe('Core Journey 4: Buyer Purchase to Seller Fast-Forward Shipment & Local
     cy.loginByMock('CUSTOMER');
     window.localStorage.setItem('token', 'mock-jwt-token-customer');
 
+    const defaultCart = [
+      {
+        listing: {
+          id: 'prd-22',
+          sellerId: 'usr-3',
+          name: 'Mew - POP Series 4 (Near Mint)',
+          game: 'Pokemon',
+          image: 'https://images.pokemontcg.io/pop4/4.png',
+          price: 3500.0,
+          cost: 2000.0,
+          stock: 5,
+          status: 'SHOW',
+          condition: 'Near Mint',
+          set: 'POP Series 4',
+          rarity: 'Rare',
+        },
+        quantity: 1,
+      },
+    ];
+    window.localStorage.setItem('mythix_reservation_cart_v2:1', JSON.stringify(defaultCart));
+    window.localStorage.setItem('mythix_reservation_cart_v2:usr-1', JSON.stringify(defaultCart));
+
     // Default cart intercept
     cy.intercept('GET', `${api}/cart`, {
       statusCode: 200,
@@ -94,6 +116,7 @@ describe('Core Journey 4: Buyer Purchase to Seller Fast-Forward Shipment & Local
       cy.cleanTestOrder(createdOrderId);
     }
     // Clean client-side test session
+    window.localStorage.removeItem('mythix_reservation_cart_v2:1');
     window.localStorage.removeItem('mythix_reservation_cart_v2:usr-1');
   });
 
@@ -115,7 +138,32 @@ describe('Core Journey 4: Buyer Purchase to Seller Fast-Forward Shipment & Local
     }).as('createOrderRequest');
 
     // Step A: Buyer proceeds to cart and review
-    cy.visit('/cart');
+    cy.visit('/cart', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem(
+          'mythix_reservation_cart_v2:1',
+          JSON.stringify([
+            {
+              listing: {
+                id: 'prd-22',
+                sellerId: 'usr-3',
+                name: 'Mew - POP Series 4 (Near Mint)',
+                game: 'Pokemon',
+                image: 'https://images.pokemontcg.io/pop4/4.png',
+                price: 3500.0,
+                cost: 2000.0,
+                stock: 5,
+                status: 'SHOW',
+                condition: 'Near Mint',
+                set: 'POP Series 4',
+                rarity: 'Rare',
+              },
+              quantity: 1,
+            },
+          ])
+        );
+      },
+    });
     cy.get('body').should('be.visible');
 
     // Click "Review reservation" to go to checkout page
@@ -154,28 +202,37 @@ describe('Core Journey 4: Buyer Purchase to Seller Fast-Forward Shipment & Local
 
   it('shows error if attempting to reserve more than available stock (US-10-5 Unhappy Path)', () => {
     // Seed with quantity > stock
-    window.localStorage.setItem(
-      'mythix_reservation_cart_v2:usr-1',
-      JSON.stringify([
-        {
-          listing: {
-            id: 'prd-22',
-            sellerId: 'usr-3',
-            name: 'Mew - POP Series 4 (Near Mint)',
-            price: 3500.0,
-            stock: 1, // Set stock to 1
-            image: 'https://images.pokemontcg.io/pop4/4.png',
-          },
-          quantity: 15, // Try to buy 15 (exceeds global stock of 8)
-        }
-      ])
-    );
+    const overStockItem = [
+      {
+        listing: {
+          id: 'prd-22',
+          sellerId: 'usr-3',
+          name: 'Mew - POP Series 4 (Near Mint)',
+          game: 'Pokemon',
+          price: 3500.0,
+          cost: 2000.0,
+          stock: 1, // Set stock to 1
+          status: 'SHOW',
+          image: 'https://images.pokemontcg.io/pop4/4.png',
+        },
+        quantity: 15, // Try to buy 15 (exceeds global stock of 8)
+      },
+    ];
+
+    window.localStorage.setItem('mythix_reservation_cart_v2:1', JSON.stringify(overStockItem));
+    window.localStorage.setItem('mythix_reservation_cart_v2:usr-1', JSON.stringify(overStockItem));
+
     cy.intercept('POST', `${api}/orders**`, {
       statusCode: 400,
       body: { message: 'Not enough stock remains to reserve this item.' },
     }).as('orderError');
 
-    cy.visit('/cart');
+    cy.visit('/cart', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem('mythix_reservation_cart_v2:1', JSON.stringify(overStockItem));
+        win.localStorage.setItem('mythix_reservation_cart_v2:usr-1', JSON.stringify(overStockItem));
+      },
+    });
     cy.contains('Review reservation').click({ force: true });
     
     // In some flows this is blocked at the cart, or blocked at checkout.
@@ -188,7 +245,32 @@ describe('Core Journey 4: Buyer Purchase to Seller Fast-Forward Shipment & Local
   });
 
   it('restores reserved stock when seller cancels the order (US-10-5 Cancel Path)', () => {
-    cy.visit('/cart');
+    cy.visit('/cart', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem(
+          'mythix_reservation_cart_v2:1',
+          JSON.stringify([
+            {
+              listing: {
+                id: 'prd-22',
+                sellerId: 'usr-3',
+                name: 'Mew - POP Series 4 (Near Mint)',
+                game: 'Pokemon',
+                image: 'https://images.pokemontcg.io/pop4/4.png',
+                price: 3500.0,
+                cost: 2000.0,
+                stock: 5,
+                status: 'SHOW',
+                condition: 'Near Mint',
+                set: 'POP Series 4',
+                rarity: 'Rare',
+              },
+              quantity: 1,
+            },
+          ])
+        );
+      },
+    });
     cy.contains('Review reservation').click({ force: true });
     cy.contains('Confirm reservation').should('be.visible').click();
     cy.url().should('include', '/checkout/confirmation');

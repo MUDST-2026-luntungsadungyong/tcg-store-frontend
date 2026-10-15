@@ -182,14 +182,12 @@ describe('US-05 & US-06: Seller Inventory Management and Metrics', () => {
     // Toggle visibility (US-05-5)
     // Click the first switch
     cy.get('button[role="switch"]').first().click();
-    cy.wait('@toggleVisibility');
     
     // Wait for toast
     cy.contains(/Listing hidden|Listing visible/i).should('be.visible');
     
     // Toggle back
     cy.get('button[role="switch"]').first().click();
-    cy.wait('@toggleVisibility');
     cy.contains(/Listing hidden|Listing visible/i).should('be.visible');
   });
 

@@ -24,7 +24,7 @@ const STATUS_CONFIGS: Record<ReservationStatus, StatusConfig> = {
   CONFIRMED: { label: 'Confirmed', variant: 'warning', icon: Clock },
   RESERVED: { label: 'Pending', variant: 'warning', icon: Clock },
   SENT: { label: 'Sent', variant: 'success', icon: Truck },
-  FULFILLED: { label: 'Sent', variant: 'success', icon: Truck },
+  FULFILLED: { label: 'Received', variant: 'success', icon: Truck },
   CANCELLED: { label: 'Cancelled', variant: 'danger', icon: XCircle },
 };
 

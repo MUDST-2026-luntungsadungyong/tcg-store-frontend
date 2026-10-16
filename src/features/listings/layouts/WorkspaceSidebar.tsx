@@ -1,5 +1,14 @@
-import { Bell, ChevronLeft, ChevronRight, ClipboardList, Layers3, Store } from 'lucide-react';
-import { useState } from 'react';
+import {
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Layers3,
+  Menu,
+  Store,
+  X,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, matchPath, useLocation } from 'react-router-dom';
 
 import { cn } from '@/shared/lib';
@@ -86,5 +95,90 @@ export function WorkspaceSidebar() {
         })}
       </nav>
     </aside>
+  );
+}
+
+export function WorkspaceMobileNavigation() {
+  const { pathname } = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, []);
+
+  return (
+    <div className="-mx-6 -mt-6 mb-6 border-b border-[#31405A] bg-[#192338] px-6 py-3 md:hidden">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          aria-label="Open workspace menu"
+          aria-expanded={isOpen}
+          aria-controls="mobile-workspace-menu"
+          onClick={() => setIsOpen(true)}
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-brand-blue transition-colors hover:bg-[#243350] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
+        >
+          <Menu size={22} />
+        </button>
+        <p className="text-sm font-semibold text-white">Workspace</p>
+      </div>
+
+      {isOpen && (
+        <>
+          <button
+            type="button"
+            aria-label="Dismiss workspace menu"
+            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 z-40 bg-black/50"
+          />
+          <nav
+            id="mobile-workspace-menu"
+            aria-label="Mobile workspace navigation"
+            className="fixed inset-y-0 left-0 z-50 flex w-[min(19rem,85vw)] flex-col bg-[#192338] p-5 shadow-2xl"
+          >
+            <div className="mb-7 flex items-center justify-between">
+              <p className="text-base font-bold text-white">Seller workspace</p>
+              <button
+                type="button"
+                aria-label="Close workspace menu"
+                onClick={() => setIsOpen(false)}
+                className="flex h-10 w-10 items-center justify-center rounded-lg text-brand-blue transition-colors hover:bg-[#243350] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
+              >
+                <X size={22} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {workspaceLinks.map((link) => {
+                const Icon = link.icon;
+                const isActive = Boolean(
+                  matchPath({ path: `${link.to}/*`, end: false }, pathname) ||
+                    matchPath({ path: link.to, end: true }, pathname),
+                );
+
+                return (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    aria-current={isActive ? 'page' : undefined}
+                    onClick={() => setIsOpen(false)}
+                    className={cn(
+                      'flex h-12 items-center gap-3 rounded-[10px] px-4 text-sm text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue',
+                      isActive ? 'bg-[#243350] font-bold' : 'hover:bg-[#243350]/60',
+                    )}
+                  >
+                    <Icon size={19} className="text-brand-blue" />
+                    {link.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        </>
+      )}
+    </div>
   );
 }

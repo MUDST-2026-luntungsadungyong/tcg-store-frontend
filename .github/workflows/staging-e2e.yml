@@ -1,0 +1,92 @@
+name: Staging browser journey
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_frontend_url:
+        description: Deployed staging frontend URL
+        required: true
+        type: string
+      staging_api_url:
+        description: Deployed staging API base URL, ending in /api
+        required: true
+        type: string
+      backend_digest:
+        description: Immutable backend OCI digest to bind to this frontend build
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-browser-journey
+  cancel-in-progress: false
+
+jobs:
+  browser-journey:
+    name: Build frontend and run live Cypress journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: staging
+    env:
+      STAGING_API_URL: ${{ inputs.staging_api_url }}
+      STAGING_FRONTEND_URL: ${{ inputs.staging_frontend_url }}
+      BACKEND_DIGEST: ${{ inputs.backend_digest }}
+      CYPRESS_LIVE_E2E: 'true'
+      CYPRESS_API_BASE_URL: ${{ inputs.staging_api_url }}
+      CYPRESS_BACKEND_DIGEST: ${{ inputs.backend_digest }}
+      CYPRESS_E2E_SELLER_EMAIL: ${{ secrets.E2E_SELLER_EMAIL }}
+      CYPRESS_E2E_SELLER_PASSWORD: ${{ secrets.E2E_SELLER_PASSWORD }}
+      CYPRESS_E2E_BUYER_EMAIL: ${{ secrets.E2E_BUYER_EMAIL }}
+      CYPRESS_E2E_BUYER_PASSWORD: ${{ secrets.E2E_BUYER_PASSWORD }}
+      CYPRESS_E2E_CARD_QUERY: ${{ vars.E2E_CARD_QUERY }}
+      VITE_API_BASE_URL: ${{ inputs.staging_api_url }}
+      VITE_ENABLE_MOCK_API: 'false'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+
+      - name: Validate immutable release inputs and staging readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$STAGING_FRONTEND_URL" =~ ^https://.+ ]] || { echo 'staging_frontend_url must be an HTTPS URL'; exit 1; }
+          [[ "$STAGING_API_URL" =~ ^https://.+/api$ ]] || { echo 'staging_api_url must be an HTTPS API URL ending in /api'; exit 1; }
+          [[ "$BACKEND_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]] || { echo 'backend_digest must be an OCI sha256 digest'; exit 1; }
+          curl --fail --retry 5 --retry-all-errors --retry-delay 3 "$STAGING_FRONTEND_URL"
+          curl --fail --retry 5 --retry-all-errors --retry-delay 3 "${STAGING_API_URL%/api}/actuator/health/readiness"
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Bind the frontend build to the staging release
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '{"apiBaseUrl":"%s","backendDigest":"%s"}\n' "$STAGING_API_URL" "$BACKEND_DIGEST" > public/e2e-release-contract.json
+          npm run build
+          node -e "const fs=require('fs'); const release=JSON.parse(fs.readFileSync('dist/e2e-release-contract.json')); if (release.apiBaseUrl!==process.env.STAGING_API_URL || release.backendDigest!==process.env.BACKEND_DIGEST) process.exit(1)"
+
+      - name: Retain frontend release contract
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-release-contract
+          path: dist/e2e-release-contract.json
+          retention-days: 90
+
+      - name: Run real browser journey without API mocks
+        run: npm run test:e2e:staging -- --config baseUrl=${{ inputs.staging_frontend_url }}
+
+      - name: Upload Cypress evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-browser-journey-evidence
+          path: |
+            cypress/screenshots
+          if-no-files-found: ignore

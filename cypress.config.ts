@@ -2,6 +2,12 @@ import { defineConfig } from 'cypress';
 import { execSync } from 'node:child_process';
 
 export default defineConfig({
+  expose: {
+    LIVE_E2E: process.env.CYPRESS_LIVE_E2E,
+    API_BASE_URL: process.env.CYPRESS_API_BASE_URL,
+    BACKEND_DIGEST: process.env.CYPRESS_BACKEND_DIGEST,
+    E2E_CARD_QUERY: process.env.CYPRESS_E2E_CARD_QUERY,
+  },
   e2e: {
     baseUrl: 'http://localhost:3000',
     viewportWidth: 1280,

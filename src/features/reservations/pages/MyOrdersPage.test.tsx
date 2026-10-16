@@ -82,6 +82,7 @@ const mockOrder2: ReservationOrder = {
 const mockFetchBuyerOrders = vi.fn();
 const mockFetchBuyerOrderById = vi.fn();
 const mockUpdateBuyerOrderStatus = vi.fn();
+let currentBuyerOrders: ReservationOrder[];
 
 vi.mock('../api/buyerOrders', () => ({
   fetchBuyerOrders: (...args: unknown[]) => mockFetchBuyerOrders(...args),
@@ -97,7 +98,8 @@ vi.mock('@/features/auth/model/useAuthStore', () => ({
 describe('MyOrdersPage (SCRUM-80)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetchBuyerOrders.mockResolvedValue([mockOrder1, mockOrder2]);
+    currentBuyerOrders = [mockOrder1, mockOrder2];
+    mockFetchBuyerOrders.mockImplementation(async () => currentBuyerOrders);
     mockFetchBuyerOrderById.mockImplementation(async (id: string) => {
       if (id === 'ord-101') return mockOrder1;
       if (id === 'ord-102') return mockOrder2;
@@ -184,9 +186,13 @@ describe('MyOrdersPage (SCRUM-80)', () => {
 
   it('allows marking order as received from Sent order', async () => {
     const user = userEvent.setup();
-    mockUpdateBuyerOrderStatus.mockResolvedValue({
+    const fulfilledOrder = {
       ...mockOrder2,
-      status: 'FULFILLED',
+      status: 'FULFILLED' as const,
+    };
+    mockUpdateBuyerOrderStatus.mockImplementation(async () => {
+      currentBuyerOrders = [mockOrder1, fulfilledOrder];
+      return fulfilledOrder;
     });
 
     render(
@@ -203,6 +209,10 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     await user.click(markReceivedBtn);
 
     expect(mockUpdateBuyerOrderStatus).toHaveBeenCalledWith('ord-102', 'FULFILLED', undefined);
+    await waitFor(() => {
+      expect(screen.getAllByText('Received')).toHaveLength(2);
+      expect(screen.queryByRole('button', { name: /Mark Received/i })).not.toBeInTheDocument();
+    });
   });
 
   it('opens Order Details modal when clicking the entire order row', async () => {

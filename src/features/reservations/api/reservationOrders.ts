@@ -248,8 +248,11 @@ function normalizeStatus(status: string): ReservationStatus {
   if (status === 'CONFIRMED') {
     return 'CONFIRMED';
   }
-  if (status === 'SENT' || status === 'FULFILLED') {
+  if (status === 'SENT') {
     return 'SENT';
+  }
+  if (status === 'FULFILLED') {
+    return 'FULFILLED';
   }
   if (status === 'CANCELLED') {
     return 'CANCELLED';

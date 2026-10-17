@@ -38,6 +38,8 @@ export const RESERVATION_STATUS_TRANSITIONS: readonly ReservationStatusTransitio
   { from: 'RESERVED', to: 'SENT', actor: 'SELLER' },
   { from: 'PENDING', to: 'SENT', actor: 'SELLER' },
   { from: 'PENDING', to: 'FULFILLED', actor: 'SELLER' },
+  { from: 'PENDING', to: 'CONFIRMED', actor: 'SELLER' },
+  { from: 'CONFIRMED', to: 'SENT', actor: 'SELLER' },
 ];
 
 export function canTransitionReservationStatus(
@@ -74,6 +76,9 @@ export interface ReservationOrder {
   cancelledAt?: string;
   logs?: any[];
   orderNumber?: string;
+  sellerName?: string;
+  updatedAt?: string;
+  cancellationReason?: string;
 }
 
 export interface ReservationCheckoutItem {

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
-import { WorkspaceSidebar } from './WorkspaceSidebar';
+import { WorkspaceMobileNavigation, WorkspaceSidebar } from './WorkspaceSidebar';
 
 describe('WorkspaceSidebar', () => {
   it('can be collapsed and expanded without removing navigation items', async () => {
@@ -33,5 +33,32 @@ describe('WorkspaceSidebar', () => {
 
     expect(sidebar).toHaveClass('w-[240px]');
     expect(screen.getByText('Card listings')).not.toHaveClass('sr-only');
+  });
+});
+
+describe('WorkspaceMobileNavigation', () => {
+  it('opens a hamburger drawer with seller workspace links and marks the current page', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={['/workspace/store-settings']}>
+        <WorkspaceMobileNavigation />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('navigation', { name: 'Mobile workspace navigation' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open workspace menu' }));
+
+    expect(screen.getByRole('navigation', { name: 'Mobile workspace navigation' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Store profile' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Reservation orders' })).toHaveAttribute(
+      'href',
+      '/workspace/orders',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Close workspace menu' }));
+
+    expect(screen.queryByRole('navigation', { name: 'Mobile workspace navigation' })).not.toBeInTheDocument();
   });
 });

@@ -1,9 +1,134 @@
 /// <reference types="cypress" />
 
 describe('US-10: Collection and Leaderboard', () => {
+  const api = 'http://localhost:8080/api';
+
+  const mockPikachuCard = {
+    id: 'base1-58',
+    name: 'Pikachu',
+    game: 'Pokemon',
+    supertype: 'Pokémon',
+    subtypes: 'Basic',
+    hp: '40',
+    types: 'Lightning',
+    rarity: 'Common',
+    setName: 'Base Set',
+    cardNumber: '58',
+    imageSmall: 'https://images.pokemontcg.io/base1/58.png',
+    imageLarge: 'https://images.pokemontcg.io/base1/58_hires.png',
+    marketPrice: 50,
+  };
+
+  const mockPikachuEntry = {
+    id: 'col-pika-1',
+    ownerId: '1',
+    quantity: 1,
+    sourceOrderId: 'ord-test-pika',
+    acquiredAt: new Date().toISOString(),
+    listing: {
+      id: 'base1-58',
+      sellerId: '',
+      name: 'Pikachu',
+      game: 'Pokemon',
+      image: 'https://images.pokemontcg.io/base1/58.png',
+      price: 50,
+      cost: 0,
+      stock: 1,
+      status: 'SHOW',
+      condition: 'Near Mint',
+      set: 'Base Set',
+      rarity: 'Common',
+      cardNumber: '58',
+    },
+  };
+
   beforeEach(() => {
     // Both parts can be tested with BUYER
     cy.loginByMock('BUYER');
+
+    // Collection APIs
+    cy.intercept('GET', `${api}/collection`, {
+      statusCode: 200,
+      body: {
+        items: [],
+        page: { page: 0, size: 20, totalElements: 0, totalPages: 0 },
+      },
+    }).as('getMyCollection');
+
+    cy.intercept('GET', `${api}/cards*`, {
+      statusCode: 200,
+      body: [mockPikachuCard],
+    }).as('searchCards');
+
+    cy.intercept('POST', `${api}/collection*`, {
+      statusCode: 200,
+      body: mockPikachuEntry,
+    }).as('addToCollection');
+
+    cy.intercept('DELETE', `${api}/collection/*`, {
+      statusCode: 200,
+      body: { success: true },
+    }).as('removeFromCollection');
+
+    // Leaderboard & Products APIs on HomePage
+    cy.intercept('GET', `${api}/products*`, {
+      statusCode: 200,
+      body: {
+        items: [],
+        totalElements: 0,
+        totalPages: 0,
+        pageNumber: 0,
+        pageSize: 100,
+        last: true,
+      },
+    }).as('getProducts');
+
+    cy.intercept('GET', `${api}/collections/leaderboard*`, {
+      statusCode: 200,
+      body: [
+        {
+          rank: 1,
+          userId: 'usr-ash',
+          displayName: 'Ash Ketchum',
+          avatarUrl: null,
+          rareCardCount: 15,
+          distinctRareCardCount: 12,
+          highlights: [
+            {
+              cardId: 'crd-pika-illustrator',
+              name: 'Pikachu Illustrator',
+              imageUrl: 'https://images.pokemontcg.io/base1/58.png',
+              rarity: 'Promo',
+              quantity: 1,
+            },
+          ],
+        },
+        {
+          rank: 2,
+          userId: 'usr-misty',
+          displayName: 'Misty Waterflower',
+          avatarUrl: null,
+          rareCardCount: 8,
+          distinctRareCardCount: 6,
+          highlights: [],
+        },
+      ],
+    }).as('getLeaderboard');
+
+    cy.intercept('GET', `${api}/collections/*`, {
+      statusCode: 200,
+      body: {
+        owner: {
+          userId: 'usr-ash',
+          displayName: 'Ash Ketchum',
+          avatarUrl: null,
+          rareCardCount: 15,
+          distinctRareCardCount: 12,
+        },
+        items: [mockPikachuEntry],
+        page: { page: 0, size: 20, totalElements: 1, totalPages: 1 },
+      },
+    }).as('getPublicCollection');
   });
 
   it('US-10-1, US-10-2, US-10-3: View, Add and Remove from Personal Collection', () => {

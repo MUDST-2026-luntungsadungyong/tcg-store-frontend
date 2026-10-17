@@ -245,8 +245,14 @@ function normalizeStatus(status: string): ReservationStatus {
   if (status === 'PENDING' || status === 'RESERVED') {
     return 'PENDING';
   }
-  if (status === 'SENT' || status === 'FULFILLED') {
+  if (status === 'CONFIRMED') {
+    return 'CONFIRMED';
+  }
+  if (status === 'SENT') {
     return 'SENT';
+  }
+  if (status === 'FULFILLED') {
+    return 'FULFILLED';
   }
   if (status === 'CANCELLED') {
     return 'CANCELLED';
@@ -293,6 +299,12 @@ export function normalizeReservationOrder(
   if (!value || typeof value !== 'object') {
     throw new ReservationOrderError('REQUEST_FAILED', 'The server returned an invalid reservation order response.');
   }
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      throw new ReservationOrderError('REQUEST_FAILED', 'The server returned an incomplete reservation order response.');
+    }
+    return normalizeReservationOrder(value[0], fallbackBuyerId);
+  }
   const record = value as BackendOrderResponse;
   if (!record.id || !record.status || !Array.isArray(record.items)) {
     throw new ReservationOrderError('REQUEST_FAILED', 'The server returned an incomplete reservation order response.');
@@ -311,10 +323,15 @@ export function normalizeReservationOrder(
     totalAmount: Number(record.totalAmount ?? record.totalPrice ?? 0),
     status: normalizeStatus(record.status),
     createdAt: String(record.createdAt ?? new Date(0).toISOString()),
+    updatedAt: (record as any).updatedAt ? String((record as any).updatedAt) : undefined,
     paymentConfirmedAt: record.paymentConfirmedAt,
     sentAt: record.sentAt,
     ownershipTransferredAt: record.ownershipTransferredAt,
     cancelledAt: record.cancelledAt,
+    orderNumber: (record as any).orderNumber ? String((record as any).orderNumber) : undefined,
+    sellerName: (record as any).sellerName ? String((record as any).sellerName) : undefined,
+    cancellationReason: (record as any).cancellationReason ? String((record as any).cancellationReason) : undefined,
+    logs: Array.isArray((record as any).logs) ? (record as any).logs : undefined,
   };
 }
 
@@ -323,11 +340,15 @@ async function createOrdersWithApi(
 ): Promise<ReservationOrder[]> {
   validateCartItems(input.items);
   const response = input.idempotencyKey
-    ? await apiClient.post<BackendOrderResponse>(ORDER_ENDPOINT, undefined, {
+    ? await apiClient.post<BackendOrderResponse | BackendOrderResponse[]>(ORDER_ENDPOINT, undefined, {
         headers: { 'Idempotency-Key': input.idempotencyKey },
       })
-    : await apiClient.post<BackendOrderResponse>(ORDER_ENDPOINT);
-  return [normalizeReservationOrder(response.data, input.buyerId)];
+    : await apiClient.post<BackendOrderResponse | BackendOrderResponse[]>(ORDER_ENDPOINT);
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return data.map((item) => normalizeReservationOrder(item, input.buyerId));
+  }
+  return [normalizeReservationOrder(data, input.buyerId)];
 }
 
 function assertSellerOrder(

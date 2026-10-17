@@ -27,6 +27,17 @@ Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
       version: 0,
     })
   );
+
+  try {
+    const rawUsers = window.localStorage.getItem('mythix_mock_users_v6');
+    const users = rawUsers ? JSON.parse(rawUsers) : [];
+    if (!users.some((u: any) => u.id === userObj.id)) {
+      users.push(userObj);
+      window.localStorage.setItem('mythix_mock_users_v6', JSON.stringify(users));
+    }
+  } catch {
+    // ignore
+  }
 });
 
 // Helper command to fast-forward order status via Seller API without switching UI accounts

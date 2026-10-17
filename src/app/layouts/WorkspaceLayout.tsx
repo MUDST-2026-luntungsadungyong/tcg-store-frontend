@@ -1,5 +1,8 @@
 import { Outlet } from 'react-router-dom';
-import { WorkspaceSidebar } from '@/features/listings/layouts/WorkspaceSidebar';
+import {
+  WorkspaceMobileNavigation,
+  WorkspaceSidebar,
+} from '@/features/listings/layouts/WorkspaceSidebar';
 import { Navbar } from '@/app/layouts/Navbar';
 import { ScrollToTop } from '@/shared/components/ScrollToTop';
 
@@ -11,6 +14,7 @@ export function WorkspaceLayout() {
       <div className="flex flex-1 overflow-hidden">
         <WorkspaceSidebar />
         <main data-route-scroll-container className="flex-1 overflow-y-auto p-6 md:p-8">
+          <WorkspaceMobileNavigation />
           <Outlet />
         </main>
       </div>

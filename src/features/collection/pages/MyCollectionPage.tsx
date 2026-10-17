@@ -87,8 +87,8 @@ export function MyCollectionPage() {
   }, [isSeller]);
 
   useEffect(() => {
-    if (activeView === 'store' && !storeLoaded) void fetchStore();
-  }, [activeView, fetchStore, storeLoaded]);
+    if (isSeller && !storeLoaded) void fetchStore();
+  }, [fetchStore, isSeller, storeLoaded]);
 
   const selectView = (view: 'collection' | 'store') => {
     const nextParams = new URLSearchParams(searchParams);

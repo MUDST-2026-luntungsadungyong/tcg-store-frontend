@@ -66,9 +66,10 @@ export function CollectionCard({ entry, onDelete, isDeleting }: CollectionCardPr
 
       <span
         aria-label={`${entry.quantity} ${entry.quantity === 1 ? 'card' : 'cards'} owned`}
-        className="pointer-events-none absolute bottom-2 right-2 flex size-8 items-center justify-center rounded-full bg-brand-blue text-base font-bold tabular-nums text-white sm:bottom-4 sm:right-4 sm:size-11 sm:text-xl"
+        title={`${entry.quantity} owned`}
+        className="pointer-events-none absolute bottom-2 right-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-brand-blue px-2 text-xs font-bold tabular-nums text-white shadow-md sm:bottom-4 sm:right-4 sm:h-9 sm:min-w-9 sm:px-2.5 sm:text-sm"
       >
-        {entry.quantity}
+        × {entry.quantity}
       </span>
     </article>
   );

@@ -181,14 +181,14 @@ export function OrderDetailPage() {
 
   if (loading) {
     return (
-      <main id="main-content" className="min-h-[calc(100vh-64px)] w-full bg-[#0B141F] px-4 py-8 text-white md:px-8">
+      <main id="main-content" className="min-h-[calc(100vh-64px)] w-full bg-bg-base px-4 py-8 text-white md:px-8">
         <div className="mx-auto flex max-w-4xl flex-col gap-6">
           <Skeleton className="h-6 w-36 bg-white/5" />
-          <div className="rounded-2xl border border-white/10 bg-[#192338] p-6 space-y-4">
+          <div className="rounded-2xl border border-white/10 bg-bg-card p-6 space-y-4">
             <Skeleton className="h-8 w-64 bg-white/5" />
             <Skeleton className="h-20 w-full rounded-xl bg-white/5" />
           </div>
-          <div className="rounded-2xl border border-white/10 bg-[#192338] p-6 space-y-4">
+          <div className="rounded-2xl border border-white/10 bg-bg-card p-6 space-y-4">
             <Skeleton className="h-6 w-48 bg-white/5" />
             <Skeleton className="h-24 w-full rounded-xl bg-white/5" />
           </div>
@@ -199,8 +199,8 @@ export function OrderDetailPage() {
 
   if (error || !order) {
     return (
-      <main id="main-content" className="min-h-[calc(100vh-64px)] w-full bg-[#0B141F] px-4 py-12 text-white md:px-8">
-        <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-4 rounded-2xl border border-status-danger/30 bg-[#192338] p-8 text-center shadow-xl">
+      <main id="main-content" className="min-h-[calc(100vh-64px)] w-full bg-bg-base px-4 py-12 text-white md:px-8">
+        <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-4 rounded-2xl border border-status-danger/30 bg-bg-card p-8 text-center shadow-xl">
           <div className="flex size-14 items-center justify-center rounded-full bg-status-danger/10 text-status-danger">
             <AlertCircle size={32} />
           </div>
@@ -229,7 +229,7 @@ export function OrderDetailPage() {
   const orderDisplayNumber = order.orderNumber || order.id;
 
   return (
-    <main id="main-content" className="min-h-[calc(100vh-64px)] w-full bg-[#0B141F] px-4 py-8 text-white md:px-8">
+    <main id="main-content" className="min-h-[calc(100vh-64px)] w-full bg-bg-base px-4 py-8 text-white md:px-8">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         {/* Navigation Breadcrumb & Page Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -299,7 +299,7 @@ export function OrderDetailPage() {
         </div>
 
         {/* Seller & Store Contact Information Card */}
-        <section aria-label="Seller Information" className="rounded-2xl border border-[rgba(143,179,226,0.15)] bg-[#192338] p-6 shadow-md">
+        <section aria-label="Seller Information" className="rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card p-6 shadow-md">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-4">
             <div className="flex items-center gap-3">
               <div className="flex size-11 items-center justify-center rounded-full bg-brand-blue/20 text-brand-blue ring-1 ring-brand-blue/40">
@@ -352,7 +352,7 @@ export function OrderDetailPage() {
         </section>
 
         {/* Reserved Items (Product List) */}
-        <section aria-label="Reserved Products" className="overflow-hidden rounded-2xl border border-[rgba(143,179,226,0.15)] bg-[#192338] shadow-md">
+        <section aria-label="Reserved Products" className="overflow-hidden rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card shadow-md">
           <div className="border-b border-white/10 bg-[#111A29] px-6 py-4">
             <h2 className="text-base font-bold text-white flex items-center justify-between">
               <span>Reserved Items ({order.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0})</span>
@@ -372,7 +372,7 @@ export function OrderDetailPage() {
                     <div className="flex items-center gap-4 min-w-0 flex-1">
                       <Link
                         to={`/cards/${item.listing.id}`}
-                        className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[#0B141F] p-1 transition-transform hover:scale-105"
+                        className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-bg-base p-1 transition-transform hover:scale-105"
                         title={`View ${item.listing.name}`}
                       >
                         <img
@@ -452,7 +452,7 @@ export function OrderDetailPage() {
         </section>
 
         {/* Order Timeline (Status History) */}
-        <section aria-label="Order Timeline" className="rounded-2xl border border-[rgba(143,179,226,0.15)] bg-[#192338] p-6 shadow-md">
+        <section aria-label="Order Timeline" className="rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card p-6 shadow-md">
           <h2 className="mb-4 text-base font-bold text-white flex items-center gap-2">
             <Calendar size={18} className="text-brand-blue" />
             Order Timeline & Audit History
@@ -502,7 +502,7 @@ export function OrderDetailPage() {
         </section>
 
         {/* Order Metadata Details */}
-        <section aria-label="Order Information" className="rounded-2xl border border-[rgba(143,179,226,0.15)] bg-[#192338] p-6 text-xs text-gray-400">
+        <section aria-label="Order Information" className="rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card p-6 text-xs text-gray-400">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
             <div>
               <p className="uppercase tracking-wider font-semibold text-gray-500">Order Reference</p>

@@ -1,3 +1,4 @@
+import { acquireBodyScrollLock } from '@/shared/lib/bodyScrollLock';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -6,6 +7,7 @@ import { collectionApi } from '../api/collection';
 import { CollectionCard } from '../components/CollectionCard';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { Button } from '@/shared/components/Button';
+import { trapDialogFocus } from '@/shared/lib/trapDialogFocus';
 import { useToastStore } from '@/shared/model/useToastStore';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import type { CardListing, CollectionEntry } from '@/entities/card/model/types';
@@ -107,12 +109,11 @@ export function MyCollectionPage() {
 
   useEffect(() => {
     if (!addCardOpen) return;
-    const previousOverflow = document.body.style.overflow;
+    const releaseScrollLock = acquireBodyScrollLock();
     const previousFocus = document.activeElement as HTMLElement | null;
-    document.body.style.overflow = 'hidden';
     addCardDialogRef.current?.focus();
     return () => {
-      document.body.style.overflow = previousOverflow;
+      releaseScrollLock();
       previousFocus?.focus();
     };
   }, [addCardOpen]);
@@ -180,7 +181,7 @@ export function MyCollectionPage() {
       await collectionApi.removeFromCollection(entryId);
       setCollection((prev) => prev.filter((item) => item.id !== entryId));
       addToast({
-        type: 'info',
+        type: 'success',
         message: `Removed "${cardName}" from your collection`,
       });
     } catch (err) {
@@ -196,7 +197,7 @@ export function MyCollectionPage() {
 
   return (
     <>
-    <div className="w-full min-h-[calc(100vh-64px)] bg-[#0B141F] text-white font-['IBM_Plex_Sans_Thai',sans-serif] px-4 md:px-8 py-10">
+    <div className="w-full min-h-[calc(100vh-64px)] bg-bg-base text-white font-['IBM_Plex_Sans_Thai',sans-serif] px-4 md:px-8 py-10">
       <div className="max-w-[1400px] mx-auto flex flex-col gap-6">
         
         {/* Header Section from Figma 641:1898 */}
@@ -223,7 +224,7 @@ export function MyCollectionPage() {
                 type="button"
                 id="collection-add-card-button"
                 onClick={openAddCard}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue/90 text-sm font-semibold text-white transition-colors shadow-lg shadow-brand-blue/20"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-sm font-semibold text-bg-base transition-colors shadow-lg shadow-brand-blue/20"
               >
                 <Plus size={16} />
                 Add Card
@@ -232,7 +233,7 @@ export function MyCollectionPage() {
               <Link
                 to="/workspace/listings"
                 aria-label="Manage your listings"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue/90 text-sm font-semibold text-white transition-colors shadow-lg shadow-brand-blue/20"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-sm font-semibold text-bg-base transition-colors shadow-lg shadow-brand-blue/20"
               >
                 <Store size={16} />
                 Manage Listings
@@ -264,7 +265,7 @@ export function MyCollectionPage() {
               aria-controls="seller-inventory-panel"
               onClick={() => selectView('collection')}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                activeView === 'collection' ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/20' : 'text-gray-400 hover:text-white'
+                activeView === 'collection' ? 'bg-brand-blue text-bg-base shadow-lg shadow-brand-blue/20' : 'text-gray-400 hover:text-white'
               }`}
             >
               <Layers size={16} />
@@ -278,7 +279,7 @@ export function MyCollectionPage() {
               aria-controls="seller-inventory-panel"
               onClick={() => selectView('store')}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                activeView === 'store' ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/20' : 'text-gray-400 hover:text-white'
+                activeView === 'store' ? 'bg-brand-blue text-bg-base shadow-lg shadow-brand-blue/20' : 'text-gray-400 hover:text-white'
               }`}
             >
               <Store size={16} />
@@ -309,7 +310,7 @@ export function MyCollectionPage() {
 
         {/* Error State with Retry */}
         {activeView === 'collection' && !loading && error && (
-          <div className="bg-[#192338] border border-status-danger/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center gap-4">
+          <div className="bg-bg-card border border-status-danger/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center gap-4">
             <div className="size-12 rounded-full bg-status-danger/10 text-status-danger flex items-center justify-center">
               <AlertCircle size={28} />
             </div>
@@ -320,7 +321,7 @@ export function MyCollectionPage() {
             <button
               type="button"
               onClick={() => void fetchCollection()}
-              className="px-5 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-semibold rounded-lg transition-colors"
+              className="px-5 py-2 bg-brand-blue hover:bg-brand-blue/90 text-bg-base text-sm font-semibold rounded-lg transition-colors"
             >
               Try Again
             </button>
@@ -328,7 +329,7 @@ export function MyCollectionPage() {
         )}
 
         {activeView === 'store' && !storeLoading && storeError && (
-          <div className="bg-[#192338] border border-status-danger/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center gap-4">
+          <div className="bg-bg-card border border-status-danger/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center gap-4">
             <div className="size-12 rounded-full bg-status-danger/10 text-status-danger flex items-center justify-center">
               <AlertCircle size={28} />
             </div>
@@ -336,7 +337,7 @@ export function MyCollectionPage() {
               <h3 className="text-lg font-bold text-white">Unable to load store</h3>
               <p className="text-sm text-gray-400 mt-1">{storeError}</p>
             </div>
-            <button type="button" onClick={refreshActiveView} className="px-5 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-semibold rounded-lg transition-colors">
+            <button type="button" onClick={refreshActiveView} className="px-5 py-2 bg-brand-blue hover:bg-brand-blue/90 text-bg-base text-sm font-semibold rounded-lg transition-colors">
               Try Again
             </button>
           </div>
@@ -344,7 +345,7 @@ export function MyCollectionPage() {
 
         {/* Collection empty state */}
         {activeView === 'collection' && !loading && !error && collection.length === 0 && (
-          <div className="bg-[#192338] border border-[rgba(143,179,226,0.15)] rounded-2xl py-20 px-6 flex flex-col items-center justify-center text-center gap-4">
+          <div className="bg-bg-card border border-[rgba(143,179,226,0.15)] rounded-2xl py-20 px-6 flex flex-col items-center justify-center text-center gap-4">
             <div className="size-16 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
               <Layers size={32} />
             </div>
@@ -356,7 +357,7 @@ export function MyCollectionPage() {
             </div>
             <Link
               to="/cards"
-              className="mt-2 bg-brand-blue hover:bg-brand-blue/90 text-white font-semibold text-sm px-6 py-2.5 rounded-lg transition-colors shadow-lg shadow-brand-blue/20"
+              className="mt-2 bg-brand-blue hover:bg-brand-blue/90 text-bg-base font-semibold text-sm px-6 py-2.5 rounded-lg transition-colors shadow-lg shadow-brand-blue/20"
             >
               Browse Cards
             </Link>
@@ -365,7 +366,7 @@ export function MyCollectionPage() {
 
         {/* Store empty state */}
         {activeView === 'store' && !storeLoading && !storeError && storeCards.length === 0 && (
-          <div className="bg-[#192338] border border-[rgba(143,179,226,0.15)] rounded-2xl py-20 px-6 flex flex-col items-center justify-center text-center gap-4">
+          <div className="bg-bg-card border border-[rgba(143,179,226,0.15)] rounded-2xl py-20 px-6 flex flex-col items-center justify-center text-center gap-4">
             <div className="size-16 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
               <ShoppingBag size={32} />
             </div>
@@ -373,7 +374,7 @@ export function MyCollectionPage() {
               <h3 className="text-xl font-bold text-white">Your store is empty</h3>
               <p className="text-sm text-gray-400 mt-1">Cards appear here only after you open a listing for sale with available stock.</p>
             </div>
-            <Link to="/workspace/listings" className="mt-2 bg-brand-blue hover:bg-brand-blue/90 text-white font-semibold text-sm px-6 py-2.5 rounded-lg transition-colors shadow-lg shadow-brand-blue/20">
+            <Link to="/workspace/listings" className="mt-2 bg-brand-blue hover:bg-brand-blue/90 text-bg-base font-semibold text-sm px-6 py-2.5 rounded-lg transition-colors shadow-lg shadow-brand-blue/20">
               Manage Listings
             </Link>
           </div>
@@ -406,7 +407,7 @@ export function MyCollectionPage() {
         {addCardOpen &&
           createPortal(
             <div
-              className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm"
+              className="fixed inset-0 z-modal-backdrop flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm"
               onMouseDown={(event) => {
                 if (event.target === event.currentTarget && !isAdding) closeAddCard();
               }}
@@ -418,6 +419,7 @@ export function MyCollectionPage() {
                 aria-labelledby="add-card-dialog-title"
                 tabIndex={-1}
                 onKeyDown={(event) => {
+                  if (!trapDialogFocus(event)) return;
                   if (event.key === 'Escape' && !isAdding) closeAddCard();
                 }}
                 className="glass-elevated flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-xl"
@@ -431,7 +433,7 @@ export function MyCollectionPage() {
                     aria-label="Close add card dialog"
                     disabled={isAdding}
                     onClick={closeAddCard}
-                    className="text-gray-400 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex size-11 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-brand-blue disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <X size={20} />
                   </button>
@@ -454,7 +456,7 @@ export function MyCollectionPage() {
 
                         <div>
                           <label htmlFor="collection-card-quantity" className="mb-1 block text-sm font-medium text-gray-300">Quantity</label>
-                          <div className="flex h-12 w-full overflow-hidden rounded-xl border border-[rgba(165,201,249,0.3)] bg-bg-input focus-within:border-brand-gold focus-within:ring-1 focus-within:ring-brand-gold">
+                          <div className="flex h-12 w-full overflow-hidden rounded-xl border border-white/15 bg-bg-input focus-within:border-brand-blue focus-within:ring-2 focus-within:ring-brand-blue">
                             <button type="button" aria-label="Decrease quantity" disabled={isAdding || Number(addQuantity) <= 1} onClick={() => { setAddQuantity((current) => String(Math.max(1, (Number(current) || 1) - 1))); setAddQuantityError(null); }} className="flex w-12 shrink-0 items-center justify-center border-r border-white/10 text-gray-300 transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-blue disabled:cursor-not-allowed disabled:opacity-35"><Minus size={17} aria-hidden="true" /></button>
                             <input id="collection-card-quantity" aria-invalid={Boolean(addQuantityError)} aria-describedby={addQuantityError ? 'collection-card-quantity-error' : undefined} type="number" min="1" step="1" inputMode="numeric" value={addQuantity} disabled={isAdding} onChange={(event) => { setAddQuantity(event.target.value); setAddQuantityError(null); }} className="min-w-0 flex-1 appearance-none bg-transparent px-3 text-center text-sm font-semibold text-gray-100 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
                             <button type="button" aria-label="Increase quantity" disabled={isAdding} onClick={() => { setAddQuantity((current) => String(Math.max(1, Number(current) || 1) + 1)); setAddQuantityError(null); }} className="flex w-12 shrink-0 items-center justify-center border-l border-white/10 text-brand-blue transition-colors hover:bg-brand-blue/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-blue disabled:cursor-not-allowed disabled:opacity-35"><Plus size={17} aria-hidden="true" /></button>

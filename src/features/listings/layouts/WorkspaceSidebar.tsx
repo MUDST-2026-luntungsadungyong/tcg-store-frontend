@@ -40,7 +40,7 @@ export function WorkspaceSidebar() {
     <aside
       aria-label="Seller workspace"
       className={cn(
-        'hidden min-h-[calc(100vh-4rem)] shrink-0 flex-col bg-[#192338] shadow-[inset_0_0_0_1px_#31405A] transition-[width] duration-200 md:flex',
+        'hidden min-h-[calc(100vh-4rem)] shrink-0 flex-col bg-bg-card shadow-[inset_0_0_0_1px_#31405A] transition-[width] duration-200 md:flex',
         isCollapsed ? 'w-[72px]' : 'w-[240px]',
       )}
     >
@@ -83,9 +83,9 @@ export function WorkspaceSidebar() {
               to={link.to}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'flex h-11 items-center gap-3 rounded-[10px] text-sm text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue',
+                'flex h-11 items-center gap-3 rounded-xl text-sm text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue',
                 isCollapsed ? 'justify-center px-2' : 'px-4',
-                isActive ? 'bg-[#243350] font-bold' : 'hover:bg-[#243350]/60',
+                isActive ? 'bg-brand-blue/10 font-semibold' : 'hover:bg-white/5',
               )}
             >
               <Icon size={19} className="text-brand-blue" />
@@ -112,7 +112,7 @@ export function WorkspaceMobileNavigation() {
   }, []);
 
   return (
-    <div className="-mx-6 -mt-6 mb-6 border-b border-[#31405A] bg-[#192338] px-6 py-3 md:hidden">
+    <div className="-mx-6 -mt-6 mb-6 border-b border-white/10 bg-bg-card px-6 py-3 md:hidden">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -138,7 +138,7 @@ export function WorkspaceMobileNavigation() {
           <nav
             id="mobile-workspace-menu"
             aria-label="Mobile workspace navigation"
-            className="fixed inset-y-0 left-0 z-50 flex w-[min(19rem,85vw)] flex-col bg-[#192338] p-5 shadow-2xl"
+            className="fixed inset-y-0 left-0 z-50 flex w-[min(19rem,85vw)] flex-col bg-bg-card p-5 shadow-2xl"
           >
             <div className="mb-7 flex items-center justify-between">
               <p className="text-base font-bold text-white">Seller workspace</p>
@@ -166,8 +166,8 @@ export function WorkspaceMobileNavigation() {
                     aria-current={isActive ? 'page' : undefined}
                     onClick={() => setIsOpen(false)}
                     className={cn(
-                      'flex h-12 items-center gap-3 rounded-[10px] px-4 text-sm text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue',
-                      isActive ? 'bg-[#243350] font-bold' : 'hover:bg-[#243350]/60',
+                      'flex h-12 items-center gap-3 rounded-xl px-4 text-sm text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue',
+                      isActive ? 'bg-brand-blue/10 font-semibold' : 'hover:bg-white/5',
                     )}
                   >
                     <Icon size={19} className="text-brand-blue" />

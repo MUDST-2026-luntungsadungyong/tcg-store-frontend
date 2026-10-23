@@ -15,7 +15,7 @@ import {
   ReceiptText,
   UsersRound,
 } from 'lucide-react';
-import { Button } from '@/shared/components/Button';
+import { ButtonLink } from '@/shared/components/ButtonLink';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { useNotificationStore } from '@/features/notifications/model/useNotificationStore';
 import { useReservationCartStore } from '@/features/reservation-cart';
@@ -139,7 +139,7 @@ export function Navbar() {
                     setSearchQuery(e.target.value);
                     setSearchOpen(Boolean(e.target.value.trim()));
                   }}
-                  className="block w-[320px] h-[44px] rounded-[22px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors"
+                  className="block w-full h-11 rounded-xl pl-10 pr-3 border border-white/15 leading-5 bg-bg-input text-gray-100 placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue text-sm transition-colors"
                 />
                 <AnimatePresence>
                   {searchOpen && searchQuery.trim() && (
@@ -333,11 +333,7 @@ export function Navbar() {
                 </AnimatePresence>
               </div>
             ) : (
-              <Link to="/login">
-                <Button variant="primary" size="sm" className="bg-white hover:bg-gray-100 text-[#151B2B] rounded-full px-6 py-1.5 font-bold">
-                  Login
-                </Button>
-              </Link>
+              <ButtonLink to="/login" size="sm" className="px-6">Login</ButtonLink>
             )}
           </div>
         </div>

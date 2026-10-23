@@ -142,7 +142,7 @@ export function MyOrdersPage() {
   );
 
   return (
-    <div className="min-h-[calc(100vh-64px)] w-full bg-[#0B141F] px-4 py-10 text-white md:px-8">
+    <div className="min-h-[calc(100vh-64px)] w-full bg-bg-base px-4 py-10 text-white md:px-8">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
@@ -166,9 +166,10 @@ export function MyOrdersPage() {
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
+              aria-pressed={activeTab === tab.key}
               className={`whitespace-nowrap rounded-full border px-5 py-2 text-sm font-semibold transition-all ${
                 activeTab === tab.key
-                  ? 'border-[#EFA025] bg-[#EFA025] text-white shadow-[0_0_12px_rgba(239,160,37,0.35)]'
+                  ? 'border-brand-blue bg-brand-blue text-bg-base'
                   : 'border-white/15 bg-transparent text-[#C0C4D1] hover:border-white/30 hover:text-white'
               }`}
             >
@@ -178,10 +179,10 @@ export function MyOrdersPage() {
         </div>
 
         {loading && (
-          <div className="flex flex-col gap-4 rounded-2xl border border-[rgba(143,179,226,0.15)] bg-[#192338] p-6">
+          <div className="flex flex-col gap-4 rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card p-6">
             <Skeleton className="h-8 w-48 bg-white/5" />
             {[1, 2].map((item) => (
-              <div key={item} className="flex items-center justify-between rounded-xl border border-white/5 bg-[#0B141F]/40 p-4">
+              <div key={item} className="flex items-center justify-between rounded-xl border border-white/5 bg-bg-base/40 p-4">
                 <div className="flex items-center gap-4">
                   <Skeleton className="size-14 rounded-lg bg-white/5" />
                   <div className="flex flex-col gap-2">
@@ -196,7 +197,7 @@ export function MyOrdersPage() {
         )}
 
         {!loading && error && (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-status-danger/30 bg-[#192338] p-8 text-center">
+          <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-status-danger/30 bg-bg-card p-8 text-center">
             <div className="flex size-12 items-center justify-center rounded-full bg-status-danger/10 text-status-danger">
               <AlertCircle size={28} />
             </div>
@@ -207,7 +208,7 @@ export function MyOrdersPage() {
             <button
               type="button"
               onClick={() => void loadOrders()}
-              className="rounded-lg bg-brand-blue px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-blue/90"
+              className="rounded-xl bg-brand-blue px-5 py-2 text-sm font-semibold text-bg-base transition-colors hover:bg-brand-blue/90"
             >
               Try Again
             </button>
@@ -215,7 +216,7 @@ export function MyOrdersPage() {
         )}
 
         {!loading && !error && filteredOrders.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[rgba(143,179,226,0.15)] bg-[#192338] px-6 py-16 text-center">
+          <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card px-6 py-16 text-center">
             <div className="flex size-16 items-center justify-center rounded-full bg-white/5 text-gray-400">
               <Package size={32} />
             </div>
@@ -231,7 +232,7 @@ export function MyOrdersPage() {
         )}
 
         {!loading && !error && filteredOrders.length > 0 && (
-          <div className="overflow-hidden rounded-2xl border border-[rgba(143,179,226,0.15)] bg-[#192338] shadow-xl">
+          <div className="overflow-hidden rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card shadow-xl">
             <div className="hidden grid-cols-12 gap-4 border-b border-white/10 bg-[#111A29] px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#99A6B8] md:grid">
               <div className="col-span-2">Order ID & Date</div>
               <div className="col-span-2">Seller</div>
@@ -290,7 +291,7 @@ export function MyOrdersPage() {
                     <div className="flex items-center gap-3 md:col-span-3">
                       {primaryItem ? (
                         <>
-                          <div className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-[#0B141F] p-1">
+                          <div className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-bg-base p-1">
                             <img src={primaryItem.listing.image} alt={primaryItem.listing.name} className="size-full object-contain" />
                           </div>
                           <div className="flex min-w-0 flex-col">
@@ -381,7 +382,7 @@ export function MyOrdersPage() {
           <textarea
             value={cancelNote}
             onChange={(e) => setCancelNote(e.target.value)}
-            className="w-full h-24 p-3 rounded-lg border border-[#31405A] bg-[#192338] text-white text-sm"
+            className="w-full h-24 p-3 rounded-lg border border-white/10 bg-bg-card text-white text-sm"
             placeholder="Reason for cancellation..."
           />
           <div className="flex justify-end gap-2 pt-4">
@@ -469,7 +470,7 @@ export function MyOrdersPage() {
                         className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#111A29]/50 p-3.5 transition-colors hover:bg-white/[0.02]"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-[#0B141F] p-1">
+                          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-bg-base p-1">
                             <img
                               src={item.listing.image}
                               alt={item.listing.name}
@@ -510,7 +511,7 @@ export function MyOrdersPage() {
               {/* Financial Totals */}
               <div className="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-[#111A29] px-4 py-3">
                 <span className="text-sm font-medium text-gray-300">Total Order Amount</span>
-                <span className="text-lg font-bold text-[#EFA025]">
+                <span className="text-lg font-bold text-brand-gold">
                   ฿{selectedOrder.totalAmount.toLocaleString()}
                 </span>
               </div>
@@ -535,7 +536,7 @@ export function MyOrdersPage() {
                           <p className="text-[10px] text-gray-400">{new Date(log.createdAt).toLocaleString()}</p>
                         </div>
                         {log.note && (
-                          <div className="mt-1 rounded border border-[#31405A] bg-[#192338] p-2 italic text-gray-300">
+                          <div className="mt-1 rounded border border-white/10 bg-bg-card p-2 italic text-gray-300">
                             "{log.note}"
                           </div>
                         )}

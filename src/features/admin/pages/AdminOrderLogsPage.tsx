@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, RefreshCw, Search, X } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, RefreshCw, X } from 'lucide-react';
 import apiClient from '@/shared/api/client';
 import { Button } from '@/shared/components/Button';
 import { Modal } from '@/shared/components/Modal';
+import { SearchField } from '@/shared/components/SearchField';
 import { cn } from '@/shared/lib';
 
 const STATUSES = ['PENDING', 'PAID', 'FULFILLED', 'CANCELLED'] as const;
@@ -40,7 +41,7 @@ function DateRangePicker({ from, to, onChange }: { from: string; to: string; onC
  const days = useMemo(() => { const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1); const offset = first.getDay(); const start = new Date(first); start.setDate(1 - offset); return Array.from({ length: 42 }, (_, i) => { const day = new Date(start); day.setDate(start.getDate() + i); return day; }); }, [cursor]);
  const label = from ? `${fmt(from)}${to ? ` – ${fmt(to)}` : ' – Select end date'}` : 'Order date range';
  function choose(day: Date) { const value = toIso(day); if (!draftFrom || draftTo || value < draftFrom) { setDraftFrom(value); setDraftTo(''); } else setDraftTo(value); }
- return <div ref={containerRef} className="relative"><button type="button" aria-expanded={open} aria-label="Select order date range" onClick={() => { setDraftFrom(from); setDraftTo(to); setOpen(!open); }} className="flex h-10 min-w-56 items-center gap-2 rounded-lg border border-white/10 bg-bg-input px-3 text-left text-sm text-white hover:bg-white/[.04] focus:outline-none focus:ring-2 focus:ring-brand-blue"><CalendarDays size={16} className="text-gray-400" /><span className={from ? '' : 'text-gray-400'}>{label}</span></button>{open && <div className="absolute right-0 z-30 mt-2 w-[20rem] rounded-xl border border-white/10 bg-bg-elevated p-3 shadow-2xl"><div className="mb-3 flex items-center justify-between"><button type="button" aria-label="Previous month" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))} className="flex size-9 items-center justify-center rounded-lg hover:bg-white/10"><ChevronLeft size={16} /></button><strong className="text-sm text-white">{cursor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</strong><button type="button" aria-label="Next month" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} className="flex size-9 items-center justify-center rounded-lg hover:bg-white/10"><ChevronRight size={16} /></button></div><div className="grid text-center text-[11px] text-gray-400" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>{['S','M','T','W','T','F','S'].map((d, i) => <span key={`${d}${i}`} className="py-1">{d}</span>)}</div><div className="grid gap-0.5" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>{days.map((day) => { const value = toIso(day); const selected = value === draftFrom || value === draftTo; const between = draftFrom && draftTo && value > draftFrom && value < draftTo; return <button key={value} type="button" onClick={() => choose(day)} className={cn('flex h-9 items-center justify-center rounded-lg text-sm transition', day.getMonth() !== cursor.getMonth() && 'text-gray-600', selected && 'bg-brand-blue text-bg-base font-bold', between && 'bg-brand-blue/20 text-white', !selected && !between && 'hover:bg-white/10')}>{day.getDate()}</button>; })}</div><div className="mt-3 flex justify-between border-t border-white/10 pt-3"><button type="button" onClick={() => { setDraftFrom(''); setDraftTo(''); onChange('', ''); setOpen(false); }} className="min-h-10 px-2 text-sm text-gray-300 hover:text-white">Clear</button><button type="button" disabled={!draftFrom || !draftTo} onClick={() => { onChange(draftFrom, draftTo); setOpen(false); }} className="min-h-10 rounded-lg bg-brand-blue px-3 text-sm font-semibold text-bg-base disabled:opacity-40">Apply</button></div></div>}</div>;
+ return <div ref={containerRef} className="relative"><button type="button" aria-expanded={open} aria-label="Select order date range" onClick={() => { setDraftFrom(from); setDraftTo(to); setOpen(!open); }} className="flex h-10 min-w-56 items-center gap-2 rounded-lg border border-white/10 bg-bg-input px-3 text-left text-sm text-white hover:bg-white/[.04] focus:outline-none focus:ring-2 focus:ring-brand-blue"><CalendarDays size={16} className="text-gray-400" /><span className={from ? '' : 'text-gray-400'}>{label}</span></button>{open && <div className="absolute right-0 z-30 mt-2 w-[20rem] rounded-xl border border-white/10 bg-bg-elevated p-3 shadow-2xl"><div className="mb-3 flex items-center justify-between"><button type="button" aria-label="Previous month" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))} className="flex size-9 items-center justify-center rounded-lg hover:bg-white/10"><ChevronLeft size={16} /></button><strong className="text-sm text-white">{cursor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</strong><button type="button" aria-label="Next month" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} className="flex size-9 items-center justify-center rounded-lg hover:bg-white/10"><ChevronRight size={16} /></button></div><div className="grid text-center text-[11px] text-gray-400" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>{['S','M','T','W','T','F','S'].map((d, i) => <span key={`${d}${i}`} className="py-1">{d}</span>)}</div><div className="grid gap-0.5" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>{days.map((day) => { const value = toIso(day); const selected = value === draftFrom || value === draftTo; const between = draftFrom && draftTo && value > draftFrom && value < draftTo; return <button key={value} type="button" onClick={() => choose(day)} className={cn('flex h-9 items-center justify-center rounded-lg text-sm transition', day.getMonth() !== cursor.getMonth() && 'text-gray-600', selected && 'bg-brand-blue text-bg-base font-bold', between && 'bg-brand-blue/20 text-white', !selected && !between && 'hover:bg-white/10')}>{day.getDate()}</button>; })}</div><div className="mt-3 flex justify-between border-t border-white/10 pt-3"><button type="button" onClick={() => { setDraftFrom(''); setDraftTo(''); onChange('', ''); setOpen(false); }} className="min-h-10 px-2 text-sm text-gray-300 hover:text-white">Clear</button><button type="button" disabled={!draftFrom || !draftTo} onClick={() => { onChange(draftFrom, draftTo); setOpen(false); }} className="min-h-10 rounded-xl bg-brand-blue px-3 text-sm font-semibold text-bg-base disabled:opacity-40">Apply</button></div></div>}</div>;
 }
 
 /* ── Mobile card for a single order row ── */
@@ -98,7 +99,7 @@ export function AdminOrderLogsPage() {
  const toggle = (status: Status) => setStatuses((all) => all.includes(status) ? all.filter((x) => x !== status) : [...all, status]); const placeholder = searchBy === 'SELLER' ? 'Search seller or store' : searchBy === 'BUYER' ? 'Search buyer name or email' : 'Search order number';
 
  return (
-  <main id="main-content" className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+  <main id="main-content" className="mythix-page">
    <header className="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
     <div>
      <p className="text-xs font-semibold uppercase tracking-[.16em] text-brand-gold">Platform administration</p>
@@ -119,15 +120,13 @@ export function AdminOrderLogsPage() {
    <section className="mt-4 rounded-xl border border-white/10 bg-bg-elevated p-3.5">
     <div className="flex flex-col gap-3 xl:flex-row">
      <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
-      <select aria-label="Search by" value={searchBy} onChange={(e) => setSearchBy(e.target.value as SearchBy)} className="h-10 rounded-lg border border-white/10 bg-bg-input px-3 text-sm text-white">
+      <select aria-label="Search by" value={searchBy} onChange={(e) => setSearchBy(e.target.value as SearchBy)} className="h-11 rounded-xl border border-white/15 bg-bg-input px-3 text-sm text-gray-100 focus-visible:ring-2 focus-visible:ring-brand-blue">
        <option value="ORDER_NUMBER">Order number</option><option value="BUYER">Buyer</option><option value="SELLER">Seller</option>
       </select>
-      <label className="relative min-w-0 flex-1">
-       <span className="sr-only">Search logs</span>
-       <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-       <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={placeholder} className="h-10 w-full rounded-lg border border-white/10 bg-bg-input pl-10 pr-9 text-sm text-white" />
+      <div className="relative min-w-0 flex-1">
+       <SearchField aria-label="Search logs" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={placeholder} className="pr-9" />
        {query && <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400"><X size={16} /></button>}
-      </label>
+      </div>
       <DateRangePicker from={from} to={to} onChange={(start, end) => { setFrom(start); setTo(end); }} />
      </div>
      <div className="flex flex-wrap gap-2">{STATUSES.map((status) => <button key={status} type="button" aria-pressed={statuses.includes(status)} onClick={() => toggle(status)} className={cn('min-h-8 rounded-full border px-3 text-xs font-semibold', statuses.includes(status) ? tone[status] : 'border-white/10 text-gray-400')}>{status}</button>)}</div>
@@ -142,7 +141,7 @@ export function AdminOrderLogsPage() {
      <>
       {/* Desktop table – hidden on mobile */}
       <div className="hidden md:block overflow-hidden rounded-xl border border-white/10 bg-bg-elevated">
-       <table className="w-full text-left text-sm">
+       <table className="mythix-table w-full text-left text-sm">
         <thead className="border-b border-white/10 text-xs uppercase text-gray-400">
          <tr><th className="p-3">Order</th><th className="p-3">Buyer</th><th className="p-3">Seller</th><th className="p-3">Status</th><th className="p-3">Date</th><th className="p-3 text-right">Amount</th></tr>
         </thead>

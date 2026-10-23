@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ButtonLink } from '@/shared/components/ButtonLink';
 import { AlertCircle, ArrowLeft, LockKeyhole } from 'lucide-react';
 
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
@@ -26,11 +27,11 @@ export function CheckoutPage() {
 
   if (!preview || items.length === 0) {
     return (
-      <main className="min-h-[calc(100vh-64px)] bg-[#0B141F] px-4 py-16 text-white md:px-8">
-        <div className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-[#192338] p-10 text-center">
+      <main className="min-h-[calc(100vh-64px)] bg-bg-base px-4 py-16 text-white md:px-8">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-bg-card p-10 text-center">
           <h1 className="text-3xl font-bold">Nothing to review</h1>
           <p className="mt-3 text-gray-400">Add a card to your reservation cart first.</p>
-          <Link to="/cards" className="mt-7 inline-flex rounded-full bg-brand-blue px-6 py-3 font-semibold">Browse cards</Link>
+          <ButtonLink to="/cards" className="mt-7" size="lg">Browse cards</ButtonLink>
         </div>
       </main>
     );
@@ -53,7 +54,7 @@ export function CheckoutPage() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-64px)] bg-[#0B141F] px-4 py-10 text-white md:px-8">
+    <main className="min-h-[calc(100vh-64px)] bg-bg-base px-4 py-10 text-white md:px-8">
       <div className="mx-auto max-w-5xl">
         <Link to="/cart" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white"><ArrowLeft size={16} /> Back to cart</Link>
         <div className="mt-6 mb-8">
@@ -64,7 +65,7 @@ export function CheckoutPage() {
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <section className="space-y-4">
             {preview.groups.map((group) => (
-              <div key={group.sellerId} className="rounded-2xl border border-white/10 bg-[#192338] p-5">
+              <div key={group.sellerId} className="rounded-2xl border border-white/10 bg-bg-card p-5">
                 <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
                   <h2 className="font-semibold">Seller {group.sellerId}</h2>
                   <span className="text-sm text-gray-400">{group.items.length} item(s)</span>
@@ -72,7 +73,7 @@ export function CheckoutPage() {
                 <div className="space-y-3">
                   {group.items.map((item) => (
                     <div key={item.listing.id} className="flex items-center gap-3">
-                      <img src={item.listing.image} alt="" className="size-14 rounded-lg bg-[#0B141F] object-contain p-1" />
+                      <img src={item.listing.image} alt="" className="size-14 rounded-lg bg-bg-base object-contain p-1" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">{item.listing.name}</p>
                         <p className="text-xs text-gray-400">Qty {item.quantity} · {money(item.listing.price)} each</p>
@@ -85,13 +86,13 @@ export function CheckoutPage() {
             ))}
           </section>
 
-          <aside className="h-fit rounded-2xl border border-white/10 bg-[#192338] p-6">
+          <aside className="h-fit rounded-2xl border border-white/10 bg-bg-card p-6">
             <h2 className="text-lg font-bold">Reservation total</h2>
             <div className="mt-5 flex items-center justify-between border-b border-white/10 pb-4 text-sm">
               <span className="text-gray-400">Cards</span>
               <span>{money(preview.totalAmount)}</span>
             </div>
-            <div className="mt-4 flex items-start gap-3 rounded-xl bg-brand-blue/10 p-3 text-xs leading-5 text-gray-300">
+            <div className="mt-4 flex items-start gap-3 rounded-full bg-brand-blue/10 p-3 text-xs leading-5 text-gray-300">
               <LockKeyhole size={16} className="mt-0.5 shrink-0 text-brand-blue" />
               <span>Stock is validated and reserved when you confirm. No payment or shipping address is collected in this phase.</span>
             </div>
@@ -101,7 +102,7 @@ export function CheckoutPage() {
                 <span>{error}</span>
               </div>
             )}
-            <button type="button" onClick={() => void submitReservation()} disabled={isSubmitting || !user} className="mt-6 flex w-full items-center justify-center rounded-full bg-brand-blue px-5 py-3 font-semibold hover:bg-[#4a85e0] disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="button" onClick={() => void submitReservation()} disabled={isSubmitting || !user} className="mt-6 flex w-full items-center justify-center rounded-xl bg-brand-blue px-5 py-3 font-semibold text-bg-base hover:bg-brand-blue/90 disabled:cursor-not-allowed disabled:opacity-50">
               {isSubmitting ? 'Reserving…' : 'Confirm reservation'}
             </button>
           </aside>

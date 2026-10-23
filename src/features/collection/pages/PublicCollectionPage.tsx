@@ -33,7 +33,7 @@ export function PublicCollectionPage() {
   }, [fetchCollection]);
 
   return (
-    <div className="w-full min-h-[calc(100vh-64px)] bg-[#0B141F] px-4 py-10 text-white font-['IBM_Plex_Sans_Thai',sans-serif] md:px-8">
+    <div className="w-full min-h-[calc(100vh-64px)] bg-bg-base px-4 py-10 text-white font-['IBM_Plex_Sans_Thai',sans-serif] md:px-8">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
@@ -72,7 +72,7 @@ export function PublicCollectionPage() {
         {loading && (
           <div className="grid grid-cols-1 gap-6 pt-4 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((index) => (
-              <div key={index} className="flex gap-5 rounded-2xl border border-white/10 bg-white p-5">
+              <div key={index} className="flex gap-5 rounded-2xl border border-white/10 bg-bg-card p-5">
                 <Skeleton className="h-36 w-28 shrink-0 rounded-xl bg-gray-200" />
                 <div className="flex flex-1 flex-col gap-3 pt-2">
                   <Skeleton className="h-4 w-3/4 bg-gray-200" />
@@ -85,26 +85,26 @@ export function PublicCollectionPage() {
         )}
 
         {!loading && error && (
-          <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/30 bg-[#192338] p-10 text-center">
+          <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/30 bg-bg-card p-10 text-center">
             <AlertCircle size={32} className="text-status-danger" />
             <div>
               <h2 className="text-lg font-bold">Unable to load public collection</h2>
               <p className="mt-1 text-text-secondary">{error}</p>
             </div>
-            <button type="button" onClick={() => void fetchCollection()} className="rounded-lg bg-brand-blue px-5 py-2 text-sm font-semibold text-bg-base transition-colors hover:bg-brand-blue/90">
+            <button type="button" onClick={() => void fetchCollection()} className="rounded-xl bg-brand-blue px-5 py-2 text-sm font-semibold text-bg-base transition-colors hover:bg-brand-blue/90">
               Try again
             </button>
           </div>
         )}
 
         {!loading && !error && items.length === 0 && (
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/10 bg-[#192338] px-6 py-20 text-center">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/10 bg-bg-card px-6 py-20 text-center">
             <Layers size={36} className="text-text-secondary" />
             <div>
               <h2 className="text-xl font-bold">This collection is empty</h2>
               <p className="mt-1 text-text-secondary">There are no public cards to display yet.</p>
             </div>
-            <Link to="/cards" className="rounded-lg bg-brand-blue px-5 py-2.5 text-sm font-semibold text-bg-base transition-colors hover:bg-brand-blue/90">
+            <Link to="/cards" className="rounded-xl bg-brand-blue px-5 py-2.5 text-sm font-semibold text-bg-base transition-colors hover:bg-brand-blue/90">
               Browse cards
             </Link>
           </div>

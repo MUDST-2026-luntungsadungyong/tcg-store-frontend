@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { MotionConfig } from 'motion/react';
 import { RouterProvider } from 'react-router-dom';
 import { router } from '@/app/router';
 import { ENV } from '@/shared/config/env';
@@ -46,9 +47,11 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <MotionConfig reducedMotion="user">
       <RouterProvider router={router} />
       <ToastProvider />
       <DevSettings />
+      </MotionConfig>
     </ErrorBoundary>
   );
 }

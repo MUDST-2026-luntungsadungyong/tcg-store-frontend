@@ -139,7 +139,7 @@ export function CardDetailPage() {
   };
 
   if (isLoading) return <main className="mx-auto max-w-[1440px] px-6 py-10 md:px-12"><Skeleton className="mb-8 h-5 w-48" /><div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"><Skeleton className="aspect-[421/533] w-full rounded-2xl" /><div className="space-y-5"><Skeleton className="h-10 w-3/4" /><Skeleton className="h-40 w-full" /><Skeleton className="h-24 w-full" /></div></div></main>;
-  if (error) return <main className="mx-auto max-w-3xl px-8 py-32 text-center"><h1 className="text-2xl font-bold">Unable to load card details</h1><p className="mt-3 text-gray-400">{error}</p><button onClick={() => void fetchCard()} className="mt-6 rounded-lg bg-brand-blue px-6 py-2.5 font-bold text-bg-base">Retry</button></main>;
+  if (error) return <main className="mx-auto max-w-3xl px-8 py-32 text-center"><h1 className="text-2xl font-bold">Unable to load card details</h1><p className="mt-3 text-gray-400">{error}</p><button onClick={() => void fetchCard()} className="mt-6 rounded-xl bg-brand-blue px-6 py-2.5 font-bold text-bg-base">Retry</button></main>;
   if (!card) return <main className="mx-auto max-w-3xl px-8 py-32 text-center"><h1 className="text-3xl font-bold">Card not found</h1><p className="mt-4 text-gray-400">The card you are looking for does not exist or has been removed.</p><Link to="/cards" className="mt-6 inline-flex rounded-lg bg-[#2B53A9] px-6 py-2.5 font-bold">Back to cards</Link></main>;
 
   // Card specification details
@@ -192,7 +192,7 @@ export function CardDetailPage() {
   ];
 
   return (
-    <main className="w-full bg-[#1B2336] text-white">
+    <main className="w-full bg-bg-card text-white">
       <div className="mx-auto max-w-[1440px] px-6 py-8 pb-20 md:px-12">
         <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 text-sm"><Link to="/cards" className="text-[#8FB3E2] hover:underline">Cards</Link><span aria-hidden="true" className="text-gray-500">/</span><span className="truncate">{card.name}</span></nav>
         <h1 className="mb-8 text-3xl font-bold md:text-[32px]">{card.name}</h1>

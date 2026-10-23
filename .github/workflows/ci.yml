@@ -110,27 +110,29 @@ jobs:
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Start Vite and wait for HTTP readiness
-        env:
-          VITE_ENABLE_MOCK_API: 'true'
-          VITE_PORT: '3000'
+      - name: Start Vite servers and wait for HTTP readiness
         run: |
-          npm run dev -- --host localhost --port 3000 --strictPort > /tmp/vite-e2e.log 2>&1 &
-          vite_pid=$!
-          for attempt in {1..60}; do
-            if curl --fail --silent --output /dev/null http://localhost:3000; then
-              cat /tmp/vite-e2e.log
-              exit 0
-            fi
-            if ! kill -0 "$vite_pid" 2>/dev/null; then
-              cat /tmp/vite-e2e.log
+          # Business suites use the in-browser mock DB; design fixtures intercept HTTP.
+          for port in 3000 3001; do
+            mock_api=true
+            if [ "$port" = 3001 ]; then mock_api=false; fi
+            VITE_ENABLE_MOCK_API="$mock_api" npm run dev -- --host localhost --port "$port" --strictPort > "/tmp/vite-e2e-$port.log" 2>&1 &
+            vite_pid=$!
+            ready=false
+            for attempt in {1..60}; do
+              if curl --fail --silent --output /dev/null "http://localhost:$port"; then
+                ready=true
+                break
+              fi
+              if ! kill -0 "$vite_pid" 2>/dev/null; then break; fi
+              sleep 2
+            done
+            cat "/tmp/vite-e2e-$port.log"
+            if [ "$ready" != true ]; then
+              echo "Vite on port $port did not become ready within 120 seconds"
               exit 1
             fi
-            sleep 2
           done
-          cat /tmp/vite-e2e.log
-          echo 'Vite did not become ready within 120 seconds'
-          exit 1
 
       - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
@@ -139,3 +141,11 @@ jobs:
           VITE_PORT: '3000'
         with:
           install: false
+          config: excludeSpecPattern=**/design/**
+
+      - name: Run HTTP-fixture design regression tests
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          spec: cypress/e2e/design/**/*.cy.ts
+          config: baseUrl=http://localhost:3001

@@ -1,5 +1,5 @@
 import { defineConfig } from 'cypress';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 export default defineConfig({
   expose: {
@@ -21,10 +21,18 @@ export default defineConfig({
     setupNodeEvents(on, config) {
       on('task', {
         cleanupLocalDbOrder(orderId: string | number) {
+          // Mock UI journeys never create database rows. Cleanup is explicit opt-in
+          // for a disposable local database, never a side effect of the mock suite.
+          if (process.env.CYPRESS_ALLOW_DB_CLEANUP !== 'true') {
+            return { success: true, skipped: true, message: 'Database cleanup disabled for mock UI journeys.' };
+          }
+          if (!/^\d+$/.test(String(orderId))) {
+            return { success: false, message: 'Database cleanup requires a numeric test order ID.' };
+          }
           try {
             // Delete order items and order from local PostgreSQL container if running
             const sql = `DELETE FROM order_items WHERE order_id = ${orderId}; DELETE FROM orders WHERE id = ${orderId};`;
-            execSync(`docker exec tcg_postgres psql -U postgres -d tcg_store -c "${sql}"`, {
+            execFileSync('docker', ['exec', 'tcg_postgres', 'psql', '-U', 'postgres', '-d', 'tcg_store', '-c', sql], {
               stdio: 'pipe',
             });
             return { success: true, message: `Order ${orderId} cleaned up from local database.` };

@@ -3,6 +3,8 @@ import type { FormEvent } from 'react';
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 import apiClient from '@/shared/api/client';
 import { Button } from '@/shared/components/Button';
+import { PageContainer, PageHeader, Toolbar } from '@/shared/components/PageLayout';
+import { SearchField } from '@/shared/components/SearchField';
 import { Modal } from '@/shared/components/Modal';
 import { useToastStore } from '@/shared/model/useToastStore';
 
@@ -101,12 +103,8 @@ export function AdminUsersPage() {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Admin management</h1>
-          <p className="mt-1 text-sm text-slate-400">Manage platform administrator accounts.</p>
-        </div>
+    <PageContainer>
+      <PageHeader title="Admin management" description="Manage platform administrator accounts." actions={
         <div className="flex items-center gap-3">
           <Button
             variant="secondary"
@@ -122,15 +120,17 @@ export function AdminUsersPage() {
             Add admin
           </Button>
         </div>
-      </div>
+      } />
 
-      <input
+      <Toolbar className="mt-6">
+      <SearchField
         aria-label="Search administrators"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search name or email"
-        className="mt-6 w-full max-w-md rounded-lg bg-bg-input p-3 text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+        className="max-w-md"
       />
+      </Toolbar>
 
       {error && <p role="alert" className="mt-4 text-status-danger">{error}</p>}
 
@@ -148,7 +148,7 @@ export function AdminUsersPage() {
           <>
             {/* Desktop Table View (Hidden on mobile) */}
             <div className="hidden md:block overflow-x-auto rounded-xl border border-white/10">
-              <table className="w-full text-left text-sm">
+              <table className="mythix-table w-full text-left text-sm">
                 <thead className="bg-bg-elevated text-gray-400">
                   <tr>
                     <th className="p-4">Name</th>
@@ -301,6 +301,6 @@ export function AdminUsersPage() {
           </div>
         )}
       </Modal>
-    </main>
+    </PageContainer>
   );
 }

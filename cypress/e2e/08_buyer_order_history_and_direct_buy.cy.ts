@@ -195,21 +195,21 @@ describe('US-04-2 & US-09: Buyer Order History, Direct Buy, and Filtering', () =
 
     // 3. Test filtering: The mock DB should have some orders loaded
     // Initially on 'All' tab
-    cy.contains('button', 'All').should('have.class', 'bg-[#EFA025]');
+    cy.contains('button', 'All').should('have.attr', 'aria-pressed', 'true');
     
     // Click 'Pending / Confirmed' tab
     cy.contains('button', 'Pending / Confirmed').click();
-    cy.contains('button', 'Pending / Confirmed').should('have.class', 'bg-[#EFA025]');
+    cy.contains('button', 'Pending / Confirmed').should('have.attr', 'aria-pressed', 'true');
     cy.contains(/Order ID & Date|No orders found/).should('be.visible');
 
     // Click 'Sent' tab
     cy.contains('button', 'Sent').click();
-    cy.contains('button', 'Sent').should('have.class', 'bg-[#EFA025]');
+    cy.contains('button', 'Sent').should('have.attr', 'aria-pressed', 'true');
     cy.contains(/Order ID & Date|No orders found/).should('be.visible');
 
     // Click 'Cancelled' tab
     cy.contains('button', 'Cancelled').click();
-    cy.contains('button', 'Cancelled').should('have.class', 'bg-[#EFA025]');
+    cy.contains('button', 'Cancelled').should('have.attr', 'aria-pressed', 'true');
     cy.contains(/Order ID & Date|No orders found/).should('be.visible');
 
     // Go back to 'All'

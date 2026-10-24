@@ -1,3 +1,4 @@
+import { acquireBodyScrollLock } from '@/shared/lib/bodyScrollLock';
 import {
   useEffect,
   useMemo,
@@ -16,7 +17,6 @@ import {
   Pencil,
   Plus,
   RefreshCw,
-  Search,
   Trash2,
   X,
 } from 'lucide-react';
@@ -35,6 +35,9 @@ import {
 import type { CatalogCard } from '@/features/discovery/api/catalog';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
+import { PageContainer, PageHeader, Panel, Toolbar } from '@/shared/components/PageLayout';
+import { trapDialogFocus } from '@/shared/lib/trapDialogFocus';
+import { SearchField } from '@/shared/components/SearchField';
 import { Input } from '@/shared/components/Input';
 import { Modal } from '@/shared/components/Modal';
 import { Select } from '@/shared/components/Select';
@@ -169,13 +172,12 @@ export function ListingManagementPage() {
   useEffect(() => {
     if (!editorOpen) return;
 
-    const previousOverflow = document.body.style.overflow;
+    const releaseScrollLock = acquireBodyScrollLock();
     const previousFocus = document.activeElement as HTMLElement | null;
-    document.body.style.overflow = 'hidden';
     editorDialogRef.current?.focus();
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      releaseScrollLock();
       previousFocus?.focus();
     };
   }, [editorOpen]);
@@ -359,23 +361,13 @@ export function ListingManagementPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-brand-blue">
-            Seller Inventory
-          </p>
-          <h1 className="text-3xl font-bold text-white">Listing Management</h1>
-          <p className="mt-2 text-sm text-gray-400">
-            Add, edit, hide, restock, and remove your card listings.
-          </p>
-        </div>
-
+    <PageContainer className="space-y-6 px-0 py-0 sm:px-0 lg:px-0">
+      <PageHeader title="Listing Management" eyebrow="Seller Inventory" description="Add, edit, hide, restock, and remove your card listings." actions={
         <Button type="button" className="gap-2 self-start" onClick={openAddModal}>
           <Plus size={18} />
           Add Listing
         </Button>
-      </div>
+      } />
 
       {error && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-status-danger/30 bg-status-danger/10 p-4 text-sm text-gray-200">
@@ -393,11 +385,10 @@ export function ListingManagementPage() {
         </div>
       )}
 
-      <section className="glass-card rounded-2xl border border-white/10 p-5">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto_auto]">
-          <Input
+      <Panel>
+        <Toolbar className="grid sm:grid lg:grid-cols-[minmax(0,1fr)_180px_180px_auto_auto]">
+          <SearchField
             aria-label="Search listings"
-            icon={Search}
             placeholder="Search name, game, set, price, stock..."
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
@@ -431,7 +422,7 @@ export function ListingManagementPage() {
               onClick={() => setViewMode('grid')}
               className={`rounded-full p-2 transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-brand-blue text-white'
+                  ? 'bg-brand-blue text-bg-base'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -444,7 +435,7 @@ export function ListingManagementPage() {
               onClick={() => setViewMode('table')}
               className={`rounded-full p-2 transition-colors ${
                 viewMode === 'table'
-                  ? 'bg-brand-blue text-white'
+                  ? 'bg-brand-blue text-bg-base'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -462,8 +453,8 @@ export function ListingManagementPage() {
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             Refresh
           </Button>
-        </div>
-      </section>
+        </Toolbar>
+      </Panel>
 
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-bg-surface">
         {isLoading && listings.length === 0 ? (
@@ -637,7 +628,7 @@ export function ListingManagementPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1040px] text-left text-sm">
+            <table className="mythix-table w-full min-w-[1040px] text-left text-sm">
               <thead className="border-b border-white/10 bg-white/[0.03] text-xs uppercase tracking-wide text-gray-500">
                 <tr>
                   <th className="px-5 py-4 font-semibold">Listing</th>
@@ -827,7 +818,7 @@ export function ListingManagementPage() {
       {editorOpen &&
         createPortal(
           <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-modal-backdrop flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget && !isSaving) {
                 closeEditor();
@@ -841,6 +832,7 @@ export function ListingManagementPage() {
             aria-labelledby="listing-editor-title"
             tabIndex={-1}
             onKeyDown={(event) => {
+              if (!trapDialogFocus(event)) return;
               if (event.key === 'Escape' && !isSaving) closeEditor();
             }}
             className="glass-elevated flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-xl"
@@ -1002,7 +994,7 @@ export function ListingManagementPage() {
         } }}
         secondaryAction={{ label: "Cancel", onClick: () => { setShowDeleteListingPopup(false); setDeleteTarget(null); } }}
       />
-    </div>
+    </PageContainer>
   );
 }
 

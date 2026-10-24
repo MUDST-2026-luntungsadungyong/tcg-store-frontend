@@ -153,7 +153,7 @@ describe('ListingManagementPage', () => {
 
     await screen.findByRole('row', { name: /Pikachu Illustrator/ });
 
-    await user.type(screen.getByRole('textbox', { name: 'Search listings' }), 'Charizard');
+    await user.type(screen.getByRole('searchbox', { name: 'Search listings' }), 'Charizard');
     expect(screen.getByText('Charizard VMAX')).toBeInTheDocument();
     expect(screen.queryByText('Pikachu Illustrator')).not.toBeInTheDocument();
 

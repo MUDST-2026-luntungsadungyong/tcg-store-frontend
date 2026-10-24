@@ -1,0 +1,23 @@
+.auth-card-backdrop { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.auth-sale-row { position: absolute; left: 0; right: 0; opacity: .48; }
+.auth-sale-row--0 { top: 3%; transform: rotate(-7deg) scale(1.1); }
+.auth-sale-row--1 { bottom: 2%; transform: rotate(7deg) scale(1.1); }
+.auth-sale-track { display: flex; width: max-content; animation: auth-sale-drift 65s linear infinite; will-change: transform; }
+.auth-sale-row--1 .auth-sale-track { animation-direction: reverse; animation-duration: 78s; }
+.auth-sale-group { display: flex; flex: none; align-items: center; justify-content: space-around; gap: 24px; min-width: 100vw; padding-right: 24px; }
+.auth-sale-card { position: relative; flex: none; width: 144px; height: 200px; overflow: hidden; border-radius: 10px; }
+.auth-sale-placeholder { position: absolute; inset: 0; display: grid; place-items: center; border: 1px solid rgb(114 168 255 / .22); border-radius: inherit; background: linear-gradient(135deg, rgb(114 168 255 / .12), rgb(27 35 54 / .8), rgb(191 166 89 / .12)); }
+.auth-sale-placeholder img { width: 96px; height: 96px; object-fit: contain; opacity: .4; }
+.auth-sale-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: saturate(.85); opacity: 0; transition: opacity .35s ease-out; }
+.auth-sale-image.is-loaded { opacity: 1; }
+.auth-sale-scrim { position: absolute; inset: 0; background: linear-gradient(90deg, var(--color-bg-base, #0B141F) 0%, transparent 18%, transparent 82%, var(--color-bg-base, #0B141F) 100%); }
+.auth-card-backdrop--mobile .auth-sale-row--0 { top: 24px; transform: rotate(-8deg); opacity: .4; }
+.auth-card-backdrop--mobile .auth-sale-track { animation-duration: 48s; }
+.auth-card-backdrop--mobile .auth-sale-group { gap: 16px; padding-right: 16px; }
+.auth-card-backdrop--mobile .auth-sale-card { width: 96px; height: 134px; }
+.auth-card-backdrop--mobile .auth-sale-scrim { background: linear-gradient(90deg, rgb(27 35 54 / .85), rgb(27 35 54 / .3)); }
+@keyframes auth-sale-drift { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .auth-sale-track { animation: none; will-change: auto; }
+  .auth-sale-image { transition: none; }
+}

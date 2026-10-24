@@ -23,9 +23,9 @@ describe('Sale-card authentication backdrop', () => {
       { image: '', status: 'SHOW', stock: 3 },
     ] } as Awaited<ReturnType<typeof listingDiscoveryApi.getListings>>);
     const { container } = render(<StrictMode><Preview /></StrictMode>);
-    await waitFor(() => expect(screen.getAllByTestId('auth-sale-track')).toHaveLength(2));
+    await waitFor(() => expect(container.querySelectorAll('.auth-sale-image')).toHaveLength(48));
     expect(listingDiscoveryApi.getListings).toHaveBeenCalledTimes(1);
-    expect([...container.querySelectorAll('.auth-sale-group img')].every((img) => img.getAttribute('src') === '/available.png')).toBe(true);
+    expect([...container.querySelectorAll('.auth-sale-image')].every((img) => img.getAttribute('src') === '/available.png')).toBe(true);
   });
 
   it('keeps authentication usable when the listing request fails', async () => {
@@ -38,8 +38,20 @@ describe('Sale-card authentication backdrop', () => {
 
   it('falls back instead of repeatedly displaying a broken sale image', () => {
     const { container } = render(<AuthCardBackdrop images={['/broken.png']} />);
-    fireEvent.error(container.querySelector('.auth-sale-group img')!);
+    fireEvent.error(container.querySelector('.auth-sale-image')!);
     expect(screen.getByTestId('auth-card-fallback')).toBeInTheDocument();
-    expect(container.querySelector('.auth-sale-track')).toBeNull();
+    expect(container.querySelector('.auth-sale-image')).toBeNull();
+    expect(container.querySelectorAll('.auth-sale-track')).toHaveLength(2);
+  });
+
+  it('keeps the moving track mounted and fades images only after they load', () => {
+    const { container, rerender } = render(<AuthCardBackdrop images={[]} />);
+    const track = container.querySelector('.auth-sale-track');
+    rerender(<AuthCardBackdrop images={['/new.png']} />);
+    expect(container.querySelector('.auth-sale-track')).toBe(track);
+    const image = container.querySelector('.auth-sale-image')!;
+    expect(image).not.toHaveClass('is-loaded');
+    fireEvent.load(image);
+    expect(image).toHaveClass('is-loaded');
   });
 });

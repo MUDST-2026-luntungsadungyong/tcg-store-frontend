@@ -18,7 +18,7 @@ describe('Sale-card authentication backdrop (HTTP fixtures)', () => {
     cy.viewport(1280, 900);
     cy.visit('/login');
     cy.wait('@saleCards');
-    cy.get('[data-testid="auth-card-backdrop"]:visible .auth-sale-group img').should('have.length', 32).each(($img) => {
+    cy.get('[data-testid="auth-card-backdrop"]:visible .auth-sale-image').should('have.length', 48).each(($img) => {
       expect(['/e2e-card-a.svg', '/e2e-card-b.svg']).to.include($img.attr('src'));
     });
     cy.get('[data-testid="auth-card-backdrop"]:visible .auth-sale-track').first().should('have.css', 'animation-name', 'auth-sale-drift');
@@ -30,6 +30,23 @@ describe('Sale-card authentication backdrop (HTTP fixtures)', () => {
     cy.get('h1').should('have.text', 'Create account');
     cy.get('@saleCards.all').should('have.length', 1);
     cy.document().should((doc) => { expect(doc.documentElement.scrollWidth).to.be.at.most(doc.documentElement.clientWidth); });
+  });
+
+  it('continues the same moving track from delayed fetch through image fade-in', () => {
+    cy.viewport(1280, 900);
+    cy.intercept('GET', '**/api/products*', { delay: 1500, body: { items } }).as('delayedCards');
+    cy.visit('/login');
+    cy.get('[data-testid="auth-card-backdrop"]:visible .auth-sale-track').first().then(($track) => {
+      const node = $track[0];
+      const width = node.getBoundingClientRect().width;
+      cy.wrap($track).find('.auth-sale-placeholder').should('exist');
+      cy.wait('@delayedCards');
+      cy.get('[data-testid="auth-card-backdrop"]:visible .auth-sale-track').first().should(($after) => {
+        expect($after[0]).to.equal(node);
+        expect($after[0].getBoundingClientRect().width).to.equal(width);
+      });
+      cy.get('[data-testid="auth-card-backdrop"]:visible .auth-sale-image').first().should('have.class', 'is-loaded').and('have.css', 'opacity', '1');
+    });
   });
 
   it('keeps the fallback and usable login form when listings are unavailable', () => {

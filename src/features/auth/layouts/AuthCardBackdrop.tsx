@@ -33,32 +33,37 @@ export function useSaleCardImages(enabled: boolean) {
 export function AuthCardBackdrop({ images, mobile = false }: { images: string[]; mobile?: boolean }) {
   const reducedMotion = useReducedMotion();
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
+  const [loaded, setLoaded] = useState<Set<string>>(() => new Set());
   const usable = images.filter((src) => !failed.has(src));
-  const cards = usable.length ? Array.from({ length: Math.max(8, usable.length) }, (_, index) => usable[index % usable.length]) : [];
+  // Stable slots keep the track width and animation clock unchanged when data arrives.
+  const cards = Array.from({ length: 12 }, (_, index) => usable.length ? usable[index % usable.length] : null);
 
   return (
     <div aria-hidden="true" data-testid="auth-card-backdrop" className={`auth-card-backdrop ${mobile ? 'auth-card-backdrop--mobile md:hidden' : 'hidden md:block'}`}>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_25%,rgba(114,168,255,0.15),transparent_55%),radial-gradient(ellipse_at_85%_80%,rgba(191,166,89,0.12),transparent_50%)]" />
-      {cards.length ? (mobile ? [0] : [0, 1]).map((row) => (
+      <div data-testid={usable.length ? undefined : 'auth-card-fallback'}>
+      {(mobile ? [0] : [0, 1]).map((row) => (
         <div key={row} className={`auth-sale-row auth-sale-row--${row}`}>
           <div className="auth-sale-track" data-testid="auth-sale-track" style={reducedMotion ? { animation: 'none', willChange: 'auto' } : undefined}>
             {[0, 1].map((copy) => (
               <div className="auth-sale-group" key={copy}>
                 {cards.map((src, index) => (
-                  <img key={`${src}-${index}`} src={src} alt="" width={144} height={200} loading="lazy" decoding="async"
-                    onError={() => setFailed((current) => new Set(current).add(src))} />
+                  <div className="auth-sale-card" key={index}>
+                    <span className="auth-sale-placeholder">
+                      <img src="/assets/mythix_logo_white_v3.png" alt="" width={96} height={96} />
+                    </span>
+                    {src && <img key={src} className={`auth-sale-image${loaded.has(src) ? ' is-loaded' : ''}`} src={src} alt="" width={144} height={200} loading="lazy" decoding="async"
+                      style={reducedMotion ? { transition: 'none' } : undefined}
+                      onLoad={() => setLoaded((current) => current.has(src) ? current : new Set(current).add(src))}
+                      onError={() => setFailed((current) => current.has(src) ? current : new Set(current).add(src))} />}
+                  </div>
                 ))}
               </div>
             ))}
           </div>
         </div>
-      )) : (
-        <div data-testid="auth-card-fallback">
-          {[0, 1].map((index) => <div key={index} className={`auth-card-back auth-card-back--${index}`}>
-            <img src="/assets/mythix_logo_white_v3.png" alt="" width={144} height={200} />
-          </div>)}
-        </div>
-      )}
+      ))}
+      </div>
       <div className="auth-sale-scrim" />
     </div>
   );

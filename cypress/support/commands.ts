@@ -1,7 +1,20 @@
 /// <reference types="cypress" />
 
+function clearAuthStorage(win: Window) {
+  for (const storage of [win.localStorage, win.sessionStorage]) {
+    storage.removeItem('token');
+    storage.removeItem('tcg_auth_storage');
+  }
+}
+
+Cypress.Commands.add('clearAuthStorage', () => {
+  // Storage-only fixture helper: visit/reload afterwards to rebuild the auth store.
+  cy.window().then((win) => clearAuthStorage(win));
+});
+
 // Custom command to bypass or mock authentication
 Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
+  clearAuthStorage(window);
   const token = role === 'ADMIN' ? 'mock-jwt-token-admin' : (role === 'SELLER' ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer');
   const userObj = {
     id: role === 'ADMIN' ? '99' : (role === 'SELLER' ? '2' : '1'),
@@ -64,10 +77,13 @@ Cypress.Commands.add('cleanTestOrder', (orderId: string | number) => {
 });
 
 // Auth & Account Custom Commands
-Cypress.Commands.add('loginByUI', (email: string, password = 'password123') => {
+Cypress.Commands.add('loginByUI', (email: string, password = 'password123', rememberMe = false) => {
+  cy.clearAuthStorage();
   cy.visit('/login');
   cy.get('#email').clear().type(email);
-  cy.get('#password').clear().type(password);
+  cy.get('#password').clear().type(password, { log: false });
+  if (rememberMe) cy.get('input[name="remember-me"]').check();
+  else cy.get('input[name="remember-me"]').uncheck();
   cy.get('button[type="submit"]').click();
   // Wait for login request to complete and redirect away from login page
   cy.url().should('not.include', '/login');
@@ -112,10 +128,11 @@ Cypress.Commands.add('loginAsAdmin', () => {
 declare global {
   namespace Cypress {
     interface Chainable {
+      clearAuthStorage(): Chainable<void>;
       loginByMock(role?: string): Chainable<void>;
       sellerFastForwardOrder(orderId: string, status?: string): Chainable<void>;
       cleanTestOrder(orderId: string | number): Chainable<void>;
-      loginByUI(email: string, password?: string): Chainable<void>;
+      loginByUI(email: string, password?: string, rememberMe?: boolean): Chainable<void>;
       registerNewUser(name: string, email: string, password?: string): Chainable<void>;
       requestPasswordReset(email: string): Chainable<void>;
       updateProfileName(name: string): Chainable<void>;

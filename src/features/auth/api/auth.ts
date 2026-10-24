@@ -1,3 +1,4 @@
+import { getStoredAccessToken } from '@/shared/api/authStorage';
 import axios from 'axios';
 import apiClient from '@/shared/api/client';
 import { ENV } from '@/shared/config/env';
@@ -118,7 +119,7 @@ export const authApi = {
       if (ENV.ENABLE_MOCK_API) {
           await new Promise(resolve => setTimeout(resolve, 300));
           // In mock mode, we assume the user is customer 1 if they have a token
-          const token = localStorage.getItem('token');
+          const token = getStoredAccessToken();
           if(!token) throw new Error('Unauthorized');
           
           const users = storage.getUsers();

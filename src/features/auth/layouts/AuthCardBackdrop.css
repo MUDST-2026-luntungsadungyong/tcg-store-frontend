@@ -1,0 +1,24 @@
+.auth-card-backdrop { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.auth-sale-row { position: absolute; left: 0; right: 0; opacity: .48; }
+.auth-sale-row--0 { top: 3%; transform: rotate(-7deg) scale(1.1); }
+.auth-sale-row--1 { bottom: 2%; transform: rotate(7deg) scale(1.1); }
+.auth-sale-track { display: flex; width: max-content; animation: auth-sale-drift 65s linear infinite; will-change: transform; }
+.auth-sale-row--1 .auth-sale-track { animation-direction: reverse; animation-duration: 78s; }
+.auth-sale-group { display: flex; flex: none; align-items: center; justify-content: space-around; gap: 24px; min-width: 100vw; padding-right: 24px; }
+.auth-sale-group img { flex: none; width: 144px; height: 200px; object-fit: contain; border-radius: 10px; filter: saturate(.85); }
+.auth-sale-scrim { position: absolute; inset: 0; background: linear-gradient(90deg, var(--color-bg-base, #0B141F) 0%, transparent 18%, transparent 82%, var(--color-bg-base, #0B141F) 100%); }
+.auth-card-back { position: absolute; display: grid; place-items: center; width: 128px; height: 176px; border: 1px solid rgb(114 168 255 / .2); border-radius: 16px; background: rgb(27 35 54 / .5); }
+.auth-card-back img { width: 128px; height: 128px; object-fit: contain; opacity: .4; }
+.auth-card-back--0 { left: 5%; top: 15%; transform: rotate(-16deg); }
+.auth-card-back--1 { right: 5%; bottom: 12%; transform: rotate(18deg); border-color: rgb(191 166 89 / .25); }
+.auth-card-backdrop--mobile .auth-sale-row--0 { top: 24px; transform: rotate(-8deg); opacity: .4; }
+.auth-card-backdrop--mobile .auth-sale-track { animation-duration: 48s; }
+.auth-card-backdrop--mobile .auth-sale-group { gap: 16px; padding-right: 16px; }
+.auth-card-backdrop--mobile .auth-sale-group img { width: 96px; height: 134px; }
+.auth-card-backdrop--mobile .auth-sale-scrim { background: linear-gradient(90deg, rgb(27 35 54 / .85), rgb(27 35 54 / .3)); }
+.auth-card-backdrop--mobile .auth-card-back--0 { left: auto; right: -16px; top: 24px; }
+.auth-card-backdrop--mobile .auth-card-back--1 { right: 32px; bottom: 8px; }
+@keyframes auth-sale-drift { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .auth-sale-track { animation: none; will-change: auto; }
+}

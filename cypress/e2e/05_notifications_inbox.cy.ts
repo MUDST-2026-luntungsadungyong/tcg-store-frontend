@@ -122,6 +122,7 @@ describe('Core Journey 5: In-App Notification Center (US-11)', () => {
       cy.visit('/', {
         onBeforeLoad(win) {
           win.localStorage.clear();
+          win.sessionStorage.clear();
         },
       });
 

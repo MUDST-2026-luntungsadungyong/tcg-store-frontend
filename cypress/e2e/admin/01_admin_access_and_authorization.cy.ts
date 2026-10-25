@@ -10,7 +10,15 @@ describe('US-11-1: Platform Admin Access & Authorization', () => {
     cy.intercept('GET', 'http://localhost:8080/api/notifications*', { statusCode: 200, body: { content: [] } });
     cy.intercept('GET', 'http://localhost:8080/api/collections/leaderboard*', { statusCode: 200, body: [] });
     cy.intercept('GET', 'http://localhost:8080/api/admin/metrics*', { statusCode: 200, body: {} });
-    cy.intercept('GET', 'http://localhost:8080/api/admin/dashboard*', { statusCode: 200, body: {} });
+    cy.intercept('GET', 'http://localhost:8080/api/admin/dashboard*', {
+      statusCode: 200,
+      body: {
+        totalUsers: 1, totalAdmins: 1, regularBuyers: 0,
+        pendingSellerApplications: 0, approvedSellers: 0,
+        totalCards: 0, listedCards: 0, totalOrders: 0,
+        totalOrderAmount: 0, trends: [],
+      },
+    }).as('adminDashboard');
     cy.intercept('GET', 'http://localhost:8080/api/admin/orders*', { statusCode: 200, body: { content: [] } });
     cy.intercept('GET', 'http://localhost:8080/api/admin/audit-logs*', { statusCode: 200, body: { content: [] } });
     cy.intercept('GET', 'http://localhost:8080/api/admin/users*', { statusCode: 200, body: [] });
@@ -78,10 +86,16 @@ describe('US-11-1: Platform Admin Access & Authorization', () => {
     cy.visit('/admin');
     cy.url().should('include', '/admin');
     
-    // Verify Admin Layout & Sidebar presence
-    cy.get('nav').should('exist'); // Adjust selector if you have specific sidebar class like .admin-sidebar
-    // Check for some admin text indicating successful access
-    cy.contains(/admin|dashboard/i).should('be.visible');
+    // Verify the loaded admin page, not just the shared navbar before data arrives.
+    cy.wait('@adminDashboard').its('response.statusCode').should('eq', 200);
+    cy.contains('h1', /^Overview$/).should('be.visible');
+    cy.get('section[aria-label="Platform metrics"]').should('be.visible');
+    cy.get('nav[aria-label="Marketplace navigation"]').should('be.visible');
+    cy.get('aside[aria-label="Platform administration"]').should('be.visible').within(() => {
+      cy.get('a[href="/admin/users"]').should('be.visible');
+      cy.get('a[href="/admin/orders"]').should('be.visible');
+    });
+    cy.contains('This page failed to load').should('not.exist');
   });
   
   it('should show error on login failure', () => {

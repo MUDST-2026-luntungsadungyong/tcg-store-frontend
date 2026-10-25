@@ -136,7 +136,7 @@ describe('US-06 & US-07: Public Store Browsing', () => {
     cy.contains('Legendary Cards Shop').should('be.visible');
     
     // Assert cards exist (Mock DB has many cards for usr-3)
-    cy.contains('cards').should('be.visible');
+    cy.get('main').contains('cards').should('be.visible');
     
     // Click on the first card listing
     cy.get('a[href^="/cards/"]').first().click();

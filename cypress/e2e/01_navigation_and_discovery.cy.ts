@@ -20,7 +20,7 @@ describe('Core Journey 1: Home, Navigation & Card Discovery (US-02)', () => {
   });
 
   it('navigates to marketplace and searches by keyword', () => {
-    cy.get('a[href="/cards"]').first().click({ force: true });
+    cy.get('nav[aria-label="Marketplace navigation"] a[href="/cards"]').filter(':visible').should('have.length', 1).click();
     cy.url().should('include', '/cards');
     
     // Search by keyword

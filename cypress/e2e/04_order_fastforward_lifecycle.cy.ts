@@ -197,7 +197,7 @@ describe('Core Journey 4: Buyer Purchase to Seller Fast-Forward Shipment & Local
 
     // Step F: Assert order appears in orders list with "Sent" status badge
     cy.get('body').should('be.visible');
-    cy.contains('My Orders').should('be.visible');
+    cy.contains('h1', 'My Orders').should('be.visible');
   });
 
   it('shows error if attempting to reserve more than available stock (US-10-5 Unhappy Path)', () => {

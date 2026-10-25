@@ -191,7 +191,7 @@ describe('US-04-2 & US-09: Buyer Order History, Direct Buy, and Filtering', () =
 
     // 2. Wait for loading to finish by checking for either the table header or empty state
     cy.contains(/Order ID & Date|No orders found/).should('be.visible');
-    cy.contains('My Orders').should('be.visible');
+    cy.contains('h1', 'My Orders').should('be.visible');
 
     // 3. Test filtering: The mock DB should have some orders loaded
     // Initially on 'All' tab

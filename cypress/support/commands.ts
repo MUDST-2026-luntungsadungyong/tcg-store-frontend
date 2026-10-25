@@ -14,7 +14,6 @@ Cypress.Commands.add('clearAuthStorage', () => {
 
 // Custom command to bypass or mock authentication
 Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
-  clearAuthStorage(window);
   const token = role === 'ADMIN' ? 'mock-jwt-token-admin' : (role === 'SELLER' ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer');
   const userObj = {
     id: role === 'ADMIN' ? '99' : (role === 'SELLER' ? '2' : '1'),
@@ -28,29 +27,23 @@ Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
   cy.intercept('GET', '**/auth/me', { statusCode: 200, body: userObj });
   cy.intercept('GET', '**/api/users/profile', { statusCode: 200, body: userObj });
   
-  window.localStorage.setItem('token', token);
-  window.localStorage.setItem(
-    'tcg_auth_storage',
-    JSON.stringify({
-      state: {
-        token,
-        user: userObj,
-        isAuthenticated: true,
-      },
-      version: 0,
-    })
-  );
+  return cy.window().then((win) => {
+    clearAuthStorage(win);
+    win.localStorage.setItem('token', token);
+    win.localStorage.setItem(
+      'tcg_auth_storage',
+      JSON.stringify({ state: { token, user: userObj, isAuthenticated: true }, version: 0 }),
+    );
 
-  try {
-    const rawUsers = window.localStorage.getItem('mythix_mock_users_v6');
+    const rawUsers = win.localStorage.getItem('mythix_mock_users_v6');
     const users = rawUsers ? JSON.parse(rawUsers) : [];
-    if (!users.some((u: any) => u.id === userObj.id)) {
-      users.push(userObj);
-      window.localStorage.setItem('mythix_mock_users_v6', JSON.stringify(users));
-    }
-  } catch {
-    // ignore
-  }
+    // Mock getProfile resolves the first account matching the token's role.
+    // Prioritize this fixture so hydration cannot replace it with a default seed.
+    win.localStorage.setItem('mythix_mock_users_v6', JSON.stringify([
+      userObj,
+      ...users.filter((user: { id: string }) => String(user.id) !== userObj.id),
+    ]));
+  });
 });
 
 // Helper command to fast-forward order status via Seller API without switching UI accounts
@@ -84,7 +77,7 @@ Cypress.Commands.add('loginByUI', (email: string, password = 'password123', reme
   cy.get('#password').clear().type(password, { log: false });
   if (rememberMe) cy.get('input[name="remember-me"]').check();
   else cy.get('input[name="remember-me"]').uncheck();
-  cy.get('button[type="submit"]').click();
+  cy.get('form').find('button[type="submit"]').should('have.length', 1).click();
   // Wait for login request to complete and redirect away from login page
   cy.url().should('not.include', '/login');
 });
@@ -95,7 +88,7 @@ Cypress.Commands.add('registerNewUser', (name: string, email: string, password =
   cy.get('#email').clear().type(email);
   cy.get('#password').clear().type(password);
   cy.get('#confirm-password').clear().type(password);
-  cy.get('button[type="submit"]').click();
+  cy.get('form').find('button[type="submit"]').should('have.length', 1).click();
   // Wait for redirect
   cy.url().should('not.include', '/register');
 });
@@ -103,13 +96,13 @@ Cypress.Commands.add('registerNewUser', (name: string, email: string, password =
 Cypress.Commands.add('requestPasswordReset', (email: string) => {
   cy.visit('/forgot-password');
   cy.get('#email').clear().type(email);
-  cy.get('button[type="submit"]').click();
+  cy.get('form').find('button[type="submit"]').should('have.length', 1).click();
 });
 
 Cypress.Commands.add('updateProfileName', (name: string) => {
   cy.visit('/profile/edit');
   cy.get('#name').clear().type(name);
-  cy.get('button[type="submit"]').click();
+  cy.get('form').find('button[type="submit"]').should('have.length', 1).click();
 });
 
 Cypress.Commands.add('updateProfileContact', (contact: { phone?: string; line?: string; facebook?: string }) => {
@@ -117,7 +110,7 @@ Cypress.Commands.add('updateProfileContact', (contact: { phone?: string; line?: 
   if (contact.phone !== undefined) cy.get('#phone').clear().type(contact.phone);
   if (contact.line !== undefined) cy.get('#line').clear().type(contact.line);
   if (contact.facebook !== undefined) cy.get('#facebook').clear().type(contact.facebook);
-  cy.get('button[type="submit"]').click();
+  cy.get('form').find('button[type="submit"]').should('have.length', 1).click();
 });
 
 Cypress.Commands.add('loginAsAdmin', () => {

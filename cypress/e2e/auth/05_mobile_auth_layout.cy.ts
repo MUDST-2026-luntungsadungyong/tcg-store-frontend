@@ -5,6 +5,7 @@ describe('Responsive authentication', () => {
     it(`keeps forms usable and navigation continuous at ${width}x${height}`, () => {
       cy.viewport(width, height);
       cy.visit('/login');
+      cy.get('[aria-label="Mobile primary navigation"]').should('not.exist');
       cy.get('h1').should('contain.text', 'Welcome back!');
       cy.get('input[name="remember-me"]').should('not.be.checked').check().should('be.checked').uncheck();
       if (width < 768) {

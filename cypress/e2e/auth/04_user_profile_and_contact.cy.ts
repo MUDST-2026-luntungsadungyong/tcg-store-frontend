@@ -47,7 +47,7 @@ describe('Auth Journey 4: User Profile & Contact Information Management (US-08-1
     cy.wait('@updateProfile');
     // Redirects to profile and shows updated name
     cy.url().should('eq', Cypress.config().baseUrl + '/profile');
-    cy.contains('Ash Ketchum Edited').should('be.visible');
+    cy.contains('h1', 'Ash Ketchum Edited').should('be.visible');
   });
 
   it('navigates to edit contact page, updates contact methods, and saves successfully', () => {

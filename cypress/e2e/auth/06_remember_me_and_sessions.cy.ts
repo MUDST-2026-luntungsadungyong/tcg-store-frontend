@@ -59,10 +59,10 @@ describe('Remember me and authentication session boundaries', () => {
       cy.loginByUI(buyer.email, password, remember);
       expectStorage(remember);
       cy.visit('/profile');
-      cy.contains(buyer.name).should('be.visible');
+      cy.contains('h1', buyer.name).should('be.visible');
       cy.reload();
       cy.location('pathname').should('eq', '/profile');
-      cy.contains(buyer.name).should('be.visible');
+      cy.contains('h1', buyer.name).should('be.visible');
       expectStorage(remember);
     });
 
@@ -74,7 +74,7 @@ describe('Remember me and authentication session boundaries', () => {
         inactive.setItem('tcg_auth_storage', JSON.stringify({ state: { token: 'stale-other-store-token', user: buyer } }));
       });
       cy.get('button[aria-label="Open account menu"]').click();
-      cy.contains('button', /^Logout$/).click();
+      cy.get('[role="menu"]').contains('button', /^Logout$/).should('be.visible').click();
       cy.get('button[aria-label="Open account menu"]').should('not.exist');
       expectGuestStorage();
       cy.visit('/profile');
@@ -117,11 +117,11 @@ describe('Remember me and authentication session boundaries', () => {
     switchThroughForm(seller.email, true);
     expectStorage(true, 'mock-jwt-token-seller');
     cy.visit('/profile');
-    cy.contains(seller.name).should('be.visible');
+    cy.contains('h1', seller.name).should('be.visible');
     switchThroughForm(buyer.email, false);
     expectStorage(false);
     cy.visit('/profile');
-    cy.contains(buyer.name).should('be.visible');
+    cy.contains('h1', buyer.name).should('be.visible');
   });
 
   it('mock-login helper replaces a tab-only customer with the requested role', () => {

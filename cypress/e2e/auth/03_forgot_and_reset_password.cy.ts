@@ -12,7 +12,7 @@ describe('Auth Journey 3: Forgot Password & Password Reset Flow', () => {
     cy.get('#email').should('be.visible').and('have.attr', 'type', 'email');
     cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Continue');
     cy.contains('Remember your password?').should('be.visible');
-    cy.contains('a', 'Login').should('be.visible').and('have.attr', 'href', '/login');
+    cy.get('main').contains('a', /^Login$/).should('be.visible').and('have.attr', 'href', '/login');
   });
 
   it('redirects user to /forgot-password when visiting /reset-password without prior initiation', () => {

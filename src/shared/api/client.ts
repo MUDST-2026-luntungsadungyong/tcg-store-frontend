@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ENV } from '@/shared/config/env';
+import { clearStoredAuth, getStoredAccessToken } from './authStorage';
 
 interface ApiClientAuthHooks {
   getAccessToken: () => string | null;
@@ -7,8 +8,8 @@ interface ApiClientAuthHooks {
 }
 
 let authHooks: ApiClientAuthHooks = {
-  getAccessToken: () => localStorage.getItem('token'),
-  onUnauthorized: () => localStorage.removeItem('token'),
+  getAccessToken: getStoredAccessToken,
+  onUnauthorized: clearStoredAuth,
 };
 
 export function configureApiClientAuth(hooks: ApiClientAuthHooks) {

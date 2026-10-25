@@ -169,6 +169,10 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
   ];
 
   const seedMockStorage = (win: Cypress.AUTWindow, role: 'CUSTOMER' | 'GUEST') => {
+    for (const storage of [win.localStorage, win.sessionStorage]) {
+      storage.removeItem('token');
+      storage.removeItem('tcg_auth_storage');
+    }
     win.localStorage.setItem('mythix_mock_users_v6', JSON.stringify(mockUsers));
     win.localStorage.setItem('mythix_mock_listings_v2', JSON.stringify(mockListings));
 
@@ -181,9 +185,6 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
           version: 0,
         })
       );
-    } else {
-      win.localStorage.removeItem('token');
-      win.localStorage.removeItem('tcg_auth_storage');
     }
   };
 

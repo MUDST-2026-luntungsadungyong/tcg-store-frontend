@@ -99,7 +99,7 @@ export function SignUpPage() {
               placeholder="••••••••"
               autoComplete="new-password"
               required
-              className="pr-10"
+              className="pr-12"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onFocus={() => setPasswordFocused(true)}
@@ -110,7 +110,7 @@ export function SignUpPage() {
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               aria-pressed={showPassword}
-              className="absolute bottom-0 right-1 flex h-[44px] w-9 items-center justify-center text-gray-300 transition-colors hover:text-brand-blue focus:text-brand-blue focus:outline-none"
+              className="absolute bottom-0 right-1 flex h-[44px] w-11 items-center justify-center text-gray-300 transition-colors hover:text-brand-blue focus:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue rounded-md"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -167,9 +167,9 @@ export function SignUpPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-400">
+      <p className="mt-5 flex flex-wrap items-center justify-center gap-x-1 text-center text-sm text-gray-400 md:mt-6">
         Already have an account?{' '}
-        <Link to="/login" state={location.state} className="font-medium text-brand-blue hover:text-brand-blue/80 hover:underline">
+        <Link to="/login" state={location.state} className="inline-flex min-h-11 items-center rounded-md px-1 font-medium text-brand-blue hover:text-brand-blue/80 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue">
           Login
         </Link>
       </p>

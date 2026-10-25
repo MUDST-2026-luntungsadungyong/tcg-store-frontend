@@ -183,16 +183,16 @@ describe('US-10: Collection and Leaderboard', () => {
     cy.contains('h2', 'The Best Collections').should('be.visible');
     
     // The leaderboard shows top 10 collectors, so it should have some rows or cards
-    cy.contains(/cards/i).should('be.visible'); // at least one collector should have some cards mentioned
+    cy.get('[data-testid="home-collector-rail"]').contains(/cards/i).should('be.visible'); // at least one collector should have some cards mentioned
     
     // Click on the first collector's link (usually an anchor wrapping the collector's name or avatar)
     // The link should point to /collections/:userId
-    cy.get('a[href^="/collections/"]').first().click();
+    cy.get('[data-testid="home-collector-rail"] a[href^="/collections/"]').first().should('be.visible').click();
 
     // Verify navigation to Public Collection Page
     cy.url().should('include', '/collections/');
     
     // Verify Public Collection Album
-    cy.contains(/Collection/i).should('be.visible'); // Should have the word Collection (e.g. "John's Collection")
+    cy.get('main').contains('Public collection showcase').should('be.visible'); // Should have the word Collection (e.g. "John's Collection")
   });
 });

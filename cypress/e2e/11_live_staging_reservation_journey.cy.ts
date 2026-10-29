@@ -93,7 +93,7 @@ function login(email: string, password: string) {
 
     cy.get('button[aria-label="Open account menu"]').click();
     cy.get('[role="menuitem"]').contains('Logout').click();
-    cy.contains('a', 'Login').should('be.visible');
+    cy.get('a[href="/login"]').filter(':visible').should('have.length', 1).and('contain.text', 'Login');
 
     login(buyerEmail, buyerPassword);
     cy.visit('/workspace/listings');

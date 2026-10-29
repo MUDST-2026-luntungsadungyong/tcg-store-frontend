@@ -1,5 +1,17 @@
 /// <reference types="cypress" />
 
+function clearAuthStorage(win: Window) {
+  for (const storage of [win.localStorage, win.sessionStorage]) {
+    storage.removeItem('token');
+    storage.removeItem('tcg_auth_storage');
+  }
+}
+
+Cypress.Commands.add('clearAuthStorage', () => {
+  // Storage-only fixture helper: visit/reload afterwards to rebuild the auth store.
+  cy.window().then((win) => clearAuthStorage(win));
+});
+
 // Custom command to bypass or mock authentication
 Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
   const token = role === 'ADMIN' ? 'mock-jwt-token-admin' : (role === 'SELLER' ? 'mock-jwt-token-seller' : 'mock-jwt-token-customer');
@@ -15,29 +27,23 @@ Cypress.Commands.add('loginByMock', (role = 'CUSTOMER') => {
   cy.intercept('GET', '**/auth/me', { statusCode: 200, body: userObj });
   cy.intercept('GET', '**/api/users/profile', { statusCode: 200, body: userObj });
   
-  window.localStorage.setItem('token', token);
-  window.localStorage.setItem(
-    'tcg_auth_storage',
-    JSON.stringify({
-      state: {
-        token,
-        user: userObj,
-        isAuthenticated: true,
-      },
-      version: 0,
-    })
-  );
+  return cy.window().then((win) => {
+    clearAuthStorage(win);
+    win.localStorage.setItem('token', token);
+    win.localStorage.setItem(
+      'tcg_auth_storage',
+      JSON.stringify({ state: { token, user: userObj, isAuthenticated: true }, version: 0 }),
+    );
 
-  try {
-    const rawUsers = window.localStorage.getItem('mythix_mock_users_v6');
+    const rawUsers = win.localStorage.getItem('mythix_mock_users_v6');
     const users = rawUsers ? JSON.parse(rawUsers) : [];
-    if (!users.some((u: any) => u.id === userObj.id)) {
-      users.push(userObj);
-      window.localStorage.setItem('mythix_mock_users_v6', JSON.stringify(users));
-    }
-  } catch {
-    // ignore
-  }
+    // Mock getProfile resolves the first account matching the token's role.
+    // Prioritize this fixture so hydration cannot replace it with a default seed.
+    win.localStorage.setItem('mythix_mock_users_v6', JSON.stringify([
+      userObj,
+      ...users.filter((user: { id: string }) => String(user.id) !== userObj.id),
+    ]));
+  });
 });
 
 // Helper command to fast-forward order status via Seller API without switching UI accounts
@@ -64,11 +70,14 @@ Cypress.Commands.add('cleanTestOrder', (orderId: string | number) => {
 });
 
 // Auth & Account Custom Commands
-Cypress.Commands.add('loginByUI', (email: string, password = 'password123') => {
+Cypress.Commands.add('loginByUI', (email: string, password = 'password123', rememberMe = false) => {
+  cy.clearAuthStorage();
   cy.visit('/login');
   cy.get('#email').clear().type(email);
-  cy.get('#password').clear().type(password);
-  cy.get('button[type="submit"]').click();
+  cy.get('#password').clear().type(password, { log: false });
+  if (rememberMe) cy.get('input[name="remember-me"]').check();
+  else cy.get('input[name="remember-me"]').uncheck();
+  cy.get('form').find('button[type="submit"]').should('have.length', 1).click();
   // Wait for login request to complete and redirect away from login page
   cy.url().should('not.include', '/login');
 });
@@ -79,7 +88,7 @@ Cypress.Commands.add('registerNewUser', (name: string, email: string, password =
   cy.get('#email').clear().type(email);
   cy.get('#password').clear().type(password);
   cy.get('#confirm-password').clear().type(password);
-  cy.get('button[type="submit"]').click();
+  cy.get('form').find('button[type="submit"]').should('have.length', 1).click();
   // Wait for redirect
   cy.url().should('not.include', '/register');
 });
@@ -87,13 +96,13 @@ Cypress.Commands.add('registerNewUser', (name: string, email: string, password =
 Cypress.Commands.add('requestPasswordReset', (email: string) => {
   cy.visit('/forgot-password');
   cy.get('#email').clear().type(email);
-  cy.get('button[type="submit"]').click();
+  cy.get('form').find('button[type="submit"]').should('have.length', 1).click();
 });
 
 Cypress.Commands.add('updateProfileName', (name: string) => {
   cy.visit('/profile/edit');
   cy.get('#name').clear().type(name);
-  cy.get('button[type="submit"]').click();
+  cy.get('form').find('button[type="submit"]').should('have.length', 1).click();
 });
 
 Cypress.Commands.add('updateProfileContact', (contact: { phone?: string; line?: string; facebook?: string }) => {
@@ -101,7 +110,7 @@ Cypress.Commands.add('updateProfileContact', (contact: { phone?: string; line?: 
   if (contact.phone !== undefined) cy.get('#phone').clear().type(contact.phone);
   if (contact.line !== undefined) cy.get('#line').clear().type(contact.line);
   if (contact.facebook !== undefined) cy.get('#facebook').clear().type(contact.facebook);
-  cy.get('button[type="submit"]').click();
+  cy.get('form').find('button[type="submit"]').should('have.length', 1).click();
 });
 
 Cypress.Commands.add('loginAsAdmin', () => {
@@ -112,10 +121,11 @@ Cypress.Commands.add('loginAsAdmin', () => {
 declare global {
   namespace Cypress {
     interface Chainable {
+      clearAuthStorage(): Chainable<void>;
       loginByMock(role?: string): Chainable<void>;
       sellerFastForwardOrder(orderId: string, status?: string): Chainable<void>;
       cleanTestOrder(orderId: string | number): Chainable<void>;
-      loginByUI(email: string, password?: string): Chainable<void>;
+      loginByUI(email: string, password?: string, rememberMe?: boolean): Chainable<void>;
       registerNewUser(name: string, email: string, password?: string): Chainable<void>;
       requestPasswordReset(email: string): Chainable<void>;
       updateProfileName(name: string): Chainable<void>;

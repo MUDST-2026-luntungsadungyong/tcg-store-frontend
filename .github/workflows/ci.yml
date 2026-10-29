@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - develop
+  merge_group:
 
 permissions:
   contents: read
@@ -20,7 +21,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [22.x]
 
     steps:
       - name: Checkout Repository
@@ -103,11 +104,35 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 22.x
           cache: 'npm'
 
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps
+
+      - name: Start Vite servers and wait for HTTP readiness
+        run: |
+          # Business suites use the in-browser mock DB; design fixtures intercept HTTP.
+          for port in 3000 3001; do
+            mock_api=true
+            if [ "$port" = 3001 ]; then mock_api=false; fi
+            VITE_ENABLE_MOCK_API="$mock_api" npm run dev -- --host localhost --port "$port" --strictPort > "/tmp/vite-e2e-$port.log" 2>&1 &
+            vite_pid=$!
+            ready=false
+            for attempt in {1..60}; do
+              if curl --fail --silent --output /dev/null "http://localhost:$port"; then
+                ready=true
+                break
+              fi
+              if ! kill -0 "$vite_pid" 2>/dev/null; then break; fi
+              sleep 2
+            done
+            cat "/tmp/vite-e2e-$port.log"
+            if [ "$ready" != true ]; then
+              echo "Vite on port $port did not become ready within 120 seconds"
+              exit 1
+            fi
+          done
 
       - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
@@ -115,6 +140,12 @@ jobs:
           VITE_ENABLE_MOCK_API: 'true'
           VITE_PORT: '3000'
         with:
-          start: npm run dev
-          wait-on: 'http://localhost:3000'
-          wait-on-timeout: 120
+          install: false
+          config: excludeSpecPattern=**/design/**
+
+      - name: Run HTTP-fixture design regression tests
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          spec: cypress/e2e/design/**/*.cy.ts
+          config: baseUrl=http://localhost:3001

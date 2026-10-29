@@ -64,7 +64,7 @@ function NavigationItem({
           'relative flex h-11 items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-blue',
           collapsed ? 'justify-center px-0' : 'px-3',
           active
-            ? 'bg-brand-gold/10 text-white font-semibold shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] before:absolute before:bottom-1.5 before:left-0 before:top-1.5 before:w-1 before:rounded-r-full before:bg-brand-gold'
+            ? 'bg-brand-blue/10 text-white font-semibold'
             : 'text-slate-400 hover:bg-white/[0.05] hover:text-white'
         )}
       >
@@ -73,7 +73,7 @@ function NavigationItem({
           strokeWidth={active ? 2.2 : 1.8}
           className={cn(
             'shrink-0 transition-transform duration-150 group-hover:scale-110',
-            active ? 'text-brand-gold drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'text-slate-400 group-hover:text-white'
+            active ? 'text-brand-blue' : 'text-slate-400 group-hover:text-white'
           )}
           aria-hidden="true"
         />

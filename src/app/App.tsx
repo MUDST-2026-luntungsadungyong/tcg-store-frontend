@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { MotionConfig } from 'motion/react';
 import { RouterProvider } from 'react-router-dom';
 import { router } from '@/app/router';
 import { ENV } from '@/shared/config/env';
@@ -29,14 +30,19 @@ if (ENV.ENABLE_MOCK_API) {
 function App() {
   useEffect(() => {
     let mounted = true;
-    const token = useAuthStore.getState().token;
+    const { token, user: initialUser } = useAuthStore.getState();
+    // A profile save, account switch or logout supersedes this initial request.
+    const ownsSession = () => {
+      const current = useAuthStore.getState();
+      return mounted && current.token === token && current.user === initialUser;
+    };
     if (token) {
       (ENV.ENABLE_MOCK_API ? authApi.getProfile() : profileApi.get())
         .then((user) => {
-          if (mounted) useAuthStore.getState().completeHydration(user);
+          if (ownsSession()) useAuthStore.getState().completeHydration(user);
         })
         .catch(() => {
-          if (mounted && !token.startsWith('mock-')) {
+          if (ownsSession() && !token.startsWith('mock-')) {
             useAuthStore.getState().logout();
           }
         });
@@ -46,9 +52,11 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <MotionConfig reducedMotion="user">
       <RouterProvider router={router} />
       <ToastProvider />
       <DevSettings />
+      </MotionConfig>
     </ErrorBoundary>
   );
 }

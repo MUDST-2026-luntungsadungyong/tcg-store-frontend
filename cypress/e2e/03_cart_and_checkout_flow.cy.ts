@@ -124,8 +124,7 @@ describe('Core Journey 3: Shopping Cart Flow & Stock Verification (US-03)', () =
 
   it('prompts unauthenticated user to login when adding to cart', () => {
     // Guest view
-    window.localStorage.removeItem('token');
-    window.localStorage.removeItem('tcg_auth_storage');
+    cy.clearAuthStorage();
     cy.visit('/cards/prd-22');
     
     cy.contains(/Add to reservation cart/i).click();
@@ -139,7 +138,7 @@ describe('Core Journey 3: Shopping Cart Flow & Stock Verification (US-03)', () =
     
     // Add to cart
     cy.contains(/Add to reservation cart/i).click();
-    cy.contains(/Added to cart|Success|reserved/i).should('be.visible');
+    cy.contains(`Added 1 × ${mockMewListing.name} to your reservation cart.`).should('be.visible');
 
     // Go to cart
     cy.visit('/cart');

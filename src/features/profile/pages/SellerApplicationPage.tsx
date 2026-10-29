@@ -78,7 +78,7 @@ export function SellerApplicationPage() {
                   <label htmlFor="shop-description" className="block text-sm font-medium text-gray-300">Store description</label>
                   <span className="text-xs text-gray-400">{shopDescription.length}/500</span>
                 </div>
-                <textarea id="shop-description" value={shopDescription} maxLength={500} placeholder="What do you collect or sell? Mention your preferred TCGs or specialties." className="block min-h-32 w-full resize-y rounded-xl border border-white/15 bg-bg-input px-3 py-3 text-sm leading-6 text-gray-100 placeholder:text-[#9AA9C0] transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" onChange={(event) => setShopDescription(event.target.value)} />
+                <textarea id="shop-description" value={shopDescription} maxLength={500} placeholder="What do you collect or sell? Mention your preferred TCGs or specialties." className="block min-h-32 w-full resize-y rounded-xl border border-white/15 bg-bg-input px-3 py-3 text-sm leading-6 text-gray-100 placeholder:text-[#9AA9C0] transition-colors focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue" onChange={(event) => setShopDescription(event.target.value)} />
               </div>
             </fieldset>
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Search,
   Bell,
@@ -8,14 +8,14 @@ import {
   LogOut,
   User as UserIcon,
   Package,
-  ChevronDown,
   Layers3,
   Library,
   ClipboardList,
   ReceiptText,
   UsersRound,
 } from 'lucide-react';
-import { Button } from '@/shared/components/Button';
+import { MobileNavigation } from './MobileNavigation';
+import { ButtonLink } from '@/shared/components/ButtonLink';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { useNotificationStore } from '@/features/notifications/model/useNotificationStore';
 import { useReservationCartStore } from '@/features/reservation-cart';
@@ -96,6 +96,14 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setMenuOpen(false); setSearchOpen(false); }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   function handleLogout() {
     setMenuOpen(false);
     logout();
@@ -109,12 +117,13 @@ export function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-40 w-full bg-[#1b2336] border-b border-[rgba(143,179,226,0.2)]">
+    <nav aria-label="Marketplace navigation" className="sticky top-0 z-40 w-full bg-[#1b2336] border-b border-[rgba(143,179,226,0.2)]">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
         <div className="flex items-center justify-between h-16 overflow-visible">
 
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
+            <MobileNavigation />
             <Link to="/" aria-label="Mythix home" className="flex items-center gap-2 group size-[86px]">
               <img src="/assets/mythix_logo_white_v3.png" alt="Mythix" className="size-full object-cover pointer-events-none" />
             </Link>
@@ -122,7 +131,7 @@ export function Navbar() {
 
           {/* Search Bar (the Cards page owns its search and filters) */}
           {!isCardDiscoveryPage && (
-            <form ref={searchRef} onSubmit={handleSearchSubmit} className="relative flex-1 max-w-lg mx-8 hidden md:block">
+            <form ref={searchRef} onSubmit={handleSearchSubmit} className="relative flex-1 min-w-0 max-w-lg mx-4 hidden lg:block">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-4 w-4 text-gray-400" />
@@ -139,7 +148,7 @@ export function Navbar() {
                     setSearchQuery(e.target.value);
                     setSearchOpen(Boolean(e.target.value.trim()));
                   }}
-                  className="block w-[320px] h-[44px] rounded-[22px] pl-10 pr-3 border border-[rgba(165,201,249,0.3)] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors"
+                  className="block w-full h-11 rounded-xl pl-10 pr-3 border border-white/15 leading-5 bg-bg-input text-gray-100 placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue text-sm transition-colors"
                 />
                 <AnimatePresence>
                   {searchOpen && searchQuery.trim() && (
@@ -173,18 +182,18 @@ export function Navbar() {
           )}
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3 sm:gap-6 text-sm font-semibold text-gray-300">
-            <Link to="/" className="hidden sm:inline hover:text-white transition-colors">
+          <div className="flex items-center gap-2 lg:gap-3 text-sm font-semibold text-gray-300">
+            <NavLink to="/" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
               Home
-            </Link>
-            <Link to="/cards" className="hidden sm:inline hover:text-white transition-colors">
+            </NavLink>
+            <NavLink to="/cards" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
               Cards
-            </Link>
+            </NavLink>
 
             {isSeller && (
               <Link
                 to="/workspace/listings"
-                className="text-sm font-semibold text-brand-blue transition-colors hover:text-white"
+                className="hidden md:inline-flex min-h-11 items-center text-sm font-semibold text-brand-blue transition-colors hover:text-white"
               >
                 Workspace
               </Link>
@@ -193,40 +202,44 @@ export function Navbar() {
             <Link
               to="/cart"
               aria-label="Reservation cart"
-              className="relative text-gray-300 hover:text-white transition-colors"
+              className="relative hidden md:flex min-h-11 min-w-11 items-center justify-center text-gray-300 hover:text-white transition-colors"
               title="Reservation cart"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <span className="relative inline-flex size-[22px] shrink-0 items-center justify-center">
+              <ShoppingCart size={22} strokeWidth={1.75} className="shrink-0" />
               {totalItems > 0 && (
-                <span className="absolute -top-2 -right-2 bg-brand-blue text-bg-base text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-md">
+                <span className="absolute -top-1.5 -right-2 bg-brand-blue text-bg-base text-[10px] font-bold rounded-full h-4 min-w-4 px-1 flex items-center justify-center ring-2 ring-[#1b2336]">
                   {totalItems > 99 ? '99+' : totalItems}
                 </span>
               )}
+              </span>
             </Link>
 
             <Link
               to="/notifications"
               aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
-              className="relative text-gray-300 hover:text-white transition-colors"
+              className="relative flex min-h-11 min-w-11 items-center justify-center text-gray-300 hover:text-white transition-colors"
               title="Notifications"
             >
-              <Bell className="h-5 w-5" />
+              <span className="relative inline-flex size-[22px] shrink-0 items-center justify-center">
+              <Bell size={22} strokeWidth={1.75} className="shrink-0" />
               {unreadCount > 0 && (
-                <span aria-hidden="true" className="absolute -top-2 -right-2 min-w-4 h-4 px-1 bg-status-danger text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+                <span aria-hidden="true" className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 bg-status-danger text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-[#1b2336]">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
+              </span>
             </Link>
 
             {user ? (
-              <div className="relative" ref={menuRef}>
+              <div className="relative hidden md:block" ref={menuRef}>
                 <button
                   type="button"
                   onClick={() => setMenuOpen((v) => !v)}
                   aria-label={menuOpen ? 'Close account menu' : 'Open account menu'}
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
-                  className={`flex items-center gap-2 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue ${menuOpen ? 'text-white' : 'hover:text-white'}`}
+                  className={`flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-bg-elevated py-1 pl-1.5 pr-3 shadow-[0_2px_6px_rgba(0,0,0,0.18)] transition-[transform,border-color] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue ${menuOpen ? 'border-brand-blue text-white' : 'hover:border-brand-blue/50'}`}
                 >
                   {user.avatarUrl ? (
                     <img
@@ -239,15 +252,7 @@ export function Navbar() {
                       {user.name.charAt(0).toUpperCase()}
                     </span>
                   )}
-                  <span className="hidden items-center gap-1.5 lg:flex">
-                    <span className="max-w-32 truncate">{user.name}</span>
-                    {isSeller && (
-                      <span className="rounded-[10px] bg-[#4D5973] px-2 py-0.5 text-[10px] font-semibold leading-3 text-[#DBE3F3]">
-                        SELLER
-                      </span>
-                    )}
-                  </span>
-                  <ChevronDown size={16} className={`transition-transform ${menuOpen ? 'rotate-180 text-white' : ''}`} />
+                  <span className="whitespace-nowrap text-[10px] font-semibold leading-none tracking-wide text-text-secondary">{user.role === 'ADMIN' ? 'ADMIN' : isSeller ? 'SELLER' : 'COLLECTOR'}</span>
                 </button>
 
                 <AnimatePresence>
@@ -333,11 +338,7 @@ export function Navbar() {
                 </AnimatePresence>
               </div>
             ) : (
-              <Link to="/login">
-                <Button variant="primary" size="sm" className="bg-white hover:bg-gray-100 text-[#151B2B] rounded-full px-6 py-1.5 font-bold">
-                  Login
-                </Button>
-              </Link>
+              <ButtonLink to="/login" size="sm" className="hidden md:inline-flex px-6">Login</ButtonLink>
             )}
           </div>
         </div>

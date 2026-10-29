@@ -20,20 +20,20 @@ export function CardListingCard({ listing, sellerCount = 1 }: CardListingCardPro
   return (
     <Link 
       to={`/cards/${encodeURIComponent(listing.cardId || listing.id)}`}
-      className={`w-full bg-white rounded-[16px] p-4 flex gap-4 h-[180px] md:h-[200px] cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-[#2B53A9] focus-visible:border-[#2B53A9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2B53A9]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base group ${
+      className={`w-full bg-bg-card rounded-[16px] p-4 flex gap-4 h-[180px] md:h-[200px] cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-brand-blue focus-visible:border-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base group ${
         !inStock ? 'opacity-60' : ''
       }`}
     >
       {/* Left Image */}
       <div className="relative w-[110px] md:w-[130px] h-full shrink-0 flex items-center justify-center rounded-lg">
         {inStock ? (
-          <span className={`absolute top-2 right-1 text-white text-[9px] font-bold px-2 py-0.5 rounded z-10 tracking-wide ${
-            isLowStock ? 'bg-[#D97706]' : 'bg-[#16A34A]'
+          <span className={`absolute top-2 right-1 text-bg-base text-[10px] font-bold px-2 py-0.5 rounded-full z-10 tracking-wide ${
+            isLowStock ? 'bg-status-warning' : 'bg-status-success'
           }`}>
             {isLowStock ? `ONLY ${listing.stock} LEFT` : 'IN STOCK'}
           </span>
         ) : (
-          <span className="absolute top-2 right-1 bg-[#DC2626] text-white text-[9px] font-bold px-2 py-0.5 rounded z-10 tracking-wide">
+          <span className="absolute top-2 right-1 bg-status-danger text-bg-base text-[10px] font-bold px-2 py-0.5 rounded-full z-10 tracking-wide">
             OUT OF STOCK
           </span>
         )}
@@ -46,10 +46,10 @@ export function CardListingCard({ listing, sellerCount = 1 }: CardListingCardPro
       
       {/* Right Content */}
       <div className="flex flex-col flex-1 py-1 overflow-hidden">
-        <h3 className="text-black font-bold text-[15px] md:text-[17px] leading-tight mb-1 line-clamp-1">
+        <h3 className="text-gray-100 font-bold text-[15px] md:text-[17px] leading-tight mb-1 line-clamp-1">
           {listing.name}
         </h3>
-        <p className="text-gray-500 text-[11px] md:text-[12px] leading-tight line-clamp-1 mb-1">
+        <p className="text-gray-400 text-[11px] md:text-[12px] leading-tight line-clamp-1 mb-1">
           {subtitle}
         </p>
         <p className="text-gray-400 text-[11px] md:text-[12px] leading-tight line-clamp-1 mb-auto">
@@ -57,13 +57,13 @@ export function CardListingCard({ listing, sellerCount = 1 }: CardListingCardPro
         </p>
         
         <div className="mt-2">
-          <div className="text-black font-black text-[22px] md:text-[28px] leading-none mb-1 line-clamp-1">
-            <span className="mr-1 text-[11px] font-bold text-gray-500">From</span>฿{listing.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div className="text-gray-100 font-black text-[22px] md:text-[28px] leading-none mb-1 line-clamp-1">
+            <span className="mr-1 text-[11px] font-bold text-gray-400">From</span>฿{listing.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="text-gray-500 text-[11px] md:text-[12px] font-medium whitespace-nowrap">
+          <div className="text-gray-400 text-[11px] md:text-[12px] font-medium whitespace-nowrap">
             {sellerCount} {sellerCount === 1 ? 'seller' : 'sellers'}
             <span className="mx-1.5">·</span>
-            Market <span className="text-[#16A34A] font-bold">
+            Market <span className="text-status-success font-bold">
               ฿{marketPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>

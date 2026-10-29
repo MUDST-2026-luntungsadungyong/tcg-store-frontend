@@ -2,11 +2,25 @@
 
 describe('Core Journey 1: Home, Navigation & Card Discovery (US-02)', () => {
   beforeEach(() => {
+    // This is a mock UI suite: discovery must not depend on the live catalog
+    // or database latency, especially when asserting an empty search result.
+    const listing = {
+      id: 'navigation-pikachu', cardId: 'navigation-pikachu', sellerId: '2',
+      name: 'Pikachu', game: 'Pokemon', image: '/assets/expensive_card_1.png',
+      price: 50, stock: 5, status: 'SHOW', rarity: 'Rare', stage: 'Basic',
+      condition: 'NM', set: 'Navigation test set',
+    };
+    cy.intercept('GET', '**/api/products*', (request) => {
+      const query = String(request.query.search || '').toLowerCase();
+      const items = listing.name.toLowerCase().includes(query) ? [listing] : [];
+      request.reply({ items, pageNumber: 0, pageSize: 100, totalElements: items.length, totalPages: items.length ? 1 : 0, last: true });
+    }).as('discoverListings');
+    cy.intercept('GET', '**/api/collections/leaderboard*', { items: [] });
     cy.visit('/');
   });
 
   it('navigates to marketplace and searches by keyword', () => {
-    cy.get('a[href="/cards"]').first().click({ force: true });
+    cy.get('nav[aria-label="Marketplace navigation"] a[href="/cards"]').filter(':visible').should('have.length', 1).click();
     cy.url().should('include', '/cards');
     
     // Search by keyword

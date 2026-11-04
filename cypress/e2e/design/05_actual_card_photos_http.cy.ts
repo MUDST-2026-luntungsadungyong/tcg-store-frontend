@@ -14,7 +14,7 @@ describe('US-20 HTTP upload and per-offer gallery contract', () => {
     cy.intercept('GET', `**/api/cards/${card.id}`, card);
     cy.intercept('GET', '**/api/seller/listings*', (req) => req.reply({ statusCode: 200, body: offers }));
     cy.intercept('POST', '**/api/seller/*/validate-listing-rules', {
-      imageMandatory: true, reasons: ['PRICE'], minimumActualPhotos: 2,
+      imageMandatory: true, reasons: ['HIGH_PRICE'], minimumActualPhotos: 2,
       maxAdditionalImages: 4, maxImageSizeBytes: 5 * 1024 * 1024,
       allowedImageTypes: ['image/jpeg', 'image/png', 'image/webp'],
     });
@@ -30,7 +30,7 @@ describe('US-20 HTTP upload and per-offer gallery contract', () => {
       expect(body).to.include('name="backImage"');
       expect(body).to.include('filename="back.png"');
       expect(body).to.include('name="cardId"');
-      offers = [{ ...baseOffer, actualImageFrontUrl: '/photo-front.png', actualImageBackUrl: '/photo-back.png' }];
+      offers = [{ ...baseOffer, id: 'photo-created-offer', actualImageFrontUrl: '/photo-front.png', actualImageBackUrl: '/photo-back.png' }];
       req.reply({ statusCode: 201, body: offers[0] });
     }).as('upload');
     cy.visit('/workspace/listings');

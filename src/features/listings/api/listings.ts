@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { evaluateImageRules, imageFileError, type ListingImageRules } from '../model/imagePolicy';
 
 import apiClient from '@/shared/api/client';
 import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
@@ -14,6 +15,8 @@ export type ManagedListing = CardListing & {
 };
 
 export type ManagedListingInput = Omit<CardListing, 'id' | 'sellerId'>;
+
+export type ListingPhotoFiles = { frontImage?: File | null; backImage?: File | null; additionalImages?: File[] };
 
 export type ManagedListingQuery = {
   search?: string;
@@ -131,6 +134,12 @@ export function normalizeManagedListing(value: unknown): ManagedListing {
     imageSmall: optionalString(record, 'imageSmall'),
     imageLarge: optionalString(record, 'imageLarge'),
     marketPrice: optionalNumber(record, 'marketPrice'),
+    gradingCompany: optionalString(record, 'gradingCompany'),
+    grade: optionalString(record, 'grade'),
+    certNumber: optionalString(record, 'certNumber'),
+    actualImageFrontUrl: optionalString(record, 'actualImageFrontUrl'),
+    actualImageBackUrl: optionalString(record, 'actualImageBackUrl'),
+    additionalImageUrls: Array.isArray(record.additionalImageUrls) ? record.additionalImageUrls.filter((url): url is string => typeof url === 'string') : [],
     activeReservationCount:
       Number.isSafeInteger(activeReservationCount) && activeReservationCount >= 0
         ? activeReservationCount
@@ -299,7 +308,7 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-function toFormData(input: ManagedListingInput, file: File): FormData {
+function toFormData(input: ManagedListingInput, file?: File | null, photos: ListingPhotoFiles = {}): FormData {
   const formData = new FormData();
   if (input.cardId) formData.append('cardId', input.cardId);
   formData.append('name', input.name);
@@ -312,8 +321,46 @@ function toFormData(input: ManagedListingInput, file: File): FormData {
   formData.append('set', input.set ?? '');
   formData.append('rarity', input.rarity ?? '');
   if (input.image) formData.append('imageUrl', input.image);
-  formData.append('image', file, file.name);
+  if (file) formData.append('image', file, file.name);
+  for (const key of ['gradingCompany', 'grade', 'certNumber', 'actualImageFrontUrl', 'actualImageBackUrl'] as const) { if (input[key] !== undefined) formData.append(key, input[key] || ''); }
+  if (input.additionalImageUrls !== undefined) {
+    formData.append('clearAdditionalImages', 'true');
+    input.additionalImageUrls.forEach(url => formData.append('additionalImageUrls', url));
+  }
+  if (photos.frontImage) formData.append('frontImage', photos.frontImage, photos.frontImage.name);
+  if (photos.backImage) formData.append('backImage', photos.backImage, photos.backImage.name);
+  photos.additionalImages?.forEach(image => formData.append('additionalImages', image, image.name));
   return formData;
+}
+
+function validatePhotos(input: ManagedListingInput, photos: ListingPhotoFiles) {
+  for (const file of [photos.frontImage, photos.backImage, ...(photos.additionalImages ?? [])]) {
+    if (file) { const error = imageFileError(file); if (error) throw new ListingError('VALIDATION', error); }
+  }
+  if ((input.additionalImageUrls?.length ?? 0) + (photos.additionalImages?.length ?? 0) > 4) throw new ListingError('VALIDATION', 'Add up to 4 additional photos.');
+  if (input.gradingCompany && !['PSA', 'BGS', 'CGC'].includes(input.gradingCompany)) throw new ListingError('VALIDATION', 'Choose PSA, BGS or CGC.');
+  if (input.gradingCompany && (!input.grade?.trim() || !input.certNumber?.trim())) throw new ListingError('VALIDATION', 'Enter the grade and certification number.');
+  if ((input.grade?.length ?? 0) > 30 || (input.certNumber?.length ?? 0) > 100) throw new ListingError('VALIDATION', 'Grade must be at most 30 characters and certification number at most 100.');
+}
+
+function authoritativeMockInput(input: ManagedListingInput): ManagedListingInput {
+  const catalog = storage.getListings().find(l => (l.cardId ?? l.id) === input.cardId || l.id === input.cardId);
+  const resolved = catalog ? { ...input, rarity: catalog.rarity, game: catalog.game, imageSmall: catalog.imageSmall ?? catalog.image, imageLarge: catalog.imageLarge ?? catalog.image } : input;
+  return input.cardId?.startsWith('seller-listing-') ? { ...resolved, rarity: undefined } : resolved;
+}
+
+async function mockPhotoFields(input: ManagedListingInput, photos: ListingPhotoFiles, existing?: CardListing) {
+  const front = photos.frontImage ? await fileToDataUrl(photos.frontImage) : input.actualImageFrontUrl ?? existing?.actualImageFrontUrl ?? '';
+  const back = photos.backImage ? await fileToDataUrl(photos.backImage) : input.actualImageBackUrl ?? existing?.actualImageBackUrl ?? '';
+  // New actual photos must come from uploads; updates may only retain their own saved photos.
+  if (!photos.frontImage && front && front !== existing?.actualImageFrontUrl) throw new ListingError('VALIDATION', 'Upload a new front photo.');
+  if (!photos.backImage && back && back !== existing?.actualImageBackUrl) throw new ListingError('VALIDATION', 'Upload a new back photo.');
+  const retained = input.additionalImageUrls ?? existing?.additionalImageUrls ?? [];
+  if (retained.some(url => !existing?.additionalImageUrls?.includes(url))) throw new ListingError('VALIDATION', 'Upload additional photos rather than supplying image URLs.');
+  const extras = [...retained, ...await Promise.all((photos.additionalImages ?? []).map(fileToDataUrl))];
+  if (extras.length > 4) throw new ListingError('VALIDATION', 'Add up to 4 additional photos.');
+  if (input.status === 'SHOW' && evaluateImageRules(input).imageMandatory && (!front || !back)) throw new ListingError('VALIDATION', 'Add front and back photos before showing this listing.');
+  return { actualImageFrontUrl: front, actualImageBackUrl: back, additionalImageUrls: extras };
 }
 
 function mockListings(query: ManagedListingQuery = {}): ManagedListing[] {
@@ -376,6 +423,10 @@ function mockActiveReservationCount(listingId: string): number {
 }
 
 export const listingsApi = {
+  async validateListingRules(input: { cardId: string; price: number; condition: string; gradingCompany?: string; rarity?: string; game?: string }): Promise<ListingImageRules> {
+    if (ENV.ENABLE_MOCK_API) { initMockStorage(); const card = storage.getListings().find(l => (l.cardId ?? l.id) === input.cardId || l.id === input.cardId); return evaluateImageRules({ ...input, rarity: input.cardId.startsWith('seller-listing-') ? undefined : card?.rarity ?? input.rarity, game: card?.game ?? input.game }); }
+    try { const { data } = await apiClient.post(`${LISTINGS_ENDPOINT}/validate-listing-rules`, { cardId: input.cardId, price: input.price, condition: input.condition, gradingCompany: input.gradingCompany || null }); return data; } catch (error) { throw toListingError(error); }
+  },
   async getListings(query: ManagedListingQuery = {}): Promise<ManagedListing[]> {
     if (ENV.ENABLE_MOCK_API) {
       return mockListings(query);
@@ -406,14 +457,19 @@ export const listingsApi = {
   async createListing(
     input: ManagedListingInput,
     file?: File | null,
+    photos: ListingPhotoFiles = {},
   ): Promise<ManagedListing> {
     validateInput(input, file);
+    validatePhotos(input, photos);
 
     if (ENV.ENABLE_MOCK_API) {
       initMockStorage();
-      const image = file ? await fileToDataUrl(file) : input.image;
+      input = authoritativeMockInput(input);
+      const photoFields = await mockPhotoFields(input, photos);
+      const image = photoFields.actualImageFrontUrl || (file ? await fileToDataUrl(file) : input.image);
       const listing: CardListing = {
         ...input,
+        ...photoFields,
         image,
         id: `prd-${crypto.randomUUID()}`,
         sellerId: 'usr-3',
@@ -423,10 +479,10 @@ export const listingsApi = {
     }
 
     try {
-      const response = file
+      const response = file || photos.frontImage || photos.backImage || photos.additionalImages?.length
         ? await apiClient.post(
             LISTINGS_ENDPOINT,
-            toFormData(input, file),
+            toFormData(input, file, photos),
             { headers: { 'Content-Type': 'multipart/form-data' } },
           )
         : await apiClient.post(LISTINGS_ENDPOINT, input);
@@ -441,8 +497,10 @@ export const listingsApi = {
     id: string,
     input: ManagedListingInput,
     file?: File | null,
+    photos: ListingPhotoFiles = {},
   ): Promise<ManagedListing> {
     validateInput(input, file);
+    validatePhotos(input, photos);
 
     if (ENV.ENABLE_MOCK_API) {
       initMockStorage();
@@ -452,8 +510,10 @@ export const listingsApi = {
         throw new ListingError('NOT_FOUND', 'This listing no longer exists.');
       }
 
-      const image = file ? await fileToDataUrl(file) : input.image;
-      const updated: CardListing = { ...existing, ...input, image, id };
+      input = authoritativeMockInput(input);
+      const photoFields = await mockPhotoFields(input, photos, existing);
+      const image = photoFields.actualImageFrontUrl || (file ? await fileToDataUrl(file) : input.image);
+      const updated: CardListing = { ...existing, ...input, ...photoFields, image, id };
       storage.setListings(
         listings.map((listing) => (listing.id === id ? updated : listing)),
       );
@@ -464,10 +524,10 @@ export const listingsApi = {
     }
 
     try {
-      const response = file
+      const response = file || photos.frontImage || photos.backImage || photos.additionalImages?.length
         ? await apiClient.put(
             `${LISTINGS_ENDPOINT}/${encodeURIComponent(id)}`,
-            toFormData(input, file),
+            toFormData(input, file, photos),
             { headers: { 'Content-Type': 'multipart/form-data' } },
           )
         : await apiClient.put(
@@ -500,6 +560,7 @@ export const listingsApi = {
       if (!existing) {
         throw new ListingError('NOT_FOUND', 'This listing no longer exists.');
       }
+      if (status === 'SHOW') await mockPhotoFields(authoritativeMockInput({ ...existing, status }), {}, existing);
       storage.setListings(
         listings.map((listing) =>
           listing.id === id ? { ...listing, status } : listing,

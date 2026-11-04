@@ -1,4 +1,5 @@
 /// <reference types="cypress" />
+import { CARD_PHOTO_URL, uploadCardPhoto } from '../support/cardPhotos';
 
 describe('US-05 & US-06: Seller Inventory Management and Metrics', () => {
   const api = 'http://localhost:8080/api';
@@ -62,7 +63,17 @@ describe('US-05 & US-06: Seller Inventory Management and Metrics', () => {
   beforeEach(() => {
     currentListings = [{ ...initialListing }];
 
+    // Initialize catalog/listing seeds before adding actual-photo metadata.
+    cy.visit('/');
     cy.loginByMock('SELLER');
+    cy.window().then((win) => {
+      const photoFields = { actualImageFrontUrl: CARD_PHOTO_URL, actualImageBackUrl: CARD_PHOTO_URL, additionalImageUrls: [] };
+      win.localStorage.setItem('mythix_mock_listings_v2', JSON.stringify([
+        { ...initialListing, ...photoFields },
+        { ...addedPikachuListing, id: 'catalog-pikachu', price: 50, ...photoFields },
+      ]));
+      win.localStorage.setItem('mythix_mock_reservations_v1', '[]');
+    });
 
     // 1. Seller listings GET
     cy.intercept('GET', `${api}/seller/listings*`, (req) => {
@@ -148,6 +159,8 @@ describe('US-05 & US-06: Seller Inventory Management and Metrics', () => {
     // 3. Fill out the form
     cy.get('input[id*="seller-listing-price"]').clear().type('1000');
     cy.get('input[id*="seller-listing-stock"]').clear().type('5');
+    uploadCardPhoto('front');
+    uploadCardPhoto('back');
 
     // 4. Save
     // We should wait until loading/busy state is over

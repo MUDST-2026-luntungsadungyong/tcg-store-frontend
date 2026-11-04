@@ -6,6 +6,7 @@ import {
   toListingError,
   type ManagedListing,
   type ManagedListingInput,
+  type ListingPhotoFiles,
 } from '@/features/listings/api/listings';
 import type { ListingVisibility } from '@/entities/card/model/types';
 
@@ -30,6 +31,7 @@ export interface ListingStoreState {
     input: ManagedListingInput,
     id?: string,
     file?: File | null,
+    photos?: ListingPhotoFiles,
   ) => Promise<ManagedListing>;
   setListingVisibility: (id: string, status: ListingVisibility) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
@@ -78,7 +80,7 @@ export const useListingStore = create<ListingStoreState>(
       }
     },
 
-    saveListing: async (input, id, file) => {
+    saveListing: async (input, id, file, photos) => {
       if (get().isSaving || (id && get().pendingIds.includes(id))) {
         throw new Error('A listing change is already being saved.');
       }
@@ -93,8 +95,8 @@ export const useListingStore = create<ListingStoreState>(
 
       try {
         const savedListing = id
-          ? await listingsApi.updateListing(id, input, file)
-          : await listingsApi.createListing(input, file);
+          ? await listingsApi.updateListing(id, input, file, photos)
+          : await listingsApi.createListing(input, file, photos);
 
         set((state) => ({
           listings: id

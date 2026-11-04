@@ -1,3 +1,5 @@
+import { CARD_PHOTO_URL } from '../../support/cardPhotos';
+
 describe('Core Journey 5: Update Product by Seller (US-05-3)', () => {
   const api = 'http://localhost:8080/api';
 
@@ -26,7 +28,14 @@ describe('Core Journey 5: Update Product by Seller (US-05-3)', () => {
     currentListings = [{ ...mockListing }];
 
     // Seller logs in
+    cy.visit('/');
     cy.loginByMock('SELLER');
+    cy.window().then((win) => {
+      win.localStorage.setItem('mythix_mock_listings_v2', JSON.stringify([
+        { ...mockListing, actualImageFrontUrl: CARD_PHOTO_URL, actualImageBackUrl: CARD_PHOTO_URL, additionalImageUrls: [] },
+      ]));
+      win.localStorage.setItem('mythix_mock_reservations_v1', '[]');
+    });
 
     cy.intercept('GET', `${api}/seller/listings*`, (req) => {
       req.reply({ statusCode: 200, body: currentListings });

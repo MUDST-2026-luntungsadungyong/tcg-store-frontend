@@ -1,4 +1,5 @@
 /// <reference types="cypress" />
+import { uploadCardPhoto } from '../support/cardPhotos';
 
 /**
  * This is deliberately separate from the mock-backed Cypress suite. It uses
@@ -80,6 +81,10 @@ function login(email: string, password: string) {
     });
     cy.get('#seller-listing-price').clear().type('1');
     cy.get('#seller-listing-stock').clear().type('1');
+    // Exercise real storage regardless of selected catalog rarity. A low price
+    // alone does not make an unknown/special rarity optional under US-20.
+    uploadCardPhoto('front', 'staging-card-front.png');
+    uploadCardPhoto('back', 'staging-card-back.png');
     cy.intercept('POST', '**/seller/listings').as('createListing');
     cy.get('[role="dialog"]').contains('button', 'Add Listing').click();
     cy.wait('@createListing').then(({ response }) => {

@@ -434,7 +434,7 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
       cy.contains('h1', 'Charizard VMAX').should('be.visible');
     });
 
-    it('renders breadcrumbs, title, 3D card visual, and card specifications correctly', () => {
+    it('renders breadcrumbs, title, card details, and seller-supplied grading correctly', () => {
       // Breadcrumb navigation
       cy.get('nav[aria-label="Breadcrumb"]').within(() => {
         cy.contains('a', 'Cards').should('have.attr', 'href', '/cards');
@@ -450,18 +450,18 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
       cy.contains('074/073 / Secret Rare').should('be.visible');
       cy.contains('Card Text:').should('be.visible');
       cy.contains('Japanese tournament champion description').should('be.visible');
-      cy.contains('Grading Company:').should('be.visible');
-      cy.contains('PSA (Professional Sports Authenticator)').should('be.visible');
-      cy.contains('Grade:').should('be.visible');
-      cy.contains('Near Mint-Mint 8').should('be.visible');
       cy.contains('Year:').should('be.visible');
       cy.contains('2020').should('be.visible');
       cy.contains('Card Set:').should('be.visible');
       cy.contains("Champion's Path").should('be.visible');
       cy.contains('Tournament:').should('be.visible');
       cy.contains('Special League').should('be.visible');
-      cy.contains('Certification Number:').should('be.visible');
-      cy.contains('79170302').should('be.visible');
+      cy.get('[role="tab"]').contains('Actual Card Photos').click();
+      cy.get('#card-photo-seller').select('offer-chz-01');
+      cy.contains('PSA (Professional Sports Authenticator)').should('be.visible');
+      cy.contains('Near Mint-Mint 8').should('be.visible');
+      cy.contains('Cert 79170302').should('be.visible');
+      cy.contains('Seller supplied, unverified').should('be.visible');
     });
   });
 

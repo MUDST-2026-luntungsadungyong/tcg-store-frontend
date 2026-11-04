@@ -5,7 +5,8 @@ import { formatCondition } from '@/entities/card/model/condition';
 import { collectionApi } from '@/features/collection';
 import { ContextualLoginModal, useAuthStore } from '@/features/auth';
 import { useReservationCartStore } from '@/features/reservation-cart';
-import { Card3DViewer } from '@/features/discovery/components/Card3DViewer';
+import { CardPhotoMagnifierViewer } from '@/features/discovery/components/CardPhotoMagnifierViewer';
+import { officialCardImage } from '@/features/discovery/lib/officialCardImage';
 import { CardCollectPanel } from '@/features/discovery/components/CardCollectPanel';
 import { SellerOffersSection } from '@/features/discovery/components/SellerOffersSection';
 import { SimilarCardsSection } from '@/features/discovery/components/SimilarCardsSection';
@@ -66,6 +67,8 @@ export function CardDetailPage() {
             name: catalogCard.name,
             game: catalogCard.game || 'Pokemon',
             image: catalogCard.imageLarge || catalogCard.imageSmall || '',
+            imageLarge: catalogCard.imageLarge,
+            imageSmall: catalogCard.imageSmall,
             price: Number(catalogCard.marketPrice ?? 0),
             cost: 0,
             stock: 0,
@@ -92,7 +95,7 @@ export function CardDetailPage() {
           rarity: foundCard.rarity,
           setName: foundCard.set,
           cardNumber: foundCard.cardNumber,
-          imageLarge: foundCard.image,
+          imageLarge: officialCardImage(foundCard),
           marketPrice: foundCard.marketPrice ?? foundCard.price,
         });
       }
@@ -145,48 +148,31 @@ export function CardDetailPage() {
   // Card specification details
   const cardDetails = [
     {
+      label: 'Card Text:',
+      value: card.cardText || 'Not specified',
+      isBold: true,
+    },
+    {
       label: 'Card Number / Rarity:',
       value:
         card.cardNumber && card.rarity && !card.cardNumber.includes(card.rarity)
           ? `${card.cardNumber} / ${card.rarity}`
-          : card.cardNumber || card.rarity || 'No. 3 / Promotional Trophy Card',
+          : card.cardNumber || card.rarity || 'Not specified',
       isBold: false,
     },
     {
-      label: 'Card Text:',
-      value:
-        card.cardText ||
-        'ポケモンカードゲーム公式トーナメントの3位入賞者であることをここに認定し、その栄誉をたたえる。このカードを所持する者は、第1回ポケモンカードゲーム日本一決定戦への参加権があることを証明する。',
-      isBold: true,
-    },
-    {
-      label: 'Grading Company:',
-      value: card.gradingCompany || 'PSA (Professional Sports Authenticator)',
-      isBold: true,
-    },
-    {
-      label: 'Grade:',
-      value: card.grade || (card.condition ? formatCondition(card.condition) : 'NM-MT 8 (Near Mint-Mint 8)'),
-      isBold: true,
-    },
-    {
       label: 'Year:',
-      value: card.year ? String(card.year) : '1998',
+      value: card.year ? String(card.year) : 'Not specified',
       isBold: true,
     },
     {
       label: 'Card Set:',
-      value: card.set || 'P.M. JAPANESE PROMO',
+      value: card.set || 'Not specified',
       isBold: true,
     },
     {
       label: 'Tournament:',
-      value: card.tournament || 'Bronze 3rd-2nd Tournament',
-      isBold: true,
-    },
-    {
-      label: 'Certification Number:',
-      value: card.certNumber || '79170302',
+      value: card.tournament || 'Not specified',
       isBold: true,
     },
   ];
@@ -198,7 +184,7 @@ export function CardDetailPage() {
         <h1 className="mb-8 text-3xl font-bold md:text-[32px]">{card.name}</h1>
 
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-14">
-          <div className="flex justify-center lg:col-span-5"><Card3DViewer imageSrc={card.image || '/assets/expensive_card_1.png'} cardName={card.name} /></div>
+          <div className="flex justify-center lg:col-span-5"><CardPhotoMagnifierViewer key={card.cardId || card.id} officialImage={officialCardImage(card)} name={card.name} offers={offers} /></div>
           <div className="flex flex-col gap-7 lg:col-span-7">
             <section aria-labelledby="card-details-heading">
               <h2 id="card-details-heading" className="mb-4 text-base font-bold text-[#A1A1A1]">Card details</h2>

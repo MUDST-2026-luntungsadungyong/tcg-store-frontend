@@ -33,6 +33,9 @@ export interface CardListing {
   year?: string | number;
   tournament?: string;
   certNumber?: string;
+  actualImageFrontUrl?: string;
+  actualImageBackUrl?: string;
+  additionalImageUrls?: string[];
 }
 
 export interface CollectionEntry {

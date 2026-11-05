@@ -1,4 +1,5 @@
 /// <reference types="cypress" />
+export {};
 
 function clearAuthStorage(win: Window) {
   for (const storage of [win.localStorage, win.sessionStorage]) {
@@ -122,7 +123,7 @@ declare global {
   namespace Cypress {
     interface Chainable {
       clearAuthStorage(): Chainable<void>;
-      loginByMock(role?: string): Chainable<void>;
+      loginByMock(role?: string): Chainable<AUTWindow>;
       sellerFastForwardOrder(orderId: string, status?: string): Chainable<void>;
       cleanTestOrder(orderId: string | number): Chainable<void>;
       loginByUI(email: string, password?: string, rememberMe?: boolean): Chainable<void>;

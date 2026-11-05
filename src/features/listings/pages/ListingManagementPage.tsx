@@ -1,3 +1,7 @@
+import { ListingPhotoEditor, emptyPhotos, type PhotoEditorValue } from '../components/ListingPhotoEditor';
+import { IMAGE_REASON_LABELS } from '../model/imagePolicy';
+import { useListingImageRules } from '../model/useListingImageRules';
+import { normalizeConditionToCode } from '@/entities/card/model/condition';
 import { acquireBodyScrollLock } from '@/shared/lib/bodyScrollLock';
 import {
   useEffect,
@@ -59,18 +63,26 @@ const GAME_FILTER_OPTIONS = [
 type ListingForm = {
   price: string;
   stock: string;
+  condition: string;
+  status: ListingVisibility;
+  gradingCompany: string;
+  grade: string;
+  certNumber: string;
 };
 
-type ListingFormErrors = Partial<Record<keyof ListingForm | 'card', string>>;
+type ListingFormErrors = Partial<Record<keyof ListingForm | 'card' | 'photos' | 'save', string>>;
 
 const emptyForm = (): ListingForm => ({
   price: '',
   stock: '1',
+  condition: 'NM', status: 'SHOW', gradingCompany: '', grade: '', certNumber: '',
 });
 
 const listingToForm = (listing: ManagedListing): ListingForm => ({
   price: String(listing.price),
   stock: String(listing.stock),
+  condition: normalizeConditionToCode(listing.condition) || 'NM', status: listing.status,
+  gradingCompany: listing.gradingCompany || '', grade: listing.grade || '', certNumber: listing.certNumber || '',
 });
 
 const listingToCatalogCard = (listing: ManagedListing): CatalogCard => ({
@@ -110,7 +122,7 @@ function validateForm(
   const stock = Number(form.stock);
 
   if (!isEditing && !selectedCard) errors.card = 'Select a card from the database.';
-  if (!form.price.trim() || Number.isNaN(price) || price < 0) {
+  if (!form.price.trim() || !Number.isFinite(price) || price <= 0) {
     errors.price = 'Enter a valid listing price.';
   }
   if (
@@ -122,6 +134,8 @@ function validateForm(
     errors.stock = 'Stock must be a whole number of 0 or more.';
   }
 
+  if (form.gradingCompany && !form.grade.trim()) errors.grade = 'Enter the card grade.';
+  if (form.gradingCompany && !form.certNumber.trim()) errors.certNumber = 'Enter the certification number.';
   return errors;
 }
 
@@ -159,7 +173,10 @@ export function ListingManagementPage() {
   );
   const [form, setForm] = useState<ListingForm>(emptyForm);
   const [formErrors, setFormErrors] = useState<ListingFormErrors>({});
+  const [photos, setPhotos] = useState<PhotoEditorValue>(emptyPhotos);
   const [selectedCard, setSelectedCard] = useState<CatalogCard | null>(null);
+  const { rules: photoRules, pending: rulesPending, failed: rulesFailed } = useListingImageRules({ cardId: selectedCard?.id || '', price: Number(form.price), condition: form.condition, gradingCompany: form.gradingCompany, rarity: selectedCard?.rarity, game: selectedCard?.game || 'Pokemon' }, editorOpen);
+  const photosIncomplete = photoRules.imageMandatory && (!(photos.files.frontImage || photos.front) || !(photos.files.backImage || photos.back));
   const [deleteTarget, setDeleteTarget] = useState<ManagedListing | null>(null);
   const [showDeleteListingPopup, setShowDeleteListingPopup] = useState(false); // CASE 11
 
@@ -233,6 +250,7 @@ export function ListingManagementPage() {
     clearError();
     setEditingListing(null);
     setForm(emptyForm());
+    setPhotos(emptyPhotos());
     setFormErrors({});
     setSelectedCard(null);
     setEditorOpen(true);
@@ -242,6 +260,7 @@ export function ListingManagementPage() {
     clearError();
     setEditingListing(listing);
     setForm(listingToForm(listing));
+    setPhotos({ front: listing.actualImageFrontUrl || '', back: listing.actualImageBackUrl || '', additional: listing.additionalImageUrls || [], files: {} });
     setFormErrors({});
     setSelectedCard(listingToCatalogCard(listing));
     setEditorOpen(true);
@@ -260,6 +279,7 @@ export function ListingManagementPage() {
     if (isSaving) return;
 
     const nextErrors = validateForm(form, selectedCard, Boolean(editingListing));
+    if (form.status === 'SHOW' && photosIncomplete) nextErrors.photos = 'Add front and back photos before showing this listing, or save it as hidden.';
     setFormErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
@@ -275,14 +295,16 @@ export function ListingManagementPage() {
       price: Number(form.price),
       cost: editingListing?.cost ?? 0,
       stock: Number(form.stock),
-      status: editingListing?.status ?? 'SHOW',
-      condition: editingListing?.condition,
+      status: form.status,
+      condition: form.condition,
+      gradingCompany: form.gradingCompany, grade: form.gradingCompany ? form.grade.trim() : '', certNumber: form.gradingCompany ? form.certNumber.trim() : '',
+      actualImageFrontUrl: photos.front, actualImageBackUrl: photos.back, additionalImageUrls: photos.additional,
       set: editingListing?.set ?? card!.setName,
       rarity: editingListing?.rarity ?? card!.rarity,
     };
 
     try {
-      const saved = await saveListing(payload, editingListing?.id);
+      const saved = await saveListing(payload, editingListing?.id, undefined, photos.files);
 
       addToast({
         type: 'success',
@@ -297,6 +319,7 @@ export function ListingManagementPage() {
       setSelectedCard(null);
     } catch (saveError) {
       const failure = toListingError(saveError);
+      setFormErrors(current => ({ ...current, save: failure.message }));
       addToast({
         type: 'error',
         title: 'Save failed',
@@ -906,10 +929,32 @@ export function ListingManagementPage() {
                 />
               </div>
 
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Select id="seller-listing-condition" label="Card condition" value={form.condition} options={[{value:'NM',label:'Near Mint (NM)'},{value:'LP',label:'Lightly Played (LP)'},{value:'MP',label:'Moderately Played (MP)'},{value:'HP',label:'Heavily Played (HP)'},{value:'DMG',label:'Damaged (DMG)'}]} onChange={event => updateForm('condition', event.target.value)} />
+                <Select id="seller-listing-status" label="Listing visibility" value={form.status} options={[{value:'SHOW',label:'Show to buyers'},{value:'HIDE',label:'Hidden — finish later'}]} onChange={event => updateForm('status', event.target.value as ListingVisibility)} />
+              </div>
+              <Select id="seller-listing-grading-company" label="Grading company" value={form.gradingCompany} options={[{value:'',label:'Ungraded'},{value:'PSA',label:'PSA'},{value:'BGS',label:'BGS'},{value:'CGC',label:'CGC'}]} onChange={event => updateForm('gradingCompany', event.target.value)} />
+              {form.gradingCompany && <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input id="seller-listing-grade" label="Grade" value={form.grade} maxLength={30} onChange={event => updateForm('grade', event.target.value)} error={formErrors.grade} />
+                  <Input id="seller-listing-cert-number" label="Certification number" value={form.certNumber} maxLength={100} onChange={event => updateForm('certNumber', event.target.value)} error={formErrors.certNumber} />
+                </div>
+                <p className="text-sm text-text-secondary">Grading details are supplied by you. Mythix does not verify certificates with the grading company.</p>
+              </>}
               {selectedCard && <CatalogCardDetails card={selectedCard} />}
             </div>
           </div>
 
+          {selectedCard && <div role="status" className="rounded-xl border border-white/15 bg-bg-input p-3 text-sm">
+            <p className="font-semibold">{photoRules.imageMandatory ? 'Front and back photos required to show this listing' : 'Actual photos are optional — official art will be used'}</p>
+            {photoRules.imageMandatory && <p className="mt-1 text-text-secondary">{photoRules.reasons.map(reason => IMAGE_REASON_LABELS[reason] || reason).join(' · ')}</p>}
+            {rulesPending && <p className="mt-1 text-text-secondary">Checking catalog requirements…</p>}
+            {rulesFailed && <p className="mt-1 text-text-secondary">Could not refresh catalog requirements. These rules are an estimate; the server checks again when you save. You can save a hidden listing now.</p>}
+            {form.status === 'HIDE' && <p className="mt-1 text-text-secondary">You can save hidden now and add required photos before showing it to buyers.</p>}
+          </div>}
+          <ListingPhotoEditor value={photos} onChange={value => { setPhotos(value); setFormErrors(current => ({ ...current, photos: undefined, save: undefined })); }} disabled={isSaving} />
+          {formErrors.photos && <p role="alert" className="text-sm text-status-danger">{formErrors.photos}</p>}
+          {formErrors.save && <p role="alert" className="text-sm text-status-danger">{formErrors.save}</p>}
           <div className="flex justify-end gap-3 border-t border-white/10 pt-5">
             <Button
               type="button"
@@ -919,7 +964,7 @@ export function ListingManagementPage() {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSaving}>
+            <Button type="submit" isLoading={isSaving} disabled={form.status === 'SHOW' && photosIncomplete && Boolean(selectedCard)}>
               {editingListing ? 'Save Changes' : 'Add Listing'}
             </Button>
           </div>

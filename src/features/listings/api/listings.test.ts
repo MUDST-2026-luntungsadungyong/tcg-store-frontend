@@ -120,6 +120,32 @@ describe('sellerListingsApi and listing normalization', () => {
       expect(result.name).toBe('Charizard VMAX');
     });
 
+    it('serializes both actual photos, grading and retained extras as multipart', async () => {
+      const frontImage = new File(['front'], 'front.png', { type: 'image/png' });
+      const backImage = new File(['back'], 'back.webp', { type: 'image/webp' });
+      const additionalImage = new File(['corner'], 'corner.jpg', { type: 'image/jpeg' });
+      post.mockResolvedValueOnce({ data: validRawListing });
+      await listingsApi.createListing({ ...sampleInput, gradingCompany: 'PSA', grade: '10', certNumber: 'cert-123', additionalImageUrls: [] }, undefined, { frontImage, backImage, additionalImages: [additionalImage] });
+      const form = post.mock.calls[0][1] as FormData;
+      expect(form).toBeInstanceOf(FormData);
+      expect(form.get('frontImage')).toMatchObject({ name: 'front.png', type: 'image/png', size: 5 });
+      expect(form.get('backImage')).toMatchObject({ name: 'back.webp', type: 'image/webp', size: 4 });
+      expect(form.getAll('additionalImages')).toHaveLength(1);
+      expect(form.getAll('additionalImages')[0]).toMatchObject({ name: 'corner.jpg', type: 'image/jpeg', size: 6 });
+      expect(form.get('gradingCompany')).toBe('PSA');
+      expect(form.get('certNumber')).toBe('cert-123');
+      expect(form.get('clearAdditionalImages')).toBe('true');
+    });
+
+    it('rejects invalid actual photo files before calling the API', async () => {
+      await expect(listingsApi.createListing(sampleInput, undefined, { frontImage: new File(['fake'], 'photo.gif', { type: 'image/gif' }) })).rejects.toThrow('Use a JPG');
+      expect(post).not.toHaveBeenCalled();
+    });
+
+    it('retains actual and official image metadata in seller responses', () => {
+      expect(normalizeManagedListing({ ...validRawListing, imageLarge: '/official.png', actualImageFrontUrl: '/front.png', actualImageBackUrl: '/back.png', additionalImageUrls: ['/corner.png'], gradingCompany: 'CGC', grade: '9.5', certNumber: 'abc' })).toMatchObject({ imageLarge: '/official.png', actualImageFrontUrl: '/front.png', actualImageBackUrl: '/back.png', additionalImageUrls: ['/corner.png'], gradingCompany: 'CGC', grade: '9.5', certNumber: 'abc' });
+    });
+
     it('updateListing() calls PUT /seller/listings/:id', async () => {
       put.mockResolvedValueOnce({
         status: 200,

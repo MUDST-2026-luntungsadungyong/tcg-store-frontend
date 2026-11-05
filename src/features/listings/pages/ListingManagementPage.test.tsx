@@ -21,6 +21,7 @@ vi.mock('@/features/listings/api/listings', async () => {
       updateListing: vi.fn(),
       setVisibility: vi.fn(),
       deleteListing: vi.fn(),
+      validateListingRules: vi.fn(),
     },
   };
 });
@@ -85,6 +86,7 @@ describe('ListingManagementPage', () => {
     resetListingStore();
     vi.mocked(listingsApi.getListings).mockResolvedValue(listings);
     vi.mocked(listingsApi.setVisibility).mockResolvedValue();
+    vi.mocked(listingsApi.validateListingRules).mockResolvedValue({ imageMandatory: true, reasons: ['HIGH_PRICE'], minimumActualPhotos: 2, maxAdditionalImages: 4, maxImageSizeBytes: 5242880, allowedImageTypes: ['image/jpeg', 'image/png', 'image/webp'] });
   });
 
   it('shows seller-owned listings with SHOW/HIDE visibility and available stock', async () => {
@@ -134,6 +136,18 @@ describe('ListingManagementPage', () => {
     expect(screen.getByText('Fire')).toBeInTheDocument();
     expect(screen.getByText('Mitsuhiro Arita')).toBeInTheDocument();
     expect(screen.getByText('Database market price ฿31,401.65')).toBeInTheDocument();
+  });
+
+  it('limits grade input to the backend contract and permits hidden saves without photos', async () => {
+    const user = userEvent.setup();
+    render(<ListingManagementPage />);
+    await screen.findByRole('row', { name: /Pikachu Illustrator/ });
+    await user.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
+    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeDisabled();
+    await user.selectOptions(screen.getByLabelText('Grading company'), 'PSA');
+    expect(screen.getByLabelText('Grade')).toHaveAttribute('maxlength', '30');
+    await user.selectOptions(screen.getByLabelText('Listing visibility'), 'HIDE');
+    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeEnabled();
   });
 
   it('opens the existing delete confirmation for a visible listing', async () => {

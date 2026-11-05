@@ -4,7 +4,7 @@
 
 The journey is one serial browser flow because the buyer consumes the listing created by the seller:
 
-1. log in as an approved seller and create a listing from the catalog;
+1. log in as an approved seller and create a listing from the catalog with actual front/back PNG uploads (US-20); the low test price does not bypass special/unknown-rarity rules;
 2. log out, log in as a buyer, and prove `/workspace/listings` redirects to `/`;
 3. find that card in the marketplace, reserve it, and confirm the reservation.
 

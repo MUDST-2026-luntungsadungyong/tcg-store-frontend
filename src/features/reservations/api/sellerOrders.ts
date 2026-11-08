@@ -91,7 +91,7 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
 
   return {
     id: order.id,
-    orderNumber: order.id.toUpperCase(),
+    orderNumber: order.orderNumber ?? String(order.id).toUpperCase(),
     status,
     buyerId: order.buyerId,
     buyerName: buyer?.name ?? `Buyer ${order.buyerId}`,
@@ -104,8 +104,9 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     sellerCost,
     sellerProfit: sellerRevenue - sellerCost,
     items,
+    logs: order.logs,
     createdAt: order.createdAt,
-    updatedAt: order.sentAt ?? order.createdAt,
+    updatedAt: order.sentAt ?? order.paymentConfirmedAt ?? order.cancelledAt ?? order.createdAt,
   };
 }
 
@@ -180,24 +181,26 @@ export async function updateSellerOrderStatus(
   if (ENV.ENABLE_MOCK_API) {
     initMockStorage();
     const reservations = storage.getReservations();
-    const order = reservations.find((candidate) => candidate.id === String(orderId));
-    if (order) {
+    const orderIndex = reservations.findIndex((candidate) => String(candidate.id) === String(orderId));
+    if (orderIndex >= 0) {
+      const order = reservations[orderIndex];
+      const timestamp = new Date().toISOString();
       if (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED') {
         const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
         const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
         const storedReservations = storage.getReservations();
-        const storedOrder = storedReservations.find((candidate) => candidate.id === String(orderId));
+        const storedOrder = storedReservations.find((candidate) => String(candidate.id) === String(orderId));
         if (storedOrder) {
           storedOrder.logs = [
             ...(storedOrder.logs || []),
             {
-              fromStatus: 'CONFIRMED',
+              fromStatus: storedOrder.status || 'CONFIRMED',
               toStatus: 'SENT',
               changedByRole: 'SELLER',
               note: note
                 ? `${note} (Tracking / TAX: ${trackingNumber})`
                 : (trackingNumber ? `Tracking / TAX: ${trackingNumber}` : null),
-              createdAt: new Date().toISOString(),
+              createdAt: timestamp,
             },
           ];
           storage.setReservations(storedReservations);
@@ -206,10 +209,23 @@ export async function updateSellerOrderStatus(
       }
       order.status = normalizedStatus as any;
       if (normalizedStatus === 'CONFIRMED') {
-        order.paymentConfirmedAt = new Date().toISOString();
+        order.paymentConfirmedAt = timestamp;
+      } else if (normalizedStatus === 'CANCELLED') {
+        order.cancelledAt = timestamp;
       }
+      order.logs = [
+        ...(order.logs || []),
+        {
+          fromStatus: order.status,
+          toStatus: normalizedStatus,
+          changedByRole: 'SELLER',
+          note: note ?? null,
+          createdAt: timestamp,
+        },
+      ];
       storage.setReservations(reservations);
       return mapReservationOrder(order);
+    }
     }
   }
 

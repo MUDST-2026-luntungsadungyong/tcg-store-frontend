@@ -21,6 +21,7 @@ import { AdminDashboardPage } from '@/features/admin/pages/AdminDashboardPage';
 import { AdminAuditLogsPage } from '@/features/admin/pages/AdminAuditLogsPage';
 import { AdminOrderLogsPage } from '@/features/admin/pages/AdminOrderLogsPage';
 import { AdminUsersPage } from '@/features/admin/pages/AdminUsersPage';
+import { AdminWeeklyReportsPage } from '@/features/admin/pages/AdminWeeklyReportsPage';
 
 import { NotFoundPage } from './NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -52,7 +53,7 @@ const workspaceRoute: RouteObject = {
 const adminRoute: RouteObject = {
   path: '/admin',
   element: <ProtectedRoute requiredRole="ADMIN" />,
-  children: [{ element: <AdminLayout />, children: [{ index: true, element: <AdminDashboardPage /> }, { path: 'seller-applications', element: <AdminSellerApplicationsPage /> }, { path: 'audit-logs', element: <AdminAuditLogsPage /> }, { path: 'orders', element: <AdminOrderLogsPage /> }, { path: 'users', element: <AdminUsersPage /> }] }],
+  children: [{ element: <AdminLayout />, children: [{ index: true, element: <AdminDashboardPage /> }, { path: 'seller-applications', element: <AdminSellerApplicationsPage /> }, { path: 'audit-logs', element: <AdminAuditLogsPage /> }, { path: 'orders', element: <AdminOrderLogsPage /> }, { path: 'users', element: <AdminUsersPage /> }, { path: 'reports/weekly', element: <AdminWeeklyReportsPage /> }] }],
 };
 
 export const router = createBrowserRouter([

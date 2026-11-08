@@ -1,6 +1,7 @@
 import {
   ChevronLeft,
   ClipboardList,
+  ChartNoAxesCombined,
   LayoutDashboard,
   Menu,
   PanelLeftClose,
@@ -31,6 +32,7 @@ const mainLinks: NavItem[] = [
 ];
 
 const monitoringLinks: NavItem[] = [
+  { name: 'Weekly reports', to: '/admin/reports/weekly', icon: ChartNoAxesCombined },
   { name: 'Order monitoring', to: '/admin/orders', icon: ReceiptText },
   { name: 'Audit trail', to: '/admin/audit-logs', icon: ClipboardList },
 ];

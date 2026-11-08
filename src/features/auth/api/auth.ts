@@ -1,3 +1,4 @@
+import { getStoredAccessToken } from '@/shared/api/authStorage';
 import axios from 'axios';
 import apiClient from '@/shared/api/client';
 import { ENV } from '@/shared/config/env';
@@ -67,7 +68,7 @@ export const authApi = {
       await new Promise(resolve => setTimeout(resolve, 800));
       const users = storage.getUsers();
       // Simple mock authentication (do not use in production)
-      const user = users.find(u => u.email === email);
+      const user = users.find(u => u.email === email || (email === 'buyer@mythix.com' && u.email === 'ash@mythix.com'));
       
       if (user && password === 'admin123' && user.role === 'ADMIN') {
          return { token: 'mock-jwt-token-admin', user };
@@ -118,7 +119,7 @@ export const authApi = {
       if (ENV.ENABLE_MOCK_API) {
           await new Promise(resolve => setTimeout(resolve, 300));
           // In mock mode, we assume the user is customer 1 if they have a token
-          const token = localStorage.getItem('token');
+          const token = getStoredAccessToken();
           if(!token) throw new Error('Unauthorized');
           
           const users = storage.getUsers();

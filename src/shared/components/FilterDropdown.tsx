@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useId } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/shared/lib';
 
@@ -10,6 +10,7 @@ interface FilterDropdownProps {
 }
 
 export function FilterDropdown({ label, options, selectedValues, onToggle }: FilterDropdownProps) {
+  const menuId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -32,10 +33,14 @@ export function FilterDropdown({ label, options, selectedValues, onToggle }: Fil
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={menuId}
+        onKeyDown={(event) => { if (event.key === 'Escape') setIsOpen(false); }}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center justify-between gap-3 px-4 py-2 rounded-lg border text-sm transition-colors min-w-[150px] md:min-w-[170px] h-[42px]",
-          "bg-[#242938] border-[#40475C] hover:border-brand-blue/50",
+          "flex items-center justify-between gap-3 px-4 py-2 rounded-xl border text-sm transition-colors min-w-[150px] md:min-w-[170px] h-11",
+          "bg-bg-input border-white/15 hover:border-brand-blue/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue",
           isOpen ? "border-brand-blue text-white" : "text-[#EDF0F7]"
         )}
       >
@@ -44,15 +49,17 @@ export function FilterDropdown({ label, options, selectedValues, onToggle }: Fil
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-56 bg-[#1B2336] border border-[#40475C] rounded-lg shadow-xl overflow-hidden z-50">
+        <div id={menuId} onKeyDown={(event) => { if (event.key === 'Escape') { setIsOpen(false); dropdownRef.current?.querySelector('button')?.focus(); } }} className="absolute top-full left-0 mt-2 w-56 bg-bg-card border border-white/15 rounded-xl shadow-xl overflow-hidden z-50">
           <div className="max-h-60 overflow-y-auto custom-scrollbar py-1">
             {options.map((option) => {
               const isSelected = selectedValues.includes(option);
               return (
                 <button
                   key={option}
+                  type="button"
+                  aria-pressed={isSelected}
                   onClick={() => onToggle(option)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#242938] transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-blue transition-colors"
                 >
                   <div className={cn(
                     "w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0",

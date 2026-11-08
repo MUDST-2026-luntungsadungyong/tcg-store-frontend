@@ -17,10 +17,21 @@ export default {
         'status-success': '#99D9AD',
         'status-danger': '#FFA5A5',
         'status-warning': '#FFEAAB',
+        'text-primary': '#F3F4F6',
+        'text-secondary': '#B8C4D8',
+        'text-muted': '#A6B4CA',
+        'border-default': '#35435A',
+        'surface-card': '#1B2336',
       },
       fontFamily: {
         sans: ['Inter', 'IBM Plex Sans Thai', 'sans-serif'],
         thai: ['IBM Plex Sans Thai', 'sans-serif'],
+      },
+      zIndex: {
+        dropdown: '60',
+        'modal-backdrop': '1000',
+        modal: '1010',
+        toast: '1100',
       },
       boxShadow: {
         'glow-blue': '0 0 15px rgba(114, 168, 255, 0.4)',

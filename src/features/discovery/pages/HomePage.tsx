@@ -46,17 +46,17 @@ function FeaturedBannerPreview({ banner, onMouseEnter, onMouseLeave }: { banner:
       onMouseLeave={onMouseLeave}
       onFocus={onMouseEnter}
       onBlur={onMouseLeave}
-      className="group absolute bottom-5 left-5 right-5 z-30 flex h-[152px] w-auto overflow-hidden rounded-[28px] border border-white/70 bg-white p-3 text-bg-card shadow-[0_24px_70px_rgba(0,0,0,0.42)] transition-transform duration-300 hover:-translate-y-1 md:bottom-8 md:left-auto md:right-6 md:w-[min(42vw,540px)]"
+      className="group absolute bottom-5 left-5 right-5 z-30 flex h-[152px] w-auto overflow-hidden rounded-[28px] border border-white/10 bg-bg-card p-3 text-gray-100 shadow-[0_24px_70px_rgba(0,0,0,0.42)] transition-transform duration-300 hover:-translate-y-1 md:bottom-8 md:left-auto md:right-6 md:w-[min(42vw,540px)]"
     >
-      <div className="h-32 w-40 shrink-0 overflow-hidden rounded-[20px] bg-white">
+      <div className="h-32 w-40 shrink-0 overflow-hidden rounded-[20px] bg-bg-card">
         <img src={banner.image} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col px-5 py-2">
         <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-status-warning">{banner.eyebrow}</span>
-        <h2 className="mt-2 line-clamp-2 text-xl font-bold leading-tight text-bg-card">{banner.title}</h2>
+        <h2 className="mt-2 line-clamp-2 text-xl font-bold leading-tight text-gray-100">{banner.title}</h2>
         <div className="mt-auto flex items-center justify-between gap-3">
-          <span className="text-xs font-medium text-bg-card/70">Discover the story</span>
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-status-warning text-bg-card transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">
+          <span className="text-xs font-medium text-gray-400">Discover the story</span>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-status-warning text-bg-base transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">
             <ChevronRight size={22} />
           </span>
         </div>
@@ -92,16 +92,16 @@ function EditorialBanners({ activeIndex, onChange, onPause, onResume }: { active
             data-testid="editorial-banner"
             data-banner-id={banner.id}
             aria-label={`Story ${activeIndex + 1} of ${HOME_BANNERS.length}: ${banner.title}`}
-            className="group grid h-[520px] w-full overflow-hidden rounded-[28px] border border-white/10 bg-white text-bg-card shadow-xl transition-opacity duration-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-status-warning md:h-[390px] md:grid-cols-[1.15fr_0.85fr]"
+            className="group grid h-[520px] w-full overflow-hidden rounded-[28px] border border-white/10 bg-bg-card text-gray-100 shadow-xl transition-opacity duration-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-status-warning md:h-[390px] md:grid-cols-[1.15fr_0.85fr]"
           >
-            <div className="relative h-[220px] overflow-hidden bg-white md:h-full">
+            <div className="relative h-[220px] overflow-hidden bg-bg-card md:h-full">
               <img src={banner.image} alt="" className={`h-full w-full transition-transform duration-500 group-hover:scale-[1.03] ${activeIndex === 1 ? 'object-contain p-5' : 'object-cover'}`} />
             </div>
             <div className="flex flex-col p-6 md:p-10">
-              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#8A6D16]">{banner.eyebrow}</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-brand-gold">{banner.eyebrow}</span>
               <h3 className="mt-3 text-3xl font-black leading-tight md:text-4xl">{banner.title}</h3>
-              <p className="mt-4 max-w-md text-base leading-relaxed text-[#596173]">{banner.description}</p>
-              <span className="mt-auto inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-bg-card px-5 py-3 text-sm font-bold text-[#DBE3F3] transition-colors group-hover:bg-bg-elevated">
+              <p className="mt-4 max-w-md text-base leading-relaxed text-gray-400">{banner.description}</p>
+              <span className="mt-auto inline-flex min-h-11 w-fit items-center gap-2 rounded-lg border border-white/15 bg-bg-elevated px-5 py-3 text-sm font-bold text-gray-100 transition-colors group-hover:bg-bg-elevated">
                 Learn more <ChevronRight size={18} />
               </span>
             </div>
@@ -154,9 +154,9 @@ function EditorialBanners({ activeIndex, onChange, onPause, onResume }: { active
 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/30 bg-white p-8 text-center text-bg-card">
+    <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/30 bg-bg-card p-8 text-center text-gray-100">
       <AlertCircle className="text-status-danger" />
-      <p className="text-sm text-[#596173]">{message}</p>
+      <p className="text-sm text-gray-400">{message}</p>
       <button type="button" onClick={onRetry} className="inline-flex items-center gap-2 rounded-lg bg-bg-card px-4 py-2 text-sm font-semibold text-white hover:bg-bg-elevated">
         <RefreshCw size={15} /> Try again
       </button>
@@ -186,11 +186,11 @@ function ExpensiveCards({ cards, loading, error, onRetry }: { cards: CardListing
           </div>
         )}
         {!loading && error && <ErrorState message={error} onRetry={onRetry} />}
-        {!loading && !error && cards.length === 0 && <div className="rounded-2xl border border-[#D9E0EA] bg-white p-10 text-center text-sm text-[#596173]">No cards are currently listed for sale.</div>}
+        {!loading && !error && cards.length === 0 && <div className="rounded-2xl border border-white/10 bg-bg-card p-10 text-center text-sm text-gray-400">No cards are currently listed for sale.</div>}
         {!loading && !error && cards.length > 0 && (
           <div className="flex gap-8 overflow-x-auto px-4 pb-12 pt-16 snap-x custom-scrollbar">
             {cards.map((item) => (
-              <Link key={item.id} to={`/cards/${item.id}`} className="group relative flex h-[380px] min-w-[260px] shrink-0 snap-start flex-col rounded-3xl border border-[#D9E0EA] bg-white text-bg-card p-4 shadow-glow transition-transform hover:-translate-y-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-blue md:h-[420px] md:min-w-[300px]">
+              <Link key={item.id} to={`/cards/${item.id}`} className="group relative flex h-[380px] min-w-[260px] shrink-0 snap-start flex-col rounded-3xl border border-white/10 bg-bg-card text-gray-100 p-4 shadow-glow transition-transform hover:-translate-y-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-blue md:h-[420px] md:min-w-[300px]">
                 <span className="absolute left-4 top-4 z-20 rounded-full bg-status-success px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-bg-base">In stock ({item.stock})</span>
                 <div className="absolute -right-5 bottom-24 z-10 flex w-[100%] items-center justify-center rotate-[4deg] drop-shadow-[0_24px_34px_rgba(0,0,0,0.55)] transition-transform duration-300 group-hover:-translate-y-4 group-hover:rotate-0">
                   <img
@@ -202,12 +202,12 @@ function ExpensiveCards({ cards, loading, error, onRetry }: { cards: CardListing
                     className="max-h-[280px] w-full object-contain md:max-h-[320px]"
                   />
                 </div>
-                <div className="relative z-20 mt-auto rounded-xl border border-[#D9E0EA] bg-[#F7F8FB] p-3">
+                <div className="relative z-20 mt-auto rounded-xl border border-white/10 bg-bg-surface p-3">
                   <div className="flex items-end justify-between gap-2">
-                    <span className="text-xl font-black text-bg-card">฿{item.price.toFixed(2)}</span>
-                    <span className="line-clamp-2 text-right text-xs font-bold text-bg-card">{item.name}</span>
+                    <span className="text-xl font-black text-gray-100">฿{item.price.toFixed(2)}</span>
+                    <span className="line-clamp-2 text-right text-xs font-bold text-gray-100">{item.name}</span>
                   </div>
-                  <div className="mt-1 flex justify-between gap-2 text-[10px] text-[#596173]">
+                  <div className="mt-1 flex justify-between gap-2 text-[10px] text-gray-400">
                     <span>
                       Market: <strong className="text-status-success">฿{(item.marketPrice ?? item.price).toFixed(2)}</strong>
                     </span>
@@ -240,36 +240,36 @@ function Leaderboard({ collectors, loading, error, onRetry }: { collectors: Coll
         {loading && (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-3xl border border-[#D9E0EA] bg-white p-6">
-                <Skeleton className="h-12 w-2/3 bg-[#E5E9F0]" />
-                <Skeleton className="mt-6 h-28 w-full bg-[#E5E9F0]" />
-                <Skeleton className="mt-6 h-10 w-full bg-[#E5E9F0]" />
+              <div key={i} className="rounded-3xl border border-white/10 bg-bg-card p-6">
+                <Skeleton className="h-12 w-2/3 bg-white/10" />
+                <Skeleton className="mt-6 h-28 w-full bg-white/10" />
+                <Skeleton className="mt-6 h-10 w-full bg-white/10" />
               </div>
             ))}
           </div>
         )}
         {!loading && error && <ErrorState message={error} onRetry={onRetry} />}
         {!loading && !error && collectors.length === 0 && (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#D9E0EA] bg-white p-10 text-center text-bg-card">
-            <Layers className="text-[#596173]" />
-            <p className="text-sm text-[#596173]">No public rare-card collections yet.</p>
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-bg-card p-10 text-center text-gray-100">
+            <Layers className="text-gray-400" />
+            <p className="text-sm text-gray-400">No public rare-card collections yet.</p>
           </div>
         )}
         {!loading && !error && collectors.length > 0 && (
-          <div className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar">
+          <div data-testid="home-collector-rail" className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar">
             {collectors.map((collector) => (
-              <article key={collector.userId} className="flex min-w-[320px] snap-center shrink-0 flex-col rounded-3xl border border-[#D9E0EA] bg-white p-6 text-bg-card shadow-[0_14px_40px_rgba(15,23,42,0.16)] transition-transform hover:-translate-y-1 sm:min-w-[390px] md:min-w-[430px]">
-                <div className="flex items-start justify-between gap-4 border-b border-[#D9E0EA] pb-5">
+              <article key={collector.userId} className="flex min-w-[320px] snap-center shrink-0 flex-col rounded-3xl border border-white/10 bg-bg-card p-6 text-gray-100 shadow-[0_14px_40px_rgba(15,23,42,0.16)] transition-transform hover:-translate-y-1 sm:min-w-[390px] md:min-w-[430px]">
+                <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-5">
                   <div className="flex min-w-0 items-center gap-3">
                     <span
-                      className={`flex h-12 w-12 shrink-0 items-center justify-center gap-1 rounded-2xl text-lg font-black ${
+                      className={`relative flex h-12 w-12 shrink-0 items-center justify-center gap-1 rounded-2xl text-lg font-black ${
                         collector.rank === 1
                           ? 'bg-[#FFF4C2] text-[#9A7410]'
                           : collector.rank === 2
                             ? 'bg-[#EEF1F5] text-[#667085]'
                             : collector.rank === 3
                               ? 'bg-[#F8E2D2] text-[#9A5B31]'
-                              : 'bg-[#E5E9F0] text-bg-card'
+                              : 'bg-white/10 text-gray-100'
                       }`}
                     >
                       {collector.rank === 1 && <Trophy size={22} strokeWidth={2.4} aria-hidden="true" />}
@@ -279,32 +279,32 @@ function Leaderboard({ collectors, loading, error, onRetry }: { collectors: Coll
                       <span className="sr-only">Rank {collector.rank}</span>
                     </span>
                     <div className="min-w-0">
-                      <h3 className="truncate text-lg font-bold text-bg-card">{collector.displayName}</h3>
-                      <p className="text-xs text-[#596173]">{collector.distinctRareCardCount} unique rare cards</p>
+                      <h3 className="truncate text-lg font-bold text-gray-100">{collector.displayName}</h3>
+                      <p className="text-xs text-gray-400">{collector.distinctRareCardCount} unique rare cards</p>
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-[#596173]">Rare cards</span>
-                    <span className="text-2xl font-black text-[#8A6D1F]">{collector.rareCardCount}</span>
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Rare cards</span>
+                    <span className="text-2xl font-black text-brand-gold">{collector.rareCardCount}</span>
                   </div>
                 </div>
                 <div className="mt-5">
-                  <h4 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#596173]">Collection highlights</h4>
+                  <h4 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Collection highlights</h4>
                   {collector.highlights.length > 0 ? (
                     <div className="grid grid-cols-3 gap-3">
                       {collector.highlights.map((card) => (
-                        <Link key={card.cardId} to={`/cards/${card.cardId}`} className="rounded-xl border border-[#D9E0EA] bg-[#F7F8FB] p-2 text-center hover:border-brand-blue/60">
+                        <Link key={card.cardId} to={`/cards/${card.cardId}`} className="rounded-xl border border-white/10 bg-bg-surface p-2 text-center hover:border-brand-blue/60">
                           <div className="relative flex h-24 items-center justify-center">
                             <img src={card.imageUrl || '/assets/expensive_card_1.png'} alt={card.name} className="max-h-full max-w-full object-contain drop-shadow-lg" />
                             {card.quantity > 1 && <span className="absolute right-0 top-0 rounded-full bg-bg-card px-1.5 py-0.5 text-[9px] font-bold text-white">×{card.quantity}</span>}
                           </div>
-                          <span className="mt-2 block truncate text-[10px] font-semibold text-bg-card">{card.name}</span>
+                          <span className="mt-2 block truncate text-[10px] font-semibold text-gray-100">{card.name}</span>
                           <span className="mt-1 block truncate text-[9px] text-brand-gold">{card.rarity}</span>
                         </Link>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-[#596173]">Rare card details unavailable.</p>
+                    <p className="text-sm text-gray-400">Rare card details unavailable.</p>
                   )}
                 </div>
                 <Link to={`/collections/${encodeURIComponent(collector.userId)}`} className="mt-6 rounded-xl bg-brand-blue py-3 text-center text-sm font-bold text-bg-base hover:bg-brand-blue/90">
@@ -393,7 +393,7 @@ export function HomePage() {
             Buy rare cards.<br /><span className="text-status-warning">Trade with confidence.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-md text-sm leading-relaxed text-[#DBE3F3]/80 sm:text-base md:mx-0">Discover rare Pokémon cards, build your collection, and trade with confidence.</p>
-          <a href="#explore-section" className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-status-warning px-6 py-3 text-sm font-bold text-bg-card shadow-lg shadow-black/20 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-status-warning/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-warning">
+          <a href="#explore-section" className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-status-warning px-6 py-3 text-sm font-bold text-bg-base shadow-lg shadow-black/20 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-status-warning/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-warning">
             Explore marketplace
           </a>
         </div>
@@ -427,14 +427,14 @@ export function HomePage() {
             ) : (
               <div className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar">
                 {featuredProducts.map((item) => (
-                  <Link key={item.id} to={`/cards/${item.id}`} className="flex h-[200px] min-w-[360px] snap-start gap-4 rounded-2xl border border-[#D9E0EA] bg-white p-4 text-bg-card hover:border-brand-blue/60">
+                  <Link key={item.id} to={`/cards/${item.id}`} className="flex h-[200px] min-w-[360px] snap-start gap-4 rounded-2xl border border-white/10 bg-bg-card p-4 text-gray-100 hover:border-brand-blue/60">
                     <div className="flex w-[130px] shrink-0 items-center justify-center">
                       <img src={item.image || '/assets/expensive_card_1.png'} alt={item.name} className="h-full w-full object-contain drop-shadow-lg" />
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col">
-                      <h3 className="truncate text-lg font-bold text-bg-card">{item.name}</h3>
-                      <p className="mt-1 text-xs text-[#596173]">{item.set || item.game}</p>
-                      <p className="mt-auto text-2xl font-black text-bg-card">฿{item.price.toFixed(2)}</p>
+                      <h3 className="truncate text-lg font-bold text-gray-100">{item.name}</h3>
+                      <p className="mt-1 text-xs text-gray-400">{item.set || item.game}</p>
+                      <p className="mt-auto text-2xl font-black text-gray-100">฿{item.price.toFixed(2)}</p>
                       <p className="text-xs text-status-success">Market: ฿{(item.marketPrice ?? item.price).toFixed(2)}</p>
                     </div>
                   </Link>

@@ -1,3 +1,4 @@
+import { getStoredAccessToken } from '@/shared/api/authStorage';
 import { ENV } from '@/shared/config/env';
 import { storage } from '@/infrastructure/mock-db/storage';
 import type { CardListing, CollectionEntry } from '@/entities/card/model/types';
@@ -82,7 +83,7 @@ export const collectionApi = {
   getMyCollection: async (): Promise<CollectionEntry[]> => {
     if (ENV.ENABLE_MOCK_API) {
       await new Promise((resolve) => setTimeout(resolve, 300));
-      const token = localStorage.getItem('token');
+      const token = getStoredAccessToken();
       const userId = token?.includes('admin') ? 'usr-2' : token?.includes('seller') ? 'usr-3' : 'usr-1';
       return storage.getCollection().filter((item) => item.ownerId === userId);
     }
@@ -93,7 +94,7 @@ export const collectionApi = {
   addToCollection: async (listing: CardListing): Promise<CollectionEntry> => {
     if (ENV.ENABLE_MOCK_API) {
       await new Promise((resolve) => setTimeout(resolve, 300));
-      const token = localStorage.getItem('token');
+      const token = getStoredAccessToken();
       const userId = token?.includes('admin') ? 'usr-2' : token?.includes('seller') ? 'usr-3' : 'usr-1';
       const all = storage.getCollection();
       const existing = all.find((item) => item.ownerId === userId && item.listing.id === listing.id);
@@ -121,16 +122,16 @@ export const collectionApi = {
     card: CatalogCard,
     quantity = 1,
   ): Promise<CollectionEntry> => {
+    // --- QA TEST SETTING FOR CASE 9 ---
+    if (localStorage.getItem('DEV_SIMULATE_API_ERROR') === 'true') {
+      throw new Error('500 Internal Server Error: Database connection lost while saving.');
+    }
+    // ----------------------------------
+
     if (ENV.ENABLE_MOCK_API) {
       await new Promise((resolve) => setTimeout(resolve, 300));
-      
-      // --- QA TEST SETTING FOR CASE 9 ---
-      if (localStorage.getItem('DEV_SIMULATE_API_ERROR') === 'true') {
-        throw new Error('500 Internal Server Error: Database connection lost while saving.');
-      }
-      // ----------------------------------
 
-      const token = localStorage.getItem('token');
+      const token = getStoredAccessToken();
       const userId = token?.includes('admin') ? 'usr-2' : token?.includes('seller') ? 'usr-3' : 'usr-1';
       const all = storage.getCollection();
       const existing = all.find((item) => item.ownerId === userId && item.listing.id === card.id);

@@ -12,6 +12,7 @@ import {
   type ReservationStatus,
 } from '@/entities/reservation/model/types';
 import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
+import { calculateMockDiscount, markLocalVoucherUsed } from '@/features/vouchers/api/vouchers';
 
 export type ReservationOrderErrorCode =
   | 'UNAUTHORIZED'
@@ -37,6 +38,7 @@ export interface CreateReservationOrdersInput {
   buyerId: string;
   items: ReservationCartItem[];
   idempotencyKey?: string;
+  voucherCode?: string;
 }
 
 export interface ReservationCheckoutGroup {
@@ -200,20 +202,52 @@ function buildMockOrders(input: CreateReservationOrdersInput): ReservationOrder[
   }
 
   const now = new Date().toISOString();
-  const orders: ReservationOrder[] = [...grouped.entries()].map(
-    ([sellerId, items]) => ({
+
+  const overallSubtotal = [...grouped.values()].reduce((sum, items) => {
+    return sum + items.reduce((sub, item) => sub + item.listing.price * item.quantity, 0);
+  }, 0);
+
+  let totalDiscount = 0;
+  if (input.voucherCode) {
+    const calc = calculateMockDiscount(input.voucherCode, overallSubtotal);
+    totalDiscount = calc.discountAmount;
+  }
+
+  let remainingDiscountToDistribute = totalDiscount;
+  const entries = [...grouped.entries()];
+  const orders: ReservationOrder[] = entries.map(([sellerId, items], index) => {
+    const subtotal = items.reduce(
+      (total, item) => total + item.listing.price * item.quantity,
+      0,
+    );
+    let orderDiscount = 0;
+    if (totalDiscount > 0) {
+      if (index === entries.length - 1) {
+        orderDiscount = remainingDiscountToDistribute;
+      } else {
+        const ratio = subtotal / overallSubtotal;
+        orderDiscount = Math.round(totalDiscount * ratio * 100) / 100;
+        remainingDiscountToDistribute = Math.max(0, remainingDiscountToDistribute - orderDiscount);
+      }
+    }
+    const finalOrderTotal = Math.max(0, subtotal - orderDiscount);
+    return {
       id: createId('ord'),
       buyerId: input.buyerId,
       sellerId,
       items,
-      totalAmount: items.reduce(
-        (total, item) => total + item.listing.price * item.quantity,
-        0,
-      ),
+      subtotalAmount: subtotal,
+      discountAmount: orderDiscount,
+      voucherCode: input.voucherCode,
+      totalAmount: finalOrderTotal,
       status: 'RESERVED',
       createdAt: now,
-    }),
-  );
+    };
+  });
+
+  if (input.voucherCode && totalDiscount > 0) {
+    markLocalVoucherUsed(input.voucherCode);
+  }
 
   // All validation completes before any storage write, keeping the mock's
   // reserve/order/notification operation atomic from the caller's perspective.
@@ -248,8 +282,11 @@ function normalizeStatus(status: string): ReservationStatus {
   if (status === 'CONFIRMED') {
     return 'CONFIRMED';
   }
-  if (status === 'SENT' || status === 'FULFILLED') {
+  if (status === 'SENT') {
     return 'SENT';
+  }
+  if (status === 'FULFILLED') {
+    return 'FULFILLED';
   }
   if (status === 'CANCELLED') {
     return 'CANCELLED';
@@ -296,6 +333,12 @@ export function normalizeReservationOrder(
   if (!value || typeof value !== 'object') {
     throw new ReservationOrderError('REQUEST_FAILED', 'The server returned an invalid reservation order response.');
   }
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      throw new ReservationOrderError('REQUEST_FAILED', 'The server returned an incomplete reservation order response.');
+    }
+    return normalizeReservationOrder(value[0], fallbackBuyerId);
+  }
   const record = value as BackendOrderResponse;
   if (!record.id || !record.status || !Array.isArray(record.items)) {
     throw new ReservationOrderError('REQUEST_FAILED', 'The server returned an incomplete reservation order response.');
@@ -312,12 +355,20 @@ export function normalizeReservationOrder(
     sellerId: firstSellerId,
     items: record.items.map((item) => toReservationItem(item, firstSellerId)),
     totalAmount: Number(record.totalAmount ?? record.totalPrice ?? 0),
+    subtotalAmount: (record as any).subtotalAmount ? Number((record as any).subtotalAmount) : Number(record.totalAmount ?? record.totalPrice ?? 0),
+    discountAmount: (record as any).discountAmount ? Number((record as any).discountAmount) : 0,
+    voucherCode: (record as any).voucherCode ?? (record as any).voucherCodeSnapshot ?? undefined,
     status: normalizeStatus(record.status),
     createdAt: String(record.createdAt ?? new Date(0).toISOString()),
+    updatedAt: (record as any).updatedAt ? String((record as any).updatedAt) : undefined,
     paymentConfirmedAt: record.paymentConfirmedAt,
     sentAt: record.sentAt,
     ownershipTransferredAt: record.ownershipTransferredAt,
     cancelledAt: record.cancelledAt,
+    orderNumber: (record as any).orderNumber ? String((record as any).orderNumber) : undefined,
+    sellerName: (record as any).sellerName ? String((record as any).sellerName) : undefined,
+    cancellationReason: (record as any).cancellationReason ? String((record as any).cancellationReason) : undefined,
+    logs: Array.isArray((record as any).logs) ? (record as any).logs : undefined,
   };
 }
 
@@ -325,12 +376,22 @@ async function createOrdersWithApi(
   input: CreateReservationOrdersInput,
 ): Promise<ReservationOrder[]> {
   validateCartItems(input.items);
-  const response = input.idempotencyKey
-    ? await apiClient.post<BackendOrderResponse>(ORDER_ENDPOINT, undefined, {
+  const response = input.voucherCode
+    ? await apiClient.post<BackendOrderResponse | BackendOrderResponse[]>(
+        ORDER_ENDPOINT,
+        { voucherCode: input.voucherCode },
+        input.idempotencyKey ? { headers: { 'Idempotency-Key': input.idempotencyKey } } : undefined,
+      )
+    : input.idempotencyKey
+    ? await apiClient.post<BackendOrderResponse | BackendOrderResponse[]>(ORDER_ENDPOINT, undefined, {
         headers: { 'Idempotency-Key': input.idempotencyKey },
       })
-    : await apiClient.post<BackendOrderResponse>(ORDER_ENDPOINT);
-  return [normalizeReservationOrder(response.data, input.buyerId)];
+    : await apiClient.post<BackendOrderResponse | BackendOrderResponse[]>(ORDER_ENDPOINT);
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return data.map((item) => normalizeReservationOrder(item, input.buyerId));
+  }
+  return [normalizeReservationOrder(data, input.buyerId)];
 }
 
 function assertSellerOrder(

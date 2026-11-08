@@ -17,7 +17,7 @@ export async function updateBuyerOrderStatus(
   if (note) {
     payload.note = note;
   }
-  const response = await apiClient.patch(`/orders/me/${orderId}/status`, payload);
+  const response = await apiClient.patch(`/orders/${orderId}/status`, payload);
   if (!response.data) throw new Error('The server returned an empty buyer order update response.');
   
   const buyerId = useAuthStore.getState().user?.id ?? 'usr-1';

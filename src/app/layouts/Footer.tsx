@@ -10,13 +10,13 @@ export function Footer() {
             <Link to="/" className="mb-2 inline-flex h-24 w-24 items-center justify-center overflow-visible">
               <img src="/assets/component_293_629.png" alt="Mythic TCG" className="h-24 w-24 scale-[1.35] object-contain" />
             </Link>
-            <p className="text-[#EAB308] text-sm font-semibold mt-2">
+            <p className="text-brand-gold text-sm font-semibold mt-2">
               Reserve, trade and collect TCG cards
             </p>
           </div>
 
           <div className="col-span-1">
-            <h3 className="text-[#EAB308] font-bold text-lg mb-6">Trading flow</h3>
+            <h3 className="text-brand-gold font-bold text-lg mb-6">Trading flow</h3>
             <ul className="space-y-4">
               <li><Link to="/cards" className="text-sm text-gray-400 hover:text-white transition-colors">Discover cards</Link></li>
               <li><Link to="/orders" className="text-sm text-gray-400 hover:text-white transition-colors">Reservation orders</Link></li>
@@ -25,7 +25,7 @@ export function Footer() {
           </div>
 
           <div className="col-span-1">
-            <h3 className="text-[#EAB308] font-bold text-lg mb-6">Important</h3>
+            <h3 className="text-brand-gold font-bold text-lg mb-6">Important</h3>
             <p className="text-sm leading-6 text-gray-400">
               Mythix records reservations and ownership changes. Buyer and seller
               arrange contact, payment and delivery outside the platform.
@@ -33,7 +33,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="text-center text-xs text-gray-600 pt-8 border-t border-white/5">
+        <div className="text-center text-xs text-text-muted pt-8 border-t border-white/5">
           Copyright © 2026 MYTHIC INC. All Rights Reserved.
         </div>
       </div>

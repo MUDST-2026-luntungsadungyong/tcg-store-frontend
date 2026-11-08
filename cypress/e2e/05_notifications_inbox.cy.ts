@@ -121,7 +121,8 @@ describe('Core Journey 5: In-App Notification Center (US-11)', () => {
     it('keeps the bell visible for guests and redirects to login when clicked', () => {
       cy.visit('/', {
         onBeforeLoad(win) {
-          win.localStorage.removeItem('token');
+          win.localStorage.clear();
+          win.sessionStorage.clear();
         },
       });
 
@@ -284,8 +285,6 @@ describe('Core Journey 5: In-App Notification Center (US-11)', () => {
       cy.get('button[aria-label="Mark Your order has been sent as read"]').should('not.exist');
       cy.get('[aria-label="Read"]').should('exist');
 
-      cy.screenshot('notifications-inbox-read-state', { capture: 'fullPage' });
-
       cy.get('button[aria-label="Delete Your order has been sent"]').click();
       cy.wait('@deleteNotification');
       cy.wait('@listNotifications');
@@ -385,7 +384,7 @@ describe('Core Journey 5: In-App Notification Center (US-11)', () => {
   });
 
   describe('Visual & Bubble Card Styles', () => {
-    it('renders notification cards as white bubbles', () => {
+    it('renders notification cards using the shared dark panel surface', () => {
       cy.intercept('GET', '**/api/notifications*', (req) => {
         req.reply(page([notification]));
       }).as('listNotifications');
@@ -394,10 +393,10 @@ describe('Core Journey 5: In-App Notification Center (US-11)', () => {
       cy.wait('@listNotifications');
       cy.get('[aria-label="Notification list"] > li')
         .should('have.length', 1)
-        .should('have.css', 'background-color', 'rgb(255, 255, 255)');
+        .should('have.css', 'background-color', 'rgb(27, 35, 54)');
     });
 
-    it('renders seller and similar cards as white bubbles', () => {
+    it('renders seller and similar cards using the shared dark panel surface', () => {
       const sellerOffer = {
         id: 'listing-1',
         cardId: 'prd-1',
@@ -453,12 +452,12 @@ describe('Core Journey 5: In-App Notification Center (US-11)', () => {
       cy.contains('h2', 'Seller offers').should('be.visible');
       cy.get('section[aria-labelledby="seller-offers-heading"] article')
         .first()
-        .should('have.css', 'background-color', 'rgb(255, 255, 255)');
+        .should('have.css', 'background-color', 'rgb(27, 35, 54)');
 
       cy.contains('h2', 'Similar cards').should('be.visible');
       cy.get('section[aria-labelledby="similar-cards-heading"] a')
         .first()
-        .should('have.css', 'background-color', 'rgb(255, 255, 255)');
+        .should('have.css', 'background-color', 'rgb(27, 35, 54)');
     });
   });
 });

@@ -1,4 +1,5 @@
-import { useEffect, type HTMLAttributes } from 'react';
+import { acquireBodyScrollLock } from '@/shared/lib/bodyScrollLock';
+import { useEffect, useId, useRef, type HTMLAttributes } from 'react';
 import { cn } from '@/shared/lib';
 import {
   Check,
@@ -39,11 +40,11 @@ export interface FeedbackPopupProps extends HTMLAttributes<HTMLDivElement> {
 /**
  * Tone config — colours are extracted 1:1 from Figma Scenario Gallery fills.
  *
- * Card background is white (light theme).
+ * Card background uses the shared dark surface.
  * Icon circle = tone colour at 10 % opacity.
- * Icon glyph  = tone colour (full opacity, visible on white).
+ * Icon glyph  = tone colour on the shared dark surface.
  * Primary btn bg = tone colour; text = bg-base (near-black).
- * Secondary btn = transparent, text = black.
+ * Secondary btn = transparent, muted foreground.
  */
 const TONE_CONFIG: Record<
   FeedbackTone,
@@ -61,7 +62,7 @@ const TONE_CONFIG: Record<
     icon: Info,
     iconWrapper: 'bg-brand-blue/10 text-brand-blue',
     primaryBtn:
-      'bg-brand-blue text-bg-base hover:bg-[#4a85e0] focus:ring-brand-blue',
+      'bg-brand-blue text-bg-base hover:bg-brand-blue/90 focus:ring-brand-blue',
   },
   // r=1.0 g=0.918 b=0.671 → #FFEAAB  (status-warning)
   warning: {
@@ -82,14 +83,14 @@ const TONE_CONFIG: Record<
     icon: LogIn,
     iconWrapper: 'bg-brand-blue/10 text-brand-blue',
     primaryBtn:
-      'bg-brand-blue text-bg-base hover:bg-[#4a85e0] focus:ring-brand-blue',
+      'bg-brand-blue text-bg-base hover:bg-brand-blue/90 focus:ring-brand-blue',
   },
   // Icon circle = warning yellow; primary btn = brand-blue (Figma confirm scenario)
   confirm: {
     icon: HelpCircle,
     iconWrapper: 'bg-status-warning/10 text-status-warning',
     primaryBtn:
-      'bg-brand-blue text-bg-base hover:bg-[#4a85e0] focus:ring-brand-blue',
+      'bg-brand-blue text-bg-base hover:bg-brand-blue/90 focus:ring-brand-blue',
   },
   // Same red as error but confirm-style irreversible action
   destructive: {
@@ -123,7 +124,7 @@ function LoadingSpinner() {
  * FeedbackPopup — modal dialog for outcomes requiring acknowledgement.
  *
  * Layout follows Figma "Feedback Popup" component set (page 03 Feedback Popup):
- *   • Light-themed white card on dark scrim
+ *   • Dark card on dark scrim
  *   • Horizontal: [icon circle] [title + message + meta]
  *   • Actions right-aligned: [secondary (ghost)] [primary (tinted)]
  *
@@ -151,11 +152,31 @@ export function FeedbackPopup({
   className,
   ...props
 }: FeedbackPopupProps) {
+  const titleId = useId();
+  const descriptionId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
   // Lock body scroll while open
   useEffect(() => {
-    document.body.style.overflow = isOpen ? 'hidden' : 'unset';
+    if (!isOpen) return;
+    const releaseScrollLock = acquireBodyScrollLock();
+    const previousFocus = document.activeElement as HTMLElement | null;
+    dialogRef.current?.querySelector<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]')?.focus();
+    const trapFocus = (event: KeyboardEvent) => {
+      const targetDialog = (event.target as HTMLElement).closest?.('[role="dialog"], [role="alertdialog"]');
+      if (targetDialog && targetDialog !== dialogRef.current) return;
+      if (event.key !== 'Tab') return;
+      const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]') ?? []).filter((element) => !element.closest('[hidden], [inert], [aria-hidden="true"]'));
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (!first) { event.preventDefault(); dialogRef.current?.focus(); return; }
+      if (event.shiftKey && (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', trapFocus);
     return () => {
-      document.body.style.overflow = 'unset';
+      releaseScrollLock();
+      document.removeEventListener('keydown', trapFocus);
+      previousFocus?.focus();
     };
   }, [isOpen]);
 
@@ -166,11 +187,13 @@ export function FeedbackPopup({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-modal-backdrop flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+      ref={dialogRef}
+      tabIndex={-1}
       role="alertdialog"
       aria-modal="true"
-      aria-labelledby="fp-title"
-      aria-describedby="fp-desc"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
     >
       {/*
         Card — white (#FFFFFF), max-w 460px, padding 24px, gap 20px, radius 16px
@@ -178,7 +201,7 @@ export function FeedbackPopup({
       */}
       <div
         className={cn(
-          'flex w-full max-w-[460px] flex-col gap-5 rounded-2xl bg-white p-6 shadow-xl',
+          'flex w-full max-w-[460px] flex-col gap-5 relative z-modal rounded-2xl border border-white/15 bg-bg-card p-6 text-gray-100 shadow-xl',
           className,
         )}
         {...props}
@@ -201,15 +224,15 @@ export function FeedbackPopup({
           {/* Figma: copy frame layoutMode=VERTICAL, itemSpacing=8 */}
           <div className="flex flex-col gap-2 text-left">
             {/* Title — black (#000000) */}
-            <h2 id="fp-title" className="text-base font-semibold leading-tight text-black">
+            <h2 id={titleId} className="text-base font-semibold leading-tight text-white">
               {title}
             </h2>
             {/* Message — dark navy (#1B2336 ≈ bg-card) */}
-            <p id="fp-desc" className="text-sm leading-relaxed text-bg-card">
+            <p id={descriptionId} className="text-sm leading-relaxed text-gray-300">
               {message}
             </p>
             {/* Meta — darker navy (#18202B ≈ bg-input) */}
-            {meta && <p className="text-xs text-bg-input">{meta}</p>}
+            {meta && <p className="text-xs text-gray-400">{meta}</p>}
           </div>
         </div>
 
@@ -218,9 +241,10 @@ export function FeedbackPopup({
         <div className="flex flex-row justify-end gap-3">
           {secondaryAction && (
             <button
+              type="button"
               onClick={secondaryAction.onClick}
               disabled={secondaryAction.isLoading}
-              className="flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center justify-center min-h-11 rounded-xl px-4 py-2 text-sm font-semibold text-gray-300 transition-colors hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 focus:ring-offset-bg-card disabled:cursor-not-allowed disabled:opacity-50"
             >
               {secondaryAction.isLoading && <LoadingSpinner />}
               {secondaryAction.label}
@@ -228,10 +252,11 @@ export function FeedbackPopup({
           )}
 
           <button
+            type="button"
             onClick={primaryAction.onClick}
             disabled={primaryAction.isLoading}
             className={cn(
-              'flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50',
+              'flex items-center justify-center min-h-11 rounded-xl px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-bg-card disabled:cursor-not-allowed disabled:opacity-50',
               config.primaryBtn,
             )}
           >

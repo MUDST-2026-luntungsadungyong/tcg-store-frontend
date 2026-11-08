@@ -78,7 +78,8 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     condition: item.listing.condition,
     image: item.listing.image,
   }));
-  const sellerRevenue = order.totalAmount;
+  // Platform absorbs voucher discount; seller always receives the full item subtotal
+  const sellerRevenue = order.subtotalAmount ?? items.reduce((sum, item) => sum + item.itemTotal, 0);
   const sellerCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
   const status: SellerOrderStatus = order.status === 'SENT' || order.status === 'FULFILLED'
     ? 'SENT'
@@ -98,6 +99,7 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     buyerPhone: buyer?.phone,
     buyerContactLine: buyer?.line,
     buyerContactFacebook: buyer?.facebook,
+    logs: order.logs ?? [],
     sellerRevenue,
     sellerCost,
     sellerProfit: sellerRevenue - sellerCost,
@@ -168,7 +170,8 @@ export async function fetchSellerOrders(
 export async function updateSellerOrderStatus(
   orderId: number | string,
   newStatus: SellerOrderStatus | string,
-  note?: string
+  note?: string,
+  trackingNumber?: string
 ): Promise<SellerOrder> {
   const normalizedStatus = newStatus.toUpperCase();
   if (!['PENDING', 'CONFIRMED', 'SENT', 'FULFILLED', 'CANCELLED'].includes(normalizedStatus)) {
@@ -176,42 +179,62 @@ export async function updateSellerOrderStatus(
   }
 
   if (ENV.ENABLE_MOCK_API) {
-    const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
-    if (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED') {
-      const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
-      return mapReservationOrder(updated);
-    }
     initMockStorage();
     const reservations = storage.getReservations();
-    const orderIndex = reservations.findIndex((o) => String(o.id) === String(orderId));
+    const orderIndex = reservations.findIndex((candidate) => String(candidate.id) === String(orderId));
     if (orderIndex >= 0) {
-      const existing = reservations[orderIndex];
+      const order = reservations[orderIndex];
       const timestamp = new Date().toISOString();
-      const updated: ReservationOrder = {
-        ...existing,
-        status: normalizedStatus as any,
-        paymentConfirmedAt: normalizedStatus === 'CONFIRMED' ? timestamp : existing.paymentConfirmedAt,
-        cancelledAt: normalizedStatus === 'CANCELLED' ? timestamp : existing.cancelledAt,
-        logs: [
-          ...(existing.logs ?? []),
-          {
-            fromStatus: existing.status,
-            toStatus: normalizedStatus,
-            changedByRole: 'SELLER',
-            note: note ?? null,
-            createdAt: timestamp,
-          },
-        ],
-      };
-      reservations[orderIndex] = updated;
-      storage.setReservations([...reservations]);
-      return mapReservationOrder(updated);
+      if (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED') {
+        const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
+        const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
+        const storedReservations = storage.getReservations();
+        const storedOrder = storedReservations.find((candidate) => String(candidate.id) === String(orderId));
+        if (storedOrder) {
+          storedOrder.logs = [
+            ...(storedOrder.logs || []),
+            {
+              fromStatus: storedOrder.status || 'CONFIRMED',
+              toStatus: 'SENT',
+              changedByRole: 'SELLER',
+              note: note
+                ? `${note} (Tracking / TAX: ${trackingNumber})`
+                : (trackingNumber ? `Tracking / TAX: ${trackingNumber}` : null),
+              createdAt: timestamp,
+            },
+          ];
+          storage.setReservations(storedReservations);
+        }
+        return mapReservationOrder(storedOrder ?? updated);
+      }
+      order.status = normalizedStatus as any;
+      if (normalizedStatus === 'CONFIRMED') {
+        order.paymentConfirmedAt = timestamp;
+      } else if (normalizedStatus === 'CANCELLED') {
+        order.cancelledAt = timestamp;
+      }
+      order.logs = [
+        ...(order.logs || []),
+        {
+          fromStatus: order.status,
+          toStatus: normalizedStatus,
+          changedByRole: 'SELLER',
+          note: note ?? null,
+          createdAt: timestamp,
+        },
+      ];
+      storage.setReservations(reservations);
+      return mapReservationOrder(order);
+    }
     }
   }
 
   const payload: any = { status: normalizedStatus };
   if (note) {
     payload.note = note;
+  }
+  if (trackingNumber) {
+    payload.trackingNumber = trackingNumber;
   }
   const response = await apiClient.patch(`/seller/orders/${encodeURIComponent(orderId)}/status`, payload);
   if (!response.data) throw new Error('The server returned an empty seller order update response.');

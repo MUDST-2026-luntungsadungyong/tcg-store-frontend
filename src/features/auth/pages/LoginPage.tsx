@@ -15,6 +15,7 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,7 +25,7 @@ export function LoginPage() {
     setIsLoading(true);
     try {
       const { token, user } = await authApi.login(email, password);
-      login(token, user);
+      login(token, user, rememberMe);
       navigate(getPostAuthDestination(user, location.state));
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Login failed'));
@@ -58,7 +59,7 @@ export function LoginPage() {
               placeholder="••••••••"
               autoComplete="current-password"
               required
-              className="pr-10"
+              className="pr-12"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -67,13 +68,23 @@ export function LoginPage() {
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               aria-pressed={showPassword}
-              className="absolute bottom-0 right-1 flex h-[44px] w-9 items-center justify-center text-gray-300 transition-colors hover:text-brand-blue focus:text-brand-blue focus:outline-none"
+              className="absolute bottom-0 right-1 flex h-[44px] w-11 items-center justify-center text-gray-300 transition-colors hover:text-brand-blue focus:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue rounded-md"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          <div className="mt-2 text-right">
-            <Link to="/forgot-password" className="text-xs font-medium text-brand-blue hover:text-brand-blue/80 hover:underline">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3">
+            <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                name="remember-me"
+                checked={rememberMe}
+                onChange={(event) => setRememberMe(event.target.checked)}
+                className="size-4 shrink-0 cursor-pointer rounded border-white/20 accent-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated"
+              />
+              Remember me
+            </label>
+            <Link to="/forgot-password" className="inline-flex min-h-11 items-center rounded-md px-1 text-sm font-medium text-brand-blue hover:text-brand-blue/80 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue">
               Forgot password?
             </Link>
           </div>
@@ -95,9 +106,9 @@ export function LoginPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-400">
+      <p className="mt-5 flex flex-wrap items-center justify-center gap-x-1 text-center text-sm text-gray-400 md:mt-6">
         Don't have an account?{' '}
-        <Link to="/register" state={location.state} className="font-medium text-brand-blue hover:text-brand-blue/80 hover:underline">
+        <Link to="/register" state={location.state} className="inline-flex min-h-11 items-center rounded-md px-1 font-medium text-brand-blue hover:text-brand-blue/80 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue">
           Sign up
         </Link>
       </p>

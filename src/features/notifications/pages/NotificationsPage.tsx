@@ -110,7 +110,7 @@ export function NotificationsPage() {
   };
 
   return (
-    <section className="min-h-[calc(100vh-64px)] bg-[#0B141F] px-4 py-10 text-white md:px-8">
+    <section className="min-h-[calc(100vh-64px)] bg-bg-base px-4 py-10 text-white md:px-8">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <header>
           <div className="flex items-center gap-3">
@@ -125,16 +125,16 @@ export function NotificationsPage() {
         {actionError && <p role="alert" className="rounded-lg border border-status-danger/30 bg-status-danger/10 p-3 text-sm text-red-200">{actionError}</p>}
 
         {loading && (
-          <div role="status" aria-label="Loading notifications" className="space-y-3 rounded-2xl border border-[#D9E0EA] bg-white p-5 text-bg-card shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
+          <div role="status" aria-label="Loading notifications" className="space-y-3 rounded-2xl border border-white/10 bg-bg-card p-5 text-gray-100 shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
             <span className="sr-only">Loading notifications</span>
-            {[0, 1, 2].map((item) => <Skeleton key={item} className="h-20 w-full bg-[#E5EAF2]" />)}
+            {[0, 1, 2].map((item) => <Skeleton key={item} className="h-20 w-full bg-white/10" />)}
           </div>
         )}
 
         {!loading && error && (
-          <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/40 bg-white p-8 text-center text-bg-card shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
+          <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-status-danger/40 bg-bg-card p-8 text-center text-gray-100 shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
             <AlertCircle className="size-10 text-status-danger" aria-hidden="true" />
-            <p className="text-[#4B5567]">{error}</p>
+            <p className="text-gray-300">{error}</p>
             {unauthorized ? (
               <Button onClick={() => navigate('/login', { state: { from: '/notifications' } })}>Sign in</Button>
             ) : (
@@ -144,10 +144,10 @@ export function NotificationsPage() {
         )}
 
         {!loading && !error && result?.content.length === 0 && (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#D9E0EA] bg-white px-6 py-16 text-center text-bg-card shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-bg-card px-6 py-16 text-center text-gray-100 shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
             <Bell className="size-12 text-[#8A94A8]" aria-hidden="true" />
-            <h2 className="text-xl font-semibold text-[#151B2B]">You’re all caught up</h2>
-            <p className="text-sm text-[#596173]">New reservation and order updates will appear here.</p>
+            <h2 className="text-xl font-semibold text-gray-100">You’re all caught up</h2>
+            <p className="text-sm text-gray-400">New reservation and order updates will appear here.</p>
           </div>
         )}
 
@@ -155,18 +155,18 @@ export function NotificationsPage() {
           <>
             <ul aria-label="Notification list" className="space-y-3">
               {result?.content.map((notification) => (
-                <li key={notification.id} className={`flex flex-col gap-4 rounded-2xl border bg-white p-5 text-bg-card shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-shadow hover:shadow-[0_12px_28px_rgba(0,0,0,0.18)] sm:flex-row sm:items-start sm:justify-between ${notification.readAt ? 'border-[#D9E0EA]' : 'border-brand-blue ring-1 ring-brand-blue/20'}`}>
+                <li key={notification.id} className={`flex flex-col gap-4 rounded-2xl border bg-bg-card p-5 text-gray-100 shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-shadow hover:shadow-[0_12px_28px_rgba(0,0,0,0.18)] sm:flex-row sm:items-start sm:justify-between ${notification.readAt ? 'border-white/10' : 'border-brand-blue ring-1 ring-brand-blue/20'}`}>
                   <div className="flex min-w-0 gap-3">
                     <span className={`mt-1 size-2 shrink-0 rounded-full ${notification.readAt ? 'bg-transparent' : 'bg-brand-blue'}`} aria-label={notification.readAt ? 'Read' : 'Unread'} />
                     <div className="min-w-0">
-                      <h2 className="font-semibold text-[#151B2B]">{notification.title}</h2>
-                      <p className="mt-1 text-sm text-[#4B5567]">{notification.message}</p>
-                      <p className="mt-2 text-xs text-[#6B7280]">
+                      <h2 className="font-semibold text-gray-100">{notification.title}</h2>
+                      <p className="mt-1 text-sm text-gray-300">{notification.message}</p>
+                      <p className="mt-2 text-xs text-gray-400">
                         {notification.orderId ? `Order #${notification.orderId} · ` : ''}
                         {notification.sellerApplicationId ? `Application #${notification.sellerApplicationId} · ` : ''}
                         {new Date(notification.createdAt).toLocaleString()}
                       </p>
-                      {getAction(notification) && <button type="button" onClick={() => void openNotification(notification, getAction(notification)!.destination)} className="mt-3 text-sm font-semibold text-[#2B53A9] hover:text-[#151B2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue">
+                      {getAction(notification) && <button type="button" onClick={() => void openNotification(notification, getAction(notification)!.destination)} className="mt-3 text-sm font-semibold text-brand-blue hover:text-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue">
                         {getAction(notification)!.label}
                       </button>}
                     </div>

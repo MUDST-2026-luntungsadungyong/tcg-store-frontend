@@ -23,7 +23,7 @@ export function SellerOffersSection({ offers, loadingOfferId, onAddToCart, onRes
           {offers.map(offer => <SellerOfferRow key={offer.id} offer={offer} isLoading={loadingOfferId === offer.id} onAddToCart={onAddToCart} onReserveNow={onReserveNow} />)}
         </div>
       ) : (
-        <div role="status" className="rounded-2xl border border-dashed border-[#C8D1E0] bg-white p-8 text-center text-sm text-[#596173] shadow-[0_8px_24px_rgba(0,0,0,0.14)]">No seller has this card listed right now.</div>
+        <div role="status" className="rounded-2xl border border-dashed border-white/15 bg-bg-card p-8 text-center text-sm text-gray-400 shadow-[0_8px_24px_rgba(0,0,0,0.14)]">No seller has this card listed right now.</div>
       )}
     </section>
   );

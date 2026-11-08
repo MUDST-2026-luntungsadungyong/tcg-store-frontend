@@ -5,7 +5,7 @@ import { ScrollToTop } from '@/shared/components/ScrollToTop';
 
 export function WorkspaceLayout() {
   return (
-    <div className="min-h-screen bg-bg-base flex flex-col text-white">
+    <div className="min-h-screen pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0 bg-bg-base flex flex-col text-white">
       <ScrollToTop />
       <Navbar />
       <div className="flex flex-1 overflow-hidden">

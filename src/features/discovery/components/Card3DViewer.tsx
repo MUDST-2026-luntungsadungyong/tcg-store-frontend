@@ -53,7 +53,7 @@ export function Card3DViewer({ imageSrc, cardName }: Card3DViewerProps) {
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="relative w-full h-[533px] bg-white rounded-[15px] p-6 flex items-center justify-center shadow-2xl cursor-grab active:cursor-grabbing overflow-hidden"
+        className="relative w-full h-[533px] bg-bg-card border border-white/10 rounded-2xl p-6 flex items-center justify-center shadow-2xl cursor-grab active:cursor-grabbing overflow-hidden"
         style={{ perspective: '1000px' }}
       >
         {/* Floating 3D Card Item (Only this card tilts) */}
@@ -96,7 +96,7 @@ export function Card3DViewer({ imageSrc, cardName }: Card3DViewerProps) {
       </div>
 
       {/* 3D Interaction Hint Badge */}
-      <div className="flex items-center gap-2 mt-4 text-xs text-[#8FB3E2] bg-[#242938]/80 border border-[#40475C]/60 rounded-full px-4 py-1.5 backdrop-blur-sm shadow-sm">
+      <div className="flex items-center gap-2 mt-4 text-xs text-[#8FB3E2] bg-bg-input/80 border border-white/15 rounded-full px-4 py-1.5 backdrop-blur-sm shadow-sm">
         <span className="inline-block w-2 h-2 rounded-full bg-brand-blue animate-ping" />
         <span>Hover or drag over the card to inspect in 3D</span>
       </div>

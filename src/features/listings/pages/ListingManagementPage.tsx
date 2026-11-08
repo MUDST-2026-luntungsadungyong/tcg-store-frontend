@@ -1,3 +1,8 @@
+import { ListingPhotoEditor, emptyPhotos, type PhotoEditorValue } from '../components/ListingPhotoEditor';
+import { IMAGE_REASON_LABELS } from '../model/imagePolicy';
+import { useListingImageRules } from '../model/useListingImageRules';
+import { normalizeConditionToCode } from '@/entities/card/model/condition';
+import { acquireBodyScrollLock } from '@/shared/lib/bodyScrollLock';
 import {
   useEffect,
   useMemo,
@@ -16,7 +21,6 @@ import {
   Pencil,
   Plus,
   RefreshCw,
-  Search,
   Trash2,
   X,
 } from 'lucide-react';
@@ -35,6 +39,9 @@ import {
 import type { CatalogCard } from '@/features/discovery/api/catalog';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
+import { PageContainer, PageHeader, Panel, Toolbar } from '@/shared/components/PageLayout';
+import { trapDialogFocus } from '@/shared/lib/trapDialogFocus';
+import { SearchField } from '@/shared/components/SearchField';
 import { Input } from '@/shared/components/Input';
 import { Modal } from '@/shared/components/Modal';
 import { Select } from '@/shared/components/Select';
@@ -56,18 +63,26 @@ const GAME_FILTER_OPTIONS = [
 type ListingForm = {
   price: string;
   stock: string;
+  condition: string;
+  status: ListingVisibility;
+  gradingCompany: string;
+  grade: string;
+  certNumber: string;
 };
 
-type ListingFormErrors = Partial<Record<keyof ListingForm | 'card', string>>;
+type ListingFormErrors = Partial<Record<keyof ListingForm | 'card' | 'photos' | 'save', string>>;
 
 const emptyForm = (): ListingForm => ({
   price: '',
   stock: '1',
+  condition: 'NM', status: 'SHOW', gradingCompany: '', grade: '', certNumber: '',
 });
 
 const listingToForm = (listing: ManagedListing): ListingForm => ({
   price: String(listing.price),
   stock: String(listing.stock),
+  condition: normalizeConditionToCode(listing.condition) || 'NM', status: listing.status,
+  gradingCompany: listing.gradingCompany || '', grade: listing.grade || '', certNumber: listing.certNumber || '',
 });
 
 const listingToCatalogCard = (listing: ManagedListing): CatalogCard => ({
@@ -107,7 +122,7 @@ function validateForm(
   const stock = Number(form.stock);
 
   if (!isEditing && !selectedCard) errors.card = 'Select a card from the database.';
-  if (!form.price.trim() || Number.isNaN(price) || price < 0) {
+  if (!form.price.trim() || !Number.isFinite(price) || price <= 0) {
     errors.price = 'Enter a valid listing price.';
   }
   if (
@@ -119,6 +134,8 @@ function validateForm(
     errors.stock = 'Stock must be a whole number of 0 or more.';
   }
 
+  if (form.gradingCompany && !form.grade.trim()) errors.grade = 'Enter the card grade.';
+  if (form.gradingCompany && !form.certNumber.trim()) errors.certNumber = 'Enter the certification number.';
   return errors;
 }
 
@@ -156,7 +173,10 @@ export function ListingManagementPage() {
   );
   const [form, setForm] = useState<ListingForm>(emptyForm);
   const [formErrors, setFormErrors] = useState<ListingFormErrors>({});
+  const [photos, setPhotos] = useState<PhotoEditorValue>(emptyPhotos);
   const [selectedCard, setSelectedCard] = useState<CatalogCard | null>(null);
+  const { rules: photoRules, pending: rulesPending, failed: rulesFailed } = useListingImageRules({ cardId: selectedCard?.id || '', price: Number(form.price), condition: form.condition, gradingCompany: form.gradingCompany, rarity: selectedCard?.rarity, game: selectedCard?.game || 'Pokemon' }, editorOpen);
+  const photosIncomplete = photoRules.imageMandatory && (!(photos.files.frontImage || photos.front) || !(photos.files.backImage || photos.back));
   const [deleteTarget, setDeleteTarget] = useState<ManagedListing | null>(null);
   const [showDeleteListingPopup, setShowDeleteListingPopup] = useState(false); // CASE 11
 
@@ -169,13 +189,12 @@ export function ListingManagementPage() {
   useEffect(() => {
     if (!editorOpen) return;
 
-    const previousOverflow = document.body.style.overflow;
+    const releaseScrollLock = acquireBodyScrollLock();
     const previousFocus = document.activeElement as HTMLElement | null;
-    document.body.style.overflow = 'hidden';
     editorDialogRef.current?.focus();
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      releaseScrollLock();
       previousFocus?.focus();
     };
   }, [editorOpen]);
@@ -231,6 +250,7 @@ export function ListingManagementPage() {
     clearError();
     setEditingListing(null);
     setForm(emptyForm());
+    setPhotos(emptyPhotos());
     setFormErrors({});
     setSelectedCard(null);
     setEditorOpen(true);
@@ -240,6 +260,7 @@ export function ListingManagementPage() {
     clearError();
     setEditingListing(listing);
     setForm(listingToForm(listing));
+    setPhotos({ front: listing.actualImageFrontUrl || '', back: listing.actualImageBackUrl || '', additional: listing.additionalImageUrls || [], files: {} });
     setFormErrors({});
     setSelectedCard(listingToCatalogCard(listing));
     setEditorOpen(true);
@@ -258,6 +279,7 @@ export function ListingManagementPage() {
     if (isSaving) return;
 
     const nextErrors = validateForm(form, selectedCard, Boolean(editingListing));
+    if (form.status === 'SHOW' && photosIncomplete) nextErrors.photos = 'Add front and back photos before showing this listing, or save it as hidden.';
     setFormErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
@@ -273,14 +295,16 @@ export function ListingManagementPage() {
       price: Number(form.price),
       cost: editingListing?.cost ?? 0,
       stock: Number(form.stock),
-      status: editingListing?.status ?? 'SHOW',
-      condition: editingListing?.condition,
+      status: form.status,
+      condition: form.condition,
+      gradingCompany: form.gradingCompany, grade: form.gradingCompany ? form.grade.trim() : '', certNumber: form.gradingCompany ? form.certNumber.trim() : '',
+      actualImageFrontUrl: photos.front, actualImageBackUrl: photos.back, additionalImageUrls: photos.additional,
       set: editingListing?.set ?? card!.setName,
       rarity: editingListing?.rarity ?? card!.rarity,
     };
 
     try {
-      const saved = await saveListing(payload, editingListing?.id);
+      const saved = await saveListing(payload, editingListing?.id, undefined, photos.files);
 
       addToast({
         type: 'success',
@@ -295,6 +319,7 @@ export function ListingManagementPage() {
       setSelectedCard(null);
     } catch (saveError) {
       const failure = toListingError(saveError);
+      setFormErrors(current => ({ ...current, save: failure.message }));
       addToast({
         type: 'error',
         title: 'Save failed',
@@ -359,23 +384,13 @@ export function ListingManagementPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-brand-blue">
-            Seller Inventory
-          </p>
-          <h1 className="text-3xl font-bold text-white">Listing Management</h1>
-          <p className="mt-2 text-sm text-gray-400">
-            Add, edit, hide, restock, and remove your card listings.
-          </p>
-        </div>
-
+    <PageContainer className="space-y-6 px-0 py-0 sm:px-0 lg:px-0">
+      <PageHeader title="Listing Management" eyebrow="Seller Inventory" description="Add, edit, hide, restock, and remove your card listings." actions={
         <Button type="button" className="gap-2 self-start" onClick={openAddModal}>
           <Plus size={18} />
           Add Listing
         </Button>
-      </div>
+      } />
 
       {error && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-status-danger/30 bg-status-danger/10 p-4 text-sm text-gray-200">
@@ -393,11 +408,10 @@ export function ListingManagementPage() {
         </div>
       )}
 
-      <section className="glass-card rounded-2xl border border-white/10 p-5">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto_auto]">
-          <Input
+      <Panel>
+        <Toolbar className="grid sm:grid lg:grid-cols-[minmax(0,1fr)_180px_180px_auto_auto]">
+          <SearchField
             aria-label="Search listings"
-            icon={Search}
             placeholder="Search name, game, set, price, stock..."
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
@@ -431,7 +445,7 @@ export function ListingManagementPage() {
               onClick={() => setViewMode('grid')}
               className={`rounded-full p-2 transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-brand-blue text-white'
+                  ? 'bg-brand-blue text-bg-base'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -444,7 +458,7 @@ export function ListingManagementPage() {
               onClick={() => setViewMode('table')}
               className={`rounded-full p-2 transition-colors ${
                 viewMode === 'table'
-                  ? 'bg-brand-blue text-white'
+                  ? 'bg-brand-blue text-bg-base'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -462,8 +476,8 @@ export function ListingManagementPage() {
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             Refresh
           </Button>
-        </div>
-      </section>
+        </Toolbar>
+      </Panel>
 
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-bg-surface">
         {isLoading && listings.length === 0 ? (
@@ -637,7 +651,7 @@ export function ListingManagementPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1040px] text-left text-sm">
+            <table className="mythix-table w-full min-w-[1040px] text-left text-sm">
               <thead className="border-b border-white/10 bg-white/[0.03] text-xs uppercase tracking-wide text-gray-500">
                 <tr>
                   <th className="px-5 py-4 font-semibold">Listing</th>
@@ -827,7 +841,7 @@ export function ListingManagementPage() {
       {editorOpen &&
         createPortal(
           <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-modal-backdrop flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget && !isSaving) {
                 closeEditor();
@@ -841,6 +855,7 @@ export function ListingManagementPage() {
             aria-labelledby="listing-editor-title"
             tabIndex={-1}
             onKeyDown={(event) => {
+              if (!trapDialogFocus(event)) return;
               if (event.key === 'Escape' && !isSaving) closeEditor();
             }}
             className="glass-elevated flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-xl"
@@ -914,10 +929,32 @@ export function ListingManagementPage() {
                 />
               </div>
 
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Select id="seller-listing-condition" label="Card condition" value={form.condition} options={[{value:'NM',label:'Near Mint (NM)'},{value:'LP',label:'Lightly Played (LP)'},{value:'MP',label:'Moderately Played (MP)'},{value:'HP',label:'Heavily Played (HP)'},{value:'DMG',label:'Damaged (DMG)'}]} onChange={event => updateForm('condition', event.target.value)} />
+                <Select id="seller-listing-status" label="Listing visibility" value={form.status} options={[{value:'SHOW',label:'Show to buyers'},{value:'HIDE',label:'Hidden — finish later'}]} onChange={event => updateForm('status', event.target.value as ListingVisibility)} />
+              </div>
+              <Select id="seller-listing-grading-company" label="Grading company" value={form.gradingCompany} options={[{value:'',label:'Ungraded'},{value:'PSA',label:'PSA'},{value:'BGS',label:'BGS'},{value:'CGC',label:'CGC'}]} onChange={event => updateForm('gradingCompany', event.target.value)} />
+              {form.gradingCompany && <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input id="seller-listing-grade" label="Grade" value={form.grade} maxLength={30} onChange={event => updateForm('grade', event.target.value)} error={formErrors.grade} />
+                  <Input id="seller-listing-cert-number" label="Certification number" value={form.certNumber} maxLength={100} onChange={event => updateForm('certNumber', event.target.value)} error={formErrors.certNumber} />
+                </div>
+                <p className="text-sm text-text-secondary">Grading details are supplied by you. Mythix does not verify certificates with the grading company.</p>
+              </>}
               {selectedCard && <CatalogCardDetails card={selectedCard} />}
             </div>
           </div>
 
+          {selectedCard && <div role="status" className="rounded-xl border border-white/15 bg-bg-input p-3 text-sm">
+            <p className="font-semibold">{photoRules.imageMandatory ? 'Front and back photos required to show this listing' : 'Actual photos are optional — official art will be used'}</p>
+            {photoRules.imageMandatory && <p className="mt-1 text-text-secondary">{photoRules.reasons.map(reason => IMAGE_REASON_LABELS[reason] || reason).join(' · ')}</p>}
+            {rulesPending && <p className="mt-1 text-text-secondary">Checking catalog requirements…</p>}
+            {rulesFailed && <p className="mt-1 text-text-secondary">Could not refresh catalog requirements. These rules are an estimate; the server checks again when you save. You can save a hidden listing now.</p>}
+            {form.status === 'HIDE' && <p className="mt-1 text-text-secondary">You can save hidden now and add required photos before showing it to buyers.</p>}
+          </div>}
+          <ListingPhotoEditor value={photos} onChange={value => { setPhotos(value); setFormErrors(current => ({ ...current, photos: undefined, save: undefined })); }} disabled={isSaving} />
+          {formErrors.photos && <p role="alert" className="text-sm text-status-danger">{formErrors.photos}</p>}
+          {formErrors.save && <p role="alert" className="text-sm text-status-danger">{formErrors.save}</p>}
           <div className="flex justify-end gap-3 border-t border-white/10 pt-5">
             <Button
               type="button"
@@ -927,7 +964,7 @@ export function ListingManagementPage() {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSaving}>
+            <Button type="submit" isLoading={isSaving} disabled={form.status === 'SHOW' && photosIncomplete && Boolean(selectedCard)}>
               {editingListing ? 'Save Changes' : 'Add Listing'}
             </Button>
           </div>
@@ -1002,7 +1039,7 @@ export function ListingManagementPage() {
         } }}
         secondaryAction={{ label: "Cancel", onClick: () => { setShowDeleteListingPopup(false); setDeleteTarget(null); } }}
       />
-    </div>
+    </PageContainer>
   );
 }
 

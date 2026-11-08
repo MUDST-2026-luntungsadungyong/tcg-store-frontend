@@ -1,5 +1,6 @@
 import { type HTMLAttributes } from 'react';
 import { formatCondition } from '@/entities/card/model/condition';
+import { Badge } from './Badge';
 import { cn } from '@/shared/lib';
 
 export interface ConditionLabelProps extends HTMLAttributes<HTMLSpanElement> {
@@ -68,9 +69,9 @@ export function ConditionLabel({
   }
 
   return (
-    <span
+    <Badge
       className={cn(
-        'inline-flex items-center rounded-md border font-medium transition-colors',
+        'font-medium',
         sizeClasses[size],
         getVariantClasses(),
         className
@@ -79,6 +80,6 @@ export function ConditionLabel({
       {...props}
     >
       {formatted}
-    </span>
+    </Badge>
   );
 }

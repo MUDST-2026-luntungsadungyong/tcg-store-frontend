@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, RefreshCw, Search, UserCheck, X } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, RefreshCw, UserCheck, X } from 'lucide-react';
 import apiClient from '@/shared/api/client';
 import { Button } from '@/shared/components/Button';
 import { Modal } from '@/shared/components/Modal';
+import { SearchField } from '@/shared/components/SearchField';
 import { cn } from '@/shared/lib';
 
 const ACTIONS = ['APPROVE_SELLER', 'REJECT_SELLER', 'UPDATE_STOCK', 'UPDATE_GLOBAL_CARD'] as const;
@@ -253,7 +254,7 @@ function DateRangePicker({ from, to, onChange }: { from: string; to: string; onC
                 onChange(draftFrom, draftTo);
                 setOpen(false);
               }}
-              className="min-h-10 rounded-lg bg-brand-blue px-3 text-sm font-semibold text-bg-base disabled:opacity-40"
+              className="min-h-10 rounded-xl bg-brand-blue px-3 text-sm font-semibold text-bg-base disabled:opacity-40"
             >
               Apply
             </button>
@@ -342,7 +343,7 @@ export function AdminAuditLogsPage() {
       : 'Search all fields (actor, email, details, target)';
 
   return (
-    <main id="main-content" className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <main id="main-content" className="mythix-page">
       <header className="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[.16em] text-brand-gold">Platform administration</p>
@@ -367,21 +368,20 @@ export function AdminAuditLogsPage() {
               aria-label="Search by"
               value={searchBy}
               onChange={(e) => setSearchBy(e.target.value as SearchBy)}
-              className="h-10 rounded-lg border border-white/10 bg-bg-input px-3 text-sm text-white"
+              className="h-11 rounded-xl border border-white/15 bg-bg-input px-3 text-sm text-gray-100 focus-visible:ring-2 focus-visible:ring-brand-blue"
             >
               <option value="ALL">All fields</option>
               <option value="ACTOR">Actor (Name/Email)</option>
               <option value="TARGET">Target</option>
               <option value="DETAILS">Details</option>
             </select>
-            <label className="relative min-w-0 flex-1">
-              <span className="sr-only">Search audit logs</span>
-              <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
+            <div className="relative min-w-0 flex-1">
+              <SearchField
+                aria-label="Search audit logs"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={placeholder}
-                className="h-10 w-full rounded-lg border border-white/10 bg-bg-input pl-10 pr-9 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                className="pr-9"
               />
               {query && (
                 <button
@@ -393,7 +393,7 @@ export function AdminAuditLogsPage() {
                   <X size={16} />
                 </button>
               )}
-            </label>
+            </div>
             <DateRangePicker from={from} to={to} onChange={(start, end) => { setFrom(start); setTo(end); }} />
           </div>
 
@@ -429,7 +429,7 @@ export function AdminAuditLogsPage() {
           <>
             {/* Desktop Table */}
             <div className="hidden md:block overflow-hidden rounded-xl border border-white/10 bg-bg-elevated">
-              <table className="w-full text-left text-sm">
+              <table className="mythix-table w-full text-left text-sm">
                 <thead className="border-b border-white/10 text-xs uppercase text-gray-400">
                   <tr>
                     <th className="py-3.5 px-4">Time</th>

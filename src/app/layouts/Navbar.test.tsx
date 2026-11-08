@@ -91,6 +91,15 @@ describe('Navbar', () => {
     );
   });
 
+  it('dismisses the desktop account menu with Escape', async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><Navbar /></MemoryRouter>);
+    await user.click(screen.getByRole('button', { name: 'Open account menu' }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
   it('submits the global search to card discovery', async () => {
     const user = userEvent.setup();
 

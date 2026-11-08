@@ -9,6 +9,8 @@
     @apply bg-bg-base text-gray-100 antialiased selection:bg-brand-blue/30;
     font-family: 'Inter', 'IBM Plex Sans Thai', sans-serif;
   }
+  h1, h2, h3 { text-wrap: balance; }
+  :focus-visible { outline: 2px solid #72A8FF; outline-offset: 3px; }
 }
 
 /* The order-log booking-style date picker needs enough room for a readable 7-day grid. */
@@ -17,14 +19,26 @@ button[aria-label="Select order date range"] + div {
 }
 
 @layer components {
-  /* Glassmorphism Utilities */
+  /* Compatibility aliases for existing callers: opaque shared surfaces. */
   .glass-card {
-    @apply bg-bg-card/80 backdrop-blur-[12px] border border-white/5 shadow-lg;
+    @apply bg-bg-card border border-border-default shadow-sm;
   }
   
   .glass-elevated {
-    @apply bg-bg-elevated/90 backdrop-blur-[16px] border border-white/10 shadow-xl;
+    @apply bg-bg-elevated border border-border-default shadow-xl;
   }
+  .mythix-page { @apply mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8; }
+  .mythix-panel { @apply rounded-2xl border border-border-default bg-bg-card p-4 sm:p-6; }
+  .mythix-title { @apply text-2xl font-bold tracking-tight text-text-primary sm:text-3xl; }
+  .mythix-toolbar { @apply flex flex-wrap items-center gap-3 rounded-2xl border border-border-default bg-bg-surface p-4; }
+  .mythix-table { @apply w-full text-left text-sm; }
+  .mythix-table th { @apply bg-bg-surface px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-secondary; }
+  .mythix-table td { @apply px-4 py-4; }
+  .mythix-table tbody tr { @apply border-b border-white/10 last:border-0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
 
 @layer utilities {

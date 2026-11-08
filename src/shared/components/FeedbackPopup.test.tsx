@@ -3,6 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { FeedbackPopup } from './FeedbackPopup';
 
 describe('FeedbackPopup', () => {
+  it('does not steal Tab focus from a nested dialog', () => {
+    render(<FeedbackPopup isOpen tone="info" title="Information" message={<span role="dialog"><button>Nested action</button></span>} primaryAction={{ label: 'Continue', onClick: vi.fn() }} />);
+    const nested = screen.getByRole('button', { name: 'Nested action' });
+    nested.focus();
+    fireEvent.keyDown(nested, { key: 'Tab' });
+    expect(nested).toHaveFocus();
+  });
+
   it('renders nothing when isOpen is false', () => {
     render(
       <FeedbackPopup

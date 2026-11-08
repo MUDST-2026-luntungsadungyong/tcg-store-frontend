@@ -1,9 +1,50 @@
-/// <reference types="cypress" />
+import { CARD_PHOTO_URL } from '../../support/cardPhotos';
 
 describe('Core Journey 5: Update Product by Seller (US-05-3)', () => {
+  const api = 'http://localhost:8080/api';
+
+  const mockListing = {
+    id: 'prd-charizard-vmax',
+    cardId: 'crd-charizard-vmax',
+    sellerId: '2',
+    name: 'Charizard VMAX',
+    game: 'Pokemon',
+    price: 3200,
+    cost: 2000,
+    stock: 3,
+    status: 'SHOW',
+    condition: 'Near Mint',
+    language: 'English',
+    set: "Champion's Path",
+    rarity: 'Secret Rare',
+    cardNumber: '074/073',
+    image: 'https://images.pokemontcg.io/swsh45/sv107.png',
+    activeReservationCount: 0,
+  };
+
+  let currentListings = [mockListing];
+
   beforeEach(() => {
+    currentListings = [{ ...mockListing }];
+
     // Seller logs in
+    cy.visit('/');
     cy.loginByMock('SELLER');
+    cy.window().then((win) => {
+      win.localStorage.setItem('mythix_mock_listings_v2', JSON.stringify([
+        { ...mockListing, actualImageFrontUrl: CARD_PHOTO_URL, actualImageBackUrl: CARD_PHOTO_URL, additionalImageUrls: [] },
+      ]));
+      win.localStorage.setItem('mythix_mock_reservations_v1', '[]');
+    });
+
+    cy.intercept('GET', `${api}/seller/listings*`, (req) => {
+      req.reply({ statusCode: 200, body: currentListings });
+    }).as('getSellerListings');
+
+    cy.intercept('PUT', `${api}/seller/listings/*`, (req) => {
+      currentListings = [{ ...currentListings[0], ...req.body }];
+      req.reply({ statusCode: 200, body: currentListings[0] });
+    }).as('updateSellerListing');
   });
 
   it('navigates to product management, edits a product successfully, and sees modal', () => {

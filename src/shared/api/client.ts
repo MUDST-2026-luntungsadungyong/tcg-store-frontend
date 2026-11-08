@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ENV } from '@/shared/config/env';
+import { clearStoredAuth, getStoredAccessToken } from './authStorage';
 
 interface ApiClientAuthHooks {
   getAccessToken: () => string | null;
@@ -7,8 +8,8 @@ interface ApiClientAuthHooks {
 }
 
 let authHooks: ApiClientAuthHooks = {
-  getAccessToken: () => localStorage.getItem('token'),
-  onUnauthorized: () => localStorage.removeItem('token'),
+  getAccessToken: getStoredAccessToken,
+  onUnauthorized: clearStoredAuth,
 };
 
 export function configureApiClientAuth(hooks: ApiClientAuthHooks) {
@@ -41,7 +42,9 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401 && !ENV.ENABLE_MOCK_API) {
+    const token = authHooks.getAccessToken();
+    const isMockToken = Boolean(token?.startsWith('mock-'));
+    if (error.response?.status === 401 && !ENV.ENABLE_MOCK_API && !isMockToken) {
       authHooks.onUnauthorized();
     }
     return Promise.reject(error);

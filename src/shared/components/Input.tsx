@@ -2,6 +2,7 @@ import {
   type ComponentType,
   type InputHTMLAttributes,
   forwardRef,
+  useId,
 } from "react";
 import { cn } from "@/shared/lib";
 import type { LucideProps } from "lucide-react";
@@ -14,12 +15,15 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, icon: Icon, iconUrl, id, ...props }, ref) => {
+  ({ className, label, error, icon: Icon, iconUrl, id, 'aria-describedby': describedBy, 'aria-invalid': invalid, ...props }, ref) => {
+    const generatedId = useId();
+    const fieldId = id ?? generatedId;
+    const errorId = `${fieldId}-error`;
     return (
       <div className="w-full">
         {label && (
           <label
-            htmlFor={id}
+            htmlFor={fieldId}
             className="block text-sm font-medium text-gray-300 mb-1"
           >
             {label}
@@ -37,17 +41,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
           <input
             ref={ref}
-            id={id}
+            id={fieldId}
+            aria-invalid={error ? true : invalid}
+            aria-describedby={[describedBy, error && errorId].filter(Boolean).join(' ') || undefined}
             className={cn(
-              "block w-full h-[44px] px-3 border border-[rgba(165,201,249,0.3)] rounded-[22px] leading-5 bg-[#0b141f] text-gray-300 placeholder-[#808ca6] focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold text-sm transition-colors",
+              "block w-full h-11 rounded-xl border border-white/15 bg-bg-input px-3 text-sm leading-5 text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
               (Icon || iconUrl) && "pl-11",
-              error && "ring-status-danger focus:ring-status-danger",
+              error && "border-status-danger focus:border-status-danger focus:ring-status-danger",
               className,
             )}
             {...props}
           />
         </div>
-        {error && <p className="mt-1 text-sm text-status-danger">{error}</p>}
+        {error && <p id={errorId} className="mt-1 text-sm text-status-danger">{error}</p>}
       </div>
     );
   },

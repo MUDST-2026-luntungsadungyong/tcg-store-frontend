@@ -14,7 +14,7 @@ export function ResetSuccessPage() {
 
       <Link
         to="/login"
-        className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-brand-blue px-6 py-3 text-lg font-semibold text-white transition-colors hover:bg-[#4a85e0] focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 focus:ring-offset-bg-base"
+        className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-brand-blue px-6 py-3 text-lg font-semibold text-bg-base transition-colors hover:bg-[#4a85e0] focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 focus:ring-offset-bg-base"
       >
         Go to Login
       </Link>

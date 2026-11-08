@@ -6,7 +6,6 @@ import {
   TrendingUp,
   DollarSign,
   Package,
-  Search,
   MessageSquare,
   Phone,
   RefreshCw,
@@ -23,7 +22,7 @@ import {
 } from '../api/sellerOrders';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
-import { Input } from '@/shared/components/Input';
+import { SearchField } from '@/shared/components/SearchField';
 import { Modal } from '@/shared/components/Modal';
 import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 10
 import { ConditionLabel } from '@/shared/components/ConditionLabel';
@@ -48,6 +47,8 @@ export function SellerOrdersPage() {
   const [actionLoadingId, setActionLoadingId] = useState<string | number | null>(null);
   const [showPaymentConfirmPopup, setShowPaymentConfirmPopup] = useState(false); // CASE 10a
   const [showMarkSentPopup, setShowMarkSentPopup] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [carrierNote, setCarrierNote] = useState('');
   const [showCancelPopup, setShowCancelPopup] = useState(false);
   const [cancelNote, setCancelNote] = useState('');
   const [pendingOrderAction, setPendingOrderAction] = useState<{ orderId: string | number; status: string } | null>(null);
@@ -74,10 +75,15 @@ export function SellerOrdersPage() {
     void loadData();
   }, [loadData]);
 
-  const handleStatusUpdate = async (orderId: string | number, newStatus: string, note?: string) => {
+  const handleStatusUpdate = async (
+    orderId: string | number,
+    newStatus: string,
+    note?: string,
+    trackingNum?: string
+  ) => {
     setActionLoadingId(orderId);
     try {
-      await updateSellerOrderStatus(orderId, newStatus, note);
+      await updateSellerOrderStatus(orderId, newStatus, note, trackingNum);
       await loadData();
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -130,11 +136,11 @@ export function SellerOrdersPage() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6 md:p-8 max-w-7xl mx-auto text-white">
+    <div className="mythix-workspace-page w-full flex-1 space-y-6 text-white">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
             <Package className="text-brand-blue" />
             Seller Order Management & Profit Dashboard
           </h1>
@@ -163,7 +169,7 @@ export function SellerOrdersPage() {
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Revenue */}
-        <div className="bg-[#192338] border border-[#31405A] rounded-xl p-5 shadow-sm">
+        <div className="bg-bg-card border border-white/10 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-gray-400 text-sm">
             <span>Total Sales (Revenue)</span>
             <DollarSign className="text-brand-blue" size={18} />
@@ -175,7 +181,7 @@ export function SellerOrdersPage() {
         </div>
 
         {/* Total Cost */}
-        <div className="bg-[#192338] border border-[#31405A] rounded-xl p-5 shadow-sm">
+        <div className="bg-bg-card border border-white/10 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-gray-400 text-sm">
             <span>Total Cost</span>
             <DollarSign className="text-gray-400" size={18} />
@@ -187,7 +193,7 @@ export function SellerOrdersPage() {
         </div>
 
         {/* Net Profit */}
-        <div className="bg-[#192338] border border-[#31405A] rounded-xl p-5 shadow-sm relative overflow-hidden">
+        <div className="bg-bg-card border border-white/10 rounded-xl p-5 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-brand-gold/5 rounded-full -mr-8 -mt-8 pointer-events-none" />
           <div className="flex items-center justify-between text-gray-400 text-sm">
             <span className="text-brand-gold font-medium">Net Profit (กำไรสุทธิ)</span>
@@ -200,7 +206,7 @@ export function SellerOrdersPage() {
         </div>
 
         {/* Orders Breakdown */}
-        <div className="bg-[#192338] border border-[#31405A] rounded-xl p-5 shadow-sm">
+        <div className="bg-bg-card border border-white/10 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-gray-400 text-sm">
             <span>Orders Overview</span>
             <Package className="text-gray-400" size={18} />
@@ -220,17 +226,19 @@ export function SellerOrdersPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-[#192338] border border-[#31405A] rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="bg-bg-card border border-white/10 rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Status Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
           {['ALL', 'PENDING', 'SENT', 'CANCELLED'].map((tab) => (
             <button
               key={tab}
+              type="button"
+              aria-pressed={statusFilter === tab}
               onClick={() => setStatusFilter(tab)}
               className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
                 statusFilter === tab
-                  ? 'bg-brand-blue text-white shadow'
-                  : 'bg-[#243350] text-gray-300 hover:bg-[#2e4063]'
+                  ? 'bg-brand-blue text-bg-base shadow'
+                  : 'border border-white/10 bg-bg-elevated text-gray-300 hover:bg-bg-surface'
               }`}
             >
               {tab === 'ALL'
@@ -246,23 +254,21 @@ export function SellerOrdersPage() {
 
         {/* Search Box */}
         <div className="relative w-full md:w-80">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <Input
-            type="text"
+          <SearchField
+            aria-label="Search orders"
             placeholder="Search order #, customer, card..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-[#243350] border-[#31405A] text-sm text-white placeholder-gray-400"
           />
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="bg-[#192338] border border-[#31405A] rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-bg-card border border-white/10 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="mythix-table w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="border-b border-[#31405A] bg-[#243350]/60 text-xs font-semibold text-gray-300 uppercase tracking-wider">
+              <tr className="border-b border-white/10 bg-[#243350]/60 text-xs font-semibold text-gray-300 uppercase tracking-wider">
                 <th className="p-4">Order Details</th>
                 <th className="p-4">Customer</th>
                 <th className="p-4">Items Reserved</th>
@@ -380,7 +386,12 @@ export function SellerOrdersPage() {
                                   size="sm"
                                   variant="primary"
                                   disabled={isActionLoading}
-                                  onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'SENT' }); setShowMarkSentPopup(true); }}
+                                  onClick={() => {
+                                    setPendingOrderAction({ orderId: order.id, status: 'SENT' });
+                                    setTrackingNumber('');
+                                    setCarrierNote('');
+                                    setShowMarkSentPopup(true);
+                                  }}
                                   className="w-28 text-xs bg-status-success hover:bg-status-success/90 mb-1"
                                 >
                                   Mark as Sent
@@ -427,20 +438,20 @@ export function SellerOrdersPage() {
         >
           <div className="space-y-4 text-sm text-gray-200">
             {/* Customer Info */}
-            <div className="p-3 bg-[#243350] rounded-lg border border-[#31405A]">
+            <div className="p-3 bg-[#243350] rounded-lg border border-white/10">
               <p className="text-xs font-semibold text-gray-400 uppercase">Customer Name</p>
               <p className="text-base font-bold text-white mt-1">{selectedOrder.buyerName || 'Not specified'}</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 bg-[#243350] rounded-lg border border-[#31405A]">
+              <div className="p-3 bg-[#243350] rounded-lg border border-white/10">
                 <p className="text-xs font-semibold text-gray-400 uppercase flex items-center gap-1">
                   <Phone size={12} /> Phone Number
                 </p>
                 <p className="font-semibold text-white mt-1">{selectedOrder.buyerPhone || 'N/A'}</p>
               </div>
 
-              <div className="p-3 bg-[#243350] rounded-lg border border-[#31405A]">
+              <div className="p-3 bg-[#243350] rounded-lg border border-white/10">
                 <p className="text-xs font-semibold text-gray-400 uppercase flex items-center gap-1">
                   <MessageSquare size={12} /> Line ID
                 </p>
@@ -449,14 +460,14 @@ export function SellerOrdersPage() {
             </div>
 
             {selectedOrder.buyerContactFacebook && (
-              <div className="p-3 bg-[#243350] rounded-lg border border-[#31405A]">
+              <div className="p-3 bg-[#243350] rounded-lg border border-white/10">
                 <p className="text-xs font-semibold text-gray-400 uppercase">Facebook</p>
                 <p className="font-semibold text-white mt-1">{selectedOrder.buyerContactFacebook}</p>
               </div>
             )}
 
             {/* Order Items Breakdown */}
-            <div className="mt-4 border-t border-[#31405A] pt-4">
+            <div className="mt-4 border-t border-white/10 pt-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-white">
                   Reserved Items ({selectedOrder.items?.reduce((sum, item) => sum + item.quantity, 0) || 0})
@@ -469,7 +480,7 @@ export function SellerOrdersPage() {
                 {selectedOrder.items?.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between gap-3 p-3 bg-[#192338] rounded-lg border border-[#31405A]"
+                    className="flex items-center justify-between gap-3 p-3 bg-bg-card rounded-lg border border-white/10"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -491,7 +502,7 @@ export function SellerOrdersPage() {
             </div>
 
             {/* Timeline */}
-            <div className="mt-4 border-t border-[#31405A] pt-4">
+            <div className="mt-4 border-t border-white/10 pt-4">
               <h3 className="text-sm font-bold text-white mb-3">Order Timeline</h3>
               {selectedOrder.logs && selectedOrder.logs.length > 0 ? (
                 <div className="space-y-3">
@@ -509,7 +520,7 @@ export function SellerOrdersPage() {
                           <p className="text-[10px] text-gray-400">{new Date(log.createdAt).toLocaleString()}</p>
                         </div>
                         {log.note && (
-                          <div className="mt-1 p-2 bg-[#192338] rounded text-gray-300 italic border border-[#31405A]">
+                          <div className="mt-1 p-2 bg-bg-card rounded text-gray-300 italic border border-white/10">
                             "{log.note}"
                           </div>
                         )}
@@ -544,20 +555,87 @@ export function SellerOrdersPage() {
         } }}
         secondaryAction={{ label: "Back", onClick: () => { setShowPaymentConfirmPopup(false); setPendingOrderAction(null); } }}
       />
-      {/* CASE 10b: Mark sent popup — Figma: Seller Orders → Mark sent */}
-      <FeedbackPopup
+      {/* CASE 10b: Mark sent & enter parcel tracking / TAX number modal */}
+      <Modal
         isOpen={showMarkSentPopup}
-        tone="confirm"
-        title="Mark this order as sent?"
-        message="This transfers card ownership to the buyer's collection."
-        meta={pendingOrderAction ? `Order ${String(pendingOrderAction.orderId)} · This cannot be reversed here.` : undefined}
-        primaryAction={{ label: "Mark as sent", onClick: async () => {
-          if (pendingOrderAction) await handleStatusUpdate(pendingOrderAction.orderId, pendingOrderAction.status);
+        onClose={() => {
           setShowMarkSentPopup(false);
           setPendingOrderAction(null);
-        } }}
-        secondaryAction={{ label: "Back", onClick: () => { setShowMarkSentPopup(false); setPendingOrderAction(null); } }}
-      />
+          setTrackingNumber('');
+          setCarrierNote('');
+        }}
+        title="Mark this order as sent?"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-300">
+            กรุณากรอกเลข TAX หรือเลขพัสดุ (Tax Invoice / Parcel Tracking No.) สำหรับการจัดส่งออเดอร์นี้ สิทธิ์ความเป็นเจ้าของจะถูกโอนไปยังผู้ซื้อเมื่ออัปเดตสถานะเป็น Sent
+          </p>
+
+          <div>
+            <label htmlFor="tracking-number-input" className="block text-xs font-semibold text-gray-300 uppercase mb-1">
+              เลข TAX / เลขพัสดุ (Tax & Tracking No.) <span className="text-status-danger">*</span>
+            </label>
+            <input
+              id="tracking-number-input"
+              type="text"
+              value={trackingNumber}
+              onChange={(e) => setTrackingNumber(e.target.value)}
+              placeholder="เช่น TAX-994821, FLASH77261902, EMS-TH88291038"
+              className="w-full p-2.5 rounded-lg border border-white/10 bg-bg-card text-white text-sm focus:outline-none focus:border-brand-blue"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label htmlFor="carrier-note-input" className="block text-xs font-semibold text-gray-300 uppercase mb-1">
+              ผู้ให้บริการขนส่ง / หมายเหตุ (Carrier / Note) (Optional)
+            </label>
+            <input
+              id="carrier-note-input"
+              type="text"
+              value={carrierNote}
+              onChange={(e) => setCarrierNote(e.target.value)}
+              placeholder="เช่น Flash Express, Kerry Express, ไปรษณีย์ไทย"
+              className="w-full p-2.5 rounded-lg border border-white/10 bg-bg-card text-white text-sm focus:outline-none focus:border-brand-blue"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowMarkSentPopup(false);
+                setPendingOrderAction(null);
+                setTrackingNumber('');
+                setCarrierNote('');
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              variant="primary"
+              disabled={!trackingNumber.trim() || actionLoadingId !== null}
+              className="bg-status-success hover:bg-status-success/90"
+              onClick={async () => {
+                if (pendingOrderAction && trackingNumber.trim()) {
+                  await handleStatusUpdate(
+                    pendingOrderAction.orderId,
+                    pendingOrderAction.status,
+                    carrierNote.trim() || undefined,
+                    trackingNumber.trim()
+                  );
+                }
+                setShowMarkSentPopup(false);
+                setPendingOrderAction(null);
+                setTrackingNumber('');
+                setCarrierNote('');
+              }}
+            >
+              Mark as Sent
+            </Button>
+          </div>
+        </div>
+      </Modal>
       {/* Cancel Order Popup with Note */}
       <Modal
         isOpen={showCancelPopup}
@@ -571,7 +649,7 @@ export function SellerOrdersPage() {
           <textarea
             value={cancelNote}
             onChange={(e) => setCancelNote(e.target.value)}
-            className="w-full h-24 p-3 rounded-lg border border-[#31405A] bg-[#192338] text-white text-sm"
+            className="w-full h-24 p-3 rounded-lg border border-white/10 bg-bg-card text-white text-sm"
             placeholder="Reason for cancellation..."
           />
           <div className="flex justify-end gap-2 pt-4">

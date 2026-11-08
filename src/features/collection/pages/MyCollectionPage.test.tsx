@@ -121,6 +121,24 @@ describe('MyCollectionPage seller collection/store toggle', () => {
     expect(screen.queryByText('Sold Out Card')).not.toBeInTheDocument();
   });
 
+  it('loads the seller store count before the store tab is opened', async () => {
+    vi.mocked(listingsApi.getListings).mockResolvedValue([
+      listing({ id: 'available', name: 'Available Card', stock: 3, status: 'SHOW' }),
+    ]);
+
+    render(
+      <MemoryRouter initialEntries={['/collection']}>
+        <MyCollectionPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'My Collection' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(listingsApi.getListings).toHaveBeenCalledWith({ status: 'SHOW', page: 0, size: 100 });
+      expect(screen.getByRole('tab', { name: /My Store.*1/ })).toBeInTheDocument();
+    });
+  });
+
   it('returns a seller to My Collection and removes the store query parameter', async () => {
     const user = userEvent.setup();
 
@@ -151,7 +169,7 @@ describe('MyCollectionPage seller collection/store toggle', () => {
     expect(await screen.findByRole('heading', { name: 'My Collection' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: /My Store/ })).not.toBeInTheDocument();
     expect(listingsApi.getListings).not.toHaveBeenCalled();
-    expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
+    expect(await screen.findByText('Pikachu Illustrator')).toBeInTheDocument();
   });
 
   it('shows separate empty states for an empty seller store and empty buyer collection', async () => {

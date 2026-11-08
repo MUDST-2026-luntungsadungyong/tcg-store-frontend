@@ -346,7 +346,7 @@ export function AdminDashboardPage() {
     : [];
 
   return (
-    <main id="main-content" className="mx-auto w-full max-w-[1440px] min-w-0 px-4 py-6 sm:px-8 lg:px-10">
+    <main id="main-content" className="mythix-page min-w-0">
       <header className="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Overview</h1>

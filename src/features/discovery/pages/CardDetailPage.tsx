@@ -5,7 +5,8 @@ import { formatCondition } from '@/entities/card/model/condition';
 import { collectionApi } from '@/features/collection';
 import { ContextualLoginModal, useAuthStore } from '@/features/auth';
 import { useReservationCartStore } from '@/features/reservation-cart';
-import { Card3DViewer } from '@/features/discovery/components/Card3DViewer';
+import { CardPhotoMagnifierViewer } from '@/features/discovery/components/CardPhotoMagnifierViewer';
+import { officialCardImage } from '@/features/discovery/lib/officialCardImage';
 import { CardCollectPanel } from '@/features/discovery/components/CardCollectPanel';
 import { SellerOffersSection } from '@/features/discovery/components/SellerOffersSection';
 import { SimilarCardsSection } from '@/features/discovery/components/SimilarCardsSection';
@@ -66,6 +67,8 @@ export function CardDetailPage() {
             name: catalogCard.name,
             game: catalogCard.game || 'Pokemon',
             image: catalogCard.imageLarge || catalogCard.imageSmall || '',
+            imageLarge: catalogCard.imageLarge,
+            imageSmall: catalogCard.imageSmall,
             price: Number(catalogCard.marketPrice ?? 0),
             cost: 0,
             stock: 0,
@@ -92,7 +95,7 @@ export function CardDetailPage() {
           rarity: foundCard.rarity,
           setName: foundCard.set,
           cardNumber: foundCard.cardNumber,
-          imageLarge: foundCard.image,
+          imageLarge: officialCardImage(foundCard),
           marketPrice: foundCard.marketPrice ?? foundCard.price,
         });
       }
@@ -139,66 +142,49 @@ export function CardDetailPage() {
   };
 
   if (isLoading) return <main className="mx-auto max-w-[1440px] px-6 py-10 md:px-12"><Skeleton className="mb-8 h-5 w-48" /><div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"><Skeleton className="aspect-[421/533] w-full rounded-2xl" /><div className="space-y-5"><Skeleton className="h-10 w-3/4" /><Skeleton className="h-40 w-full" /><Skeleton className="h-24 w-full" /></div></div></main>;
-  if (error) return <main className="mx-auto max-w-3xl px-8 py-32 text-center"><h1 className="text-2xl font-bold">Unable to load card details</h1><p className="mt-3 text-gray-400">{error}</p><button onClick={() => void fetchCard()} className="mt-6 rounded-lg bg-brand-blue px-6 py-2.5 font-bold text-bg-base">Retry</button></main>;
+  if (error) return <main className="mx-auto max-w-3xl px-8 py-32 text-center"><h1 className="text-2xl font-bold">Unable to load card details</h1><p className="mt-3 text-gray-400">{error}</p><button onClick={() => void fetchCard()} className="mt-6 rounded-xl bg-brand-blue px-6 py-2.5 font-bold text-bg-base">Retry</button></main>;
   if (!card) return <main className="mx-auto max-w-3xl px-8 py-32 text-center"><h1 className="text-3xl font-bold">Card not found</h1><p className="mt-4 text-gray-400">The card you are looking for does not exist or has been removed.</p><Link to="/cards" className="mt-6 inline-flex rounded-lg bg-[#2B53A9] px-6 py-2.5 font-bold">Back to cards</Link></main>;
 
   // Card specification details
   const cardDetails = [
     {
+      label: 'Card Text:',
+      value: card.cardText || 'Not specified',
+      isBold: true,
+    },
+    {
       label: 'Card Number / Rarity:',
       value:
         card.cardNumber && card.rarity && !card.cardNumber.includes(card.rarity)
           ? `${card.cardNumber} / ${card.rarity}`
-          : card.cardNumber || card.rarity || 'No. 3 / Promotional Trophy Card',
+          : card.cardNumber || card.rarity || 'Not specified',
       isBold: false,
     },
     {
-      label: 'Card Text:',
-      value:
-        card.cardText ||
-        'ポケモンカードゲーム公式トーナメントの3位入賞者であることをここに認定し、その栄誉をたたえる。このカードを所持する者は、第1回ポケモンカードゲーム日本一決定戦への参加権があることを証明する。',
-      isBold: true,
-    },
-    {
-      label: 'Grading Company:',
-      value: card.gradingCompany || 'PSA (Professional Sports Authenticator)',
-      isBold: true,
-    },
-    {
-      label: 'Grade:',
-      value: card.grade || (card.condition ? formatCondition(card.condition) : 'NM-MT 8 (Near Mint-Mint 8)'),
-      isBold: true,
-    },
-    {
       label: 'Year:',
-      value: card.year ? String(card.year) : '1998',
+      value: card.year ? String(card.year) : 'Not specified',
       isBold: true,
     },
     {
       label: 'Card Set:',
-      value: card.set || 'P.M. JAPANESE PROMO',
+      value: card.set || 'Not specified',
       isBold: true,
     },
     {
       label: 'Tournament:',
-      value: card.tournament || 'Bronze 3rd-2nd Tournament',
-      isBold: true,
-    },
-    {
-      label: 'Certification Number:',
-      value: card.certNumber || '79170302',
+      value: card.tournament || 'Not specified',
       isBold: true,
     },
   ];
 
   return (
-    <main className="w-full bg-[#1B2336] text-white">
+    <main className="w-full bg-bg-card text-white">
       <div className="mx-auto max-w-[1440px] px-6 py-8 pb-20 md:px-12">
         <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 text-sm"><Link to="/cards" className="text-[#8FB3E2] hover:underline">Cards</Link><span aria-hidden="true" className="text-gray-500">/</span><span className="truncate">{card.name}</span></nav>
         <h1 className="mb-8 text-3xl font-bold md:text-[32px]">{card.name}</h1>
 
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-14">
-          <div className="flex justify-center lg:col-span-5"><Card3DViewer imageSrc={card.image || '/assets/expensive_card_1.png'} cardName={card.name} /></div>
+          <div className="flex justify-center lg:col-span-5"><CardPhotoMagnifierViewer key={card.cardId || card.id} officialImage={officialCardImage(card)} name={card.name} offers={offers} /></div>
           <div className="flex flex-col gap-7 lg:col-span-7">
             <section aria-labelledby="card-details-heading">
               <h2 id="card-details-heading" className="mb-4 text-base font-bold text-[#A1A1A1]">Card details</h2>

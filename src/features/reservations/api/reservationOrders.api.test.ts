@@ -92,4 +92,15 @@ describe('reservation order API adapter', () => {
     });
     expect(normalized.status).toBe('CONFIRMED');
   });
+
+  it('preserves FULFILLED so buyer orders show as received', () => {
+    const normalized = normalizeReservationOrder({
+      id: 'order-fulfilled-1',
+      status: 'FULFILLED',
+      totalAmount: 1500,
+      items: [{ listingId: 'listing-1', sellerId: 'seller-1', name: 'Charizard', price: 1500, quantity: 1, subtotal: 1500 }],
+    });
+
+    expect(normalized.status).toBe('FULFILLED');
+  });
 });

@@ -116,7 +116,7 @@ export async function fetchAvailableVouchers(): Promise<Voucher[]> {
   }
 
   try {
-    const response = await apiClient.get<Voucher[]>('/api/vouchers');
+    const response = await apiClient.get<Voucher[]>('/vouchers');
     return response.data;
   } catch {
     return getAnnotatedMockVouchers();
@@ -158,7 +158,7 @@ export async function claimVoucherApi(voucherId: number): Promise<UserVoucher> {
   }
 
   try {
-    const response = await apiClient.post<UserVoucher>(`/api/vouchers/${voucherId}/claim`);
+    const response = await apiClient.post<UserVoucher>(`/vouchers/${voucherId}/claim`);
     return response.data;
   } catch (err: any) {
     if (err?.response?.status === 401) {
@@ -187,7 +187,7 @@ export async function fetchMyVouchers(status?: string): Promise<UserVoucher[]> {
 
   try {
     const params = status ? { status } : {};
-    const response = await apiClient.get<UserVoucher[]>('/api/vouchers/my-vouchers', { params });
+    const response = await apiClient.get<UserVoucher[]>('/vouchers/my-vouchers', { params });
     return response.data;
   } catch {
     const list = getLocalUserVouchers();
@@ -252,7 +252,7 @@ export async function validateVoucherApi(code: string, subtotal: number): Promis
   }
 
   try {
-    const response = await apiClient.post<VoucherValidationResult>('/api/vouchers/validate', {
+    const response = await apiClient.post<VoucherValidationResult>('/vouchers/validate', {
       code,
       subtotal,
     });

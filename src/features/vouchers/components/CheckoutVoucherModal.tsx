@@ -1,8 +1,29 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { X, Tag, AlertCircle, Check } from 'lucide-react';
-import type { Voucher } from '../model/types';
-import { fetchAvailableVouchers, validateVoucherApi } from '../api/vouchers';
+import type { UserVoucher, Voucher } from '../model/types';
+import { fetchMyVouchers, validateVoucherApi } from '../api/vouchers';
 import { VoucherTicket } from './VoucherTicket';
+
+function mapUserVoucherToVoucher(uv: UserVoucher): Voucher {
+  return {
+    id: uv.voucherId ?? uv.id,
+    code: uv.code,
+    title: uv.title,
+    description: uv.description,
+    discountType: uv.discountType,
+    discountValue: Number(uv.discountValue),
+    minSpend: Number(uv.minSpend || 0),
+    maxDiscountAmount: uv.maxDiscountAmount != null ? Number(uv.maxDiscountAmount) : null,
+    totalQuota: 1,
+    usedQuota: 0,
+    remainingQuota: 1,
+    quotaPercentage: 100,
+    startTime: null,
+    endTime: uv.endTime,
+    isActive: true,
+    isClaimed: true,
+  };
+}
 
 interface CheckoutVoucherModalProps {
   isOpen: boolean;
@@ -31,9 +52,9 @@ export function CheckoutVoucherModal({
       setTempSelected(selectedVoucher);
       setCustomError(null);
       setLoading(true);
-      fetchAvailableVouchers()
+      fetchMyVouchers('CLAIMED')
         .then((data) => {
-          setVouchers(data);
+          setVouchers(data.map(mapUserVoucherToVoucher));
         })
         .catch(() => {
           setVouchers([]);
@@ -183,7 +204,11 @@ export function CheckoutVoucherModal({
                   โค้ดส่วนลดที่ใช้ได้ ({eligibleVouchers.length})
                 </h3>
                 {eligibleVouchers.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic py-2">ไม่มีโค้ดส่วนลดที่ตรงตามยอดซื้อปัจจุบัน</p>
+                  <p className="text-sm text-gray-500 italic py-2">
+                    {vouchers.length === 0
+                      ? 'คุณยังไม่มีโค้ดส่วนลดที่เก็บไว้'
+                      : 'ไม่มีโค้ดส่วนลดที่ตรงตามยอดซื้อปัจจุบัน'}
+                  </p>
                 ) : (
                   <div className="space-y-3">
                     {eligibleVouchers.map((v) => (

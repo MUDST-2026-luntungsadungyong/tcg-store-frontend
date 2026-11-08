@@ -4,24 +4,28 @@ describe('Responsive marketplace navigation', () => {
     cy.visit('/', { onBeforeLoad(win) { win.sessionStorage.clear(); } });
   });
 
-  it('shows mobile tabs and a dismissible account drawer', () => {
+  it('shows marketplace links in a dismissible mobile drawer', () => {
     cy.viewport(375, 812);
-    cy.get('[aria-label="Mobile primary navigation"]').should('be.visible').then(($nav) => {
-      const box = $nav[0].getBoundingClientRect();
-      expect(box.left).to.be.greaterThan(0);
-      expect(box.bottom).to.be.lessThan($nav[0].ownerDocument.defaultView!.innerHeight);
-    });
     cy.get('[aria-label="Open account menu"]').should('not.exist');
-    cy.get('[aria-label="Mobile primary navigation"] a[href="/"]').should('have.attr', 'aria-current', 'page');
     cy.get('[aria-label="Open navigation menu"]').click();
-    cy.get('dialog[open]').within(() => {
-      cy.contains('a', 'Login').should('be.visible');
+    cy.get('dialog[open]').should('be.visible').should(($drawer) => {
+      const box = $drawer[0].getBoundingClientRect();
+      expect(box.left).to.be.closeTo(0, 1);
+      expect(box.right).to.be.at.most($drawer[0].ownerDocument.defaultView!.innerWidth);
+    }).within(() => {
+      cy.get('nav a[href="/"]').should('have.attr', 'aria-current', 'page');
+      cy.contains('a', /^Auctions$/).should('have.attr', 'href', '/auctions');
+      cy.contains('a', /^Log in$/i).should('be.visible');
       cy.get('[aria-label="Close navigation menu"]').click();
     });
     cy.get('dialog').should('not.have.attr', 'open');
-    cy.get('[aria-label="Mobile primary navigation"] a[href="/cards"]').click();
+    cy.get('[aria-label="Open navigation menu"]').should('have.focus').click();
+    cy.get('dialog[open] nav a[href="/cards"]').click();
     cy.location('pathname').should('eq', '/cards');
-    cy.get('[aria-label="Mobile primary navigation"] a[href="/cards"]').should('have.attr', 'aria-current', 'page');
+    cy.get('dialog').should('not.have.attr', 'open');
+    cy.get('[aria-label="Open navigation menu"]').click();
+    cy.get('dialog[open] nav a[href="/cards"]').should('have.attr', 'aria-current', 'page');
+    cy.get('dialog[open] [aria-label="Close navigation menu"]').click();
     cy.window().then((win) => { expect(win.document.documentElement.scrollWidth).to.be.at.most(win.innerWidth); });
   });
 
@@ -34,12 +38,12 @@ describe('Responsive marketplace navigation', () => {
     cy.get('dialog[open]').within(() => {
       cy.contains('SELLER').should('be.visible');
       cy.contains('a', 'Profile').should('be.visible');
-      cy.contains('a', 'Workspace').should('have.attr', 'href', '/workspace/listings');
-      cy.contains('a', 'Store Profile').should('have.attr', 'href', '/workspace/store-settings');
+      cy.contains('a', /^Listings$/).should('have.attr', 'href', '/workspace/listings');
+      cy.contains('a', /^Seller Orders$/).should('have.attr', 'href', '/workspace/orders');
     });
     cy.viewport(1280, 900);
     cy.get('dialog').should('not.have.attr', 'open');
-    cy.get('[aria-label="Mobile primary navigation"]').should('not.be.visible');
+    cy.get('[aria-label="Open navigation menu"]').should('not.be.visible');
     cy.get('[aria-label="Open account menu"]').should('be.visible').should('contain', 'SELLER').should('not.contain', 'Test SELLER').click();
     cy.get('[role="menu"]').should('be.visible');
     cy.get('body').type('{esc}');
@@ -67,7 +71,7 @@ describe('Responsive marketplace navigation', () => {
       cy.get('dialog').should('not.have.attr', 'open');
       cy.contains('h1', `Test ${role}`).should('be.visible');
       cy.get('[aria-label="Open navigation menu"]').click();
-      cy.get('dialog[open]').contains('button', /^Logout$/).should('be.visible').click();
+      cy.get('dialog[open]').contains('button', /^Log out$/i).should('be.visible').click();
       // Logout must leave the protected profile, regardless of a home/sign-in redirect.
       cy.location('pathname').should('not.eq', '/profile');
       cy.get('dialog').should('not.have.attr', 'open');
@@ -83,8 +87,8 @@ describe('Responsive marketplace navigation', () => {
       cy.visit('/');
       cy.get('[aria-label="Open navigation menu"]').click();
       cy.get('dialog[open]').within(() => {
-        cy.contains('a', /^Login$/).should('be.visible');
-        cy.contains('button', /^Logout$/).should('not.exist');
+        cy.contains('a', /^Log in$/i).should('be.visible');
+        cy.contains('button', /^Log out$/i).should('not.exist');
         cy.get('a[href="/workspace/listings"]').should('not.exist');
         cy.get('a[href="/admin"]').should('not.exist');
       });

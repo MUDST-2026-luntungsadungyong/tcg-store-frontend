@@ -450,8 +450,8 @@ describe('US-12-5: Platform-wide Order Logs Monitoring', () => {
       cy.contains('td', 'ORD-2026-0001').click();
 
       // Modal should appear
-      cy.get('#modal-title').closest('[role="dialog"]').should('be.visible').within(() => {
-        cy.contains('#modal-title', 'Order details').should('be.visible');
+      cy.contains('[role="dialog"] h2', /^Order details$/).closest('[role="dialog"]').should('be.visible').within(() => {
+        cy.contains('h2', /^Order details$/).should('be.visible');
         cy.contains('h2', 'ORD-2026-0001').should('be.visible');
         cy.contains('span', 'PENDING').should('be.visible');
 
@@ -484,7 +484,7 @@ describe('US-12-5: Platform-wide Order Logs Monitoring', () => {
       });
 
       // Modal is closed
-      cy.get('#modal-title').should('not.exist');
+      cy.contains('[role="dialog"] h2', /^Order details$/).should('not.exist');
       cy.get('[data-testid="modal-backdrop"]').should('not.exist');
     });
   });

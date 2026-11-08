@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  Gavel,
   Layers3,
   Menu,
   Store,
@@ -30,6 +31,7 @@ const workspaceLinks = [
     to: '/notifications',
     icon: Bell,
   },
+  { name: 'My Auctions', to: '/workspace/auctions', icon: Gavel },
 ] as const;
 
 export function WorkspaceSidebar() {

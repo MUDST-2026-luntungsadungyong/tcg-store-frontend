@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Search, Library, ShoppingCart, Menu, X, LogOut, Package, Layers3, ShieldCheck, ChevronRight, Tag } from 'lucide-react';
+import { Home, Search, Library, ShoppingCart, Menu, X, LogOut, Package, Layers3, ShieldCheck, ChevronRight, Tag, Gavel } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { isSellerUser } from '@/entities/account/model/types';
 import { useReservationCartStore } from '@/features/reservation-cart';
@@ -72,6 +72,9 @@ export function MobileNavigation() {
               {to === '/cart' && count > 0 && <span className="rounded-full bg-brand-blue px-2 py-0.5 text-xs font-bold text-bg-base">{count > 99 ? '99+' : count}</span>}
             </NavLink>
           ))}
+          <NavLink to="/auctions" onClick={close} className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold text-text-secondary hover:bg-white/5 hover:text-white">
+            <Gavel size={20} aria-hidden /> Auctions
+          </NavLink>
         </nav>
         {user && <div className="mt-6 border-t border-white/10 pt-4">
           <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">Account</p>

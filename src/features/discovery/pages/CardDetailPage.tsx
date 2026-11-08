@@ -44,7 +44,7 @@ export function CardDetailPage() {
     try {
       const listingResult = await listingDiscoveryApi.getListings({ cardId: id, page: 0, size: 100, sortBy: 'price', sortDir: 'asc' });
       let foundOffers = listingResult.items.filter(offer => offer.cardId === id);
-      let foundCard = foundOffers[0];
+      let foundCard = foundOffers.find(offer => (offer.stock ?? 0) > 0) ?? foundOffers[0];
 
       if (!foundCard) {
         const directListing = await listingDiscoveryApi.getListingById(id).catch(() => undefined);
@@ -84,7 +84,8 @@ export function CardDetailPage() {
       }
 
       setCard(foundCard ?? null);
-      setOffers(foundOffers.sort((a, b) => a.price - b.price));
+      const inStockOffers = foundOffers.filter(offer => (offer.stock ?? 0) > 0);
+      setOffers(inStockOffers.sort((a, b) => a.price - b.price));
       if (foundCard) {
         setCatalogCard({
           id: foundCard.cardId || foundCard.id,

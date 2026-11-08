@@ -83,6 +83,7 @@ export interface ReservationOrder {
   cancelledAt?: string;
   logs?: any[];
   orderNumber?: string;
+  orderType?: 'AUCTION' | 'DIRECT';
   sellerName?: string;
   updatedAt?: string;
   cancellationReason?: string;

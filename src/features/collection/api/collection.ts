@@ -23,6 +23,10 @@ export interface CollectionPrivacyResponse {
 }
 
 export interface CollectionEntryResponse {
+  auctionWon?: boolean;
+  provenance?: string;
+  gradingCompany?: string;
+  grade?: string;
   id: string;
   ownerId: string;
   quantity?: number;
@@ -117,6 +121,12 @@ function normalizeCollectionEntry(value: CollectionEntryResponse): CollectionEnt
       rarity: listing.rarity ?? value.rarity,
       cardNumber: listing.cardNumber ?? value.cardNumber,
     },
+    ...(value.auctionWon ? {
+      auctionWon: true,
+      provenance: value.provenance,
+      gradingCompany: value.gradingCompany,
+      grade: value.grade,
+    } : {}),
     quantity: Number(value.quantity ?? 0),
     sourceOrderId: String(value.sourceOrderId ?? ''),
     acquiredAt: String(value.acquiredAt ?? value.createdAt ?? new Date(0).toISOString()),

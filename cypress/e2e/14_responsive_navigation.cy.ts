@@ -85,7 +85,7 @@ describe('Responsive marketplace navigation', () => {
       cy.go('back');
       cy.location('pathname').should('eq', '/login');
       cy.get('#email').should('be.visible');
-      cy.get('nav[aria-label="Marketplace navigation"] > div a[aria-label="Mythix home"]').filter(':visible').click();
+      cy.get('nav[aria-label="Marketplace navigation"] > div > div > div > a[aria-label="Mythix home"]').should('have.length', 1).should('be.visible').click();
       cy.location('pathname').should('eq', '/');
       cy.get('[aria-label="Open navigation menu"]').click();
       cy.get('dialog[open]').within(() => {

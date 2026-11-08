@@ -99,6 +99,7 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     buyerPhone: buyer?.phone,
     buyerContactLine: buyer?.line,
     buyerContactFacebook: buyer?.facebook,
+    logs: order.logs ?? [],
     sellerRevenue,
     sellerCost,
     sellerProfit: sellerRevenue - sellerCost,
@@ -184,7 +185,24 @@ export async function updateSellerOrderStatus(
       if (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED') {
         const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
         const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
-        return mapReservationOrder(updated);
+        const storedReservations = storage.getReservations();
+        const storedOrder = storedReservations.find((candidate) => candidate.id === String(orderId));
+        if (storedOrder) {
+          storedOrder.logs = [
+            ...(storedOrder.logs || []),
+            {
+              fromStatus: 'CONFIRMED',
+              toStatus: 'SENT',
+              changedByRole: 'SELLER',
+              note: note
+                ? `${note} (Tracking / TAX: ${trackingNumber})`
+                : (trackingNumber ? `Tracking / TAX: ${trackingNumber}` : null),
+              createdAt: new Date().toISOString(),
+            },
+          ];
+          storage.setReservations(storedReservations);
+        }
+        return mapReservationOrder(storedOrder ?? updated);
       }
       order.status = normalizedStatus as any;
       if (normalizedStatus === 'CONFIRMED') {

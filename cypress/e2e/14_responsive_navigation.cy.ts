@@ -14,15 +14,16 @@ describe('Responsive marketplace navigation', () => {
       expect(box.right).to.be.at.most($drawer[0].ownerDocument.defaultView!.innerWidth);
     }).within(() => {
       cy.get('nav a[href="/"]').should('have.attr', 'aria-current', 'page');
-      cy.contains('a', /^Auctions$/).should('have.attr', 'href', '/auctions');
-      cy.contains('a', /^Log in$/i).should('be.visible');
+      cy.get('nav a[href="/auctions"]').should('be.visible').and('contain.text', 'Auctions');
+      cy.get('a[href="/login"]').should('be.visible').and('contain.text', 'Log In');
       cy.get('[aria-label="Close navigation menu"]').click();
     });
-    cy.get('dialog').should('not.have.attr', 'open');
+    cy.get('dialog').should('have.css', 'display', 'none');
     cy.get('[aria-label="Open navigation menu"]').should('have.focus').click();
     cy.get('dialog[open] nav a[href="/cards"]').click();
     cy.location('pathname').should('eq', '/cards');
-    cy.get('dialog').should('not.have.attr', 'open');
+    cy.contains('h1', 'The Pokémon Cards Collection').should('be.visible');
+    cy.get('dialog').should('have.css', 'display', 'none');
     cy.get('[aria-label="Open navigation menu"]').click();
     cy.get('dialog[open] nav a[href="/cards"]').should('have.attr', 'aria-current', 'page');
     cy.get('dialog[open] [aria-label="Close navigation menu"]').click();
@@ -60,7 +61,7 @@ describe('Responsive marketplace navigation', () => {
         const users = JSON.parse(win.localStorage.getItem('mythix_mock_users_v6')!);
         expect(users.find((user: { name: string }) => user.name === `Test ${role}`)).to.exist;
       });
-      cy.visit('/');
+      cy.reload();
       cy.get('[aria-label="Open navigation menu"]').click();
       cy.get('dialog[open]').should('be.visible').within(() => {
         cy.contains(`Test ${role}`).should('be.visible');
@@ -71,7 +72,7 @@ describe('Responsive marketplace navigation', () => {
       cy.get('dialog').should('not.have.attr', 'open');
       cy.contains('h1', `Test ${role}`).should('be.visible');
       cy.get('[aria-label="Open navigation menu"]').click();
-      cy.get('dialog[open]').contains('button', /^Log out$/i).should('be.visible').click();
+      cy.get('dialog[open]').contains('button', /log\s*out/i).scrollIntoView().should('be.visible').click();
       // Logout must leave the protected profile, regardless of a home/sign-in redirect.
       cy.location('pathname').should('not.eq', '/profile');
       cy.get('dialog').should('not.have.attr', 'open');
@@ -84,11 +85,12 @@ describe('Responsive marketplace navigation', () => {
       cy.visit('/profile');
       cy.location('pathname').should('eq', '/login');
       cy.get('#email').should('be.visible');
-      cy.visit('/');
+      cy.get('nav[aria-label="Marketplace navigation"] > div a[aria-label="Mythix home"]').filter(':visible').click();
+      cy.location('pathname').should('eq', '/');
       cy.get('[aria-label="Open navigation menu"]').click();
       cy.get('dialog[open]').within(() => {
-        cy.contains('a', /^Log in$/i).should('be.visible');
-        cy.contains('button', /^Log out$/i).should('not.exist');
+        cy.get('a[href="/login"]').should('be.visible').and('contain.text', 'Log In');
+        cy.contains('button', /log\s*out/i).should('not.exist');
         cy.get('a[href="/workspace/listings"]').should('not.exist');
         cy.get('a[href="/admin"]').should('not.exist');
       });

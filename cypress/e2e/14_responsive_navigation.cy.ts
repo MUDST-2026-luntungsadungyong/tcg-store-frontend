@@ -82,7 +82,7 @@ describe('Responsive marketplace navigation', () => {
           expect(storage.getItem('tcg_auth_storage')).to.equal(null);
         }
       });
-      cy.visit('/profile');
+      cy.go('back');
       cy.location('pathname').should('eq', '/login');
       cy.get('#email').should('be.visible');
       cy.get('nav[aria-label="Marketplace navigation"] > div a[aria-label="Mythix home"]').filter(':visible').click();

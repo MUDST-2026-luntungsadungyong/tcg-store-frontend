@@ -13,6 +13,7 @@ import {
   ClipboardList,
   ReceiptText,
   UsersRound,
+  Tag,
 } from 'lucide-react';
 import { MobileNavigation } from './MobileNavigation';
 import { ButtonLink } from '@/shared/components/ButtonLink';
@@ -189,6 +190,11 @@ export function Navbar() {
             <NavLink to="/cards" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
               Cards
             </NavLink>
+            <NavLink to="/vouchers" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center gap-1.5 transition-colors ${isActive ? 'text-amber-400' : 'hover:text-white'}`}>
+              <Tag size={15} className="text-amber-400" />
+              <span>ส่วนลด</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">HOT</span>
+            </NavLink>
 
             {isSeller && (
               <Link
@@ -302,6 +308,24 @@ export function Navbar() {
                     >
                       <Package size={16} />
                       My Orders
+                    </Link>
+                    <Link
+                      to="/profile/vouchers"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <Tag size={16} className="text-amber-400" />
+                      My Vouchers
+                    </Link>
+                    <Link
+                      to="/vouchers"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <Tag size={16} className="text-amber-400" />
+                      Voucher Center
                     </Link>
                     <Link
                       to="/collection"

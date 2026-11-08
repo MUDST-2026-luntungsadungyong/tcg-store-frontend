@@ -72,6 +72,9 @@ export interface ReservationOrder {
   sellerId: string;
   items: ReservationCartItem[];
   totalAmount: number;
+  subtotalAmount?: number;
+  discountAmount?: number;
+  voucherCode?: string;
   status: ReservationStatus;
   createdAt: string;
   paymentConfirmedAt?: string;

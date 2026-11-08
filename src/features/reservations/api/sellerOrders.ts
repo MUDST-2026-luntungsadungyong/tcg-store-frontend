@@ -78,7 +78,8 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     condition: item.listing.condition,
     image: item.listing.image,
   }));
-  const sellerRevenue = order.totalAmount;
+  // Platform absorbs voucher discount; seller always receives the full item subtotal
+  const sellerRevenue = order.subtotalAmount ?? items.reduce((sum, item) => sum + item.itemTotal, 0);
   const sellerCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
   const status: SellerOrderStatus = order.status === 'SENT' || order.status === 'FULFILLED'
     ? 'SENT'

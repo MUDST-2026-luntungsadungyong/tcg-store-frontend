@@ -78,16 +78,19 @@ function login(role: 'BUYER' | 'SELLER') {
       cy.get('img[alt="Buyer payment proof"]').should('be.visible');
       cy.contains('tr', card).contains('button', 'Confirm Payment').click();
       cy.get('[role="alertdialog"]').contains('button', 'Confirm payment').click();
+      cy.get('[role="alertdialog"]').should('not.exist');
       cy.contains('tr', card).contains('button', 'Mark as Sent').click();
       cy.get('#tracking-number-input').type('TCG-E2E-001');
       cy.get('[role="dialog"]').contains('button', 'Mark as Sent').click();
-      cy.contains('tr', card).should('contain.text', 'SENT');
+      cy.contains('tr', card).should('contain.text', 'Sent');
 
       login('BUYER');
       cy.get<string>('@orderPath').then(path => cy.visit(path));
       cy.contains('button', /^Mark Received$/).click();
       cy.contains('button', 'Yes, Mark Received').click();
       cy.contains(/FULFILLED|Order Completed/i).should('be.visible');
+      cy.visit('/collection');
+      cy.contains('article', card).should('contain.text', 'Auction won');
     });
   });
 });

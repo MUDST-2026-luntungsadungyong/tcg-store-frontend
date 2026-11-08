@@ -2,7 +2,7 @@ import { acquireBodyScrollLock } from '@/shared/lib/bodyScrollLock';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Layers, AlertCircle, Minus, Plus, RefreshCw, ShoppingBag, Store, X } from 'lucide-react';
+import { Layers, AlertCircle, ExternalLink, Globe, Lock, Minus, Plus, RefreshCw, Share2, ShoppingBag, Store, X } from 'lucide-react';
 import { collectionApi } from '../api/collection';
 import { CollectionCard } from '../components/CollectionCard';
 import { Skeleton } from '@/shared/components/Skeleton';
@@ -31,6 +31,8 @@ export function MyCollectionPage() {
   const activeView: 'collection' | 'store' = isSeller && requestedView === 'store' ? 'store' : 'collection';
 
   const [collection, setCollection] = useState<CollectionEntry[]>([]);
+  const [privacy, setPrivacy] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC');
+  const [isUpdatingPrivacy, setIsUpdatingPrivacy] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [storeListings, setStoreListings] = useState<CardListing[]>([]);
@@ -60,14 +62,55 @@ export function MyCollectionPage() {
     setLoading(true);
     setError(null);
     try {
-      const items = await collectionApi.getMyCollection();
+      const fetchPrivacy = typeof collectionApi.getCollectionPrivacy === 'function'
+        ? collectionApi.getCollectionPrivacy().catch(() => 'PUBLIC' as const)
+        : Promise.resolve('PUBLIC' as const);
+
+      const [items, currentPrivacy] = await Promise.all([
+        collectionApi.getMyCollection(),
+        fetchPrivacy,
+      ]);
       setCollection(items);
+      setPrivacy(currentPrivacy);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load your collection.');
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const handleTogglePrivacy = async (nextPrivacy: 'PUBLIC' | 'PRIVATE') => {
+    if (isUpdatingPrivacy || nextPrivacy === privacy) return;
+    setIsUpdatingPrivacy(true);
+    try {
+      const updated = await collectionApi.updateCollectionPrivacy(nextPrivacy);
+      setPrivacy(updated);
+      addToast({
+        type: 'success',
+        title: 'Privacy Updated',
+        message: `Your collection is now ${updated === 'PUBLIC' ? 'Public' : 'Private'}.`,
+      });
+    } catch (err) {
+      addToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: err instanceof Error ? err.message : 'Failed to update collection privacy.',
+      });
+    } finally {
+      setIsUpdatingPrivacy(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (!user?.id) return;
+    const url = `${window.location.origin}/collections/${user.id}`;
+    void navigator.clipboard.writeText(url);
+    addToast({
+      type: 'success',
+      title: 'Link Copied',
+      message: 'Showcase link copied to clipboard.',
+    });
+  };
 
   useEffect(() => {
     void fetchCollection();
@@ -251,6 +294,104 @@ export function MyCollectionPage() {
             </button>
           </div>
         </div>
+
+        {/* Privacy & Showcase Toolbar */}
+        {activeView === 'collection' && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-white/10 bg-bg-surface p-4">
+            <div className="flex items-center gap-3">
+              <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${
+                privacy === 'PUBLIC'
+                  ? 'border-status-success/30 bg-status-success/10 text-status-success'
+                  : 'border-white/15 bg-white/5 text-gray-400'
+              }`}>
+                {privacy === 'PUBLIC' ? <Globe size={20} /> : <Lock size={20} />}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-white">Collection Visibility:</span>
+                  <span
+                    data-testid="collection-privacy-status"
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                      privacy === 'PUBLIC'
+                        ? 'bg-status-success/20 text-status-success border border-status-success/30'
+                        : 'bg-white/10 text-gray-300 border border-white/10'
+                    }`}
+                  >
+                    {privacy === 'PUBLIC' ? 'Public' : 'Private'}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {privacy === 'PUBLIC'
+                    ? 'Anyone can view your cards showcase and you can be ranked on the leaderboard.'
+                    : 'Hidden from everyone else. Excluded from leaderboard and public showcase.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+              <div
+                role="radiogroup"
+                aria-label="Collection privacy setting"
+                className="inline-flex rounded-xl border border-white/10 bg-bg-card p-1"
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={privacy === 'PUBLIC'}
+                  data-testid="toggle-privacy-public"
+                  onClick={() => void handleTogglePrivacy('PUBLIC')}
+                  disabled={isUpdatingPrivacy}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    privacy === 'PUBLIC'
+                      ? 'bg-brand-blue text-bg-base font-bold shadow-sm'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Globe size={14} />
+                  Public
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={privacy === 'PRIVATE'}
+                  data-testid="toggle-privacy-private"
+                  onClick={() => void handleTogglePrivacy('PRIVATE')}
+                  disabled={isUpdatingPrivacy}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    privacy === 'PRIVATE'
+                      ? 'bg-status-danger text-white font-bold shadow-sm'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Lock size={14} />
+                  Private
+                </button>
+              </div>
+
+              {user?.id && (
+                <>
+                  <Link
+                    to={`/collections/${user.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-bg-card px-3 py-1.5 text-xs font-semibold text-gray-300 transition-colors hover:bg-bg-elevated hover:text-white"
+                    title="View your public showcase"
+                  >
+                    <ExternalLink size={14} />
+                    View Showcase
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-bg-card px-3 py-1.5 text-xs font-semibold text-gray-300 transition-colors hover:bg-bg-elevated hover:text-white"
+                    title="Copy public showcase link"
+                  >
+                    <Share2 size={14} />
+                    Share Link
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {isSeller && (
           <div

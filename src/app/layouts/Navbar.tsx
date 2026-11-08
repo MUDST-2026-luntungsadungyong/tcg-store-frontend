@@ -9,6 +9,7 @@ import {
   User as UserIcon,
   Package,
   Layers3,
+  Layers,
   Library,
   ClipboardList,
   ReceiptText,
@@ -190,8 +191,13 @@ export function Navbar() {
             <NavLink to="/cards" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
               Cards
             </NavLink>
+<<<<<<< HEAD
+            <NavLink to="/collections" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
+              Collections
+=======
             <NavLink to="/auctions" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
               Auctions
+>>>>>>> origin/main
             </NavLink>
             <NavLink to="/vouchers" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center gap-1.5 transition-colors ${isActive ? 'text-amber-400' : 'hover:text-white'}`}>
               <Tag size={15} className="text-amber-400" />
@@ -338,6 +344,15 @@ export function Navbar() {
                     >
                       <Library size={16} />
                       My Collection
+                    </Link>
+                    <Link
+                      to="/collections"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <Layers size={16} />
+                      Explore Collections
                     </Link>
                     {isSeller && (
                       <Link

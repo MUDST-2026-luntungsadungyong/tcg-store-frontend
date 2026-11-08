@@ -1,4 +1,4 @@
-﻿import type { RouteObject } from 'react-router-dom';
+import type { RouteObject } from 'react-router-dom';
 
 export const collectionRoutes: RouteObject[] = [
   {
@@ -8,6 +8,10 @@ export const collectionRoutes: RouteObject[] = [
 ];
 
 export const publicCollectionRoutes: RouteObject[] = [
+  {
+    path: 'collections',
+    lazy: async () => ({ Component: (await import('./pages/PublicCollectionsExplorePage')).PublicCollectionsExplorePage }),
+  },
   {
     path: 'collections/:userId',
     lazy: async () => ({ Component: (await import('./pages/PublicCollectionPage')).PublicCollectionPage }),

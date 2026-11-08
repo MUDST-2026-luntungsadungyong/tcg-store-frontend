@@ -160,14 +160,22 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
     const sentBtns = screen.getAllByRole('button', { name: /Mark as Sent/i });
     await user.click(sentBtns[0]);
 
-    // Wait for the popup and click the confirm button
+    // Wait for the popup and check tracking/TAX number requirement
     const popupTitle = await screen.findByText('Mark this order as sent?');
     expect(popupTitle).toBeInTheDocument();
 
     const allSentBtns = screen.getAllByRole('button', { name: /Mark as Sent/i });
-    await user.click(allSentBtns[allSentBtns.length - 1]);
+    const confirmBtn = allSentBtns[allSentBtns.length - 1];
+    expect(confirmBtn).toBeDisabled();
 
-    expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT', undefined);
+    // Type tracking/TAX number to enable button
+    const trackingInput = screen.getByLabelText(/เลข TAX|Tracking Number/i);
+    await user.type(trackingInput, 'TAX-9928102');
+    expect(confirmBtn).toBeEnabled();
+
+    await user.click(confirmBtn);
+
+    expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT', undefined, 'TAX-9928102');
   });
 
   it('displays card condition badge in items list and inside Order Details modal', async () => {

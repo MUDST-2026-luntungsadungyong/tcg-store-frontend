@@ -68,7 +68,7 @@ export const authApi = {
       await new Promise(resolve => setTimeout(resolve, 800));
       const users = storage.getUsers();
       // Simple mock authentication (do not use in production)
-      const user = users.find(u => u.email === email);
+      const user = users.find(u => u.email === email || (email === 'buyer@mythix.com' && u.email === 'ash@mythix.com'));
       
       if (user && password === 'admin123' && user.role === 'ADMIN') {
          return { token: 'mock-jwt-token-admin', user };

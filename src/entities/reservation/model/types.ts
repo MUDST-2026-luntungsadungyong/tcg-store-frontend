@@ -39,7 +39,11 @@ export const RESERVATION_STATUS_TRANSITIONS: readonly ReservationStatusTransitio
   { from: 'PENDING', to: 'SENT', actor: 'SELLER' },
   { from: 'PENDING', to: 'FULFILLED', actor: 'SELLER' },
   { from: 'PENDING', to: 'CONFIRMED', actor: 'SELLER' },
+  { from: 'RESERVED', to: 'CONFIRMED', actor: 'SELLER' },
   { from: 'CONFIRMED', to: 'SENT', actor: 'SELLER' },
+  { from: 'RESERVED', to: 'CANCELLED', actor: 'SELLER' },
+  { from: 'PENDING', to: 'CANCELLED', actor: 'SELLER' },
+  { from: 'CONFIRMED', to: 'CANCELLED', actor: 'SELLER' },
 ];
 
 export function canTransitionReservationStatus(

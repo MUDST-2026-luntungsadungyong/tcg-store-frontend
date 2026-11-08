@@ -12,6 +12,7 @@ import { acquireBodyScrollLock } from '@/shared/lib/bodyScrollLock';
 const destinations = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/cards', label: 'Cards', icon: Search },
+  { to: '/collections', label: 'Collections', icon: Layers3 },
   { to: '/vouchers', label: 'Vouchers', icon: Tag },
   { to: '/collection', label: 'Collection', icon: Library },
   { to: '/cart', label: 'Cart', icon: ShoppingCart },

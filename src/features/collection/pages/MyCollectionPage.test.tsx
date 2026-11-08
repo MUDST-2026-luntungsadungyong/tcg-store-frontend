@@ -14,6 +14,8 @@ import { MyCollectionPage } from './MyCollectionPage';
 vi.mock('../api/collection', () => ({
   collectionApi: {
     getMyCollection: vi.fn(),
+    getCollectionPrivacy: vi.fn(),
+    updateCollectionPrivacy: vi.fn(),
     addCatalogCardToCollection: vi.fn(),
     removeFromCollection: vi.fn(),
   },
@@ -89,6 +91,8 @@ describe('MyCollectionPage seller collection/store toggle', () => {
     vi.clearAllMocks();
     useAuthStore.setState({ token: 'test-token', user: seller, isHydrating: false });
     vi.mocked(collectionApi.getMyCollection).mockResolvedValue([]);
+    vi.mocked(collectionApi.getCollectionPrivacy).mockResolvedValue('PUBLIC');
+    vi.mocked(collectionApi.updateCollectionPrivacy).mockResolvedValue('PRIVATE');
     vi.mocked(collectionApi.addCatalogCardToCollection).mockResolvedValue(collectionEntry);
     vi.mocked(listingsApi.getListings).mockResolvedValue([]);
     vi.mocked(catalogApi.searchCards).mockResolvedValue([]);
@@ -216,6 +220,28 @@ describe('MyCollectionPage seller collection/store toggle', () => {
 
     await waitFor(() => {
       expect(collectionApi.addCatalogCardToCollection).toHaveBeenCalledWith(catalogCard, 3);
+    });
+  });
+
+  it('allows user to toggle collection privacy between PUBLIC and PRIVATE', async () => {
+    const user = userEvent.setup();
+    vi.mocked(collectionApi.getCollectionPrivacy).mockResolvedValue('PUBLIC');
+    vi.mocked(collectionApi.updateCollectionPrivacy).mockResolvedValue('PRIVATE');
+
+    render(
+      <MemoryRouter initialEntries={['/collection']}>
+        <MyCollectionPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByTestId('collection-privacy-status')).toHaveTextContent('Public');
+
+    const privateBtn = screen.getByTestId('toggle-privacy-private');
+    await user.click(privateBtn);
+
+    await waitFor(() => {
+      expect(collectionApi.updateCollectionPrivacy).toHaveBeenCalledWith('PRIVATE');
+      expect(screen.getByTestId('collection-privacy-status')).toHaveTextContent('Private');
     });
   });
 });

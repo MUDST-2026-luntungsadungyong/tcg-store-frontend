@@ -104,7 +104,6 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     sellerCost,
     sellerProfit: sellerRevenue - sellerCost,
     items,
-    logs: order.logs,
     createdAt: order.createdAt,
     updatedAt: order.sentAt ?? order.paymentConfirmedAt ?? order.cancelledAt ?? order.createdAt,
   };
@@ -225,7 +224,6 @@ export async function updateSellerOrderStatus(
       ];
       storage.setReservations(reservations);
       return mapReservationOrder(order);
-    }
     }
   }
 

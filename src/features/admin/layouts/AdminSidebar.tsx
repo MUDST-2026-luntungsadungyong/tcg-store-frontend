@@ -1,6 +1,7 @@
 import {
   ChevronLeft,
   ClipboardList,
+  Gavel,
   LayoutDashboard,
   Menu,
   PanelLeftClose,
@@ -28,6 +29,7 @@ const mainLinks: NavItem[] = [
   { name: 'Overview', to: '/admin', icon: LayoutDashboard },
   { name: 'Seller approvals', to: '/admin/seller-applications', icon: ShieldCheck },
   { name: 'Admin management', to: '/admin/users', icon: UsersRound },
+  { name: 'Cancellation requests', to: '/admin/auction-cancellation-requests', icon: Gavel },
 ];
 
 const monitoringLinks: NavItem[] = [

@@ -84,7 +84,9 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     ? 'SENT'
     : order.status === 'CANCELLED'
       ? 'CANCELLED'
-      : 'PENDING';
+      : order.status === 'CONFIRMED'
+        ? 'CONFIRMED'
+        : 'PENDING';
 
   return {
     id: order.id,
@@ -173,10 +175,23 @@ export async function updateSellerOrderStatus(
     throw new Error(`Unsupported seller order status: ${newStatus}`);
   }
 
-  if (ENV.ENABLE_MOCK_API && (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED')) {
-    const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
-    const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
-    return mapReservationOrder(updated);
+  if (ENV.ENABLE_MOCK_API) {
+    initMockStorage();
+    const reservations = storage.getReservations();
+    const order = reservations.find((candidate) => candidate.id === String(orderId));
+    if (order) {
+      if (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED') {
+        const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
+        const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
+        return mapReservationOrder(updated);
+      }
+      order.status = normalizedStatus as any;
+      if (normalizedStatus === 'CONFIRMED') {
+        order.paymentConfirmedAt = new Date().toISOString();
+      }
+      storage.setReservations(reservations);
+      return mapReservationOrder(order);
+    }
   }
 
   const payload: any = { status: normalizedStatus };

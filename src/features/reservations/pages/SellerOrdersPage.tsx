@@ -20,6 +20,7 @@ import {
   type SellerOrder,
   type SellerProfitSummary,
 } from '../api/sellerOrders';
+import { buyerAuctionApi } from '@/features/auctions/api/auctions';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { SearchField } from '@/shared/components/SearchField';
@@ -28,6 +29,19 @@ import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 10
 import { ConditionLabel } from '@/shared/components/ConditionLabel';
 
 export function SellerOrdersPage() {
+  const [proof, setProof] = useState<{ orderId: string | number; url: string }>();
+  useEffect(() => () => { if (proof) URL.revokeObjectURL(proof.url); }, [proof]);
+
+  async function viewProof(orderId: string | number) {
+    setError(null);
+    try {
+      const file = await buyerAuctionApi.paymentProof(orderId);
+      setProof({ orderId, url: URL.createObjectURL(file) });
+    } catch {
+      setError('Could not open the payment proof. The buyer may still need to upload it.');
+    }
+  }
+
   const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [summary, setSummary] = useState<SellerProfitSummary>({
     totalRevenue: 0,
@@ -368,6 +382,12 @@ export function SellerOrdersPage() {
                       {/* Actions */}
                       <td className="p-4 align-top text-right whitespace-nowrap">
                         <div className="flex flex-col gap-1.5 items-end">
+                          {order.orderType === 'AUCTION' && order.status !== 'CANCELLED' &&
+                            <Button size="sm" variant="secondary" onClick={() => void viewProof(order.id)}>View payment proof</Button>}
+                          {proof?.orderId === order.id && <div className="space-y-2">
+                            <img className="max-h-52 max-w-52 object-contain" src={proof.url} alt="Buyer payment proof" />
+                            <button type="button" className="underline" onClick={() => setProof(undefined)}>Close proof</button>
+                          </div>}
                           {(order.status === 'PENDING' || order.status === 'CONFIRMED' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
                             <>
                               {(order.status === 'PENDING' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
@@ -397,7 +417,7 @@ export function SellerOrdersPage() {
                                   Mark as Sent
                                 </Button>
                               )}
-                              <Button
+                              {order.orderType !== 'AUCTION' && <Button
                                 size="sm"
                                 variant="danger"
                                 disabled={isActionLoading}
@@ -405,7 +425,7 @@ export function SellerOrdersPage() {
                                 className="w-28 text-xs"
                               >
                                 Cancel Order
-                              </Button>
+                              </Button>}
                             </>
                           )}
                           {(order.status === 'SENT' || (order.status as string) === 'FULFILLED') && (
@@ -568,7 +588,7 @@ export function SellerOrdersPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-300">
-            กรุณากรอกเลข TAX หรือเลขพัสดุ (Tax Invoice / Parcel Tracking No.) สำหรับการจัดส่งออเดอร์นี้ สิทธิ์ความเป็นเจ้าของจะถูกโอนไปยังผู้ซื้อเมื่ออัปเดตสถานะเป็น Sent
+            กรุณากรอกเลข TAX หรือเลขพัสดุ (Tax Invoice / Parcel Tracking No.) สำหรับการจัดส่งออเดอร์นี้ ผู้ซื้อยืนยันการรับการ์ดได้หลังอัปเดตสถานะเป็น Sent
           </p>
 
           <div>

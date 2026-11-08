@@ -32,6 +32,7 @@ export interface SellerOrder {
   id: number | string;
   orderNumber: string;
   status: SellerOrderStatus;
+  orderType?: 'AUCTION' | 'DIRECT';
   buyerId?: number | string;
   buyerName?: string;
   buyerEmail?: string;

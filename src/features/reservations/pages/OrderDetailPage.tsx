@@ -223,7 +223,8 @@ export function OrderDetailPage() {
 
   const statusConfig = STATUS_BANNER_CONFIGS[order.status] ?? STATUS_BANNER_CONFIGS.PENDING;
   const StatusIcon = statusConfig.icon;
-  const canCancel = order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED';
+  const canCancel = order.orderType !== 'AUCTION'
+    && (order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED');
   const canMarkReceived = order.status === 'SENT';
 
   const orderDisplayNumber = order.orderNumber || order.id;

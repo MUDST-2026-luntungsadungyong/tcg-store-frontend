@@ -15,7 +15,7 @@ const TABS: Array<{ name: string; statuses: AuctionStatus[]; description: string
   { name: 'Drafts', statuses: ['DRAFT'], description: 'Pick up where you left off. Drafts are private and can be edited or deleted.' },
   { name: 'Scheduled', statuses: ['SCHEDULED'], description: 'Your upcoming auctions. Inventory is held from confirmation.' },
   { name: 'Active', statuses: ['ACTIVE'], description: 'Manage your auctions, follow bids and keep track of every outcome.' },
-  { name: 'Ended & Awaiting Payment', statuses: ['ENDED', 'AWAITING_PAYMENT', 'CANCELLED'], description: 'Review auction outcomes and payment progress after bidding ends.' },
+  { name: 'Ended & Awaiting Payment', statuses: ['ENDED', 'AWAITING_PAYMENT', 'BUYOUT_COMPLETED', 'UNSOLD_NO_BIDS', 'RESERVE_NOT_MET', 'DEFAULTED', 'CANCELLED'], description: 'Review auction outcomes and payment progress after bidding ends.' },
   { name: 'Completed', statuses: ['COMPLETED'], description: 'View completed auctions and their payment history.' },
 ];
 const MONTH = new Intl.DateTimeFormat('en-GB', { timeZone: AUCTION_TIMEZONE, month: 'numeric', year: 'numeric' });
@@ -24,7 +24,11 @@ const PAGE_SIZE = 12;
 function statusNote(status: AuctionStatus) {
   switch (status) {
     case 'ENDED': return 'Auction ended';
+    case 'BUYOUT_COMPLETED':
     case 'AWAITING_PAYMENT': return 'Awaiting buyer payment';
+    case 'UNSOLD_NO_BIDS': return 'No sale · No bids';
+    case 'RESERVE_NOT_MET': return 'No sale · Reserve not met';
+    case 'DEFAULTED': return 'Winner missed payment deadline';
     case 'COMPLETED': return 'Completed';
     case 'CANCELLED': return 'Cancelled';
     default: return '—';
@@ -86,7 +90,10 @@ export function MyAuctionsPage() {
 
   return <AuctionPage>
     <PageHeader eyebrow="Seller auctions" title="My Auctions" description={tab.description}
-      actions={<ButtonLink to={`${AUCTIONS_PATH}/new`}>Create Auction</ButtonLink>} />
+      actions={<div className="flex gap-2">
+        <ButtonLink to={`${AUCTIONS_PATH}/analytics`} variant="secondary">Auction Analytics</ButtonLink>
+        <ButtonLink to={`${AUCTIONS_PATH}/new`}>Create Auction</ButtonLink>
+      </div>} />
     {message && <div role="status"><Notice title={message} tone="success">Your inventory is unchanged.</Notice></div>}
     {actionError && <ErrorState message={actionError} onRetry={() => { setActionError(''); return reload(); }} />}
     {loading && !data && <AuctionLoading label="Loading auctions" />}

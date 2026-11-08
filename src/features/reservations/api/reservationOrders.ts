@@ -74,6 +74,7 @@ interface BackendOrderItemResponse {
 }
 
 interface BackendOrderResponse {
+  orderType?: 'AUCTION' | 'DIRECT';
   id: string;
   orderNumber?: string;
   buyerId?: string;
@@ -366,6 +367,7 @@ export function normalizeReservationOrder(
     ownershipTransferredAt: record.ownershipTransferredAt,
     cancelledAt: record.cancelledAt,
     orderNumber: (record as any).orderNumber ? String((record as any).orderNumber) : undefined,
+    ...(record.orderType === 'AUCTION' ? { orderType: 'AUCTION' } : {}),
     sellerName: (record as any).sellerName ? String((record as any).sellerName) : undefined,
     cancellationReason: (record as any).cancellationReason ? String((record as any).cancellationReason) : undefined,
     logs: Array.isArray((record as any).logs) ? (record as any).logs : undefined,

@@ -47,6 +47,8 @@ export function SellerOrdersPage() {
   const [actionLoadingId, setActionLoadingId] = useState<string | number | null>(null);
   const [showPaymentConfirmPopup, setShowPaymentConfirmPopup] = useState(false); // CASE 10a
   const [showMarkSentPopup, setShowMarkSentPopup] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [carrierNote, setCarrierNote] = useState('');
   const [showCancelPopup, setShowCancelPopup] = useState(false);
   const [cancelNote, setCancelNote] = useState('');
   const [pendingOrderAction, setPendingOrderAction] = useState<{ orderId: string | number; status: string } | null>(null);
@@ -73,10 +75,15 @@ export function SellerOrdersPage() {
     void loadData();
   }, [loadData]);
 
-  const handleStatusUpdate = async (orderId: string | number, newStatus: string, note?: string) => {
+  const handleStatusUpdate = async (
+    orderId: string | number,
+    newStatus: string,
+    note?: string,
+    trackingNum?: string
+  ) => {
     setActionLoadingId(orderId);
     try {
-      await updateSellerOrderStatus(orderId, newStatus, note);
+      await updateSellerOrderStatus(orderId, newStatus, note, trackingNum);
       await loadData();
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -379,7 +386,12 @@ export function SellerOrdersPage() {
                                   size="sm"
                                   variant="primary"
                                   disabled={isActionLoading}
-                                  onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'SENT' }); setShowMarkSentPopup(true); }}
+                                  onClick={() => {
+                                    setPendingOrderAction({ orderId: order.id, status: 'SENT' });
+                                    setTrackingNumber('');
+                                    setCarrierNote('');
+                                    setShowMarkSentPopup(true);
+                                  }}
                                   className="w-28 text-xs bg-status-success hover:bg-status-success/90 mb-1"
                                 >
                                   Mark as Sent
@@ -543,20 +555,87 @@ export function SellerOrdersPage() {
         } }}
         secondaryAction={{ label: "Back", onClick: () => { setShowPaymentConfirmPopup(false); setPendingOrderAction(null); } }}
       />
-      {/* CASE 10b: Mark sent popup — Figma: Seller Orders → Mark sent */}
-      <FeedbackPopup
+      {/* CASE 10b: Mark sent & enter parcel tracking number modal */}
+      <Modal
         isOpen={showMarkSentPopup}
-        tone="confirm"
-        title="Mark this order as sent?"
-        message="This transfers card ownership to the buyer's collection."
-        meta={pendingOrderAction ? `Order ${String(pendingOrderAction.orderId)} · This cannot be reversed here.` : undefined}
-        primaryAction={{ label: "Mark as sent", onClick: async () => {
-          if (pendingOrderAction) await handleStatusUpdate(pendingOrderAction.orderId, pendingOrderAction.status);
+        onClose={() => {
           setShowMarkSentPopup(false);
           setPendingOrderAction(null);
-        } }}
-        secondaryAction={{ label: "Back", onClick: () => { setShowMarkSentPopup(false); setPendingOrderAction(null); } }}
-      />
+          setTrackingNumber('');
+          setCarrierNote('');
+        }}
+        title="Mark this order as sent?"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-300">
+            Please enter the tracking number (เลขพัสดุ) for this shipment. Card ownership will be transferred to the buyer once marked as sent.
+          </p>
+
+          <div>
+            <label htmlFor="tracking-number-input" className="block text-xs font-semibold text-gray-300 uppercase mb-1">
+              Tracking Number / เลขพัสดุ <span className="text-status-danger">*</span>
+            </label>
+            <input
+              id="tracking-number-input"
+              type="text"
+              value={trackingNumber}
+              onChange={(e) => setTrackingNumber(e.target.value)}
+              placeholder="e.g. FLASH77261902, EMS-TH88291038"
+              className="w-full p-2.5 rounded-lg border border-white/10 bg-bg-card text-white text-sm focus:outline-none focus:border-brand-blue"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label htmlFor="carrier-note-input" className="block text-xs font-semibold text-gray-300 uppercase mb-1">
+              Carrier or Note (Optional)
+            </label>
+            <input
+              id="carrier-note-input"
+              type="text"
+              value={carrierNote}
+              onChange={(e) => setCarrierNote(e.target.value)}
+              placeholder="e.g. Flash Express, Kerry Express, Thailand Post"
+              className="w-full p-2.5 rounded-lg border border-white/10 bg-bg-card text-white text-sm focus:outline-none focus:border-brand-blue"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowMarkSentPopup(false);
+                setPendingOrderAction(null);
+                setTrackingNumber('');
+                setCarrierNote('');
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              variant="primary"
+              disabled={!trackingNumber.trim() || actionLoadingId !== null}
+              className="bg-status-success hover:bg-status-success/90"
+              onClick={async () => {
+                if (pendingOrderAction && trackingNumber.trim()) {
+                  await handleStatusUpdate(
+                    pendingOrderAction.orderId,
+                    pendingOrderAction.status,
+                    carrierNote.trim() || undefined,
+                    trackingNumber.trim()
+                  );
+                }
+                setShowMarkSentPopup(false);
+                setPendingOrderAction(null);
+                setTrackingNumber('');
+                setCarrierNote('');
+              }}
+            >
+              Mark as Sent
+            </Button>
+          </div>
+        </div>
+      </Modal>
       {/* Cancel Order Popup with Note */}
       <Modal
         isOpen={showCancelPopup}

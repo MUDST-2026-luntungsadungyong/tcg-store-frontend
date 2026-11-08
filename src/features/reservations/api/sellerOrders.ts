@@ -165,7 +165,8 @@ export async function fetchSellerOrders(
 export async function updateSellerOrderStatus(
   orderId: number | string,
   newStatus: SellerOrderStatus | string,
-  note?: string
+  note?: string,
+  trackingNumber?: string
 ): Promise<SellerOrder> {
   const normalizedStatus = newStatus.toUpperCase();
   if (!['PENDING', 'CONFIRMED', 'SENT', 'FULFILLED', 'CANCELLED'].includes(normalizedStatus)) {
@@ -181,6 +182,9 @@ export async function updateSellerOrderStatus(
   const payload: any = { status: normalizedStatus };
   if (note) {
     payload.note = note;
+  }
+  if (trackingNumber) {
+    payload.trackingNumber = trackingNumber;
   }
   const response = await apiClient.patch(`/seller/orders/${encodeURIComponent(orderId)}/status`, payload);
   if (!response.data) throw new Error('The server returned an empty seller order update response.');

@@ -26,6 +26,16 @@ describe('seller orders API adapter', () => {
     expect(get).toHaveBeenNthCalledWith(2, '/seller/orders/profit');
   });
 
+  it('sends note and trackingNumber in payload when updating status', async () => {
+    patch.mockResolvedValueOnce({ data: { id: 42, status: 'SENT' } });
+    await updateSellerOrderStatus(42, 'SENT', 'Shipped via Flash', 'FLASH77261902');
+    expect(patch).toHaveBeenCalledWith('/seller/orders/42/status', {
+      status: 'SENT',
+      note: 'Shipped via Flash',
+      trackingNumber: 'FLASH77261902',
+    });
+  });
+
   it('propagates API failures instead of returning in-memory orders', async () => {
     get.mockRejectedValueOnce(new Error('API unavailable'));
     await expect(fetchSellerOrders()).rejects.toThrow('API unavailable');

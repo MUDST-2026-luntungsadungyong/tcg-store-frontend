@@ -4,7 +4,7 @@ import { PublicLayout } from '@/app/layouts/PublicLayout';
 import { WorkspaceLayout } from '@/app/layouts/WorkspaceLayout';
 import { AdminLayout } from '@/app/layouts/AdminLayout';
 import { authRoutes } from '@/features/auth/routes';
-import { adminAuctionRoutes, sellerAuctionRoutes } from '@/features/auctions/routes';
+import { adminAuctionRoutes, buyerAuctionRoutes, sellerAuctionRoutes } from '@/features/auctions/routes';
 import { collectionRoutes, publicCollectionRoutes } from '@/features/collection/routes';
 import { checkoutRoutes } from '@/features/checkout/routes';
 import { discoveryRoutes } from '@/features/discovery/routes';
@@ -75,6 +75,7 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
     children: [
       ...discoveryRoutes,
+      ...buyerAuctionRoutes,
       ...authRoutes,
       ...publicStoreRoutes,
       ...publicCollectionRoutes,

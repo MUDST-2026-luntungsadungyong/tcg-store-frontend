@@ -429,7 +429,7 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
       });
 
       // Modal appears
-      cy.get('#modal-title').should('contain.text', 'Order Details - ORD-2026-0001');
+      cy.get('[role="dialog"] h2').should('contain.text', 'Order Details - ORD-2026-0001');
 
       // Customer info
       cy.contains('Customer Name').should('be.visible');
@@ -451,7 +451,7 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
 
       // Close modal
       cy.contains('button', 'Close').click();
-      cy.get('#modal-title').should('not.exist');
+      cy.get('[role="dialog"]').should('not.exist');
     });
   });
 
@@ -491,21 +491,31 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
       });
     });
 
-    it('updates order status from CONFIRMED to SENT via Mark Sent popup', () => {
+    it('requires tracking details before updating an order from CONFIRMED to SENT', () => {
       // Click Mark as Sent on Row 2 (ORD-2026-0002)
       cy.get('table tbody tr').eq(1).within(() => {
         cy.contains('button', 'Mark as Sent').click();
       });
 
-      // FeedbackPopup opens (CASE 10b)
-      cy.get('[role="alertdialog"]').should('be.visible').within(() => {
-        cy.contains('Mark this order as sent?').should('be.visible');
-        cy.contains('This transfers card ownership to the buyer\'s collection.').should('be.visible');
-        cy.contains('button', 'Mark as sent').click();
+      const trackingNumber = 'EMS-TH88291038';
+      const carrierNote = 'Thailand Post EMS';
+      cy.get('[role="dialog"]').should('be.visible').within(() => {
+        cy.contains('h2', 'Mark this order as sent?').should('be.visible');
+        cy.contains('button', /^Mark as Sent$/).should('be.disabled');
+        cy.get('#tracking-number-input').type('   ');
+        cy.contains('button', /^Mark as Sent$/).should('be.disabled');
+        cy.get('#tracking-number-input').clear().type(trackingNumber);
+        cy.get('#carrier-note-input').type(carrierNote);
+        cy.contains('button', /^Mark as Sent$/).should('be.enabled').click();
       });
 
-      // FeedbackPopup closes
-      cy.get('[role="alertdialog"]').should('not.exist');
+      cy.get('[role="dialog"]').should('not.exist');
+      cy.window().should((win) => {
+        const orders = JSON.parse(win.localStorage.getItem('mythix_mock_reservations_v1')!);
+        const order = orders.find((candidate: { id: string }) => candidate.id === 'ord-test-02');
+        expect(order.status).to.equal('SENT');
+        expect(order.logs.at(-1).note).to.equal(`${carrierNote} (Tracking / TAX: ${trackingNumber})`);
+      });
 
       // Status badge should update to Sent
       cy.get('table tbody tr').eq(1).within(() => {
@@ -520,7 +530,7 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
       });
 
       // Cancel Modal opens
-      cy.get('#modal-title').should('contain.text', 'Cancel Order');
+      cy.get('[role="dialog"] h2').should('contain.text', 'Cancel Order');
       cy.contains('Please provide a reason for cancelling this order').should('be.visible');
 
       // Submit button should be disabled when empty
@@ -532,7 +542,7 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
       cy.get('button').filter(':contains("Cancel Order")').last().should('not.be.disabled').click();
 
       // Modal closes
-      cy.get('#modal-title').should('not.exist');
+      cy.get('[role="dialog"]').should('not.exist');
 
       // Row status should update to Cancelled
       cy.get('table tbody tr').eq(0).within(() => {
@@ -543,7 +553,7 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
       cy.get('table tbody tr').eq(0).within(() => {
         cy.contains('button', 'Order Details').click();
       });
-      cy.get('#modal-title').should('contain.text', 'Order Details - ORD-2026-0001');
+      cy.get('[role="dialog"] h2').should('contain.text', 'Order Details - ORD-2026-0001');
       cy.contains(`"${reason}"`).should('be.visible');
       cy.contains('button', 'Close').click();
     });

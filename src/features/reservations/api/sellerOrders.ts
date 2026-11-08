@@ -32,6 +32,7 @@ export interface SellerOrder {
   id: number | string;
   orderNumber: string;
   status: SellerOrderStatus;
+  orderType?: 'AUCTION' | 'DIRECT';
   buyerId?: number | string;
   buyerName?: string;
   buyerEmail?: string;
@@ -183,6 +184,7 @@ export async function updateSellerOrderStatus(
     const orderIndex = reservations.findIndex((candidate) => String(candidate.id) === String(orderId));
     if (orderIndex >= 0) {
       const order = reservations[orderIndex];
+      const previousStatus = order.status;
       const timestamp = new Date().toISOString();
       if (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED') {
         const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
@@ -193,7 +195,7 @@ export async function updateSellerOrderStatus(
           storedOrder.logs = [
             ...(storedOrder.logs || []),
             {
-              fromStatus: storedOrder.status || 'CONFIRMED',
+              fromStatus: previousStatus,
               toStatus: 'SENT',
               changedByRole: 'SELLER',
               note: note
@@ -215,7 +217,7 @@ export async function updateSellerOrderStatus(
       order.logs = [
         ...(order.logs || []),
         {
-          fromStatus: order.status,
+          fromStatus: previousStatus,
           toStatus: normalizedStatus,
           changedByRole: 'SELLER',
           note: note ?? null,

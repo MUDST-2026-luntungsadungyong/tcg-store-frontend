@@ -96,6 +96,9 @@ export function NotificationsPage() {
   };
 
   const getAction = (notification: Notification): { label: string; destination: string } | null => {
+    if (notification.actionPath && /^\/(auctions|orders|workspace\/auctions)(\/|$)/.test(notification.actionPath)) {
+      return { label: 'View auction update', destination: notification.actionPath };
+    }
     switch (notification.type) {
       case 'ORDER_RESERVED':
         return notification.orderId ? { label: 'View order', destination: '/workspace/orders' } : null;
@@ -106,6 +109,8 @@ export function NotificationsPage() {
       case 'SELLER_APPLICATION_APPROVED':
       case 'SELLER_APPLICATION_REJECTED':
         return { label: 'View profile', destination: '/profile' };
+      default:
+        return null;
     }
   };
 

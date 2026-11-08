@@ -87,6 +87,8 @@ function AuctionDetails({ id }: { id: number }) {
       <div className="space-y-4">
         <AuctionOverview auction={auction} />
         <BidOverview auction={auction} now={now} />
+        {['AWAITING_PAYMENT', 'BUYOUT_COMPLETED', 'COMPLETED'].includes(status) &&
+          <AuctionSettlementPanel auctionId={id} />}
       </div>
     </div>
   </AuctionPage>;
@@ -115,6 +117,8 @@ function AuctionDetails({ id }: { id: number }) {
       </div>
       <aside className="min-w-0 space-y-4">
         <BidOverview auction={auction} now={now} />
+        {['AWAITING_PAYMENT', 'BUYOUT_COMPLETED', 'COMPLETED'].includes(status) &&
+          <AuctionSettlementPanel auctionId={id} />}
         <Panel className="space-y-4">
           <h2 className="text-lg font-semibold">Pricing · Seller only</h2>
           <DetailRows items={[
@@ -123,6 +127,17 @@ function AuctionDetails({ id }: { id: number }) {
             ['Buy-It-Now', money(auction.buyItNowPrice)],
           ]} />
         </Panel>
+        {status === 'DEFAULTED' && <Button disabled={busy} onClick={async () => {
+          setBusy(true);
+          try {
+            await auctionApi.sendSecondChanceOffer(id);
+            setMessage('Second-chance offer sent.');
+          } catch (error) {
+            setMessage(auctionError(error, 'Could not send second-chance offer.'));
+          } finally {
+            setBusy(false);
+          }
+        }}>Send Second-Chance Offer</Button>}
         {!error && live && !pending && <div className="flex flex-wrap gap-2">
           {canRequest
             ? <Button type="button" variant="secondary" onClick={() => { setMessage(''); setRequestForm(true); }}>Request Cancellation</Button>
@@ -174,5 +189,21 @@ function BidOverview({ auction, now }: { auction: Auction; now: number }) {
       ['Bids', auction.bidCount],
       ...(live ? [[scheduled ? 'Starts in' : 'Time remaining', countdown(scheduled ? auction.startAt : auction.endAt, now)] as [string, string]] : []),
     ]} />
+  </Panel>;
+}
+
+function AuctionSettlementPanel({ auctionId }: { auctionId: number }) {
+  const fetchSettlement = useCallback(() => auctionApi.settlement(auctionId), [auctionId]);
+  const { data, error, loading, reload } = useAuctionResource(fetchSettlement, 'Could not load settlement.');
+  return <Panel className="space-y-3">
+    <h2 className="text-lg font-semibold">Auction settlement</h2>
+    {loading && <p role="status">Loading settlement…</p>}
+    {error && <p role="alert">{error} <button className="underline" onClick={() => void reload()}>Retry</button></p>}
+    {data && <DetailRows items={[
+      ['Final price', money(data.finalPrice)],
+      [`Platform fee (${Number((data.platformFeeRate * 100).toFixed(2))}%)`, money(data.platformFeeAmount)],
+      ['Seller payout before cost', money(data.sellerNetAmount)],
+      ['Cost basis', money(data.costBasis)],
+    ]} />}
   </Panel>;
 }

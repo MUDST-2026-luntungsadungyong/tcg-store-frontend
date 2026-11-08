@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Trophy } from 'lucide-react';
 import type { CollectionEntry } from '@/entities/card/model/types';
 import { ConditionLabel } from '@/shared/components/ConditionLabel';
 
@@ -41,6 +41,10 @@ export function CollectionCard({ entry, onDelete, isDeleting }: CollectionCardPr
           <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
             <span className="text-[11px] font-medium text-gray-400 sm:text-xs">Condition:</span>
             <ConditionLabel condition={card.condition} fallback="Not specified" size="xs" />
+            {entry.auctionWon && <span className="inline-flex items-center gap-1 text-brand-gold" title={entry.provenance}>
+              <Trophy size={13} aria-hidden="true" /> Auction won
+              {entry.gradingCompany && entry.grade && ` · ${entry.gradingCompany} ${entry.grade}`}
+            </span>}
             {card.tournament && (
               <span className="truncate text-[11px] text-gray-400 sm:text-xs">· {card.tournament}</span>
             )}

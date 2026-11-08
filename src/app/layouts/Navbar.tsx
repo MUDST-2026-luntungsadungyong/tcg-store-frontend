@@ -190,6 +190,9 @@ export function Navbar() {
             <NavLink to="/cards" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
               Cards
             </NavLink>
+            <NavLink to="/auctions" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
+              Auctions
+            </NavLink>
             <NavLink to="/vouchers" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center gap-1.5 transition-colors ${isActive ? 'text-amber-400' : 'hover:text-white'}`}>
               <Tag size={15} className="text-amber-400" />
               <span>ส่วนลด</span>

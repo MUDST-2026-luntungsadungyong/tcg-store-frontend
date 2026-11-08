@@ -33,6 +33,7 @@ describe('WorkspaceSidebar', () => {
 
     expect(sidebar).toHaveClass('w-[240px]');
     expect(screen.getByText('Card listings')).not.toHaveClass('sr-only');
+    expect(screen.getByRole('link', { name: 'Vouchers' })).toHaveAttribute('href', '/vouchers');
   });
 });
 

@@ -17,6 +17,7 @@ import {
 } from '@/features/reservations/routes';
 import { listingWorkspaceRoutes } from '@/features/listings/routes';
 import { publicStoreRoutes, sellerStoreRoutes } from '@/features/stores/routes';
+import { publicVoucherRoutes, userVoucherRoutes } from '@/features/vouchers/routes';
 import { AdminSellerApplicationsPage } from '@/features/admin/pages/AdminSellerApplicationsPage';
 import { AdminDashboardPage } from '@/features/admin/pages/AdminDashboardPage';
 import { AdminAuditLogsPage } from '@/features/admin/pages/AdminAuditLogsPage';
@@ -36,6 +37,7 @@ const accountRoutes: RouteObject = {
     ...collectionRoutes,
     ...notificationRoutes,
     ...profileRoutes,
+    ...userVoucherRoutes,
   ],
 };
 
@@ -76,10 +78,11 @@ export const router = createBrowserRouter([
       ...authRoutes,
       ...publicStoreRoutes,
       ...publicCollectionRoutes,
+      ...publicVoucherRoutes,
       accountRoutes,
       { path: '*', element: <NotFoundPage /> },
     ],
   },
-  { ...workspaceRoute, errorElement: <RouteErrorBoundary /> },
+  workspaceRoute,
   adminRoute,
 ]);

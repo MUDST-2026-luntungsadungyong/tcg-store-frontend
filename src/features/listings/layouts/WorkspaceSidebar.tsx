@@ -6,6 +6,7 @@ import {
   Layers3,
   Menu,
   Store,
+  Tag,
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -23,6 +24,11 @@ const workspaceLinks = [
     name: 'Reservation orders',
     to: '/workspace/orders',
     icon: ClipboardList,
+  },
+  {
+    name: 'Vouchers',
+    to: '/vouchers',
+    icon: Tag,
   },
   { name: 'Store profile', to: '/workspace/store-settings', icon: Store },
   {

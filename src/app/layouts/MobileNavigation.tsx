@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Search, Library, ShoppingCart, Menu, X, LogOut, Package, Layers3, Store, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Home, Search, Library, ShoppingCart, Menu, X, LogOut, Package, Layers3, ShieldCheck, ChevronRight, Tag } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { isSellerUser } from '@/entities/account/model/types';
 import { useReservationCartStore } from '@/features/reservation-cart';
@@ -12,6 +12,7 @@ import { acquireBodyScrollLock } from '@/shared/lib/bodyScrollLock';
 const destinations = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/cards', label: 'Cards', icon: Search },
+  { to: '/vouchers', label: 'Vouchers', icon: Tag },
   { to: '/collection', label: 'Collection', icon: Library },
   { to: '/cart', label: 'Cart', icon: ShoppingCart },
 ];
@@ -58,29 +59,41 @@ export function MobileNavigation() {
             <span className="mt-1 block text-[10px] font-semibold tracking-wide text-brand-blue">{user.role === 'ADMIN' ? 'ADMIN' : seller ? 'SELLER' : 'COLLECTOR'}</span>
             <span className="mt-1 block text-xs text-text-secondary">View Profile</span>
           </span>
-          <ChevronRight size={16} className="shrink-0 text-text-muted" />
+          <ChevronRight size={18} className="text-text-muted" />
         </Link>}
-        <nav aria-label="Account navigation" className="space-y-1">
-          {[
-            { to: '/cards', label: 'Explore cards', icon: Search },
-            { to: '/collection', label: 'My Collection', icon: Library },
-            { to: '/orders', label: 'My Orders', icon: Package },
-          ].map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} onClick={close} className={({ isActive }) => `flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium ${isActive ? 'bg-brand-blue/10 text-brand-blue' : 'text-text-secondary hover:bg-white/5 hover:text-white'}`}><Icon size={20} strokeWidth={1.75} />{label}</NavLink>)}
-          {(seller || user?.role === 'ADMIN') && <div className="!my-4 border-t border-white/10" />}
-          {[
-            ...(seller ? [{ to: '/workspace/listings', label: 'Workspace', icon: Layers3 }, { to: '/workspace/orders', label: 'Seller Orders', icon: Package }, { to: '/workspace/store-settings', label: 'Store Profile', icon: Store }] : []),
-            ...(user?.role === 'ADMIN' ? [{ to: '/admin', label: 'Admin dashboard', icon: ShieldCheck }] : []),
-          ].map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} onClick={close} className={({ isActive }) => `flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium ${isActive ? 'bg-brand-blue/10 text-brand-blue' : 'text-text-secondary hover:bg-white/5 hover:text-white'}`}><Icon size={20} strokeWidth={1.75} />{label}</NavLink>)}
+        <nav aria-label="Primary mobile" className="flex flex-col gap-1">
+          {destinations.map(({ to, label, icon: Icon }) => (
+            <NavLink key={to} to={to} onClick={close} end={to === '/'} className={({ isActive }) => `flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-semibold transition-colors ${isActive ? 'bg-brand-blue/10 text-brand-blue' : 'text-text-secondary hover:bg-white/5 hover:text-white'}`}>
+              <span className="flex items-center gap-3">
+                <Icon size={20} />
+                <span>{label}</span>
+              </span>
+              {to === '/cart' && count > 0 && <span className="rounded-full bg-brand-blue px-2 py-0.5 text-xs font-bold text-bg-base">{count > 99 ? '99+' : count}</span>}
+            </NavLink>
+          ))}
         </nav>
-        <div className="mt-4 border-t border-white/10 pt-3">
-          {user ? <button type="button" onClick={() => { close(); logout(); navigate('/'); }} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-sm text-status-danger hover:bg-white/5"><LogOut size={20} strokeWidth={1.75} />Logout</button> : <Link to="/login" onClick={close} className="flex min-h-12 items-center justify-center rounded-xl bg-brand-blue font-semibold text-bg-base">Login</Link>}
+        {user && <div className="mt-6 border-t border-white/10 pt-4">
+          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">Account</p>
+          <div className="flex flex-col gap-1">
+            <NavLink to="/orders" onClick={close} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-text-secondary hover:bg-white/5 hover:text-white"><Package size={18} /><span>My Orders</span></NavLink>
+            <NavLink to="/profile/vouchers" onClick={close} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-text-secondary hover:bg-white/5 hover:text-white"><Tag size={18} className="text-amber-400" /><span>My Vouchers</span></NavLink>
+            {seller && <NavLink to="/workspace/listings" onClick={close} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-text-secondary hover:bg-white/5 hover:text-white"><Layers3 size={18} /><span>Listings</span></NavLink>}
+            {seller && <NavLink to="/workspace/orders" onClick={close} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-text-secondary hover:bg-white/5 hover:text-white"><Package size={18} /><span>Seller Orders</span></NavLink>}
+            {seller && <NavLink to="/vouchers" onClick={close} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-text-secondary hover:bg-white/5 hover:text-white"><Tag size={18} className="text-amber-400" /><span>Vouchers</span></NavLink>}
+            {user.role === 'ADMIN' && <NavLink to="/admin" onClick={close} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-brand-blue hover:bg-white/5"><ShieldCheck size={18} /><span>Admin Area</span></NavLink>}
+          </div>
+        </div>}
+        <div className="mt-auto border-t border-white/10 pt-4">
+          {user ? (
+            <button type="button" onClick={() => { logout(); close(); navigate('/'); }} className="flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold text-status-danger hover:bg-white/5"><LogOut size={18} /><span>Log out</span></button>
+          ) : !authRoute ? (
+            <div className="flex flex-col gap-2">
+              <Link to="/login" onClick={close} className="flex h-11 items-center justify-center rounded-xl bg-brand-blue text-sm font-semibold text-bg-base hover:bg-brand-blue/90">Log In</Link>
+              <Link to="/register" onClick={close} className="flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-white hover:bg-white/10">Sign Up</Link>
+            </div>
+          ) : null}
         </div>
       </div>
     </dialog>
-    {!authRoute && <nav aria-label="Mobile primary navigation" className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 mx-auto grid max-w-[480px] grid-cols-4 rounded-[24px] border border-white/15 bg-bg-elevated p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] md:hidden">
-      {destinations.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue ${isActive ? 'bg-brand-blue/10 text-brand-blue' : 'text-text-secondary hover:text-white'}`}>
-        <span className="relative"><Icon size={22} />{to === '/cart' && count > 0 && <span className="absolute -right-3 -top-2 rounded-full bg-brand-blue px-1 text-[9px] text-bg-base" aria-label={`${count} items`}>{count > 99 ? '99+' : count}</span>}</span>{label}
-      </NavLink>)}
-    </nav>}
   </>;
 }

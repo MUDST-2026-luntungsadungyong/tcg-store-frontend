@@ -14,7 +14,7 @@ Cypress.on('uncaught:exception', (err, runnable) => {
 // Provide default network intercepts so background calls (e.g. from Navbar)
 // do not receive 401s from the backend and trigger unauthorized redirects
 beforeEach(() => {
-  if (String(Cypress.expose('LIVE_E2E')).toLowerCase() === 'true') return;
+  if (['LIVE_E2E', 'AUCTION_LIVE_E2E'].some((flag) => String(Cypress.expose(flag)).toLowerCase() === 'true')) return;
   const api = 'http://localhost:8080/api';
 
   cy.intercept('GET', `${api}/notifications/unread-count`, {

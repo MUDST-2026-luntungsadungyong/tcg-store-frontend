@@ -7,16 +7,13 @@ import {
   ShoppingCart,
   LogOut,
   User as UserIcon,
-  Package,
   Layers3,
-  Layers,
-  Library,
   ClipboardList,
   ReceiptText,
   UsersRound,
-  Tag,
 } from 'lucide-react';
 import { MobileNavigation } from './MobileNavigation';
+import { accountLinks, isMarketplaceLinkActive, marketplaceLinks, sellerLinks, workspaceLink } from './marketplaceNavigation';
 import { ButtonLink } from '@/shared/components/ButtonLink';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { useNotificationStore } from '@/features/notifications/model/useNotificationStore';
@@ -120,7 +117,7 @@ export function Navbar() {
 
   return (
     <nav aria-label="Marketplace navigation" className="sticky top-0 z-40 w-full bg-[#1b2336] border-b border-[rgba(143,179,226,0.2)]">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-16 overflow-visible">
 
           {/* Logo */}
@@ -184,40 +181,23 @@ export function Navbar() {
           )}
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2 lg:gap-3 text-sm font-semibold text-gray-300">
-            <NavLink to="/" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
-              Home
-            </NavLink>
-            <NavLink to="/cards" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
-              Cards
-            </NavLink>
-<<<<<<< HEAD
-            <NavLink to="/collections" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
-              Collections
-=======
-            <NavLink to="/auctions" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center transition-colors ${isActive ? 'text-brand-blue' : 'hover:text-white'}`}>
-              Auctions
->>>>>>> origin/main
-            </NavLink>
-            <NavLink to="/vouchers" className={({ isActive }) => `hidden md:inline-flex min-h-11 items-center gap-1.5 transition-colors ${isActive ? 'text-amber-400' : 'hover:text-white'}`}>
-              <Tag size={15} className="text-amber-400" />
-              <span>ส่วนลด</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">HOT</span>
-            </NavLink>
+          <div className="flex items-center gap-1.5 lg:gap-3 text-sm font-semibold text-gray-300">
+            {(isSeller ? [...marketplaceLinks, workspaceLink] : marketplaceLinks).map(({ to, label, icon: Icon }) => {
+              const active = isMarketplaceLinkActive(to, location.pathname);
+              return (
+                <Link key={to} to={to} aria-current={active ? 'page' : undefined}
+                  className={`hidden md:inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap transition-colors ${active ? 'text-brand-blue' : 'hover:text-white'}`}>
+                  {to === '/vouchers' && <Icon size={15} className="text-amber-400" aria-hidden />}
+                  {label}
+                  {to === '/vouchers' && <span aria-hidden className="hidden lg:inline rounded-full border border-amber-500/30 bg-amber-500/20 px-1.5 text-[10px] font-bold text-amber-300">HOT</span>}
+                </Link>
+              );
+            })}
 
-            {isSeller && (
-              <Link
-                to="/workspace/listings"
-                className="hidden md:inline-flex min-h-11 items-center text-sm font-semibold text-brand-blue transition-colors hover:text-white"
-              >
-                Workspace
-              </Link>
-            )}
-
-            <Link
+            <NavLink
               to="/cart"
               aria-label="Reservation cart"
-              className="relative hidden md:flex min-h-11 min-w-11 items-center justify-center text-gray-300 hover:text-white transition-colors"
+              className={({ isActive }) => `relative hidden md:flex min-h-11 min-w-11 items-center justify-center transition-colors ${isActive ? 'text-brand-blue' : 'text-gray-300 hover:text-white'}`}
               title="Reservation cart"
             >
               <span className="relative inline-flex size-[22px] shrink-0 items-center justify-center">
@@ -228,7 +208,7 @@ export function Navbar() {
                 </span>
               )}
               </span>
-            </Link>
+            </NavLink>
 
             <Link
               to="/notifications"
@@ -289,82 +269,28 @@ export function Navbar() {
                       <Link to="/admin/audit-logs" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><ClipboardList size={16} />Audit trail</Link>
                       <div className="my-1.5 border-t border-white/10" />
                     </>}
-                    {isSeller && (
-                      <Link
-                        to="/workspace/listings"
-                        role="menuitem"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-                      >
-                        <Layers3 size={16} />
-                        Card Listings
-                      </Link>
-                    )}
-                    <Link
+                    <NavLink
                       to="/profile"
+                      end
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                      className={({ isActive }) => `flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${isActive ? 'bg-brand-blue/10 text-brand-blue' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
                     >
                       <UserIcon size={16} />
                       Profile
-                    </Link>
-                    <Link
-                      to="/orders"
-                      role="menuitem"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-                    >
-                      <Package size={16} />
-                      My Orders
-                    </Link>
-                    <Link
-                      to="/profile/vouchers"
-                      role="menuitem"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-                    >
-                      <Tag size={16} className="text-amber-400" />
-                      My Vouchers
-                    </Link>
-                    <Link
-                      to="/vouchers"
-                      role="menuitem"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-                    >
-                      <Tag size={16} className="text-amber-400" />
-                      Voucher Center
-                    </Link>
-                    <Link
-                      to="/collection"
-                      role="menuitem"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-                    >
-                      <Library size={16} />
-                      My Collection
-                    </Link>
-                    <Link
-                      to="/collections"
-                      role="menuitem"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-                    >
-                      <Layers size={16} />
-                      Explore Collections
-                    </Link>
-                    {isSeller && (
-                      <Link
-                        to="/workspace/orders"
+                    </NavLink>
+                    {(isSeller ? [...accountLinks, ...sellerLinks] : accountLinks).map(({ to, label, icon: Icon }) => (
+                      <NavLink
+                        key={to}
+                        to={to}
                         role="menuitem"
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                        className={({ isActive }) => `flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${isActive ? 'bg-brand-blue/10 text-brand-blue' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
                       >
-                        <Package size={16} />
-                        Seller Orders
-                      </Link>
-                    )}
+                        <Icon size={16} className={to === '/profile/vouchers' ? 'text-amber-400' : undefined} aria-hidden />
+                        {label}
+                      </NavLink>
+                    ))}
                     <div className="my-1.5 border-t border-white/10" />
                     <button
                       type="button"

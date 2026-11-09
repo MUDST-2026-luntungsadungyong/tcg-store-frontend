@@ -49,6 +49,30 @@ describe('CardDiscoveryPage', () => {
     vi.clearAllMocks();
   });
 
+  it('uses catalog art for search results and a placeholder when catalog art is unavailable', async () => {
+    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
+      items: [
+        { ...mockItems[0], image: '/seller-pikachu.png', imageSmall: '/catalog-pikachu.png' },
+        { ...mockItems[1], image: '/seller-charizard.png' },
+      ],
+      pageNumber: 0,
+      pageSize: 12,
+      totalElements: 2,
+      totalPages: 1,
+      last: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <CardDiscoveryPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('img', { name: 'Pikachu Illustrator' })).toHaveAttribute('src', '/catalog-pikachu.png');
+    expect(screen.getByText('No catalog image')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Charizard VMAX' })).not.toBeInTheDocument();
+  });
+
   it('renders products and filters only after clicking search', async () => {
     const user = userEvent.setup();
     vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({

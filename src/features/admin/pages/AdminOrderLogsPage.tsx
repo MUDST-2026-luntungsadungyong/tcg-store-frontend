@@ -6,12 +6,12 @@ import { Modal } from '@/shared/components/Modal';
 import { SearchField } from '@/shared/components/SearchField';
 import { cn } from '@/shared/lib';
 
-const STATUSES = ['PENDING', 'PAID', 'FULFILLED', 'CANCELLED'] as const;
+const STATUSES = ['PENDING', 'PAID', 'AWAITING_BUYER_CONTACT', 'PENDING_SELLER_ACTION', 'SENT', 'FULFILLED', 'CANCELLED'] as const;
 type Status = typeof STATUSES[number]; type SearchBy = 'ORDER_NUMBER' | 'BUYER' | 'SELLER';
 type Item = { id: string; productName: string; cardId: string; sellerName: string; sellerEmail: string; shopName: string; price: number; quantity: number; itemTotal?: number };
-type Order = { id: string; orderNumber: string; buyerName: string; buyerEmail: string; status: Status; totalAmount: number; createdAt: string; platformFee: number; sellerNetAmount: number; items?: Item[] };
+type Order = { id: string; orderNumber: string; buyerName: string; buyerEmail: string; status: Status; totalAmount: number; createdAt: string; platformFee: number; sellerNetAmount: number; items?: Item[]; orderType?: string };
 type Page = { content: Order[]; number: number; totalPages: number; totalElements: number };
-const tone: Record<Status, string> = { PENDING: 'border-status-warning/30 bg-status-warning/10 text-status-warning', PAID: 'border-brand-blue/30 bg-brand-blue/10 text-brand-blue', FULFILLED: 'border-status-success/30 bg-status-success/10 text-status-success', CANCELLED: 'border-status-danger/30 bg-status-danger/10 text-status-danger' };
+const tone: Partial<Record<Status, string>> = { PENDING: 'border-status-warning/30 bg-status-warning/10 text-status-warning', PAID: 'border-brand-blue/30 bg-brand-blue/10 text-brand-blue', FULFILLED: 'border-status-success/30 bg-status-success/10 text-status-success', CANCELLED: 'border-status-danger/30 bg-status-danger/10 text-status-danger' };
 const money = (n: number) => `฿${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 const toIso = (d: Date) => d.toISOString().slice(0, 10);
 const fmt = (value: string) => new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
@@ -67,6 +67,9 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
 export function AdminOrderLogsPage() {
  const [orders, setOrders] = useState<Order[]>([]); const [query, setQuery] = useState(''); const [searchBy, setSearchBy] = useState<SearchBy>('ORDER_NUMBER'); const [statuses, setStatuses] = useState<Status[]>([]); const [from, setFrom] = useState(''); const [to, setTo] = useState(''); const [page, setPage] = useState(0); const [info, setInfo] = useState<Page>({ content: [], number: 0, totalPages: 0, totalElements: 0 }); const [loading, setLoading] = useState(true); const [viewing, setViewing] = useState<Order | null>(null);
  useEffect(() => setPage(0), [query, searchBy, statuses, from, to]);
+ const [deliveryReason, setDeliveryReason] = useState('');
+ const [confirmingDelivery, setConfirmingDelivery] = useState(false);
+ const [deliveryError, setDeliveryError] = useState(false);
 
  const fetchOrders = useCallback(async () => {
   setLoading(true);
@@ -95,6 +98,29 @@ export function AdminOrderLogsPage() {
  useEffect(() => {
   void fetchOrders();
  }, [fetchOrders]);
+
+ function openOrder(order: Order) {
+  setViewing(order);
+  setDeliveryReason('');
+  setDeliveryError(false);
+ }
+
+ async function resolveShipment(order: Order, outcome: 'DELIVERED' | 'UNDELIVERED') {
+  setConfirmingDelivery(true);
+  setDeliveryError(false);
+  try {
+   await apiClient.post(`/admin/orders/${encodeURIComponent(order.id)}/resolve-auction-shipment`, {
+    outcome,
+    reason: deliveryReason.trim(),
+   });
+   setViewing(null);
+   await fetchOrders();
+  } catch {
+   setDeliveryError(true);
+  } finally {
+   setConfirmingDelivery(false);
+  }
+ }
 
  const toggle = (status: Status) => setStatuses((all) => all.includes(status) ? all.filter((x) => x !== status) : [...all, status]); const placeholder = searchBy === 'SELLER' ? 'Search seller or store' : searchBy === 'BUYER' ? 'Search buyer name or email' : 'Search order number';
 
@@ -147,7 +173,7 @@ export function AdminOrderLogsPage() {
         </thead>
         <tbody>
          {orders.map((order) => (
-          <tr key={order.id} onClick={() => setViewing(order)} className="cursor-pointer border-b border-white/10 last:border-0 hover:bg-white/[.03]">
+          <tr key={order.id} onClick={() => openOrder(order)} className="cursor-pointer border-b border-white/10 last:border-0 hover:bg-white/[.03]">
            <td className="p-3 font-medium text-white">{order.orderNumber}</td>
            <td className="p-3 text-white">{order.buyerName}</td>
            <td className="p-3 text-gray-300">{sellers(order).map((s) => s.shopName || s.sellerName).join(', ') || '—'}</td>
@@ -162,7 +188,7 @@ export function AdminOrderLogsPage() {
 
       {/* Mobile card list – hidden on desktop */}
       <div className="flex flex-col gap-3 md:hidden">
-       {orders.map((order) => <OrderCard key={order.id} order={order} onClick={() => setViewing(order)} />)}
+       {orders.map((order) => <OrderCard key={order.id} order={order} onClick={() => openOrder(order)} />)}
       </div>
 
       {/* Pagination */}
@@ -196,7 +222,7 @@ export function AdminOrderLogsPage() {
    </section>
 
    {/* Order detail modal – wider on desktop via className override */}
-   <Modal isOpen={Boolean(viewing)} onClose={() => setViewing(null)} title="Order details" mobileSheet className="md:max-w-3xl">
+   <Modal isOpen={Boolean(viewing)} onClose={() => { if (!confirmingDelivery) setViewing(null); }} title="Order details" mobileSheet className="md:max-w-3xl">
     {viewing && (
      <div className="space-y-5 md:space-y-0 md:grid md:grid-cols-2 md:gap-5">
 
@@ -229,6 +255,25 @@ export function AdminOrderLogsPage() {
         <DetailRow label="Platform fee">{money(viewing.platformFee)}</DetailRow>
         <DetailRow label="Seller net amount">{money(viewing.sellerNetAmount)}</DetailRow>
        </div>
+       {viewing.orderType === 'AUCTION' && viewing.status === 'SENT' && (
+        <form className="space-y-3 rounded-lg border border-white/10 p-4" onSubmit={event => {
+         event.preventDefault();
+         void resolveShipment(viewing, 'DELIVERED');
+        }}>
+         <label className="block text-sm text-gray-300">
+          Reason for resolving shipment
+          <textarea className="mt-2 w-full rounded-lg border border-white/10 bg-bg-input p-2"
+           required maxLength={500} value={deliveryReason} onChange={event => setDeliveryReason(event.target.value)} />
+         </label>
+         <p className="text-xs text-gray-400">Record the verified outcome on the order timeline. Resolve any refund outside the app before closing an undelivered order.</p>
+         {deliveryError && <p role="alert" className="text-sm text-status-danger">Shipment could not be resolved. Refresh the order and try again.</p>}
+         <div className="flex flex-wrap gap-2">
+          <Button type="submit" disabled={!deliveryReason.trim() || confirmingDelivery}>Confirm auction delivery</Button>
+          <Button type="button" variant="danger" disabled={!deliveryReason.trim() || confirmingDelivery}
+           onClick={() => void resolveShipment(viewing, 'UNDELIVERED')}>Close as undelivered</Button>
+         </div>
+        </form>
+       )}
       </div>
 
       {/* Right column – Items */}

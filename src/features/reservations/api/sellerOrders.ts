@@ -171,7 +171,8 @@ export async function updateSellerOrderStatus(
   orderId: number | string,
   newStatus: SellerOrderStatus | string,
   note?: string,
-  trackingNumber?: string
+  trackingNumber?: string,
+  noBuyerContact?: boolean
 ): Promise<SellerOrder> {
   const normalizedStatus = newStatus.toUpperCase();
   if (!['PENDING', 'CONFIRMED', 'AWAITING_BUYER_CONTACT', 'PENDING_SELLER_ACTION', 'SENT', 'FULFILLED', 'CANCELLED'].includes(normalizedStatus)) {
@@ -229,12 +230,15 @@ export async function updateSellerOrderStatus(
     }
   }
 
-  const payload: any = { status: normalizedStatus };
+  const payload: { status: string; note?: string; trackingNumber?: string; noBuyerContact?: boolean } = { status: normalizedStatus };
   if (note) {
     payload.note = note;
   }
   if (trackingNumber) {
     payload.trackingNumber = trackingNumber;
+  }
+  if (noBuyerContact) {
+    payload.noBuyerContact = true;
   }
   const response = await apiClient.patch(`/seller/orders/${encodeURIComponent(orderId)}/status`, payload);
   if (!response.data) throw new Error('The server returned an empty seller order update response.');

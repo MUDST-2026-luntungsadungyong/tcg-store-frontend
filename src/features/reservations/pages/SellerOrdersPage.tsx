@@ -53,7 +53,9 @@ export function SellerOrdersPage() {
   const [carrierNote, setCarrierNote] = useState('');
   const [showCancelPopup, setShowCancelPopup] = useState(false);
   const [cancelNote, setCancelNote] = useState('');
+  const [noBuyerContact, setNoBuyerContact] = useState(false);
   const [pendingOrderAction, setPendingOrderAction] = useState<{ orderId: string | number; status: string } | null>(null);
+  const pendingOrder = orders.find(order => order.id === pendingOrderAction?.orderId);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -91,15 +93,18 @@ export function SellerOrdersPage() {
     orderId: string | number,
     newStatus: string,
     note?: string,
-    trackingNum?: string
+    trackingNum?: string,
+    cancelForNoContact?: boolean
   ) => {
     setActionLoadingId(orderId);
     try {
-      await updateSellerOrderStatus(orderId, newStatus, note, trackingNum);
+      await updateSellerOrderStatus(orderId, newStatus, note, trackingNum, cancelForNoContact);
       await loadData();
+      return true;
     } catch (err) {
       console.error('Failed to update status:', err);
       setError(err instanceof Error ? err.message : 'Unable to update order status.');
+      return false;
     } finally {
       setActionLoadingId(null);
     }
@@ -434,15 +439,15 @@ export function SellerOrdersPage() {
                                   Mark as Sent
                                 </Button>
                               )}
-                              {order.orderType !== 'AUCTION' && <Button
+                              <Button
                                 size="sm"
                                 variant="danger"
                                 disabled={isActionLoading}
-                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'CANCELLED' }); setCancelNote(''); setShowCancelPopup(true); }}
+                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'CANCELLED' }); setCancelNote(''); setNoBuyerContact(false); setShowCancelPopup(true); }}
                                 className="w-28 text-xs"
                               >
                                 Cancel Order
-                              </Button>}
+                              </Button>
                             </>
                           )}
                           {(order.status === 'SENT' || (order.status as string) === 'FULFILLED') && (
@@ -688,17 +693,26 @@ export function SellerOrdersPage() {
             className="w-full h-24 p-3 rounded-lg border border-white/10 bg-bg-card text-white text-sm"
             placeholder="Reason for cancellation..."
           />
+          {pendingOrder?.orderType === 'AUCTION' && pendingOrder.status === 'AWAITING_BUYER_CONTACT' && (
+            <label className="flex items-start gap-2 text-sm text-gray-300">
+              <input type="checkbox" checked={noBuyerContact} onChange={event => setNoBuyerContact(event.target.checked)} />
+              The winner never contacted me and I received no payment. Allow a second-chance offer for this auction.
+            </label>
+          )}
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="secondary" onClick={() => { setShowCancelPopup(false); setPendingOrderAction(null); }}>
               Back
             </Button>
             <Button
               variant="danger"
-              disabled={!cancelNote.trim()}
+              disabled={!cancelNote.trim() || actionLoadingId !== null}
               onClick={async () => {
-                if (pendingOrderAction) await handleStatusUpdate(pendingOrderAction.orderId, pendingOrderAction.status, cancelNote);
-                setShowCancelPopup(false);
-                setPendingOrderAction(null);
+                if (pendingOrderAction && await handleStatusUpdate(
+                  pendingOrderAction.orderId, pendingOrderAction.status, cancelNote, undefined, noBuyerContact,
+                )) {
+                  setShowCancelPopup(false);
+                  setPendingOrderAction(null);
+                }
               }}
             >
               Cancel Order

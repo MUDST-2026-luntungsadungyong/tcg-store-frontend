@@ -28,7 +28,7 @@ function statusNote(status: AuctionStatus) {
     case 'AWAITING_BUYER_CONTACT': return 'Awaiting buyer contact';
     case 'UNSOLD_NO_BIDS': return 'No sale · No bids';
     case 'RESERVE_NOT_MET': return 'No sale · Reserve not met';
-    case 'DEFAULTED': return 'Winner missed payment deadline';
+    case 'DEFAULTED': return 'Winner did not contact seller';
     case 'COMPLETED': return 'Completed';
     case 'CANCELLED': return 'Cancelled';
     default: return '—';

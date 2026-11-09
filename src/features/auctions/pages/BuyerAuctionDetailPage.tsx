@@ -104,8 +104,9 @@ function AuctionRoom({ id }: { id: number }) {
 
   const requestBid = (mode: 'bid' | 'proxy', value: string) => {
     const amount = Number(value);
-    if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(value) || amount < auction.nextMinimumBid) {
-      setActionError(`กรอกราคาอย่างน้อย ${money(auction.nextMinimumBid)} และใช้ทศนิยมไม่เกินสองตำแหน่ง`);
+    const minimum = mode === 'bid' ? auction.nextMinimumBid : 0.01;
+    if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(value) || amount < minimum) {
+      setActionError(`กรอกราคาอย่างน้อย ${money(minimum)} และใช้ทศนิยมไม่เกินสองตำแหน่ง`);
       return;
     }
     setActionError('');

@@ -5,7 +5,7 @@ import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
 import { reservationOrdersApi } from './reservationOrders';
 
-export type SellerOrderStatus = 'PENDING' | 'CONFIRMED' | 'SENT' | 'FULFILLED' | 'CANCELLED';
+export type SellerOrderStatus = 'PENDING' | 'CONFIRMED' | 'AWAITING_BUYER_CONTACT' | 'PENDING_SELLER_ACTION' | 'SENT' | 'FULFILLED' | 'CANCELLED';
 
 export interface OrderStatusLog {
   fromStatus: string | null;
@@ -174,7 +174,7 @@ export async function updateSellerOrderStatus(
   trackingNumber?: string
 ): Promise<SellerOrder> {
   const normalizedStatus = newStatus.toUpperCase();
-  if (!['PENDING', 'CONFIRMED', 'SENT', 'FULFILLED', 'CANCELLED'].includes(normalizedStatus)) {
+  if (!['PENDING', 'CONFIRMED', 'AWAITING_BUYER_CONTACT', 'PENDING_SELLER_ACTION', 'SENT', 'FULFILLED', 'CANCELLED'].includes(normalizedStatus)) {
     throw new Error(`Unsupported seller order status: ${newStatus}`);
   }
 

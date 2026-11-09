@@ -2,7 +2,15 @@ import apiClient from '@/shared/api/client';
 import type { CardListing } from '@/entities/card/model/types';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
 
-export type StoreProfile = { sellerId: string; shopName: string; shopDescription?: string; phone?: string; line?: string; facebook?: string };
+export type StoreProfile = {
+  sellerId: string;
+  shopName: string;
+  shopDescription?: string;
+  phone?: string;
+  line?: string;
+  facebook?: string;
+  otherContact?: string;
+};
 export type StoreProfileInput = Omit<StoreProfile, 'sellerId'>;
 
 export function filterAvailableStoreListings(listings: readonly CardListing[]): CardListing[] {

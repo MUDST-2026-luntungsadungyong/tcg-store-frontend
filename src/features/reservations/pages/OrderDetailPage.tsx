@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 
 import type { ReservationOrder, ReservationStatus } from '@/entities/reservation/model/types';
-import { storesApi, type StoreProfile } from '@/features/stores/api/stores';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { ConditionLabel } from '@/shared/components/ConditionLabel';
@@ -52,6 +51,24 @@ const STATUS_BANNER_CONFIGS: Record<ReservationStatus, StatusBannerConfig> = {
     badgeLabel: 'Confirmed',
     variant: 'warning',
     icon: Clock,
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/30',
+  },
+  AWAITING_BUYER_CONTACT: {
+    title: 'Contact the Seller to Arrange Payment',
+    description: 'Your auction was successful. Use the private seller contact details below to arrange payment and delivery.',
+    badgeLabel: 'Awaiting Contact',
+    variant: 'gold',
+    icon: MessageCircle,
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/30',
+  },
+  PENDING_SELLER_ACTION: {
+    title: 'Payment Arranged',
+    description: 'The seller has recorded the payment arrangement and will prepare shipment.',
+    badgeLabel: 'Preparing Shipment',
+    variant: 'warning',
+    icon: Package,
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/30',
   },
@@ -98,7 +115,6 @@ export function OrderDetailPage() {
   const navigate = useNavigate();
 
   const [order, setOrder] = useState<ReservationOrder | null>(null);
-  const [storeProfile, setStoreProfile] = useState<StoreProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,16 +141,6 @@ export function OrderDetailPage() {
       const detailedOrder = await fetchBuyerOrderById(orderId);
       setOrder(detailedOrder);
 
-      // Fetch seller store profile for contact information
-      if (detailedOrder.sellerId) {
-        try {
-          const profile = await storesApi.public(detailedOrder.sellerId);
-          setStoreProfile(profile);
-        } catch {
-          // Gracefully continue without store profile
-          setStoreProfile(null);
-        }
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load order details.');
     } finally {
@@ -224,8 +230,8 @@ export function OrderDetailPage() {
   const statusConfig = STATUS_BANNER_CONFIGS[order.status] ?? STATUS_BANNER_CONFIGS.PENDING;
   const StatusIcon = statusConfig.icon;
   const isAuction = order.orderType === 'AUCTION';
-  const canCancel = !isAuction
-    && (order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED');
+  const canCancel = order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED'
+    || order.status === 'AWAITING_BUYER_CONTACT' || order.status === 'PENDING_SELLER_ACTION';
   const canMarkReceived = order.status === 'SENT';
 
   const orderDisplayNumber = order.orderNumber || order.id;
@@ -295,19 +301,9 @@ export function OrderDetailPage() {
           <ShieldCheck size={20} className="mt-0.5 shrink-0 text-brand-blue" />
           <div className="leading-relaxed">
             <span className="font-bold text-white">Mythix Marketplace Notice: </span>
-            Payment and physical delivery are arranged directly between the buyer and seller outside the Mythix platform.
-            Please coordinate fulfillment using the authorized seller contact information below.
+            กรุณาติดต่อร้านค้าเพื่อดำเนินการชำระเงินและจัดส่ง โดยใช้ช่องทางติดต่อของร้านค้าที่แสดงด้านล่าง
           </div>
         </div>
-
-        {isAuction && order.status === 'PENDING' && (
-          <Link
-            to={`/auctions/me#auction-payment-${order.id}`}
-            className="w-fit rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-bg-base focus-visible:outline focus-visible:outline-2"
-          >
-            ดูสถานะหรือส่งหลักฐานการชำระเงิน
-          </Link>
-        )}
 
         {/* Seller & Store Contact Information Card */}
         <section aria-label="Seller Information" className="rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card p-6 shadow-md">
@@ -320,7 +316,7 @@ export function OrderDetailPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Seller / Store</p>
                 <div className="flex items-center gap-2">
                   <span className="text-base font-bold text-white">
-                    {storeProfile?.shopName || order.sellerName || `Seller ${order.sellerId}`}
+                    {order.sellerName || `Seller ${order.sellerId}`}
                   </span>
                   <Link
                     to={`/stores/${order.sellerId}`}
@@ -335,25 +331,36 @@ export function OrderDetailPage() {
 
             {/* Seller Contact Badges */}
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              {storeProfile?.phone && (
+              {order.sellerEmail && (
+                <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#111A29] px-3 py-1.5 text-gray-300">
+                  <MessageCircle size={14} className="text-sky-400" />
+                  <span>{order.sellerEmail}</span>
+                </div>
+              )}
+              {order.sellerPhone && (
                 <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#111A29] px-3 py-1.5 text-gray-300">
                   <Phone size={14} className="text-emerald-400" />
-                  <span>{storeProfile.phone}</span>
+                  <span>{order.sellerPhone}</span>
                 </div>
               )}
-              {storeProfile?.line && (
+              {order.sellerLine && (
                 <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#111A29] px-3 py-1.5 text-gray-300">
                   <MessageCircle size={14} className="text-green-400" />
-                  <span>Line: {storeProfile.line}</span>
+                  <span>Line: {order.sellerLine}</span>
                 </div>
               )}
-              {storeProfile?.facebook && (
+              {order.sellerFacebook && (
                 <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#111A29] px-3 py-1.5 text-gray-300">
                   <span className="font-semibold text-blue-400">f</span>
-                  <span>{storeProfile.facebook}</span>
+                  <span>{order.sellerFacebook}</span>
                 </div>
               )}
-              {!storeProfile?.phone && !storeProfile?.line && !storeProfile?.facebook && (
+              {order.sellerOtherContact && (
+                <div className="rounded-lg border border-white/10 bg-[#111A29] px-3 py-1.5 text-gray-300">
+                  {order.sellerOtherContact}
+                </div>
+              )}
+              {!order.sellerEmail && !order.sellerPhone && !order.sellerLine && !order.sellerFacebook && !order.sellerOtherContact && (
                 <span className="text-xs text-gray-400 italic">
                   Seller ID: {order.sellerId}
                 </span>

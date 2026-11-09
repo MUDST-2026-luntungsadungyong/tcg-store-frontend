@@ -146,6 +146,25 @@ describe('NotificationsPage', () => {
     expect(await screen.findByTestId('destination')).toHaveTextContent(destination);
   });
 
+  it('opens the exact seller order from an auction notification deep link', async () => {
+    const auctionNotification: Notification = {
+      ...notification,
+      type: 'AUCTION_ENDED_SELLER',
+      title: 'Auction ended',
+      message: 'The buyer can now contact you.',
+      orderId: null,
+      actionPath: '/workspace/orders?orderId=42',
+    };
+    list.mockResolvedValue(page([auctionNotification]));
+    markRead.mockResolvedValue({ ...auctionNotification, readAt: '2026-09-20T11:00:00' });
+    renderPage();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'View auction update' }));
+
+    expect(markRead).toHaveBeenCalledWith(auctionNotification.id);
+    expect(await screen.findByTestId('destination')).toHaveTextContent('/workspace/orders?orderId=42');
+  });
+
   it.each([
     { type: 'ORDER_RESERVED', orderId: null, sellerApplicationId: null },
     { type: 'ORDER_STATUS_CHANGED', orderId: undefined, sellerApplicationId: null },

@@ -79,6 +79,12 @@ interface BackendOrderResponse {
   orderNumber?: string;
   buyerId?: string;
   sellerId?: string;
+  sellerName?: string;
+  sellerEmail?: string;
+  sellerPhone?: string;
+  sellerLine?: string;
+  sellerFacebook?: string;
+  sellerOtherContact?: string;
   status: string;
   totalAmount?: number;
   totalPrice?: number;
@@ -283,6 +289,12 @@ function normalizeStatus(status: string): ReservationStatus {
   if (status === 'CONFIRMED') {
     return 'CONFIRMED';
   }
+  if (status === 'AWAITING_BUYER_CONTACT') {
+    return 'AWAITING_BUYER_CONTACT';
+  }
+  if (status === 'PENDING_SELLER_ACTION') {
+    return 'PENDING_SELLER_ACTION';
+  }
   if (status === 'SENT') {
     return 'SENT';
   }
@@ -369,6 +381,11 @@ export function normalizeReservationOrder(
     orderNumber: (record as any).orderNumber ? String((record as any).orderNumber) : undefined,
     ...(record.orderType === 'AUCTION' ? { orderType: 'AUCTION' } : {}),
     sellerName: (record as any).sellerName ? String((record as any).sellerName) : undefined,
+    sellerEmail: record.sellerEmail ? String(record.sellerEmail) : undefined,
+    sellerPhone: record.sellerPhone ? String(record.sellerPhone) : undefined,
+    sellerLine: record.sellerLine ? String(record.sellerLine) : undefined,
+    sellerFacebook: record.sellerFacebook ? String(record.sellerFacebook) : undefined,
+    sellerOtherContact: record.sellerOtherContact ? String(record.sellerOtherContact) : undefined,
     cancellationReason: (record as any).cancellationReason ? String((record as any).cancellationReason) : undefined,
     logs: Array.isArray((record as any).logs) ? (record as any).logs : undefined,
   };

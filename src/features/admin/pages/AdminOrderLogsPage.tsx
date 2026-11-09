@@ -144,8 +144,8 @@ export function AdminOrderLogsPage() {
 
    {/* Filters */}
    <section className="mt-4 rounded-xl border border-white/10 bg-bg-elevated p-3.5">
-    <div className="flex flex-col gap-3 xl:flex-row">
-     <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
+    <div className="flex flex-col gap-3">
+     <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
       <select aria-label="Search by" value={searchBy} onChange={(e) => setSearchBy(e.target.value as SearchBy)} className="h-11 rounded-xl border border-white/15 bg-bg-input px-3 text-sm text-gray-100 focus-visible:ring-2 focus-visible:ring-brand-blue">
        <option value="ORDER_NUMBER">Order number</option><option value="BUYER">Buyer</option><option value="SELLER">Seller</option>
       </select>

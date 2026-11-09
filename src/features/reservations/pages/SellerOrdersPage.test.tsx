@@ -61,6 +61,34 @@ const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
         },
       ],
     },
+    {
+      id: 3,
+      orderNumber: 'AUC-2026-003',
+      orderType: 'AUCTION',
+      status: 'AWAITING_BUYER_CONTACT',
+      buyerId: 103,
+      buyerName: 'Nattapong Auction Buyer',
+      buyerEmail: 'nattapong@example.com',
+      buyerPhone: '082-555-0199',
+      buyerContactLine: 'nattapong_cards',
+      sellerRevenue: 3200,
+      sellerCost: 1800,
+      sellerProfit: 1400,
+      createdAt: '2026-09-09T18:45:00Z',
+      items: [
+        {
+          itemId: 3,
+          cardId: 'sv04-223',
+          productName: 'Charizard ex - Special Illustration Rare',
+          unitPrice: 3200,
+          unitCost: 1800,
+          itemProfit: 1400,
+          quantity: 1,
+          itemTotal: 3200,
+          condition: 'MP',
+        },
+      ],
+    },
   ];
 
   const mockSummary = {
@@ -99,6 +127,19 @@ vi.mock('../api/sellerOrders', () => ({
 }));
 
 describe('SellerOrdersPage (SCRUM-27)', () => {
+  it('shows an auction order and opens it from the orderId deep link', async () => {
+    render(
+      <MemoryRouter initialEntries={['/workspace/orders?orderId=3']}>
+        <SellerOrdersPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('AUC-2026-003')).toBeInTheDocument();
+    expect(screen.getAllByText('Charizard ex - Special Illustration Rare').length).toBeGreaterThanOrEqual(1);
+    expect(await screen.findByText('Order Details - AUC-2026-003')).toBeInTheDocument();
+    expect(screen.getByText('Awaiting buyer contact')).toBeInTheDocument();
+  });
+
   it('renders dashboard title and metrics overview cards', async () => {
     render(
       <MemoryRouter>

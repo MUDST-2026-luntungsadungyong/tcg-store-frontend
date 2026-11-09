@@ -22,6 +22,8 @@ interface StatusConfig {
 const STATUS_CONFIGS: Record<ReservationStatus, StatusConfig> = {
   PENDING: { label: 'Pending', variant: 'warning', icon: Clock },
   CONFIRMED: { label: 'Confirmed', variant: 'warning', icon: Clock },
+  AWAITING_BUYER_CONTACT: { label: 'Contact seller', variant: 'gold', icon: Clock },
+  PENDING_SELLER_ACTION: { label: 'Preparing shipment', variant: 'warning', icon: Package },
   RESERVED: { label: 'Pending', variant: 'warning', icon: Clock },
   SENT: { label: 'Sent', variant: 'success', icon: Truck },
   FULFILLED: { label: 'Received', variant: 'success', icon: Truck },

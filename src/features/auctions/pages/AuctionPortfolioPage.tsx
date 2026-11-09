@@ -1,12 +1,11 @@
 import { isAxiosError } from 'axios';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
-import { IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/features/listings/model/imagePolicy';
 import { Button } from '@/shared/components/Button';
 import { auctionError, buyerAuctionApi } from '../api/auctions';
 import { auctionDate, money } from '../model/auctionFormat';
-import { useAuctionClock, useAuctionResource } from '../model/useAuctionResource';
+import { useAuctionResource } from '../model/useAuctionResource';
 
 export function AuctionPortfolioPage() {
   const user = useAuthStore(state => state.user);
@@ -27,11 +26,10 @@ function AuctionPortfolio() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [failure, setFailure] = useState('');
-  const now = useAuctionClock();
   const { hash } = useLocation();
 
   useEffect(() => {
-    if (data && hash.startsWith('#auction-payment-')) {
+    if (data && hash.startsWith('#auction-order-')) {
       document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' });
     }
   }, [data, hash]);
@@ -51,26 +49,6 @@ function AuctionPortfolio() {
     } finally {
       setBusy(false);
     }
-  }
-
-  function upload(event: FormEvent<HTMLFormElement>, orderId: number) {
-    event.preventDefault();
-    setMessage('');
-    const input = event.currentTarget.elements.namedItem('file');
-    const file = input instanceof HTMLInputElement ? input.files?.[0] : undefined;
-    if (!file?.size) {
-      setFailure('กรุณาเลือกรูปหลักฐานการชำระเงิน');
-      return;
-    }
-    if (!IMAGE_TYPES.includes(file.type)) {
-      setFailure('รองรับรูป JPG, PNG และ WebP');
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      setFailure('ไฟล์ต้องมีขนาดไม่เกิน 5 MiB');
-      return;
-    }
-    void run(() => buyerAuctionApi.submitPaymentProof(orderId, file), 'ส่งหลักฐานแล้ว รอผู้ขายยืนยัน');
   }
 
   return <main className="mx-auto max-w-5xl space-y-5 p-5">
@@ -95,23 +73,13 @@ function AuctionPortfolio() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">รายการที่ชนะ</h2>
         {data.portfolio.wonItems.length === 0 && <p>ยังไม่มีรายการที่ชนะ</p>}
-        {data.portfolio.wonItems.map(item => <article id={`auction-payment-${item.orderId}`}
+        {data.portfolio.wonItems.map(item => <article id={`auction-order-${item.orderId}`}
           className="scroll-mt-24 space-y-2 rounded-lg bg-bg-elevated p-3" key={item.auctionId}>
           <Link to={`/auctions/${item.auctionId}`} className="font-semibold underline">{item.cardName}</Link>
           <p>{item.quantity ?? 1} ใบ · {money(item.finalPrice)} ทั้งล็อต · {item.orderStatus}</p>
           {item.orderId && <Link className="underline" to={`/orders/${item.orderId}`}>{item.orderNumber}</Link>}
-          {item.orderStatus === 'PENDING' && item.hasPaymentProof &&
-            <p>ส่งหลักฐานแล้ว รอผู้ขายตรวจ</p>}
-          {item.orderStatus === 'PENDING' && !item.hasPaymentProof && item.paymentDeadline &&
-            <p>{now < Date.parse(item.paymentDeadline) ? 'ส่งหลักฐานภายใน' : 'หมดเวลาส่งหลักฐาน'} {auctionDate(item.paymentDeadline)} (เวลาไทย)</p>}
-          {item.orderId && item.orderStatus === 'PENDING' && !item.hasPaymentProof && item.paymentDeadline && now < Date.parse(item.paymentDeadline) &&
-            <form className="flex flex-wrap items-center gap-3" onSubmit={event => upload(event, item.orderId)}>
-              <label className="block">หลักฐานการชำระเงิน
-                <input className="block" type="file" name="file" accept={IMAGE_TYPES.join(',')} required disabled={busy} />
-                <span className="text-sm text-text-secondary">JPG, PNG หรือ WebP ขนาดไม่เกิน 5 MiB</span>
-              </label>
-              <Button type="submit" disabled={busy}>ส่งหลักฐาน</Button>
-            </form>}
+          {item.orderStatus === 'AWAITING_BUYER_CONTACT' &&
+            <p>กรุณาติดต่อร้านค้าเพื่อดำเนินการชำระเงินและจัดส่ง</p>}
         </article>)}
       </section>
       <section className="space-y-3">

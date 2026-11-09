@@ -3,7 +3,7 @@ import apiClient from '@/shared/api/client';
 
 export type AuctionStatus =
   | 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'ENDED'
-  | 'AWAITING_PAYMENT' | 'COMPLETED' | 'CANCELLED'
+  | 'AWAITING_BUYER_CONTACT' | 'COMPLETED' | 'CANCELLED'
   | 'BUYOUT_COMPLETED' | 'RESERVE_NOT_MET' | 'UNSOLD_NO_BIDS' | 'DEFAULTED';
 export type RequestStatus = 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
 export type StartMode = 'NOW' | 'SCHEDULED';
@@ -220,9 +220,7 @@ export interface BuyerPortfolio {
     cardName: string | null;
     quantity: number;
     finalPrice: number;
-    paymentDeadline: string | null;
     isPaid: boolean;
-    hasPaymentProof: boolean;
   }>;
 }
 
@@ -306,14 +304,6 @@ export const buyerAuctionApi = {
 
   /** รายการ Watchlist ของฉัน */
   watchlist: async () => (await apiClient.get<AuctionSummary[]>(`${userPath}/watchlist`)).data,
-
-  submitPaymentProof: async (orderId: number, file: File) => {
-    const form = new FormData();
-    form.append('file', file);
-    await apiClient.post(`/orders/${orderId}/payment-proof`, form, { headers: multipart });
-  },
-  paymentProof: async (orderId: number | string) =>
-    (await apiClient.get<Blob>(`/orders/${orderId}/payment-proof`, { responseType: 'blob' })).data,
 
   secondChanceOffers: async () =>
     (await apiClient.get<SecondChanceOffer[]>(`${userPath}/auction-second-chance-offers`)).data,

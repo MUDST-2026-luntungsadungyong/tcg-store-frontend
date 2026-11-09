@@ -87,7 +87,7 @@ function AuctionDetails({ id }: { id: number }) {
       <div className="space-y-4">
         <AuctionOverview auction={auction} />
         <BidOverview auction={auction} now={now} />
-        {['AWAITING_PAYMENT', 'BUYOUT_COMPLETED', 'COMPLETED'].includes(status) &&
+        {['AWAITING_BUYER_CONTACT', 'BUYOUT_COMPLETED', 'COMPLETED'].includes(status) &&
           <AuctionSettlementPanel auctionId={id} />}
       </div>
     </div>
@@ -119,7 +119,7 @@ function AuctionDetails({ id }: { id: number }) {
       </div>
       <aside className="min-w-0 space-y-4">
         <BidOverview auction={auction} now={now} />
-        {['AWAITING_PAYMENT', 'BUYOUT_COMPLETED', 'COMPLETED'].includes(status) &&
+        {['AWAITING_BUYER_CONTACT', 'BUYOUT_COMPLETED', 'COMPLETED'].includes(status) &&
           <AuctionSettlementPanel auctionId={id} />}
         <Panel className="space-y-4">
           <h2 className="text-lg font-semibold">Pricing · Seller only</h2>

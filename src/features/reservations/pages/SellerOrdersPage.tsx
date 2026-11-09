@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   CheckCircle2,
   Clock,
@@ -20,7 +21,6 @@ import {
   type SellerOrder,
   type SellerProfitSummary,
 } from '../api/sellerOrders';
-import { buyerAuctionApi } from '@/features/auctions/api/auctions';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { SearchField } from '@/shared/components/SearchField';
@@ -29,19 +29,7 @@ import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 10
 import { ConditionLabel } from '@/shared/components/ConditionLabel';
 
 export function SellerOrdersPage() {
-  const [proof, setProof] = useState<{ orderId: string | number; url: string }>();
-  useEffect(() => () => { if (proof) URL.revokeObjectURL(proof.url); }, [proof]);
-
-  async function viewProof(orderId: string | number) {
-    setError(null);
-    try {
-      const file = await buyerAuctionApi.paymentProof(orderId);
-      setProof({ orderId, url: URL.createObjectURL(file) });
-    } catch {
-      setError('Could not open the payment proof. The buyer may still need to upload it.');
-    }
-  }
-
+  const [searchParams] = useSearchParams();
   const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [summary, setSummary] = useState<SellerProfitSummary>({
     totalRevenue: 0,
@@ -89,6 +77,16 @@ export function SellerOrdersPage() {
     void loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    const orderId = searchParams.get('orderId');
+    if (!orderId) return;
+    const order = orders.find(candidate => String(candidate.id) === orderId);
+    if (order) {
+      setSelectedOrder(order);
+      setIsContactModalOpen(true);
+    }
+  }, [orders, searchParams]);
+
   const handleStatusUpdate = async (
     orderId: string | number,
     newStatus: string,
@@ -129,6 +127,18 @@ export function SellerOrdersPage() {
         return (
           <Badge variant="warning" className="flex items-center gap-1">
             <Clock size={12} /> Confirmed
+          </Badge>
+        );
+      case 'AWAITING_BUYER_CONTACT':
+        return (
+          <Badge variant="warning" className="flex items-center gap-1">
+            <MessageSquare size={12} /> Awaiting buyer contact
+          </Badge>
+        );
+      case 'PENDING_SELLER_ACTION':
+        return (
+          <Badge variant="warning" className="flex items-center gap-1">
+            <Clock size={12} /> Ready to ship
           </Badge>
         );
       case 'SENT':
@@ -243,7 +253,7 @@ export function SellerOrdersPage() {
       <div className="bg-bg-card border border-white/10 rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Status Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-          {['ALL', 'PENDING', 'SENT', 'CANCELLED'].map((tab) => (
+          {['ALL', 'PENDING', 'AWAITING_BUYER_CONTACT', 'SENT', 'CANCELLED'].map((tab) => (
             <button
               key={tab}
               type="button"
@@ -259,6 +269,8 @@ export function SellerOrdersPage() {
                 ? 'All Orders'
                 : tab === 'PENDING'
                   ? 'Pending'
+                  : tab === 'AWAITING_BUYER_CONTACT'
+                    ? 'Awaiting Contact'
                   : tab === 'SENT'
                     ? 'Sent'
                     : 'Cancelled'}
@@ -382,14 +394,19 @@ export function SellerOrdersPage() {
                       {/* Actions */}
                       <td className="p-4 align-top text-right whitespace-nowrap">
                         <div className="flex flex-col gap-1.5 items-end">
-                          {order.orderType === 'AUCTION' && order.status !== 'CANCELLED' &&
-                            <Button size="sm" variant="secondary" onClick={() => void viewProof(order.id)}>View payment proof</Button>}
-                          {proof?.orderId === order.id && <div className="space-y-2">
-                            <img className="max-h-52 max-w-52 object-contain" src={proof.url} alt="Buyer payment proof" />
-                            <button type="button" className="underline" onClick={() => setProof(undefined)}>Close proof</button>
-                          </div>}
-                          {(order.status === 'PENDING' || order.status === 'CONFIRMED' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
+                          {(order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'AWAITING_BUYER_CONTACT' || order.status === 'PENDING_SELLER_ACTION' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
                             <>
+                              {order.orderType === 'AUCTION' && order.status === 'AWAITING_BUYER_CONTACT' && (
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  disabled={isActionLoading}
+                                  onClick={() => void handleStatusUpdate(order.id, 'PENDING_SELLER_ACTION', 'Buyer contact and payment arrangement confirmed')}
+                                  className="w-32 text-xs bg-brand-blue hover:bg-brand-blue/90 mb-1"
+                                >
+                                  Contact arranged
+                                </Button>
+                              )}
                               {(order.status === 'PENDING' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
                                 <Button
                                   size="sm"
@@ -398,10 +415,10 @@ export function SellerOrdersPage() {
                                   onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'CONFIRMED' }); setShowPaymentConfirmPopup(true); }}
                                   className="w-28 text-xs bg-brand-blue hover:bg-brand-blue/90 mb-1"
                                 >
-                                  Confirm Payment
+                                  Confirm arrangement
                                 </Button>
                               )}
-                              {order.status === 'CONFIRMED' && (
+                              {(order.status === 'CONFIRMED' || order.status === 'PENDING_SELLER_ACTION') && (
                                 <Button
                                   size="sm"
                                   variant="primary"
@@ -561,14 +578,13 @@ export function SellerOrdersPage() {
           </div>
         </Modal>
       )}
-      {/* CASE 10a: Confirm payment popup — Figma: Seller Orders → Payment */}
       <FeedbackPopup
         isOpen={showPaymentConfirmPopup}
         tone="confirm"
-        title="Confirm payment received?"
-        message="Only confirm after the buyer has paid you outside Mythix."
+        title="Confirm payment arrangement?"
+        message="Confirm only after you and the buyer have agreed on payment outside Mythix."
         meta={pendingOrderAction ? `Order ${String(pendingOrderAction.orderId)}` : undefined}
-        primaryAction={{ label: "Confirm payment", onClick: async () => {
+        primaryAction={{ label: "Confirm arrangement", onClick: async () => {
           if (pendingOrderAction) await handleStatusUpdate(pendingOrderAction.orderId, pendingOrderAction.status);
           setShowPaymentConfirmPopup(false);
           setPendingOrderAction(null);

@@ -11,6 +11,11 @@ const mockOrderPending: ReservationOrder = {
   buyerId: 'usr-buyer',
   sellerId: 'usr-seller-1',
   sellerName: 'PokeMaster Store',
+  sellerEmail: 'seller@example.com',
+  sellerPhone: '0812345678',
+  sellerLine: '@pokemaster',
+  sellerFacebook: 'PokeMasterTH',
+  sellerOtherContact: 'Discord: pokemaster',
   status: 'PENDING',
   totalAmount: 3500,
   createdAt: '2026-09-10T10:00:00Z',
@@ -124,17 +129,10 @@ const mockOrderSpecial: ReservationOrder = {
 
 const mockFetchBuyerOrderById = vi.fn();
 const mockUpdateBuyerOrderStatus = vi.fn();
-const mockPublicStore = vi.fn();
 
 vi.mock('../api/buyerOrders', () => ({
   fetchBuyerOrderById: (...args: unknown[]) => mockFetchBuyerOrderById(...args),
   updateBuyerOrderStatus: (...args: unknown[]) => mockUpdateBuyerOrderStatus(...args),
-}));
-
-vi.mock('@/features/stores/api/stores', () => ({
-  storesApi: {
-    public: (...args: unknown[]) => mockPublicStore(...args),
-  },
 }));
 
 vi.mock('@/features/auth/model/useAuthStore', () => ({
@@ -154,21 +152,13 @@ function renderOrderDetailPage(orderId: string) {
 }
 
 describe('OrderDetailPage (SCRUM-80)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockPublicStore.mockResolvedValue({
-      sellerId: 'usr-seller-1',
-      shopName: 'PokeMaster Official Store',
-      phone: '0812345678',
-      line: '@pokemaster',
-      facebook: 'PokeMasterTH',
-    });
-  });
+  beforeEach(() => vi.clearAllMocks());
 
-  it('links a pending auction order to its proof form and shows the whole-lot price', async () => {
+  it('shows private seller contact after an auction win and never exposes a proof form', async () => {
     mockFetchBuyerOrderById.mockResolvedValue({
       ...mockOrderPending,
       orderType: 'AUCTION',
+      status: 'AWAITING_BUYER_CONTACT',
       totalAmount: 3001,
       items: [{
         ...mockOrderPending.items[0],
@@ -179,8 +169,10 @@ describe('OrderDetailPage (SCRUM-80)', () => {
 
     renderOrderDetailPage('ord-101');
 
-    expect(await screen.findByRole('link', { name: 'ดูสถานะหรือส่งหลักฐานการชำระเงิน' }))
-      .toHaveAttribute('href', '/auctions/me#auction-payment-ord-101');
+    expect(await screen.findByText('Contact the Seller to Arrange Payment')).toBeInTheDocument();
+    expect(screen.getByText('seller@example.com')).toBeInTheDocument();
+    expect(screen.getByText('0812345678')).toBeInTheDocument();
+    expect(screen.queryByText(/หลักฐานการชำระเงิน/)).not.toBeInTheDocument();
     expect(screen.getByText('ราคาทั้งล็อต')).toBeInTheDocument();
     expect(screen.getByText('Qty: 3')).toBeInTheDocument();
     expect(screen.queryByText(/9,003/)).not.toBeInTheDocument();
@@ -200,9 +192,9 @@ describe('OrderDetailPage (SCRUM-80)', () => {
     expect(screen.getByText('Near Mint')).toBeInTheDocument();
     expect(screen.queryByText(/^NM$/)).not.toBeInTheDocument();
 
-    // Check seller store profile and contact details
+    // Check private seller contact details returned by the order API.
     await waitFor(() => {
-      expect(screen.getByText('PokeMaster Official Store')).toBeInTheDocument();
+      expect(screen.getByText('PokeMaster Store')).toBeInTheDocument();
       expect(screen.getByText('0812345678')).toBeInTheDocument();
       expect(screen.getByText('Line: @pokemaster')).toBeInTheDocument();
       expect(screen.getByText('PokeMasterTH')).toBeInTheDocument();

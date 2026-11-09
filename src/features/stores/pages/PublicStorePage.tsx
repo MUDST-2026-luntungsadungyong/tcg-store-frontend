@@ -65,12 +65,7 @@ export function PublicStorePage() {
         {store.shopDescription && <p className="mt-4 max-w-3xl text-gray-300">{store.shopDescription}</p>}
         
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4 text-sm text-gray-300">
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {store.phone && <p>Phone: {store.phone}</p>}
-            {store.line && <p>Line: {store.line}</p>}
-            {store.facebook && <p>Facebook: {store.facebook}</p>}
-          </div>
-
+          <p className="max-w-xl text-xs text-gray-400">ช่องทางติดต่อร้านค้าจะแสดงในรายละเอียดออเดอร์หลังซื้อหรือชนะการประมูลสำเร็จ</p>
           <Link
             to={`/collections/${sellerId}`}
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-bg-surface px-4 py-2 text-xs font-semibold text-gray-200 transition-colors hover:bg-bg-elevated hover:text-white"

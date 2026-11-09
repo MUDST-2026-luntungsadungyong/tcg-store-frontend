@@ -85,7 +85,7 @@ function AuctionRoom({ id }: { id: number }) {
           break;
         case 'buyout':
           await buyerAuctionApi.buyout(id);
-          setMessage('ซื้อทันทีสำเร็จ ส่งหลักฐานได้ในพอร์ตการประมูล');
+          setMessage('ซื้อทันทีสำเร็จ กรุณาเปิดรายละเอียดออเดอร์เพื่อติดต่อร้านค้า');
           break;
         case 'watch':
           await buyerAuctionApi.toggleWatch(id);

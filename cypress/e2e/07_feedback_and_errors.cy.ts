@@ -233,17 +233,24 @@ describe('US-30: Feedback Popups & Error Handling UX', () => {
 
   it('Case 2: Destructive Popup on Remove from Collection', () => {
     cy.loginByMock('BUYER');
-    cy.visit('/collection');
+    cy.visit('/collection', {
+      onBeforeLoad(win) {
+        // The business suite reads the mock DB without making a collection HTTP request.
+        win.localStorage.setItem('mythix_mock_collection_v2', JSON.stringify([mockCollectionEntry]));
+      },
+    });
 
-    // Wait for collection to load
-    // Click the delete/trash icon on the first card
-    cy.get('button[title="Remove from collection"]').first().should('exist').click();
+    cy.get('main').contains('Charizard VMAX').should('be.visible');
+    cy.get('button[title="Remove from collection"]').should('be.visible').click();
 
-    // Assert Destructive popup
-    cy.contains('Remove this card?').should('be.visible');
-    cy.contains('will be removed from your personal collection').should('be.visible');
-    cy.contains('button', 'Remove card').should('be.visible');
-    cy.contains('button', 'Cancel').click();
+    cy.get('[role="alertdialog"]').within(() => {
+      cy.contains('Remove this card?').should('be.visible');
+      cy.contains('will be removed from your personal collection').should('be.visible');
+      cy.contains('button', 'Remove card').should('be.visible');
+      cy.contains('button', 'Cancel').click();
+    });
+    cy.get('[role="alertdialog"]').should('not.exist');
+    cy.get('main').contains('Charizard VMAX').should('be.visible');
   });
 
   it('Case 3: Warning Popup on Cart Stock Change', () => {

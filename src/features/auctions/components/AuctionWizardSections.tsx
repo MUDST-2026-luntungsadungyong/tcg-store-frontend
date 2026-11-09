@@ -23,49 +23,55 @@ function toCatalogCard(item: AuctionInventory): CatalogCard {
     cardNumber: item.cardNumber ?? undefined, imageSmall: item.imageUrl ?? undefined };
 }
 
-export function InventoryPicker({ inventory, selected, fields, errors, update }: FieldsProps & {
+export function InventoryPicker({ inventory, selected, initialCatalogCard, onCatalogChange, fields, errors, update }: FieldsProps & {
   inventory: AuctionInventory[];
   selected?: AuctionInventory;
+  initialCatalogCard?: CatalogCard | null;
+  onCatalogChange: (card: CatalogCard | null) => void;
 }) {
   const [source, setSource] = useState<'catalog' | 'collection'>('catalog');
-  const [catalogCard, setCatalogCard] = useState<CatalogCard | null>(() => selected ? toCatalogCard(selected) : null);
+  const [catalogCard, setCatalogCard] = useState<CatalogCard | null>(() => selected ? toCatalogCard(selected) : initialCatalogCard ?? null);
   const [query, setQuery] = useState('');
   const catalogStock = catalogCard ? inventory.filter(item => item.cardId === catalogCard.id) : [];
   const collectionStock = inventory.filter(item => item.collectionMatch
     && matchesAuctionSearch(query, item.cardName, item.setName, item.productId, item.cardNumber, item.rarity));
   const select = (item?: AuctionInventory) => {
     update('productId', item ? String(item.productId) : '');
+    if (item) update('cardId', '');
     if (item) update('condition', normalizeConditionToCode(item.condition));
   };
   return <Panel className="space-y-4">
     <h2 className="text-lg font-semibold">{source === 'catalog' ? 'Find your card' : 'My Collection'}</h2>
     <div className="flex flex-wrap gap-2" role="group" aria-label="Card source">
-      <Button type="button" size="sm" variant={source === 'catalog' ? 'primary' : 'secondary'} aria-pressed={source === 'catalog'} onClick={() => { setCatalogCard(selected ? toCatalogCard(selected) : null); setSource('catalog'); }}>Global Catalog</Button>
+      <Button type="button" size="sm" variant={source === 'catalog' ? 'primary' : 'secondary'} aria-pressed={source === 'catalog'} onClick={() => {
+        if (selected) setCatalogCard(toCatalogCard(selected));
+        setSource('catalog');
+      }}>Global Catalog</Button>
       <Button type="button" size="sm" variant={source === 'collection' ? 'primary' : 'secondary'} aria-pressed={source === 'collection'} onClick={() => setSource('collection')}>My Collection</Button>
     </div>
     {source === 'catalog' ? <>
-      <CatalogCardPicker card={catalogCard} onSelect={card => { setCatalogCard(card); select(undefined); }} />
+      <CatalogCardPicker card={catalogCard} onSelect={card => { setCatalogCard(card); onCatalogChange(card); select(undefined); update('cardId', card?.id ?? ''); }} />
       {catalogCard && <>
         <AuctionCardSummary name={catalogCard.name} imageUrl={catalogCard.imageSmall || catalogCard.imageLarge} setName={catalogCard.setName} />
         <Select label="Your inventory item" value={catalogStock.some(item => String(item.productId) === fields.productId) ? fields.productId : ''}
-          onChange={event => select(catalogStock.find(item => String(item.productId) === event.target.value))}
+          onChange={event => { const item = catalogStock.find(item => String(item.productId) === event.target.value); select(item); if (!item) update('cardId', catalogCard.id); }}
           options={[
-            { value: '', label: 'Choose an inventory item' },
+            { value: '', label: 'Use catalog card directly' },
             ...catalogStock.filter(item => item.availableQuantity > 0 || item.productId === selected?.productId).map(item => ({
               value: String(item.productId),
-              label: `Inventory #${item.productId} · ${formatCondition(item.condition)} · ${item.availableQuantity} available`,
+              label: `Inventory #${item.productId} · ${formatCondition(item.condition)} · ${item.language ?? 'EN'} · ${item.availableQuantity} available`,
             })),
           ]} error={errors.productId}
         />
         <p className="text-xs text-text-secondary">{catalogStock.length
           ? 'Availability is checked again at confirmation.'
-          : 'Add this card to your seller inventory to auction it.'}</p>
+          : 'You can auction this catalog card directly.'}</p>
       </>}
       {!catalogCard && errors.productId && <p role="alert" className="text-sm text-status-danger">{errors.productId}</p>}
     </> : <>
       <SearchField label="Search collection" aria-label="Search collection" value={query} onChange={event => setQuery(event.target.value)} />
       <p className="text-xs text-text-secondary">{collectionStock.filter(item => item.availableQuantity > 0).length} available inventory items</p>
-      {collectionStock.length === 0 && <p className="rounded-xl bg-bg-surface p-4 text-sm text-text-secondary">No matching seller inventory. Add your card to seller inventory before creating an auction.</p>}
+      {collectionStock.length === 0 && <p className="rounded-xl bg-bg-surface p-4 text-sm text-text-secondary">No matching seller inventory. You can choose a card from Global Catalog to auction it directly.</p>}
       <ul className="max-h-80 space-y-2 overflow-y-auto">
         {collectionStock.map(item => <li key={item.productId}>
           <button type="button" aria-pressed={item.productId === selected?.productId} disabled={item.availableQuantity < 1}
@@ -86,9 +92,18 @@ export function InventoryPicker({ inventory, selected, fields, errors, update }:
   </Panel>;
 }
 
-export function ConditionAndGrading({ fields, errors, update, inventoryCondition }: FieldsProps & { inventoryCondition?: string }) {
+export function ConditionAndGrading({ fields, errors, update, inventoryCondition, inventoryLanguage }: FieldsProps & {
+  inventoryCondition?: string;
+  inventoryLanguage?: string;
+}) {
   return <Panel className="space-y-4">
     <h2 className="text-lg font-semibold">Condition & grading</h2>
+    <div className="grid gap-3 sm:grid-cols-2">
+      <Input label="Number of copies" type="number" min={1} max={2_147_483_647} step={1} value={fields.quantity} onChange={event => update('quantity', event.target.value)} error={errors.quantity} />
+      <Select label="Card language" value={inventoryLanguage ?? fields.language} disabled={Boolean(inventoryCondition)}
+        onChange={event => update('language', event.target.value)}
+        options={[{ value: 'EN', label: 'English' }, { value: 'JP', label: 'Japanese' }, { value: 'TH', label: 'Thai' }]} />
+    </div>
     <fieldset>
       <legend className="mb-2 text-sm font-medium">Card condition *</legend>
       <div className="flex flex-wrap gap-2">
@@ -100,9 +115,11 @@ export function ConditionAndGrading({ fields, errors, update, inventoryCondition
       {inventoryCondition && <p className="mt-2 text-sm text-text-secondary">The condition must match the selected seller inventory.</p>}
       {errors.condition && <p role="alert" className="mt-2 text-sm text-status-danger">{errors.condition}</p>}
     </fieldset>
+    <p className="text-sm text-text-secondary">Multiple-copy lots must be ungraded; a certificate identifies one card.</p>
     <div className="grid gap-3 sm:grid-cols-3">
       <Select label="Grading company (optional)" value={fields.gradingCompany} onChange={event => update('gradingCompany', event.target.value)}
         options={[{ value: '', label: 'Ungraded' }, ...['PSA', 'BGS', 'CGC'].map(value => ({ value, label: value }))]} />
+      {errors.gradingCompany && <p role="alert" className="text-sm text-status-danger">{errors.gradingCompany}</p>}
       <Input label="Grade" value={fields.grade} disabled={!fields.gradingCompany} maxLength={30}
         onChange={event => update('grade', event.target.value)} error={errors.grade} />
       <Input label="Certificate number" value={fields.certNumber} disabled={!fields.gradingCompany} maxLength={100}
@@ -124,7 +141,7 @@ export function AuctionPhotos({ photos = {}, urls, errors = {}, onChoose, action
       <h2 className="text-lg font-semibold">Actual card photos</h2>
       {actions}
     </div>
-    {onChoose && <p className="text-sm text-text-secondary">Upload the actual front and back of the card. Use JPG, PNG or WebP, up to 5 MiB each.</p>}
+    {onChoose && <p className="text-sm text-text-secondary">Upload actual front and back photos; each photo must show all copies in the lot. Use JPG, PNG or WebP, up to 5 MiB each.</p>}
     <div className="grid gap-4 sm:grid-cols-2">
       {PHOTO_SIDES.map(side => {
         const label = side === 'front' ? 'Front photo' : 'Back photo';
@@ -164,6 +181,7 @@ export function PricingRows({ fields }: { fields: Pick<DraftFields, 'startPrice'
 export function PricingFields({ fields, errors, update }: FieldsProps) {
   return <Panel className="space-y-5">
     <h2 className="text-lg font-semibold">Set your prices</h2>
+    <p className="text-sm text-text-secondary">All prices are for the whole lot.</p>
     <DetailRows items={[[ 'Start price · From Card Details', money(fields.startPrice) ]]} />
     <label className="flex min-h-9 items-center gap-2 text-sm font-medium">
       <input type="checkbox" checked={fields.reserveEnabled} onChange={event => update('reserveEnabled', event.target.checked)} className="size-4 accent-brand-blue" />

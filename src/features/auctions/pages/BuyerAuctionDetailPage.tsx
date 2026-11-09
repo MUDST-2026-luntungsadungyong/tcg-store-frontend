@@ -140,7 +140,9 @@ function AuctionRoom({ id }: { id: number }) {
       <Panel className="space-y-4">
         <AuctionStatusBadge status={auction.status} />
         <DetailRows items={[
-          ['ราคาปัจจุบัน', money(auction.currentPrice)],
+          ['จำนวน', `${auction.quantity ?? 1} ใบ`],
+          ['ภาษา', auction.language ?? '—'],
+          ['ราคาปัจจุบัน · ทั้งชุด', money(auction.currentPrice)],
           ['จำนวน bid', auction.bidCount],
           ['ราคาขั้นต่ำถัดไป', money(auction.nextMinimumBid)],
           ['Reserve', auction.isReserveMet ? 'ผ่านเงื่อนไขราคาแล้ว' : 'ยังไม่ถึงราคาสำรอง'],

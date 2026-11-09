@@ -8,7 +8,7 @@ import { cn } from '@/shared/lib';
 
 const STATUSES = ['PENDING', 'PAID', 'FULFILLED', 'CANCELLED'] as const;
 type Status = typeof STATUSES[number]; type SearchBy = 'ORDER_NUMBER' | 'BUYER' | 'SELLER';
-type Item = { id: string; productName: string; cardId: string; sellerName: string; sellerEmail: string; shopName: string; price: number; quantity: number };
+type Item = { id: string; productName: string; cardId: string; sellerName: string; sellerEmail: string; shopName: string; price: number; quantity: number; itemTotal?: number };
 type Order = { id: string; orderNumber: string; buyerName: string; buyerEmail: string; status: Status; totalAmount: number; createdAt: string; platformFee: number; sellerNetAmount: number; items?: Item[] };
 type Page = { content: Order[]; number: number; totalPages: number; totalElements: number };
 const tone: Record<Status, string> = { PENDING: 'border-status-warning/30 bg-status-warning/10 text-status-warning', PAID: 'border-brand-blue/30 bg-brand-blue/10 text-brand-blue', FULFILLED: 'border-status-success/30 bg-status-success/10 text-status-success', CANCELLED: 'border-status-danger/30 bg-status-danger/10 text-status-danger' };
@@ -253,7 +253,7 @@ export function AdminOrderLogsPage() {
               <span>Email: <span className="text-gray-300">{item.sellerEmail}</span></span>
               {item.shopName && <span>Shop: <span className="text-gray-300">{item.shopName}</span></span>}
               <span>Qty: <span className="text-gray-300">{item.quantity}</span></span>
-              <span>Subtotal: <span className="text-white font-medium">{money(item.price * item.quantity)}</span></span>
+              <span>Subtotal: <span className="text-white font-medium">{money(item.itemTotal ?? item.price * item.quantity)}</span></span>
              </div>
             </div>
            ))}

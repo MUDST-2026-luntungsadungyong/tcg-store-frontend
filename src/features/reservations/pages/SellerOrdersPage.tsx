@@ -354,7 +354,7 @@ export function SellerOrdersPage() {
                                 )}
                               </div>
                               <div className="text-gray-400">
-                                {item.quantity}x @ ฿{item.unitPrice.toLocaleString()} (Cost: ฿{item.unitCost.toLocaleString()})
+                                {order.orderType === 'AUCTION' ? `${item.quantity} copies · whole lot ฿${item.itemTotal.toLocaleString()}` : `${item.quantity}x @ ฿${item.unitPrice.toLocaleString()} (Cost: ฿${item.unitCost.toLocaleString()})`}
                               </div>
                             </div>
                           ))}
@@ -510,7 +510,7 @@ export function SellerOrdersPage() {
                         )}
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
-                        Qty: {item.quantity} × ฿{item.unitPrice.toLocaleString()} · Subtotal: ฿{item.itemTotal.toLocaleString()}
+                        {selectedOrder.orderType === 'AUCTION' ? `Qty: ${item.quantity} · Whole lot: ฿${item.itemTotal.toLocaleString()}` : `Qty: ${item.quantity} × ฿${item.unitPrice.toLocaleString()} · Subtotal: ฿${item.itemTotal.toLocaleString()}`}
                       </p>
                     </div>
                     <div className="text-right shrink-0">

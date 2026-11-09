@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router-dom';
 import { Check } from 'lucide-react';
+import type { CatalogCard } from '@/features/discovery/api/catalog';
 import { formatCondition, normalizeConditionToCode } from '@/entities/card/model/condition';
 import { Button } from '@/shared/components/Button';
 import { ErrorState } from '@/shared/components/ErrorState';
@@ -56,6 +57,7 @@ function AuctionWizard({ inventory, initialDraft, refreshInventory }: {
   refreshInventory: () => Promise<void>;
 }) {
   const navigate = useNavigate();
+  const [catalogCard, setCatalogCard] = useState<CatalogCard | null>(() => initialDraft?.cardId && !initialDraft.productId ? { id: initialDraft.cardId, name: initialDraft.cardName ?? '', setName: initialDraft.setName ?? '', imageSmall: initialDraft.imageUrl ?? undefined } : null);
   const [step, setStep] = useState(0);
   const [returnToReview, setReturnToReview] = useState(false);
   const [fields, setFields] = useState(() => draftFields(initialDraft));
@@ -109,7 +111,11 @@ function AuctionWizard({ inventory, initialDraft, refreshInventory }: {
     setReturnToReview(true);
     go(target);
   };
-  const validate = (target: number) => validateDraftStep(target, fields, Boolean(selected && selected.availableQuantity > 0), photos, urls, now);
+  const validate = (target: number) => {
+    const problems = validateDraftStep(target, fields, Boolean(selected && selected.availableQuantity > 0), photos, urls, now);
+    if (target === 0 && selected && Number(fields.quantity) > selected.availableQuantity) problems.quantity = `Only ${selected.availableQuantity} copies available.`;
+    return problems;
+  };
   const showValidation = (target: number, problems: DraftErrors) => {
     go(target);
     setErrors(problems);
@@ -157,7 +163,7 @@ function AuctionWizard({ inventory, initialDraft, refreshInventory }: {
   };
 
   const fieldsProps = { fields, errors, update };
-  const card = <AuctionCardSummary name={selected?.cardName} imageUrl={selected?.imageUrl} setName={selected?.setName} condition={fields.condition} inventoryId={selected?.productId} />;
+  const card = <AuctionCardSummary name={selected?.cardName ?? catalogCard?.name} imageUrl={selected?.imageUrl ?? catalogCard?.imageSmall} setName={selected?.setName ?? catalogCard?.setName} condition={fields.condition} inventoryId={selected?.productId} />;
   const editAction = (label: string, target: number) => <Button type="button" size="sm" variant="ghost" onClick={() => reviewEdit(target)}>{label}</Button>;
   const canLeave = blocker.state === 'blocked';
   return <>
@@ -178,8 +184,9 @@ function AuctionWizard({ inventory, initialDraft, refreshInventory }: {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-4">
           {step === 0 && <>
-            <InventoryPicker {...fieldsProps} inventory={inventory} selected={selected} />
-            <ConditionAndGrading {...fieldsProps} inventoryCondition={selected ? normalizeConditionToCode(selected.condition) : undefined} />
+            <InventoryPicker {...fieldsProps} inventory={inventory} selected={selected} initialCatalogCard={catalogCard} onCatalogChange={setCatalogCard} />
+            <ConditionAndGrading {...fieldsProps} inventoryCondition={selected ? normalizeConditionToCode(selected.condition) : undefined}
+              inventoryLanguage={selected?.language} />
             <AuctionPhotos photos={photos} urls={urls} errors={errors} onChoose={choosePhoto} />
           </>}
           {step === 1 && <PricingFields {...fieldsProps} />}
@@ -191,7 +198,9 @@ function AuctionWizard({ inventory, initialDraft, refreshInventory }: {
               </div>
               {card}
               <DetailRows items={[
+                ['Quantity', `${fields.quantity} copies`],
                 ['Condition', formatCondition(fields.condition)],
+                ['Language', selected?.language ?? fields.language],
                 ['Grading', fields.gradingCompany ? [fields.gradingCompany, fields.grade, fields.certNumber].join(' · ') : 'Ungraded'],
               ]} />
             </Panel>
@@ -203,10 +212,10 @@ function AuctionWizard({ inventory, initialDraft, refreshInventory }: {
             <Panel className="space-y-3">
               <h2 className="text-lg font-semibold">Starting price</h2>
               <Input label="Start price (THB)" inputMode="decimal" value={fields.startPrice} onChange={event => update('startPrice', event.target.value)} error={errors.startPrice} />
-              <p className="text-xs text-text-secondary">Must be greater than ฿0.</p>
+              <p className="text-xs text-text-secondary">Price for the whole lot; must be greater than ฿0.</p>
             </Panel>
-            <Notice title="Inventory stays available">Saving a draft keeps your inventory available. Confirming the auction reserves one unit.</Notice>
-            {selected && <Panel className="space-y-3"><h2 className="text-lg font-semibold">Selected card</h2>{card}</Panel>}
+            <Notice title="Inventory stays available">Saving a draft keeps your inventory available. Confirming an inventory auction reserves the selected quantity.</Notice>
+            {(selected || catalogCard) && <Panel className="space-y-3"><h2 className="text-lg font-semibold">Selected card</h2>{card}</Panel>}
           </>}
           {(step === 1 || step === 3) && <Panel className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -234,7 +243,7 @@ function AuctionWizard({ inventory, initialDraft, refreshInventory }: {
             {step === 2 && <PricingRows fields={fields} />}
             {fields.startMode === 'NOW' && <p className="text-xs text-text-secondary">Estimated times. Confirmation uses the server clock.</p>}
           </Panel>}
-          {step === 3 && <Notice title="Inventory locks only after success">Confirmation creates the auction and reserves one unit together.</Notice>}
+          {step === 3 && <Notice title="Inventory locks only after success">Confirmation reserves the selected inventory quantity when applicable.</Notice>}
         </aside>
       </div>
       {message && <div role="alert" className="rounded-xl border border-status-danger/30 bg-status-danger/5 p-4 text-sm text-status-danger">

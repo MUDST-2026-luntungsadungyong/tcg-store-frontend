@@ -99,16 +99,18 @@ function AuctionDetails({ id }: { id: number }) {
     {error && <ErrorState message={error} onRetry={() => reload()} />}
     {message && <ErrorState message={message} onRetry={() => { setMessage(''); return reload(); }} />}
     {created && live && <div role="status"><Notice tone="success" title={status === 'SCHEDULED' ? 'Auction scheduled successfully' : 'Auction created successfully'}>
-      Inventory #{auction.productId} is reserved for this auction.
+      {auction.productId
+        ? `${auction.quantity ?? 1} copies from inventory #${auction.productId} are reserved for this auction.`
+        : `Your catalog lot of ${auction.quantity ?? 1} copies is ready for bidding at the scheduled start time.`}
     </Notice></div>}
     {status === 'CANCELLED' && <Notice title="Your auction has been cancelled" tone="success">
-      The auction hold was released. Any other reservations still apply.
+      {auction.productId ? 'The auction hold was released. Any other reservations still apply.' : 'The catalog lot is closed.'}
     </Notice>}
     {pending && <Notice title="Cancellation request submitted" tone="warning">
-      {live ? 'Your request is pending review. The auction continues and inventory stays reserved.' : 'Your request is pending review. The auction has already ended.'}
+      {live ? 'Your request is pending review. The auction continues.' : 'Your request is pending review. The auction has already ended.'}
     </Notice>}
     {status === 'ENDED' && auction.bidCount === 0 && <Notice title="Auction ended">No bids were placed. The auction hold was released.</Notice>}
-    {status === 'DRAFT' && <Notice title="Inventory is available">Drafts do not reserve stock. Availability is checked when you confirm creation.</Notice>}
+    {status === 'DRAFT' && auction.productId && <Notice title="Inventory is available">Drafts do not reserve stock. Availability is checked when you confirm creation.</Notice>}
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
       <div className="min-w-0 space-y-4">
         <AuctionOverview auction={auction} />
@@ -122,7 +124,8 @@ function AuctionDetails({ id }: { id: number }) {
         <Panel className="space-y-4">
           <h2 className="text-lg font-semibold">Pricing · Seller only</h2>
           <DetailRows items={[
-            ['Starting price', money(auction.startPrice)],
+            ['Quantity', `${auction.quantity ?? 1} copies`],
+            ['Starting price · whole lot', money(auction.startPrice)],
             ['Hidden reserve · Seller only', money(auction.reservePrice)],
             ['Buy-It-Now', money(auction.buyItNowPrice)],
           ]} />
@@ -171,6 +174,7 @@ function AuctionOverview({ auction }: { auction: Auction }) {
     <AuctionCardSummary name={auction.cardName} imageUrl={auction.imageUrl} setName={auction.setName} condition={auction.condition} inventoryId={auction.productId} />
     <DetailRows items={[
       ['Condition', formatCondition(auction.condition, '—')],
+      ['Language', auction.language ?? '—'],
       ['Grading', auction.gradingCompany ? [auction.gradingCompany, auction.grade, auction.certNumber].filter(Boolean).join(' · ') : 'Ungraded'],
       [`Start · ${AUCTION_TIMEZONE}`, auctionDate(auction.startAt)],
       ['Duration', durationLabel(auction.durationHours)],

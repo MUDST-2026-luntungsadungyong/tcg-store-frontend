@@ -133,6 +133,7 @@ export function MyAuctionsPage() {
               {rows.map(auction => <tr key={auction.id}>
                 <td className="p-4">
                   <AuctionCardSummary name={auction.cardName} imageUrl={auction.imageUrl} setName={auction.setName} condition={auction.condition} />
+                  <p className="text-xs text-text-secondary">{auction.quantity ?? 1} copies · prices for whole lot</p>
                   <p className="mt-1 text-xs text-brand-blue">{auction.status === 'DRAFT' ? 'Draft' : 'Auction'} #{auction.id}</p>
                 </td>
                 <td className="space-y-2 p-4">

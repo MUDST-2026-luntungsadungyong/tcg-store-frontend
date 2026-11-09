@@ -73,7 +73,7 @@ function AuctionCard({ auction, now }: { auction: AuctionSummary; now: number })
       <div className="flex flex-1 flex-col gap-1 p-3">
         <div className="flex items-start justify-between gap-1">
           <p className="line-clamp-2 text-sm font-semibold text-text-primary leading-snug">
-            {auction.cardName ?? 'ไม่ระบุชื่อ'}
+            {auction.cardName ?? 'ไม่ระบุชื่อ'} · {auction.quantity ?? 1} ใบ
           </p>
           {statusBadge(auction.status)}
         </div>
@@ -83,7 +83,7 @@ function AuctionCard({ auction, now }: { auction: AuctionSummary; now: number })
         <div className="mt-auto flex items-end justify-between pt-2">
           <div>
             <p className="text-[10px] text-text-secondary">ราคาปัจจุบัน</p>
-            <p className="text-base font-bold text-brand-blue">{money(auction.currentPrice)}</p>
+            <p className="text-base font-bold text-brand-blue">{money(auction.currentPrice)} <span className="text-xs font-normal">/ ทั้งชุด</span></p>
             {auction.buyItNowPrice && (
               <p className="text-[10px] text-brand-gold">BIN {money(auction.buyItNowPrice)}</p>
             )}

@@ -18,6 +18,7 @@ export interface AuctionInventory {
   cardNumber: string | null;
   rarity: string | null;
   condition: string;
+  language?: string;
   status: 'SHOW' | 'HIDE' | 'OUT_OF_STOCK';
   availableQuantity: number;
   collectionMatch: boolean;
@@ -51,6 +52,8 @@ export interface CancellationRequest {
 }
 
 export interface Auction {
+  language?: string;
+  quantity?: number;
   id: number;
   status: AuctionStatus;
   productId: number | null;
@@ -81,6 +84,7 @@ export interface Auction {
 // ─── Buyer-facing types (US-14, US-15, US-17, US-18) ───────────────────────
 
 export interface AuctionSummary {
+  quantity?: number;
   id: number;
   frontImageUrl: string | null;
   cardName: string | null;
@@ -99,6 +103,8 @@ export interface AuctionSummary {
 }
 
 export interface BuyerAuctionDetail {
+  language?: string;
+  quantity?: number;
   id: number;
   cardName: string | null;
   setName: string | null;
@@ -153,6 +159,7 @@ export interface BuyoutResult {
 }
 
 export interface SecondChanceOffer {
+  quantity?: number;
   id: number;
   auctionId: number;
   cardName: string | null;
@@ -211,9 +218,11 @@ export interface BuyerPortfolio {
     orderNumber: string;
     orderStatus: string;
     cardName: string | null;
+    quantity: number;
     finalPrice: number;
     paymentDeadline: string | null;
     isPaid: boolean;
+    hasPaymentProof: boolean;
   }>;
 }
 

@@ -165,6 +165,27 @@ describe('OrderDetailPage (SCRUM-80)', () => {
     });
   });
 
+  it('links a pending auction order to its proof form and shows the whole-lot price', async () => {
+    mockFetchBuyerOrderById.mockResolvedValue({
+      ...mockOrderPending,
+      orderType: 'AUCTION',
+      totalAmount: 3001,
+      items: [{
+        ...mockOrderPending.items[0],
+        quantity: 3,
+        listing: { ...mockOrderPending.items[0].listing, price: 3001 },
+      }],
+    });
+
+    renderOrderDetailPage('ord-101');
+
+    expect(await screen.findByRole('link', { name: 'ดูสถานะหรือส่งหลักฐานการชำระเงิน' }))
+      .toHaveAttribute('href', '/auctions/me#auction-payment-ord-101');
+    expect(screen.getByText('ราคาทั้งล็อต')).toBeInTheDocument();
+    expect(screen.getByText('Qty: 3')).toBeInTheDocument();
+    expect(screen.queryByText(/9,003/)).not.toBeInTheDocument();
+  });
+
   it('renders order detail with status banner, full condition label, seller contact, and financial summary', async () => {
     mockFetchBuyerOrderById.mockResolvedValue(mockOrderPending);
 

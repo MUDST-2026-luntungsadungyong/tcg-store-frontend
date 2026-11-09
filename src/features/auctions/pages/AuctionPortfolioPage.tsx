@@ -1,6 +1,8 @@
-import { useCallback, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { isAxiosError } from 'axios';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
+import { IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/features/listings/model/imagePolicy';
 import { Button } from '@/shared/components/Button';
 import { auctionError, buyerAuctionApi } from '../api/auctions';
 import { auctionDate, money } from '../model/auctionFormat';
@@ -26,6 +28,13 @@ function AuctionPortfolio() {
   const [message, setMessage] = useState('');
   const [failure, setFailure] = useState('');
   const now = useAuctionClock();
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (data && hash.startsWith('#auction-payment-')) {
+      document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' });
+    }
+  }, [data, hash]);
 
   async function run(action: () => Promise<unknown>, success: string) {
     setBusy(true);
@@ -36,7 +45,9 @@ function AuctionPortfolio() {
       setMessage(success);
       await reload(true);
     } catch (error) {
-      setFailure(auctionError(error, 'ทำรายการไม่สำเร็จ'));
+      setFailure(isAxiosError(error) && error.response?.status === 413
+        ? 'ระบบปฏิเสธไฟล์เนื่องจากมีขนาดใหญ่เกินไป กรุณาลองใช้รูปที่เล็กลง'
+        : auctionError(error, 'ทำรายการไม่สำเร็จ'));
     } finally {
       setBusy(false);
     }
@@ -44,9 +55,18 @@ function AuctionPortfolio() {
 
   function upload(event: FormEvent<HTMLFormElement>, orderId: number) {
     event.preventDefault();
-    const file = new FormData(event.currentTarget).get('file');
-    if (!(file instanceof File) || !file.size) return;
-    if (file.size > 5 * 1024 * 1024) {
+    setMessage('');
+    const input = event.currentTarget.elements.namedItem('file');
+    const file = input instanceof HTMLInputElement ? input.files?.[0] : undefined;
+    if (!file?.size) {
+      setFailure('กรุณาเลือกรูปหลักฐานการชำระเงิน');
+      return;
+    }
+    if (!IMAGE_TYPES.includes(file.type)) {
+      setFailure('รองรับรูป JPG, PNG และ WebP');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
       setFailure('ไฟล์ต้องมีขนาดไม่เกิน 5 MiB');
       return;
     }
@@ -75,15 +95,20 @@ function AuctionPortfolio() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">รายการที่ชนะ</h2>
         {data.portfolio.wonItems.length === 0 && <p>ยังไม่มีรายการที่ชนะ</p>}
-        {data.portfolio.wonItems.map(item => <article className="space-y-2 rounded-lg bg-bg-elevated p-3" key={item.auctionId}>
+        {data.portfolio.wonItems.map(item => <article id={`auction-payment-${item.orderId}`}
+          className="scroll-mt-24 space-y-2 rounded-lg bg-bg-elevated p-3" key={item.auctionId}>
           <Link to={`/auctions/${item.auctionId}`} className="font-semibold underline">{item.cardName}</Link>
-          <p>{money(item.finalPrice)} · {item.orderStatus}</p>
+          <p>{item.quantity ?? 1} ใบ · {money(item.finalPrice)} ทั้งล็อต · {item.orderStatus}</p>
           {item.orderId && <Link className="underline" to={`/orders/${item.orderId}`}>{item.orderNumber}</Link>}
-          {item.orderStatus === 'PENDING' && item.paymentDeadline && <p>ส่งหลักฐานภายใน {auctionDate(item.paymentDeadline)} (เวลาไทย)</p>}
-          {item.orderStatus === 'PENDING' && item.paymentDeadline && now < Date.parse(item.paymentDeadline) &&
+          {item.orderStatus === 'PENDING' && item.hasPaymentProof &&
+            <p>ส่งหลักฐานแล้ว รอผู้ขายตรวจ</p>}
+          {item.orderStatus === 'PENDING' && !item.hasPaymentProof && item.paymentDeadline &&
+            <p>{now < Date.parse(item.paymentDeadline) ? 'ส่งหลักฐานภายใน' : 'หมดเวลาส่งหลักฐาน'} {auctionDate(item.paymentDeadline)} (เวลาไทย)</p>}
+          {item.orderId && item.orderStatus === 'PENDING' && !item.hasPaymentProof && item.paymentDeadline && now < Date.parse(item.paymentDeadline) &&
             <form className="flex flex-wrap items-center gap-3" onSubmit={event => upload(event, item.orderId)}>
               <label className="block">หลักฐานการชำระเงิน
-                <input className="block" type="file" name="file" accept="image/png,image/jpeg,image/webp" required disabled={busy} />
+                <input className="block" type="file" name="file" accept={IMAGE_TYPES.join(',')} required disabled={busy} />
+                <span className="text-sm text-text-secondary">JPG, PNG หรือ WebP ขนาดไม่เกิน 5 MiB</span>
               </label>
               <Button type="submit" disabled={busy}>ส่งหลักฐาน</Button>
             </form>}
@@ -94,7 +119,7 @@ function AuctionPortfolio() {
         {data.offers.length === 0 && <p>ยังไม่มีข้อเสนอ</p>}
         {data.offers.map(offer => <article className="space-y-2 rounded-lg bg-bg-elevated p-3" key={offer.id}>
           <Link to={`/auctions/${offer.auctionId}`} className="font-semibold underline">{offer.cardName}</Link>
-          <p>{money(offer.offerPrice)} · ตอบภายใน {auctionDate(offer.expiresAt)} (เวลาไทย)</p>
+          <p>{offer.quantity ?? 1} ใบ · {money(offer.offerPrice)} ทั้งล็อต · ตอบภายใน {auctionDate(offer.expiresAt)} (เวลาไทย)</p>
           <div className="flex gap-2">
             <Button disabled={busy} onClick={() => void run(
               () => buyerAuctionApi.respondSecondChance(offer.id, true), 'รับข้อเสนอและสร้างออเดอร์แล้ว',

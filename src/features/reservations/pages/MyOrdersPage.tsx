@@ -463,7 +463,7 @@ export function MyOrdersPage() {
               <div className="space-y-3">
                 {selectedOrder.items && selectedOrder.items.length > 0 ? (
                   selectedOrder.items.map((item, idx) => {
-                    const lineTotal = item.listing.price * item.quantity;
+                    const lineTotal = selectedOrder.orderType === 'AUCTION' ? item.listing.price : item.listing.price * item.quantity;
                     return (
                       <div
                         key={idx}
@@ -497,7 +497,7 @@ export function MyOrdersPage() {
                         <div className="shrink-0 text-right">
                           <p className="font-semibold text-brand-blue">฿{lineTotal.toLocaleString()}</p>
                           <p className="text-xs text-gray-400">
-                            {item.quantity} × ฿{item.listing.price.toLocaleString()}
+                            {selectedOrder.orderType === 'AUCTION' ? `${item.quantity} copies · whole lot` : `${item.quantity} × ฿${item.listing.price.toLocaleString()}`}
                           </p>
                         </div>
                       </div>

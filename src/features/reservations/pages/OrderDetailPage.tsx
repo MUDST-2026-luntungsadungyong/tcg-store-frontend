@@ -223,7 +223,8 @@ export function OrderDetailPage() {
 
   const statusConfig = STATUS_BANNER_CONFIGS[order.status] ?? STATUS_BANNER_CONFIGS.PENDING;
   const StatusIcon = statusConfig.icon;
-  const canCancel = order.orderType !== 'AUCTION'
+  const isAuction = order.orderType === 'AUCTION';
+  const canCancel = !isAuction
     && (order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED');
   const canMarkReceived = order.status === 'SENT';
 
@@ -299,6 +300,15 @@ export function OrderDetailPage() {
           </div>
         </div>
 
+        {isAuction && order.status === 'PENDING' && (
+          <Link
+            to={`/auctions/me#auction-payment-${order.id}`}
+            className="w-fit rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-bg-base focus-visible:outline focus-visible:outline-2"
+          >
+            ดูสถานะหรือส่งหลักฐานการชำระเงิน
+          </Link>
+        )}
+
         {/* Seller & Store Contact Information Card */}
         <section aria-label="Seller Information" className="rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card p-6 shadow-md">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-4">
@@ -364,7 +374,7 @@ export function OrderDetailPage() {
           <div className="divide-y divide-white/5">
             {order.items && order.items.length > 0 ? (
               order.items.map((item, index) => {
-                const lineTotal = item.listing.price * item.quantity;
+                const lineTotal = isAuction ? order.subtotalAmount ?? order.totalAmount : item.listing.price * item.quantity;
                 return (
                   <div
                     key={index}
@@ -408,7 +418,7 @@ export function OrderDetailPage() {
                     <div className="flex items-center justify-between border-t border-white/5 pt-3 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
                       <div className="text-left sm:text-right">
                         <p className="text-xs text-gray-400">
-                          ฿{item.listing.price.toLocaleString()} × {item.quantity}
+                          {isAuction ? 'ราคาทั้งล็อต' : `฿${item.listing.price.toLocaleString()} × ${item.quantity}`}
                         </p>
                         <p className="text-base font-bold text-brand-blue">
                           ฿{lineTotal.toLocaleString()}
@@ -434,7 +444,9 @@ export function OrderDetailPage() {
               <div className="flex justify-between text-sm text-gray-400">
                 <span>Items Subtotal</span>
                 <span className="text-gray-200">
-                  ฿{order.items?.reduce((sum, it) => sum + it.listing.price * it.quantity, 0).toLocaleString()}
+                  ฿{(isAuction
+                    ? order.subtotalAmount ?? order.totalAmount
+                    : order.items?.reduce((sum, it) => sum + it.listing.price * it.quantity, 0) ?? 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-gray-400">

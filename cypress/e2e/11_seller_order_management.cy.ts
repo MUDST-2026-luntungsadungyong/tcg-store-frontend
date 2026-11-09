@@ -314,7 +314,7 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
         cy.contains('Cost: ฿1,500').should('be.visible');
         cy.contains('Profit: +฿2,000').should('be.visible');
         cy.contains('Pending').should('be.visible');
-        cy.contains('button', 'Confirm Payment').should('be.visible');
+        cy.contains('button', 'Confirm arrangement').should('be.visible');
         cy.contains('button', 'Cancel Order').should('be.visible');
       });
 
@@ -468,17 +468,17 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
       cy.contains('h1', 'Seller Order Management & Profit Dashboard').should('be.visible');
     });
 
-    it('updates order status from PENDING to CONFIRMED via Payment Confirmation popup', () => {
-      // Click Confirm Payment on Row 1 (ORD-2026-0001)
+    it('updates order status from PENDING to CONFIRMED via payment arrangement confirmation', () => {
+      // Confirm the off-platform payment arrangement on Row 1 (ORD-2026-0001)
       cy.get('table tbody tr').eq(0).within(() => {
-        cy.contains('button', 'Confirm Payment').click();
+        cy.contains('button', 'Confirm arrangement').click();
       });
 
       // FeedbackPopup opens (CASE 10a)
       cy.get('[role="alertdialog"]').should('be.visible').within(() => {
-        cy.contains('Confirm payment received?').should('be.visible');
-        cy.contains('Only confirm after the buyer has paid you outside Mythix.').should('be.visible');
-        cy.contains('button', 'Confirm payment').click();
+        cy.contains('Confirm payment arrangement?').should('be.visible');
+        cy.contains('Confirm only after you and the buyer have agreed on payment outside Mythix.').should('be.visible');
+        cy.contains('button', 'Confirm arrangement').click();
       });
 
       // FeedbackPopup closes

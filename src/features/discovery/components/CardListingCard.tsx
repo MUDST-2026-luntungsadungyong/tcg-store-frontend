@@ -5,10 +5,14 @@ import { formatCondition } from '@/entities/card/model/condition';
 export interface CardListingCardProps {
   listing: CardListing;
   sellerCount?: number;
+  imageSrc?: string;
 }
 
-export function CardListingCard({ listing, sellerCount = 1 }: CardListingCardProps) {
-  const imageSrc = listing.image || '/assets/expensive_card_1.png';
+export function CardListingCard({
+  listing,
+  sellerCount = 1,
+  imageSrc = listing.image || '/assets/expensive_card_1.png',
+}: CardListingCardProps) {
   const marketPrice = listing.marketPrice ?? (listing.price * 0.9);
   const inStock = listing.stock > 0;
   const isLowStock = inStock && listing.stock <= 3;
@@ -37,11 +41,17 @@ export function CardListingCard({ listing, sellerCount = 1 }: CardListingCardPro
             OUT OF STOCK
           </span>
         )}
-        <img 
-          src={imageSrc} 
-          alt={listing.name} 
-          className="w-full h-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300" 
-        />
+        {imageSrc ? (
+          <img
+            src={imageSrc}
+            alt={listing.name}
+            className="w-full h-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center rounded-lg bg-bg-base p-2 text-center text-xs text-gray-400">
+            No catalog image
+          </div>
+        )}
       </div>
       
       {/* Right Content */}

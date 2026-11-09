@@ -14,6 +14,7 @@ import {
   normalizeConditionToCode,
 } from '@/entities/card/model/condition';
 import { groupListingsByCard } from '@/features/discovery/lib/groupListings';
+import { officialCardImage } from '@/features/discovery/lib/officialCardImage';
 
 const RARITIES = ['Common', 'Uncommon', 'Rare', 'Holo', 'Rare Holo', 'Ultra Rare', 'Secret Rare'];
 const STAGES = ['Basic', 'Stage 1', 'Stage 2', 'V', 'VMAX', 'VSTAR'];
@@ -514,7 +515,12 @@ export function CardDiscoveryPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
               {pageProducts.map(product => (
-                <CardListingCard key={product.cardId || product.id} listing={product} sellerCount={product.sellerCount} />
+                <CardListingCard
+                  key={product.cardId || product.id}
+                  listing={product}
+                  sellerCount={product.sellerCount}
+                  imageSrc={officialCardImage(product)}
+                />
               ))}
             </div>
 

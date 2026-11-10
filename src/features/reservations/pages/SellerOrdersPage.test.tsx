@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -216,7 +216,19 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
 
     await user.click(confirmBtn);
 
-    expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT', undefined, 'TAX-9928102');
+    expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT', undefined, 'TAX-9928102', undefined);
+  });
+
+  it('lets the seller explicitly cancel an awaiting-contact auction and enable second chance', async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><SellerOrdersPage /></MemoryRouter>);
+    const row = (await screen.findByText('AUC-2026-003')).closest('tr')!;
+    await user.click(within(row).getByRole('button', { name: 'Cancel Order' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Cancel Order' });
+    await user.type(within(dialog).getByPlaceholderText('Reason for cancellation...'), 'No response from winner');
+    await user.click(within(dialog).getByRole('checkbox', { name: /never contacted me/i }));
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel Order' }));
+    expect(mockUpdateStatus).toHaveBeenCalledWith(3, 'CANCELLED', 'No response from winner', undefined, true);
   });
 
   it('displays card condition badge in items list and inside Order Details modal', async () => {

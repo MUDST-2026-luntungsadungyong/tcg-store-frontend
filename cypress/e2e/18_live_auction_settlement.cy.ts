@@ -1,5 +1,4 @@
 import { auctionField, openAuctionWizard } from '../support/auctionJourney';
-import { CARD_PHOTO_BASE64 } from '../support/cardPhotos';
 
 const live = String(Cypress.expose('AUCTION_LIVE_E2E')).toLowerCase() === 'true';
 const api = () => String(Cypress.expose('API_BASE_URL')).replace(/\/$/, '');
@@ -20,12 +19,14 @@ function login(role: 'BUYER' | 'SELLER') {
 }
 
 (live ? describe : describe.skip)('Auction bidding and settlement against PostgreSQL', () => {
-  it('publishes, receives a live bid, buys out, submits proof, ships, and fulfills', () => {
+  it('publishes, receives a live bid, buys out, contacts the seller, ships, and fulfills', () => {
     const card = String(Cypress.expose('E2E_AUCTION_CARD_NAME') || '');
+    const quantity = Number(Cypress.expose('E2E_AUCTION_LOT_QUANTITY') || 1);
     expect(card, 'dedicated auction fixture').not.to.equal('');
     login('SELLER');
     cy.intercept('POST', '**/api/seller/auctions/*/publish').as('publish');
     openAuctionWizard(card);
+    if (quantity !== 1) auctionField(/^Number of copies$/).clear().type(String(quantity));
     cy.contains('button', /^Next: Pricing$/).click();
     cy.contains('label', 'Enable Buy-It-Now').click();
     auctionField(/Buy-It-Now price/).type('500');
@@ -35,6 +36,7 @@ function login(role: 'BUYER' | 'SELLER') {
     cy.contains('button', /^Confirm & Create Auction$/).click();
     cy.wait('@publish').then(({ response }) => {
       expect(response?.statusCode).to.eq(200);
+      expect(response?.body.quantity).to.eq(quantity);
       const auctionId = Number(response?.body.id);
       const updates: string[] = [];
       login('BUYER');
@@ -61,24 +63,20 @@ function login(role: 'BUYER' | 'SELLER') {
       cy.contains('button', /^ซื้อทันที/).click();
       cy.get('[role="dialog"]').contains('button', /^ยืนยัน$/).click();
       cy.contains('a', 'ดูพอร์ตการประมูล').click();
-      cy.get('article').filter(':has(input[type="file"])').contains(card).closest('article').within(() => {
-        cy.get('input[type="file"]').selectFile({
-          contents: Cypress.Buffer.from(CARD_PHOTO_BASE64, 'base64'),
-          fileName: 'payment.png',
-          mimeType: 'image/png',
-        });
-        cy.contains('button', 'ส่งหลักฐาน').click();
-        cy.contains('a', /^AUC-/).invoke('attr', 'href').as('orderPath');
+      cy.contains('article', card).should('contain.text', `${quantity} ใบ`).contains('a[href^="/orders/"]', /^AUC-/).then(link => {
+        const path = link.attr('href');
+        expect(path).to.match(/^\/orders\/\d+$/);
+        cy.wrap(path).as('orderPath', { type: 'static' });
+        cy.wrap(link).click();
       });
-      cy.contains('[role="status"]', 'ส่งหลักฐานแล้ว').should('be.visible');
+      cy.contains('Contact the Seller to Arrange Payment').should('be.visible');
+      cy.env(['E2E_SELLER_EMAIL'], { log: false }).then(({ E2E_SELLER_EMAIL }) => {
+        cy.contains(String(E2E_SELLER_EMAIL)).should('be.visible');
+      });
 
       login('SELLER');
       cy.visit('/workspace/orders');
-      cy.contains('tr', card).contains('button', 'View payment proof').click();
-      cy.get('img[alt="Buyer payment proof"]').should('be.visible');
-      cy.contains('tr', card).contains('button', 'Confirm Payment').click();
-      cy.get('[role="alertdialog"]').contains('button', 'Confirm payment').click();
-      cy.get('[role="alertdialog"]').should('not.exist');
+      cy.contains('tr', card).contains('button', 'Contact arranged').click();
       cy.contains('tr', card).contains('button', 'Mark as Sent').click();
       cy.get('#tracking-number-input').type('TCG-E2E-001');
       cy.get('[role="dialog"]').contains('button', 'Mark as Sent').click();

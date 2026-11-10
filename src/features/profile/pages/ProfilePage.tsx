@@ -5,6 +5,7 @@ import { X, UserRound, Mail, Camera, ShieldCheck, Check, ChevronRight, Clock3, C
 import { useAuthStore } from "@/features/auth/model/useAuthStore";
 import { isSellerUser } from "@/entities/account/model/types";
 import { useToastStore } from "@/shared/model/useToastStore";
+import { Avatar } from "@/shared/components/Avatar";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { Modal } from "@/shared/components/Modal";
@@ -102,12 +103,32 @@ export function ProfilePage() {
     setAvatarError("");
     try {
       const updated = await profileApi.uploadAvatar(editedFile);
-      if (token) login(token, updated);
+      const current = useAuthStore.getState();
+      if (token && current.token === token && current.user?.id === user?.id) {
+        login(token, { ...current.user, avatarUrl: updated.avatarUrl });
+      }
       setAvatarFile(null);
       setAvatarEditorOpen(false);
       addToast({ type: "success", title: "Profile photo updated", message: "Your new photo has been saved." });
     } catch {
       setAvatarError("Unable to upload your photo. Please try again.");
+    } finally { setUploadingAvatar(false); }
+  }
+  async function removeAvatar() {
+    if (uploadingAvatar) return;
+    setUploadingAvatar(true);
+    setAvatarError("");
+    try {
+      const updated = await profileApi.removeAvatar();
+      const current = useAuthStore.getState();
+      if (token && current.token === token && current.user?.id === user?.id) {
+        login(token, { ...current.user, avatarUrl: updated.avatarUrl });
+      }
+      setAvatarFile(null);
+      setAvatarEditorOpen(false);
+      addToast({ type: "success", title: "Profile photo removed", message: "Your profile photo has been removed." });
+    } catch {
+      setAvatarError("Unable to remove your photo. Please try again.");
     } finally { setUploadingAvatar(false); }
   }
   const copiedResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -253,7 +274,7 @@ export function ProfilePage() {
         <div className="relative px-5 pb-7 sm:px-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="relative -mt-14 size-28 rounded-full border-[6px] border-bg-surface bg-bg-card sm:-mt-16 sm:size-36">
-              {user?.avatarUrl ? <img src={user.avatarUrl} alt={`${user.name}'s profile`} className="size-full rounded-full object-cover" /> : <span className="flex size-full items-center justify-center rounded-full bg-brand-blue/15 text-4xl font-semibold text-brand-blue">{user?.name?.trim().slice(0, 1).toUpperCase() || "M"}</span>}
+              <Avatar name={user?.name} src={user?.avatarUrl} alt={`${user?.name || "My"}'s profile`} className="size-full rounded-full text-4xl" />
               <button type="button" aria-label="Change profile photo" onClick={() => { setAvatarError(""); setAvatarEditorOpen(true); }} disabled={uploadingAvatar} className="absolute -bottom-1 -right-2 flex size-11 items-center justify-center rounded-full border-4 border-bg-surface bg-brand-blue text-bg-base transition-colors hover:bg-brand-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-blue"><Camera size={19} /></button>
             </div>
             <Button type="button" variant="secondary" className="mt-4 w-full shrink-0 gap-2 sm:w-auto" onClick={() => openEditor("profile")}><Edit3 size={16} aria-hidden="true" />Edit profile</Button>
@@ -332,7 +353,7 @@ export function ProfilePage() {
       ))}
         </div>
       </div>
-      {avatarEditorOpen && <AvatarPhotoEditor file={avatarFile} currentUrl={user?.avatarUrl} saving={uploadingAvatar} error={avatarError} onUpload={() => fileInput.current?.click()} onClose={() => { setAvatarEditorOpen(false); setAvatarFile(null); setAvatarError(""); }} onSave={saveAvatar} />}
+      {avatarEditorOpen && <AvatarPhotoEditor file={avatarFile} currentUrl={user?.avatarUrl} saving={uploadingAvatar} error={avatarError} onUpload={() => fileInput.current?.click()} onClose={() => { setAvatarEditorOpen(false); setAvatarFile(null); setAvatarError(""); }} onSave={saveAvatar} onRemove={removeAvatar} />}
       <Modal
         isOpen={activeEditor === "profile"}
         onClose={() => { if (!isSaving) setActiveEditor(null); }}
@@ -345,7 +366,7 @@ export function ProfilePage() {
         <form id="edit-profile-form" onSubmit={saveProfile} className="space-y-6 p-1 sm:p-2">
           <div className="flex items-center gap-4 rounded-2xl bg-brand-blue/[0.07] p-4">
             <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-brand-blue/25 bg-bg-elevated text-xl font-semibold text-brand-blue">
-              {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="size-full object-cover" /> : <UserRound size={25} aria-hidden="true" />}
+              <Avatar name={user?.name} src={user?.avatarUrl} className="size-full rounded-full text-xl" />
             </span>
             <div><p className="font-semibold text-text-primary">Your personal details</p><p id="profile-editor-description" className="mt-1 text-sm leading-5 text-text-secondary">Keep your name and email up to date.</p></div>
           </div>

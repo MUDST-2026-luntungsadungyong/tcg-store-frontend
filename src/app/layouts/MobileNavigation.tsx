@@ -1,3 +1,4 @@
+import { Avatar } from '@/shared/components/Avatar';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, X, LogOut, ShieldCheck, ChevronRight } from 'lucide-react';
@@ -48,7 +49,7 @@ export function MobileNavigation() {
           <button autoFocus type="button" aria-label="Close navigation menu" onClick={close} className="flex size-11 items-center justify-center rounded-xl text-text-secondary hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-brand-blue"><X size={20} /></button>
         </div>
         {user && <NavLink to="/profile" end onClick={close} className="mb-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-bg-elevated p-3 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue">
-          {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="size-12 shrink-0 rounded-full object-cover" /> : <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-blue/15 text-lg font-semibold text-brand-blue">{user.name.charAt(0).toUpperCase()}</span>}
+          <Avatar name={user.name} src={user.avatarUrl} className="size-12 rounded-full text-lg" />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-text-primary">{user.name}</span>
             <span className="mt-1 block text-[10px] font-semibold tracking-wide text-brand-blue">{user.role === 'ADMIN' ? 'ADMIN' : seller ? 'SELLER' : 'COLLECTOR'}</span>

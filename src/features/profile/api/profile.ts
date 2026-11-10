@@ -4,6 +4,7 @@ type BackendProfile={id:string;name:string;email:string;phone?:string;line?:stri
 const map=(v:BackendProfile):User=>({id:v.id,name:v.name,email:v.email,phone:v.phone,line:v.line,facebook:v.facebook,avatarUrl:v.avatarUrl,role:v.role==='ADMIN'?'ADMIN':'USER',isSeller:v.role==='SELLER'||v.sellerStatus==='APPROVED',...(v.sellerStatus?{sellerStatus:v.sellerStatus}:{})});
 type SellerVerificationResponse={sellerStatus?:string};
 export const profileApi = {
+  removeAvatar: async () => map((await apiClient.delete<BackendProfile>('/users/profile/avatar')).data),
   getAvatar: async () => (await apiClient.get<Blob>('/users/profile/avatar', { responseType: 'blob' })).data,
   get: async () => map((await apiClient.get<BackendProfile>('/users/profile')).data),
   update: async (data: Partial<User> & { line?: string; facebook?: string }) =>

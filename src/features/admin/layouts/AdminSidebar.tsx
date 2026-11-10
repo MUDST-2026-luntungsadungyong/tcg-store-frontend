@@ -1,3 +1,4 @@
+import { Avatar } from '@/shared/components/Avatar';
 import {
   ChevronLeft,
   ClipboardList,
@@ -240,17 +241,7 @@ function SidebarFooter({
         <div className="flex flex-col items-center gap-2">
           {/* User Avatar with Floating Tooltip */}
           <div className="group relative flex justify-center py-0.5">
-            {user?.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
-                alt=""
-                className="size-9 shrink-0 rounded-full object-cover ring-1 ring-white/20"
-              />
-            ) : (
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/30">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
-              </span>
-            )}
+            <Avatar name={user?.name || 'Administrator'} src={user?.avatarUrl} className="size-9 rounded-full text-xs ring-1 ring-white/20" />
             <div
               role="tooltip"
               className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 scale-95 rounded-lg border border-white/15 bg-bg-surface px-3 py-1.5 text-xs text-white opacity-0 shadow-2xl backdrop-blur transition-all duration-150 group-hover:scale-100 group-hover:opacity-100 whitespace-nowrap"
@@ -277,17 +268,7 @@ function SidebarFooter({
         /* Expanded Mode: Full Card + Collapse Button */
         <>
           <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
-            {user?.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
-                alt=""
-                className="size-9 shrink-0 rounded-full object-cover ring-1 ring-white/20"
-              />
-            ) : (
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/30">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
-              </span>
-            )}
+            <Avatar name={user?.name || 'Administrator'} src={user?.avatarUrl} className="size-9 rounded-full text-xs ring-1 ring-white/20" />
 
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-white">

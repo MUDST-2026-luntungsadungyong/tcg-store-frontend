@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { collectionApi } from '../api/collection';
@@ -75,6 +75,19 @@ describe('PublicCollectionPage', () => {
       'href',
       '/stores/usr-100',
     );
+  });
+
+  it('ignores a late response for the previous showcase', async () => {
+    let resolveOld!: (value: { owner: typeof mockOwner; items: CollectionEntry[] }) => void;
+    vi.mocked(collectionApi.getPublicCollection)
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }))
+      .mockResolvedValueOnce({ owner: { ...mockOwner, userId: 'new', displayName: 'New Owner' }, items: [] });
+    render(<MemoryRouter initialEntries={['/collections/usr-100']}><Link to="/collections/new">Next showcase</Link><Routes><Route path="/collections/:userId" element={<PublicCollectionPage />} /></Routes></MemoryRouter>);
+    await userEvent.click(screen.getByRole('link', { name: 'Next showcase' }));
+    expect(await screen.findByRole('heading', { name: 'New Owner' })).toBeInTheDocument();
+    await act(async () => { resolveOld({ owner: mockOwner, items: [] }); });
+    expect(screen.getByRole('heading', { name: 'New Owner' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Master Collector' })).not.toBeInTheDocument();
   });
 
   it('renders 403 error page when collection is private', async () => {

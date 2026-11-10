@@ -100,8 +100,8 @@ function AuctionDetails({ id }: { id: number }) {
     {message && <ErrorState message={message} onRetry={() => { setMessage(''); return reload(); }} />}
     {created && live && <div role="status"><Notice tone="success" title={status === 'SCHEDULED' ? 'Auction scheduled successfully' : 'Auction created successfully'}>
       {auction.productId
-        ? `${auction.quantity ?? 1} copies from inventory #${auction.productId} are reserved for this auction.`
-        : `Your catalog lot of ${auction.quantity ?? 1} copies is ready for bidding at the scheduled start time.`}
+        ? `1 card from inventory #${auction.productId} is reserved for this auction.`
+        : `Your catalog card is ready for bidding at the scheduled start time.`}
     </Notice></div>}
     {status === 'CANCELLED' && <Notice title="Your auction has been cancelled" tone="success">
       {auction.productId ? 'The auction hold was released. Any other reservations still apply.' : 'The catalog lot is closed.'}
@@ -119,13 +119,19 @@ function AuctionDetails({ id }: { id: number }) {
       </div>
       <aside className="min-w-0 space-y-4">
         <BidOverview auction={auction} now={now} />
-        {['AWAITING_BUYER_CONTACT', 'BUYOUT_COMPLETED', 'COMPLETED'].includes(status) &&
-          <AuctionSettlementPanel auctionId={id} />}
+        {['AWAITING_BUYER_CONTACT', 'BUYOUT_COMPLETED', 'COMPLETED'].includes(status) && (
+          <div className="space-y-4">
+            <ButtonLink to={auction.orderId ? `/workspace/orders?orderId=${auction.orderId}` : '/workspace/orders'} variant="primary">
+              Seller Order Management
+            </ButtonLink>
+            <AuctionSettlementPanel auctionId={id} />
+          </div>
+        )}
         <Panel className="space-y-4">
           <h2 className="text-lg font-semibold">Pricing · Seller only</h2>
           <DetailRows items={[
-            ['Quantity', `${auction.quantity ?? 1} copies`],
-            ['Starting price · whole lot', money(auction.startPrice)],
+            ['Quantity', '1 card'],
+            ['Starting price', money(auction.startPrice)],
             ['Hidden reserve · Seller only', money(auction.reservePrice)],
             ['Buy-It-Now', money(auction.buyItNowPrice)],
           ]} />

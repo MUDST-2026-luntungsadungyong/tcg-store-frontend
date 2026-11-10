@@ -73,13 +73,20 @@ describe('CardDiscoveryPage', () => {
     expect(screen.queryByRole('img', { name: 'Charizard VMAX' })).not.toBeInTheDocument();
   });
 
-  it('renders products and filters only after clicking search', async () => {
+  it('renders Thai alias matches returned by the API after clicking search', async () => {
     const user = userEvent.setup();
-    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
+    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValueOnce({
       items: mockItems,
       pageNumber: 0,
       pageSize: 12,
       totalElements: 2,
+      totalPages: 1,
+      last: true,
+    }).mockResolvedValue({
+      items: [mockItems[0]],
+      pageNumber: 0,
+      pageSize: 12,
+      totalElements: 1,
       totalPages: 1,
       last: true,
     });
@@ -101,7 +108,7 @@ describe('CardDiscoveryPage', () => {
 
     // Type in search input (should NOT filter immediately)
     const searchInput = screen.getByTestId('search-input');
-    await user.type(searchInput, 'Pikachu');
+    await user.type(searchInput, 'พิคาชู');
 
     // Both cards should still be visible before clicking Search
     expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
@@ -112,17 +119,27 @@ describe('CardDiscoveryPage', () => {
     await user.click(searchButton);
 
     // Only Pikachu should be visible after searching
-    expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
-    expect(screen.queryByText('Charizard VMAX')).not.toBeInTheDocument();
+    expect(listingDiscoveryApi.getListings).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'พิคาชู' }));
+    await waitFor(() => {
+      expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
+      expect(screen.queryByText('Charizard VMAX')).not.toBeInTheDocument();
+    });
   });
 
   it('applies search when user presses Enter in the search input', async () => {
     const user = userEvent.setup();
-    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
+    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValueOnce({
       items: mockItems,
       pageNumber: 0,
       pageSize: 12,
       totalElements: 2,
+      totalPages: 1,
+      last: true,
+    }).mockResolvedValue({
+      items: [mockItems[1]],
+      pageNumber: 0,
+      pageSize: 12,
+      totalElements: 1,
       totalPages: 1,
       last: true,
     });
@@ -138,8 +155,10 @@ describe('CardDiscoveryPage', () => {
     const searchInput = screen.getByTestId('search-input');
     await user.type(searchInput, 'Charizard{enter}');
 
-    expect(screen.getByText('Charizard VMAX')).toBeInTheDocument();
-    expect(screen.queryByText('Pikachu Illustrator')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Charizard VMAX')).toBeInTheDocument();
+      expect(screen.queryByText('Pikachu Illustrator')).not.toBeInTheDocument();
+    });
   });
 
   it('filters by condition abbreviation when user selects full name and clicks search', async () => {

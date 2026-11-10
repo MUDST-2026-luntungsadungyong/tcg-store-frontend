@@ -188,12 +188,6 @@ export function CardDiscoveryPage() {
       // In-stock toggle
       if (appliedInStockOnly && p.stock <= 0) return false;
 
-      // Search match
-      if (appliedSearch.trim()) {
-        const q = appliedSearch.trim().toLowerCase();
-        if (!p.name.toLowerCase().includes(q)) return false;
-      }
-
       // Multi-select rarity match if more than 1 selected
       if (appliedRarity.length > 0 && (!p.rarity || !appliedRarity.includes(p.rarity))) {
         return false;
@@ -220,7 +214,7 @@ export function CardDiscoveryPage() {
 
       return true;
     });
-  }, [canonicalProducts, appliedInStockOnly, appliedSearch, appliedRarity, appliedStage, appliedCondition, appliedPriceRange]);
+  }, [canonicalProducts, appliedInStockOnly, appliedRarity, appliedStage, appliedCondition, appliedPriceRange]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const pageProducts = filteredProducts.slice(page * pageSize, (page + 1) * pageSize);

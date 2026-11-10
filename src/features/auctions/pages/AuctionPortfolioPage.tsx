@@ -69,7 +69,27 @@ function AuctionPortfolio() {
           <dt className="text-text-secondary">{label}</dt><dd className="font-semibold">{value}</dd>
         </div>)}
       </dl>
-      {data.portfolio.badges.length > 0 && <p>{data.portfolio.badges.join(' · ')}</p>}
+      {data.portfolio.badges.length > 0 ? (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {data.portfolio.badges.map((badge) => (
+            <span key={badge} className="inline-flex items-center gap-1 rounded-full border border-brand-gold/30 bg-brand-gold/10 px-3 py-1 text-xs font-bold text-brand-gold">
+              🏆 {badge}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg bg-bg-elevated p-3 text-xs text-text-secondary">
+          เป้าหมายตราเกียรติยศ: ชนะประมูลอีก {Math.max(1, 3 - data.portfolio.auctionsWon)} ครั้งเพื่อปลดล็อกตรา Master Bidder
+        </div>
+      )}
+      {data.portfolio.bidsPlaced === 0 && (
+        <div className="rounded-xl border border-white/10 bg-bg-elevated p-6 text-center space-y-3">
+          <p className="text-sm text-text-secondary">คุณยังไม่เคยเข้าร่วมการประมูลการ์ดในระบบ</p>
+          <Link to="/auctions" className="inline-flex items-center gap-2 rounded-lg bg-brand-gold px-4 py-2 text-xs font-bold text-bg-base hover:bg-brand-gold/90 transition-colors">
+            สำรวจห้องประมูลการ์ด
+          </Link>
+        </div>
+      )}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">รายการที่ชนะ</h2>
         {data.portfolio.wonItems.length === 0 && <p>ยังไม่มีรายการที่ชนะ</p>}

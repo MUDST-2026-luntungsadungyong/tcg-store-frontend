@@ -104,7 +104,7 @@ export function ProfilePage() {
     try {
       const updated = await profileApi.uploadAvatar(editedFile);
       const current = useAuthStore.getState();
-      if (token && current.token === token && current.user?.id === user?.id) {
+      if (token && current.token === token && current.user && current.user.id === user?.id) {
         login(token, { ...current.user, avatarUrl: updated.avatarUrl });
       }
       setAvatarFile(null);
@@ -121,7 +121,7 @@ export function ProfilePage() {
     try {
       const updated = await profileApi.removeAvatar();
       const current = useAuthStore.getState();
-      if (token && current.token === token && current.user?.id === user?.id) {
+      if (token && current.token === token && current.user && current.user.id === user?.id) {
         login(token, { ...current.user, avatarUrl: updated.avatarUrl });
       }
       setAvatarFile(null);

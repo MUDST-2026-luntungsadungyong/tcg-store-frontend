@@ -204,6 +204,23 @@ Repository นี้รองรับระบบ CI/CD อัตโนมั�
 
 ---
 
+## ☁️ Cloudflare Pages
+
+Frontend สามารถ deploy เป็น Vite static site บน Cloudflare Pages ได้ โดยไม่ต้องรัน Docker container:
+
+- Root directory: repository root (`/`)
+- Production branch: `main`
+- Build command: `npm ci --legacy-peer-deps && npm run build`
+- Build output directory: `dist`
+- Build variables ทั้ง Production และ Preview: `VITE_API_BASE_URL=/api`, `VITE_ENABLE_MOCK_API=false`
+- Pages Function runtime variable: `API_ORIGIN=https://<oke-ingress-host>` โดยใส่เฉพาะ HTTPS origin ไม่มี `/api` ต่อท้าย; ตั้ง Preview ให้ชี้ staging API และ Production ให้ชี้ production API
+
+`functions/api/[[path]].ts` proxy API requests ไปยัง backend และ `public/_routes.json` จำกัดการเรียก Function ไว้ที่ `/api` เพื่อลดการใช้โควตาจาก static assets ห้ามใส่ secrets ในตัวแปร `VITE_*` เพราะค่าจะถูกฝังลงในไฟล์ frontend ที่ browser อ่านได้
+
+ค่าตัวอย่างอยู่ใน [.env.cloud.example](.env.cloud.example); ต้องใส่ `API_ORIGIN` ใน Cloudflare Pages dashboard เป็น runtime variable แยกจาก build variables
+
+---
+
 ## 📚 Related Documentation
 
 - [Architecture & Boundaries](docs/architecture.md)

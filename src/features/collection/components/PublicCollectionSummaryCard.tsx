@@ -1,3 +1,4 @@
+import { Avatar } from '@/shared/components/Avatar';
 import { Link } from 'react-router-dom';
 import { ExternalLink, Layers, Sparkles, Store } from 'lucide-react';
 import type { PublicCollectionSummary } from '../api/collection';
@@ -7,7 +8,6 @@ interface PublicCollectionSummaryCardProps {
 }
 
 export function PublicCollectionSummaryCard({ summary }: PublicCollectionSummaryCardProps) {
-  const firstLetter = (summary.displayName || 'C').charAt(0).toUpperCase();
   const remainingCount = Math.max(0, summary.totalCardsCount - summary.highlights.length);
 
   return (
@@ -19,17 +19,7 @@ export function PublicCollectionSummaryCard({ summary }: PublicCollectionSummary
         {/* Collector Header */}
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3 min-w-0">
-            {summary.avatarUrl ? (
-              <img
-                src={summary.avatarUrl}
-                alt={summary.displayName}
-                className="size-12 shrink-0 rounded-full border border-white/10 object-cover"
-              />
-            ) : (
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue/30 to-brand-gold/20 text-lg font-bold text-white border border-white/10 shadow-inner">
-                {firstLetter}
-              </div>
-            )}
+            <Avatar name={summary.displayName} src={summary.avatarUrl} className="size-12 rounded-full border border-white/10 text-lg" />
             <div className="min-w-0">
               <Link
                 to={`/collections/${summary.userId}`}

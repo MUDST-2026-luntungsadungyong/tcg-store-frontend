@@ -19,6 +19,18 @@ describe('auth API contract adapters', () => {
     });
   });
 
+  it('keeps the profile photo returned at login without waiting for profile hydration', () => {
+    const user = {
+      id: '42',
+      name: 'Naphat',
+      email: 'naphat@example.com',
+      role: 'USER',
+      avatarUrl: 'https://images.example.com/avatar.png',
+    };
+
+    expect(toFrontendUser(user)).toHaveProperty('avatarUrl', user.avatarUrl);
+  });
+
   it('maps an approved backend seller to a user account with seller capability', () => {
     expect(toFrontendUser({ id: '44', name: 'Seller', email: 'seller@example.com', role: 'USER', sellerStatus: 'APPROVED' })).toMatchObject({
       role: 'USER',

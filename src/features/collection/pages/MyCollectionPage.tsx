@@ -1,3 +1,4 @@
+import { Avatar } from '@/shared/components/Avatar';
 import { acquireBodyScrollLock } from '@/shared/lib/bodyScrollLock';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -246,6 +247,7 @@ export function MyCollectionPage() {
         {/* Header Section from Figma 641:1898 */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
+            {user && <div className="mb-3 flex items-center gap-2"><Avatar name={user.name} src={user.avatarUrl} className="size-10 rounded-full text-sm" /><span className="text-sm font-semibold text-text-secondary">{user.name}</span></div>}
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
                 {activeView === 'store' ? 'My Store' : 'My Collection'}

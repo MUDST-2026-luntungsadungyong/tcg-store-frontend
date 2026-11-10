@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Avatar } from '@/shared/components/Avatar';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -26,6 +27,7 @@ export function PublicCollectionPage() {
   const { userId = '' } = useParams<{ userId: string }>();
   const currentUser = useAuthStore((s) => s.user);
   const isOwner = Boolean(currentUser?.id && String(currentUser.id) === String(userId));
+  const requestId = useRef(0);
   const [owner, setOwner] = useState<PublicCollectionOwner | null>(null);
   const [items, setItems] = useState<CollectionEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,14 +44,17 @@ export function PublicCollectionPage() {
 
   const fetchCollection = useCallback(async () => {
     if (!userId) return;
+    const request = ++requestId.current;
     setLoading(true);
     setErrorKind('NONE');
     setErrorMessage('');
     try {
       const result = await collectionApi.getPublicCollection(userId);
+      if (request !== requestId.current) return;
       setOwner(result.owner);
       setItems(result.items);
     } catch (err: unknown) {
+      if (request !== requestId.current) return;
       const errorObj = err as {
         status?: number;
         code?: string;
@@ -69,12 +74,14 @@ export function PublicCollectionPage() {
         setErrorMessage(errorObj?.message || 'Unable to load this public collection.');
       }
     } finally {
-      setLoading(false);
+      if (request === requestId.current) setLoading(false);
     }
   }, [userId]);
 
   useEffect(() => {
     void fetchCollection();
+    const generation = requestId;
+    return () => { generation.current++; };
   }, [fetchCollection]);
 
   const handleShare = () => {
@@ -261,11 +268,7 @@ export function PublicCollectionPage() {
               <div className="flex items-start gap-5">
                 {/* Collector Avatar */}
                 <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-brand-blue/20 to-brand-gold/20 text-2xl font-bold text-white shadow-md md:size-24 md:text-3xl">
-                  {owner.avatarUrl ? (
-                    <img src={owner.avatarUrl} alt={owner.displayName} className="size-full object-cover" />
-                  ) : (
-                    <span>{(owner.displayName || 'C').charAt(0).toUpperCase()}</span>
-                  )}
+                  <Avatar name={isOwner ? currentUser?.name : owner.displayName} src={isOwner ? currentUser?.avatarUrl : owner.avatarUrl} className="size-full" />
                 </div>
 
                 <div>
@@ -281,7 +284,7 @@ export function PublicCollectionPage() {
                   </div>
 
                   <h1 className="mt-1 text-3xl font-bold tracking-tight text-white md:text-4xl">
-                    {owner.displayName}
+                    {isOwner ? currentUser?.name : owner.displayName}
                   </h1>
 
                   <p className="mt-2 text-sm text-gray-400">

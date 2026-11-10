@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
@@ -25,6 +25,7 @@ export function PublicCollectionsExplorePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearch = searchParams.get('search') ?? '';
 
+  const requestId = useRef(0);
   const [collections, setCollections] = useState<PublicCollectionSummary[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -40,6 +41,7 @@ export function PublicCollectionsExplorePage() {
   const currentUser = useAuthStore((s) => s.user);
 
   const fetchCollections = useCallback(async () => {
+    const request = ++requestId.current;
     setIsLoading(true);
     setError(null);
     try {
@@ -51,18 +53,22 @@ export function PublicCollectionsExplorePage() {
         size: PAGE_SIZE,
       });
 
+      if (request !== requestId.current) return;
       setCollections(response.items);
       setTotalElements(response.page.totalElements);
       setTotalPages(Math.max(1, response.page.totalPages));
     } catch (err) {
+      if (request !== requestId.current) return;
       setError(err instanceof Error ? err.message : 'Failed to load public collections.');
     } finally {
-      setIsLoading(false);
+      if (request === requestId.current) setIsLoading(false);
     }
   }, [appliedSearch, selectedRole, selectedSort, page]);
 
   useEffect(() => {
     void fetchCollections();
+    const generation = requestId;
+    return () => { generation.current++; };
   }, [fetchCollections]);
 
   // Sync search query from URL parameter
@@ -301,7 +307,7 @@ export function PublicCollectionsExplorePage() {
         {!isLoading && !error && collections.length > 0 && (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {collections.map((summary) => (
-              <PublicCollectionSummaryCard key={summary.userId} summary={summary} />
+              <PublicCollectionSummaryCard key={summary.userId} summary={currentUser && String(currentUser.id) === String(summary.userId) ? { ...summary, displayName: currentUser.name, avatarUrl: currentUser.avatarUrl } : summary} />
             ))}
           </div>
         )}

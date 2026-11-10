@@ -1,3 +1,4 @@
+import { Avatar } from '@/shared/components/Avatar';
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
@@ -236,17 +237,7 @@ export function Navbar() {
                   aria-expanded={menuOpen}
                   className={`flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-bg-elevated py-1 pl-1.5 pr-3 shadow-[0_2px_6px_rgba(0,0,0,0.18)] transition-[transform,border-color] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue ${menuOpen ? 'border-brand-blue text-white' : 'hover:border-brand-blue/50'}`}
                 >
-                  {user.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt=""
-                      className="size-8 rounded-full object-cover ring-1 ring-white/10"
-                    />
-                  ) : (
-                    <span className="flex size-8 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/40">
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
-                  )}
+                  <Avatar name={user.name} src={user.avatarUrl} className="size-8 rounded-full text-xs ring-1 ring-white/10" />
                   <span className="whitespace-nowrap text-[10px] font-semibold leading-none tracking-wide text-text-secondary">{user.role === 'ADMIN' ? 'ADMIN' : isSeller ? 'SELLER' : 'COLLECTOR'}</span>
                 </button>
 

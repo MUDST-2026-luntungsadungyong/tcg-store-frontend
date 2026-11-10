@@ -12,9 +12,10 @@ interface Props {
   error: string;
   onClose: () => void;
   onSave: (file: File) => Promise<void>;
+  onRemove: () => Promise<void>;
 }
 
-export function AvatarPhotoEditor({ file, currentUrl, onUpload, saving, error, onClose, onSave }: Props) {
+export function AvatarPhotoEditor({ file, currentUrl, onUpload, saving, error, onClose, onSave, onRemove }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -97,7 +98,7 @@ export function AvatarPhotoEditor({ file, currentUrl, onUpload, saving, error, o
       <div className="space-y-5 p-2">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm text-text-secondary">{file ? 'Preview your new photo' : currentUrl ? 'Adjust your current photo' : 'Add a profile photo'}</p>
-          <Button variant="secondary" disabled={busy} onClick={onUpload}>Upload new photo</Button>
+          <div className="flex flex-wrap gap-2"><Button variant="secondary" disabled={busy} onClick={onUpload}>Upload new photo</Button>{currentUrl && <Button variant="danger" disabled={busy} onClick={() => void onRemove()}>Remove photo</Button>}</div>
         </div>
         <div className="relative mx-auto aspect-square w-56 max-w-full overflow-hidden rounded-full bg-bg-base ring-4 ring-brand-blue/30 sm:w-64">
           {!image && <span className="pointer-events-none absolute inset-0 flex items-center justify-center p-5 text-center text-sm text-text-secondary">{!file && !currentUrl ? 'Choose a photo to get started' : localError ? 'Photo unavailable' : 'Loading photo…'}</span>}
@@ -126,7 +127,7 @@ export function AvatarPhotoEditor({ file, currentUrl, onUpload, saving, error, o
           </div>
         </fieldset>
         <p className="text-xs text-text-secondary">PNG, JPEG or WebP, up to 5 MiB.</p>
-        {(localError || error) && <p role="alert" className="text-sm text-status-danger">{localError || error}</p>}
+        {(localError || error) && <p role="alert" className="text-sm text-status-danger">{error || localError}</p>}
       </div>
     </Modal>
   );

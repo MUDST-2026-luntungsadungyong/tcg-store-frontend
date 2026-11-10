@@ -78,6 +78,9 @@ export interface Auction {
   highestBid: number | null;
   updatedAt: string;
   serverTime?: string;
+  winnerId?: number | null;
+  winningBid?: number | null;
+  orderId?: number | null;
   cancellationRequest: CancellationRequest | null;
 }
 
@@ -131,6 +134,9 @@ export interface BuyerAuctionDetail {
   sellerId: number;
   sellerRating: number | null;
   sellerCompletedAuctions: number;
+  winnerId?: number | null;
+  winningBid?: number | null;
+  orderId?: number | null;
 }
 
 export interface BidView {

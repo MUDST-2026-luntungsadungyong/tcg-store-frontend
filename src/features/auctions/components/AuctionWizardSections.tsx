@@ -99,7 +99,7 @@ export function ConditionAndGrading({ fields, errors, update, inventoryCondition
   return <Panel className="space-y-4">
     <h2 className="text-lg font-semibold">Condition & grading</h2>
     <div className="grid gap-3 sm:grid-cols-2">
-      <Input label="Number of copies" type="number" min={1} max={2_147_483_647} step={1} value={fields.quantity} onChange={event => update('quantity', event.target.value)} error={errors.quantity} />
+      <Input label="Number of cards" type="number" min={1} max={1} step={1} value="1" disabled readOnly error={errors.quantity} />
       <Select label="Card language" value={inventoryLanguage ?? fields.language} disabled={Boolean(inventoryCondition)}
         onChange={event => update('language', event.target.value)}
         options={[{ value: 'EN', label: 'English' }, { value: 'JP', label: 'Japanese' }, { value: 'TH', label: 'Thai' }]} />
@@ -115,7 +115,6 @@ export function ConditionAndGrading({ fields, errors, update, inventoryCondition
       {inventoryCondition && <p className="mt-2 text-sm text-text-secondary">The condition must match the selected seller inventory.</p>}
       {errors.condition && <p role="alert" className="mt-2 text-sm text-status-danger">{errors.condition}</p>}
     </fieldset>
-    <p className="text-sm text-text-secondary">Multiple-copy lots must be ungraded; a certificate identifies one card.</p>
     <div className="grid gap-3 sm:grid-cols-3">
       <Select label="Grading company (optional)" value={fields.gradingCompany} onChange={event => update('gradingCompany', event.target.value)}
         options={[{ value: '', label: 'Ungraded' }, ...['PSA', 'BGS', 'CGC'].map(value => ({ value, label: value }))]} />
@@ -141,7 +140,7 @@ export function AuctionPhotos({ photos = {}, urls, errors = {}, onChoose, action
       <h2 className="text-lg font-semibold">Actual card photos</h2>
       {actions}
     </div>
-    {onChoose && <p className="text-sm text-text-secondary">Upload actual front and back photos; each photo must show all copies in the lot. Use JPG, PNG or WebP, up to 5 MiB each.</p>}
+    {onChoose && <p className="text-sm text-text-secondary">Upload actual front and back photos of the card. Use JPG, PNG or WebP, up to 5 MiB each.</p>}
     <div className="grid gap-4 sm:grid-cols-2">
       {PHOTO_SIDES.map(side => {
         const label = side === 'front' ? 'Front photo' : 'Back photo';
@@ -181,7 +180,7 @@ export function PricingRows({ fields }: { fields: Pick<DraftFields, 'startPrice'
 export function PricingFields({ fields, errors, update }: FieldsProps) {
   return <Panel className="space-y-5">
     <h2 className="text-lg font-semibold">Set your prices</h2>
-    <p className="text-sm text-text-secondary">All prices are for the whole lot.</p>
+    <p className="text-sm text-text-secondary">Prices are for the auction item.</p>
     <DetailRows items={[[ 'Start price · From Card Details', money(fields.startPrice) ]]} />
     <label className="flex min-h-9 items-center gap-2 text-sm font-medium">
       <input type="checkbox" checked={fields.reserveEnabled} onChange={event => update('reserveEnabled', event.target.checked)} className="size-4 accent-brand-blue" />

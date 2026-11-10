@@ -66,6 +66,9 @@ function AuctionRoom({ id }: { id: number }) {
   const open = auction.status === 'ACTIVE' && Boolean(auction.endAt && Date.parse(auction.endAt) > now);
   const owner = Boolean(user && String(user.id) === String(auction.sellerId));
   const canBid = open && Boolean(user) && !owner && !error;
+  const isWinner = Boolean(user && auction.winnerId != null && Number(user.id) === Number(auction.winnerId));
+  const isEnded = !open && auction.status !== 'SCHEDULED' && auction.status !== 'DRAFT';
+  const showSellerOrderBtn = owner && (auction.orderId != null || auction.winnerId != null);
 
   async function transact(action: Action | { mode: 'watch' }) {
     setBusy(true);
@@ -140,16 +143,61 @@ function AuctionRoom({ id }: { id: number }) {
       </Panel>
       <Panel className="space-y-4">
         <AuctionStatusBadge status={auction.status} />
+        {isEnded && (
+          <div
+            data-testid="winning-result-banner"
+            className={`rounded-xl border p-4 text-center font-medium ${
+              isWinner
+                ? 'border-status-success/50 bg-status-success/15 text-status-success'
+                : 'border-white/10 bg-white/5 text-gray-200'
+            }`}
+          >
+            {isWinner ? (
+              <p className="text-base font-semibold">
+                Auction ended — You won at {money(auction.winningBid ?? auction.currentPrice)}
+              </p>
+            ) : auction.winnerId != null ? (
+              <p className="text-base font-semibold">
+                Auction ended — Won at {money(auction.winningBid ?? auction.currentPrice)}
+              </p>
+            ) : (
+              <p className="text-base font-semibold">Auction ended</p>
+            )}
+          </div>
+        )}
+        {auction.buyItNowPrice != null && (
+          <div data-testid="buy-it-now-display" className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-400">Buy It Now (ซื้อทันที)</p>
+              <p className="text-xl font-bold text-amber-200">{money(auction.buyItNowPrice)}</p>
+            </div>
+            {canBid && auction.buyItNowPrice > auction.currentPrice && (
+              <Button type="button" disabled={busy} variant="gold" onClick={() => setConfirm({ mode: 'buyout' })}>
+                ซื้อทันที {money(auction.buyItNowPrice)}
+              </Button>
+            )}
+          </div>
+        )}
         <DetailRows items={[
           ['จำนวน', `${auction.quantity ?? 1} ใบ`],
           ['ภาษา', auction.language ?? '—'],
-          ['ราคาปัจจุบัน · ทั้งชุด', money(auction.currentPrice)],
+          ['ราคาปัจจุบัน', money(auction.currentPrice)],
+          ['Buy It Now', auction.buyItNowPrice != null ? money(auction.buyItNowPrice) : 'ไม่มี (None)'],
           ['จำนวน bid', auction.bidCount],
           ['ราคาขั้นต่ำถัดไป', money(auction.nextMinimumBid)],
           ['Reserve', auction.isReserveMet ? 'ผ่านเงื่อนไขราคาแล้ว' : 'ยังไม่ถึงราคาสำรอง'],
           ['เวลาปิด', auctionDate(auction.endAt)],
           ['เวลาที่เหลือ', open ? countdown(auction.endAt, now) : '—'],
         ]} />
+        {showSellerOrderBtn && (
+          <ButtonLink
+            to={auction.orderId ? `/workspace/orders?orderId=${auction.orderId}` : '/workspace/orders'}
+            variant="primary"
+            className="w-full justify-center"
+          >
+            Seller Order Management
+          </ButtonLink>
+        )}
         {!user && <ButtonLink to="/login">เข้าสู่ระบบเพื่อร่วมประมูล</ButtonLink>}
         {user && <Button type="button" variant="secondary" disabled={busy} onClick={() => void transact({ mode: 'watch' })}>
           {auction.isWatching ? 'นำออกจาก Watchlist' : 'เพิ่มใน Watchlist'}
@@ -167,9 +215,6 @@ function AuctionRoom({ id }: { id: number }) {
             <Input label="ราคาสูงสุดสำหรับ Proxy Bid (บาท)" inputMode="decimal" value={proxy} onChange={event => setProxy(event.target.value)} />
             <Button type="submit" disabled={busy} variant="secondary">ตั้งราคาสูงสุด</Button>
           </form>
-          {auction.buyItNowPrice != null && auction.buyItNowPrice > auction.currentPrice && <Button type="button" disabled={busy} variant="gold" onClick={() => setConfirm({ mode: 'buyout' })}>
-            ซื้อทันที {money(auction.buyItNowPrice)}
-          </Button>}
         </>}
       </Panel>
     </div>

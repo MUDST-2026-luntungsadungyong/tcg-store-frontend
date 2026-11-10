@@ -113,7 +113,7 @@ function AuctionWizard({ inventory, initialDraft, refreshInventory }: {
   };
   const validate = (target: number) => {
     const problems = validateDraftStep(target, fields, Boolean(selected && selected.availableQuantity > 0), photos, urls, now);
-    if (target === 0 && selected && Number(fields.quantity) > selected.availableQuantity) problems.quantity = `Only ${selected.availableQuantity} copies available.`;
+    if (target === 0 && selected && selected.availableQuantity < 1) problems.quantity = 'Selected card is out of stock.';
     return problems;
   };
   const showValidation = (target: number, problems: DraftErrors) => {
@@ -198,7 +198,7 @@ function AuctionWizard({ inventory, initialDraft, refreshInventory }: {
               </div>
               {card}
               <DetailRows items={[
-                ['Quantity', `${fields.quantity} copies`],
+                ['Quantity', '1 card'],
                 ['Condition', formatCondition(fields.condition)],
                 ['Language', selected?.language ?? fields.language],
                 ['Grading', fields.gradingCompany ? [fields.gradingCompany, fields.grade, fields.certNumber].join(' · ') : 'Ungraded'],
@@ -212,7 +212,7 @@ function AuctionWizard({ inventory, initialDraft, refreshInventory }: {
             <Panel className="space-y-3">
               <h2 className="text-lg font-semibold">Starting price</h2>
               <Input label="Start price (THB)" inputMode="decimal" value={fields.startPrice} onChange={event => update('startPrice', event.target.value)} error={errors.startPrice} />
-              <p className="text-xs text-text-secondary">Price for the whole lot; must be greater than ฿0.</p>
+              <p className="text-xs text-text-secondary">Starting bid; must be greater than ฿0.</p>
             </Panel>
             <Notice title="Inventory stays available">Saving a draft keeps your inventory available. Confirming an inventory auction reserves the selected quantity.</Notice>
             {(selected || catalogCard) && <Panel className="space-y-3"><h2 className="text-lg font-semibold">Selected card</h2>{card}</Panel>}

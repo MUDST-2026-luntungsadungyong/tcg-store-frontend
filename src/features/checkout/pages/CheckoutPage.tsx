@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ButtonLink } from '@/shared/components/ButtonLink';
 import { AlertCircle, ArrowLeft, LockKeyhole, Tag, ChevronRight, Check } from 'lucide-react';
@@ -9,6 +9,12 @@ import { useReservationCartStore } from '@/features/reservation-cart/model/useRe
 import { previewReservationOrders } from '@/features/reservations/api/reservationOrders';
 import { CheckoutVoucherModal } from '@/features/vouchers/components/CheckoutVoucherModal';
 import type { Voucher } from '@/features/vouchers/model/types';
+import {
+  calculatePlatformFee,
+  DEFAULT_PLATFORM_FEE_POLICY,
+  fetchPlatformFeePolicy,
+  type PlatformFeePolicy,
+} from '@/features/checkout/api/platformFee';
 
 const money = (value: number) => `฿${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 
@@ -20,6 +26,7 @@ export function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
   const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
+  const [feePolicy, setFeePolicy] = useState<PlatformFeePolicy>(DEFAULT_PLATFORM_FEE_POLICY);
 
   const preview = useMemo(() => {
     try {
@@ -44,6 +51,18 @@ export function CheckoutPage() {
     if (!preview) return 0;
     return Math.max(0, preview.totalAmount - discountAmount);
   }, [preview, discountAmount]);
+
+  const platformFee = useMemo(
+    () => calculatePlatformFee(preview?.totalAmount ?? 0, feePolicy),
+    [preview, feePolicy],
+  );
+
+  useEffect(() => {
+    void fetchPlatformFeePolicy().then(setFeePolicy).catch(() => {
+      // Keep the published default visible if the public policy endpoint is temporarily unavailable.
+      setFeePolicy(DEFAULT_PLATFORM_FEE_POLICY);
+    });
+  }, []);
 
   if (!preview || items.length === 0) {
     return (
@@ -150,6 +169,13 @@ export function CheckoutPage() {
                   <span>-{money(discountAmount)}</span>
                 </div>
               )}
+              <div className="flex items-center justify-between text-gray-400">
+                <span>Platform service fee (seller)</span>
+                <span className="text-brand-gold">{money(platformFee)}</span>
+              </div>
+              <p className="-mt-1 text-[11px] leading-4 text-gray-500">
+                {`${(feePolicy.rate * 100).toFixed(0)}% (minimum ${money(feePolicy.minimumFee)}) is deducted from the seller settlement; your total is unchanged.`}
+              </p>
               <div className="pt-2 flex items-center justify-between text-base font-bold text-white border-t border-white/5">
                 <span>ยอดชำระสุทธิ</span>
                 <span className="text-xl text-brand-blue">{money(finalTotal)}</span>

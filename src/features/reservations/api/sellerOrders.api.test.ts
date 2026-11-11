@@ -7,7 +7,7 @@ vi.mock('@/shared/config/env', () => ({
   ENV: { ENABLE_MOCK_API: false, API_BASE_URL: 'http://localhost:8080/api' },
 }));
 
-import { fetchProfitSummary, fetchSellerOrders, updateSellerOrderStatus } from './sellerOrders';
+import { fetchMonthlyDashboard, fetchProfitSummary, fetchSellerOrders, updateSellerOrderStatus } from './sellerOrders';
 
 describe('seller orders API adapter', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -15,7 +15,7 @@ describe('seller orders API adapter', () => {
   it('uses API-relative seller order paths and backend status values', async () => {
     get.mockResolvedValueOnce({ data: { content: [], totalPages: 0, totalElements: 0, number: 0 } });
     patch.mockResolvedValueOnce({ data: { id: 42, status: 'FULFILLED' } });
-    get.mockResolvedValueOnce({ data: { totalRevenue: 0, totalCost: 0, netProfit: 0, totalOrders: 0, pendingOrders: 0, fulfilledOrders: 0, cancelledOrders: 0 } });
+    get.mockResolvedValueOnce({ data: { totalRevenue: 0, totalPlatformFee: 0, totalCost: 0, netProfit: 0, totalOrders: 0, pendingOrders: 0, fulfilledOrders: 0, cancelledOrders: 0 } });
 
     await fetchSellerOrders(0, 20, 'PENDING');
     await updateSellerOrderStatus(42, 'FULFILLED');
@@ -24,6 +24,12 @@ describe('seller orders API adapter', () => {
     expect(get).toHaveBeenNthCalledWith(1, '/seller/orders', { params: { page: 0, size: 20, status: 'PENDING' } });
     expect(patch).toHaveBeenCalledWith('/seller/orders/42/status', { status: 'FULFILLED' });
     expect(get).toHaveBeenNthCalledWith(2, '/seller/orders/profit');
+  });
+
+  it('loads the monthly dashboard with a year and month filter', async () => {
+    get.mockResolvedValueOnce({ data: { selectedMonth: { year: 2026, month: 11 }, lastTwelveMonths: [] } });
+    await fetchMonthlyDashboard(2026, 11);
+    expect(get).toHaveBeenCalledWith('/seller/orders/dashboard/monthly', { params: { year: 2026, month: 11 } });
   });
 
   it('sends note and trackingNumber in payload when updating status', async () => {

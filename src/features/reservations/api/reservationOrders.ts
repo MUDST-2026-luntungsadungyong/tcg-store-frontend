@@ -88,6 +88,8 @@ interface BackendOrderResponse {
   status: string;
   totalAmount?: number;
   totalPrice?: number;
+  platformFee?: number;
+  sellerNetAmount?: number;
   items?: Array<CheckoutItemResponse | BackendOrderItemResponse>;
   createdAt?: string;
   updatedAt?: string;
@@ -368,6 +370,8 @@ export function normalizeReservationOrder(
     sellerId: firstSellerId,
     items: record.items.map((item) => toReservationItem(item, firstSellerId)),
     totalAmount: Number(record.totalAmount ?? record.totalPrice ?? 0),
+      platformFee: Number(record.platformFee ?? 0),
+      sellerNetAmount: Number(record.sellerNetAmount ?? record.totalAmount ?? record.totalPrice ?? 0),
     subtotalAmount: (record as any).subtotalAmount ? Number((record as any).subtotalAmount) : Number(record.totalAmount ?? record.totalPrice ?? 0),
     discountAmount: (record as any).discountAmount ? Number((record as any).discountAmount) : 0,
     voucherCode: (record as any).voucherCode ?? (record as any).voucherCodeSnapshot ?? undefined,

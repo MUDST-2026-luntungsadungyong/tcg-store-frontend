@@ -44,6 +44,11 @@ export const onRequest = async ({ request, env }: PagesRequestContext): Promise<
 
   try {
     const upstreamResponse = await fetch(new Request(upstreamUrl, request));
+    // A successful WebSocket upgrade carries a Workers-specific webSocket property.
+    // Rebuilding the response would discard it and break live auction updates.
+    if (upstreamResponse.status === 101) {
+      return upstreamResponse;
+    }
     const headers = new Headers(upstreamResponse.headers);
     headers.set('cache-control', 'no-store');
 

@@ -15,7 +15,7 @@ const TABS: Array<{ name: string; statuses: AuctionStatus[]; description: string
   { name: 'Drafts', statuses: ['DRAFT'], description: 'Pick up where you left off. Drafts are private and can be edited or deleted.' },
   { name: 'Scheduled', statuses: ['SCHEDULED'], description: 'Your upcoming auctions. Inventory is held from confirmation.' },
   { name: 'Active', statuses: ['ACTIVE'], description: 'Manage your auctions, follow bids and keep track of every outcome.' },
-  { name: 'Ended & Awaiting Payment', statuses: ['ENDED', 'AWAITING_PAYMENT', 'BUYOUT_COMPLETED', 'UNSOLD_NO_BIDS', 'RESERVE_NOT_MET', 'DEFAULTED', 'CANCELLED'], description: 'Review auction outcomes and payment progress after bidding ends.' },
+  { name: 'Ended & Awaiting Contact', statuses: ['ENDED', 'AWAITING_BUYER_CONTACT', 'BUYOUT_COMPLETED', 'UNSOLD_NO_BIDS', 'RESERVE_NOT_MET', 'DEFAULTED', 'CANCELLED'], description: 'Review auction outcomes and buyer contact progress after bidding ends.' },
   { name: 'Completed', statuses: ['COMPLETED'], description: 'View completed auctions and their payment history.' },
 ];
 const MONTH = new Intl.DateTimeFormat('en-GB', { timeZone: AUCTION_TIMEZONE, month: 'numeric', year: 'numeric' });
@@ -25,10 +25,10 @@ function statusNote(status: AuctionStatus) {
   switch (status) {
     case 'ENDED': return 'Auction ended';
     case 'BUYOUT_COMPLETED':
-    case 'AWAITING_PAYMENT': return 'Awaiting buyer payment';
+    case 'AWAITING_BUYER_CONTACT': return 'Awaiting buyer contact';
     case 'UNSOLD_NO_BIDS': return 'No sale · No bids';
     case 'RESERVE_NOT_MET': return 'No sale · Reserve not met';
-    case 'DEFAULTED': return 'Winner missed payment deadline';
+    case 'DEFAULTED': return 'Winner did not contact seller';
     case 'COMPLETED': return 'Completed';
     case 'CANCELLED': return 'Cancelled';
     default: return '—';
@@ -67,7 +67,7 @@ export function MyAuctionsPage() {
   const metrics = [
     ['Active auctions', auctions.filter(auction => auction.status === 'ACTIVE').length],
     ['Total bids', auctions.reduce((sum, auction) => sum + auction.bidCount, 0)],
-    ['Awaiting payment', auctions.filter(auction => auction.status === 'AWAITING_PAYMENT').length],
+    ['Awaiting buyer contact', auctions.filter(auction => auction.status === 'AWAITING_BUYER_CONTACT').length],
     ['Completed this month', auctions.filter(auction => auction.status === 'COMPLETED' && MONTH.format(Date.parse(auction.updatedAt)) === month).length],
   ] as const;
   const deleteDraft = async () => {
@@ -133,6 +133,7 @@ export function MyAuctionsPage() {
               {rows.map(auction => <tr key={auction.id}>
                 <td className="p-4">
                   <AuctionCardSummary name={auction.cardName} imageUrl={auction.imageUrl} setName={auction.setName} condition={auction.condition} />
+                  <p className="text-xs text-text-secondary">1 card</p>
                   <p className="mt-1 text-xs text-brand-blue">{auction.status === 'DRAFT' ? 'Draft' : 'Auction'} #{auction.id}</p>
                 </td>
                 <td className="space-y-2 p-4">

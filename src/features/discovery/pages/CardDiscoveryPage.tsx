@@ -14,6 +14,7 @@ import {
   normalizeConditionToCode,
 } from '@/entities/card/model/condition';
 import { groupListingsByCard } from '@/features/discovery/lib/groupListings';
+import { officialCardImage } from '@/features/discovery/lib/officialCardImage';
 
 const RARITIES = ['Common', 'Uncommon', 'Rare', 'Holo', 'Rare Holo', 'Ultra Rare', 'Secret Rare'];
 const STAGES = ['Basic', 'Stage 1', 'Stage 2', 'V', 'VMAX', 'VSTAR'];
@@ -187,12 +188,6 @@ export function CardDiscoveryPage() {
       // In-stock toggle
       if (appliedInStockOnly && p.stock <= 0) return false;
 
-      // Search match
-      if (appliedSearch.trim()) {
-        const q = appliedSearch.trim().toLowerCase();
-        if (!p.name.toLowerCase().includes(q)) return false;
-      }
-
       // Multi-select rarity match if more than 1 selected
       if (appliedRarity.length > 0 && (!p.rarity || !appliedRarity.includes(p.rarity))) {
         return false;
@@ -219,7 +214,7 @@ export function CardDiscoveryPage() {
 
       return true;
     });
-  }, [canonicalProducts, appliedInStockOnly, appliedSearch, appliedRarity, appliedStage, appliedCondition, appliedPriceRange]);
+  }, [canonicalProducts, appliedInStockOnly, appliedRarity, appliedStage, appliedCondition, appliedPriceRange]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const pageProducts = filteredProducts.slice(page * pageSize, (page + 1) * pageSize);
@@ -514,7 +509,12 @@ export function CardDiscoveryPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
               {pageProducts.map(product => (
-                <CardListingCard key={product.cardId || product.id} listing={product} sellerCount={product.sellerCount} />
+                <CardListingCard
+                  key={product.cardId || product.id}
+                  listing={product}
+                  sellerCount={product.sellerCount}
+                  imageSrc={officialCardImage(product)}
+                />
               ))}
             </div>
 

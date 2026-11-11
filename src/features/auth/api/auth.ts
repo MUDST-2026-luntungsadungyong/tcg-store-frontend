@@ -9,6 +9,7 @@ interface BackendUser {
   id: string;
   name: string;
   email: string;
+  avatarUrl?: string | null;
   role: string;
   sellerStatus?: string;
 }
@@ -40,6 +41,7 @@ export function toFrontendUser(user: BackendUser): User {
     id: String(user.id),
     name: user.name,
     email: user.email,
+    ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
     role,
     isSeller:
       user.role.toUpperCase() === 'SELLER' ||

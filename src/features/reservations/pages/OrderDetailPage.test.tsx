@@ -11,6 +11,11 @@ const mockOrderPending: ReservationOrder = {
   buyerId: 'usr-buyer',
   sellerId: 'usr-seller-1',
   sellerName: 'PokeMaster Store',
+  sellerEmail: 'seller@example.com',
+  sellerPhone: '0812345678',
+  sellerLine: '@pokemaster',
+  sellerFacebook: 'PokeMasterTH',
+  sellerOtherContact: 'Discord: pokemaster',
   status: 'PENDING',
   totalAmount: 3500,
   createdAt: '2026-09-10T10:00:00Z',
@@ -124,17 +129,19 @@ const mockOrderSpecial: ReservationOrder = {
 
 const mockFetchBuyerOrderById = vi.fn();
 const mockUpdateBuyerOrderStatus = vi.fn();
-const mockPublicStore = vi.fn();
+const mockReorderBuyerOrder = vi.fn();
+const mockDownloadBuyerOrderInvoice = vi.fn();
+const mockSetCartState = vi.fn();
 
 vi.mock('../api/buyerOrders', () => ({
   fetchBuyerOrderById: (...args: unknown[]) => mockFetchBuyerOrderById(...args),
   updateBuyerOrderStatus: (...args: unknown[]) => mockUpdateBuyerOrderStatus(...args),
+  reorderBuyerOrder: (...args: unknown[]) => mockReorderBuyerOrder(...args),
+  downloadBuyerOrderInvoice: (...args: unknown[]) => mockDownloadBuyerOrderInvoice(...args),
 }));
 
-vi.mock('@/features/stores/api/stores', () => ({
-  storesApi: {
-    public: (...args: unknown[]) => mockPublicStore(...args),
-  },
+vi.mock('@/features/reservation-cart/model/useReservationCartStore', () => ({
+  useReservationCartStore: { setState: (...args: unknown[]) => mockSetCartState(...args) },
 }));
 
 vi.mock('@/features/auth/model/useAuthStore', () => ({
@@ -154,15 +161,30 @@ function renderOrderDetailPage(orderId: string) {
 }
 
 describe('OrderDetailPage (SCRUM-80)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockPublicStore.mockResolvedValue({
-      sellerId: 'usr-seller-1',
-      shopName: 'PokeMaster Official Store',
-      phone: '0812345678',
-      line: '@pokemaster',
-      facebook: 'PokeMasterTH',
+  beforeEach(() => vi.clearAllMocks());
+
+  it('shows private seller contact after an auction win and never exposes a proof form', async () => {
+    mockFetchBuyerOrderById.mockResolvedValue({
+      ...mockOrderPending,
+      orderType: 'AUCTION',
+      status: 'AWAITING_BUYER_CONTACT',
+      totalAmount: 3001,
+      items: [{
+        ...mockOrderPending.items[0],
+        quantity: 3,
+        listing: { ...mockOrderPending.items[0].listing, price: 3001 },
+      }],
     });
+
+    renderOrderDetailPage('ord-101');
+
+    expect(await screen.findByText('Contact the Seller to Arrange Payment')).toBeInTheDocument();
+    expect(screen.getByText('seller@example.com')).toBeInTheDocument();
+    expect(screen.getByText('0812345678')).toBeInTheDocument();
+    expect(screen.queryByText(/หลักฐานการชำระเงิน/)).not.toBeInTheDocument();
+    expect(screen.getByText('ราคาทั้งล็อต')).toBeInTheDocument();
+    expect(screen.getByText('Qty: 3')).toBeInTheDocument();
+    expect(screen.queryByText(/9,003/)).not.toBeInTheDocument();
   });
 
   it('renders order detail with status banner, full condition label, seller contact, and financial summary', async () => {
@@ -179,9 +201,9 @@ describe('OrderDetailPage (SCRUM-80)', () => {
     expect(screen.getByText('Near Mint')).toBeInTheDocument();
     expect(screen.queryByText(/^NM$/)).not.toBeInTheDocument();
 
-    // Check seller store profile and contact details
+    // Check private seller contact details returned by the order API.
     await waitFor(() => {
-      expect(screen.getByText('PokeMaster Official Store')).toBeInTheDocument();
+      expect(screen.getByText('PokeMaster Store')).toBeInTheDocument();
       expect(screen.getByText('0812345678')).toBeInTheDocument();
       expect(screen.getByText('Line: @pokemaster')).toBeInTheDocument();
       expect(screen.getByText('PokeMasterTH')).toBeInTheDocument();
@@ -299,6 +321,71 @@ describe('OrderDetailPage (SCRUM-80)', () => {
 
     expect(screen.queryByRole('button', { name: /Cancel Order/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Mark Received/i })).not.toBeInTheDocument();
+  });
+
+  it('reorders available cards, syncs the cart, and reports stock adjustments', async () => {
+    const user = userEvent.setup();
+    mockFetchBuyerOrderById.mockResolvedValue(mockOrderSpecial);
+    mockReorderBuyerOrder.mockResolvedValue({
+      totalAddedItems: 1,
+      hasUnavailableItems: true,
+      items: [
+        {
+          listingId: 'lst-3',
+          productName: 'Pikachu Illustrator',
+          requestedQuantity: 1,
+          addedQuantity: 1,
+          availableQuantity: 1,
+          outcome: 'ADDED',
+        },
+        {
+          listingId: 'lst-4',
+          productName: 'Ancient Mew',
+          requestedQuantity: 1,
+          addedQuantity: 0,
+          availableQuantity: 0,
+          outcome: 'STOCK_LIMIT_REACHED',
+        },
+      ],
+      cart: {
+        totalItems: 1,
+        totalAmount: 5000,
+        items: [
+          {
+            listingId: 'lst-3',
+            sellerId: 'usr-seller-3',
+            name: 'Pikachu Illustrator',
+            game: 'Pokemon',
+            image: 'https://images.pokemontcg.io/promo/1.png',
+            price: 5000,
+            quantity: 1,
+            available: true,
+            availableQuantity: 1,
+            subtotal: 5000,
+          },
+        ],
+      },
+    });
+
+    renderOrderDetailPage('ord-103');
+    await user.click(await screen.findByRole('button', { name: /1-Click Reorder/i }));
+
+    expect(mockReorderBuyerOrder).toHaveBeenCalledWith('ord-103');
+    expect(mockSetCartState).toHaveBeenCalledWith(expect.objectContaining({ error: null }));
+    expect(await screen.findByText(/Some quantities were reduced to match current stock/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /View Cart/i })).toHaveAttribute('href', '/cart');
+  });
+
+  it('downloads the PDF invoice from order detail', async () => {
+    const user = userEvent.setup();
+    mockFetchBuyerOrderById.mockResolvedValue(mockOrderPending);
+    mockDownloadBuyerOrderInvoice.mockResolvedValue('mythix-order-ORD-2026-101.pdf');
+
+    renderOrderDetailPage('ord-101');
+    await user.click(await screen.findByRole('button', { name: /Download PDF Invoice/i }));
+
+    expect(mockDownloadBuyerOrderInvoice).toHaveBeenCalledWith('ord-101');
+    expect(await screen.findByText('PDF order summary downloaded.')).toBeInTheDocument();
   });
 
   it('displays error state when order fetching fails', async () => {

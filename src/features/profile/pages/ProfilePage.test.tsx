@@ -10,7 +10,7 @@ import { ProfilePage } from "./ProfilePage";
 
 vi.mock("@/features/collection/api/collection", () => ({ collectionApi: { getMyCollection: vi.fn().mockResolvedValue([]) } }));
 
-vi.mock("../api/profile", () => ({ profileApi: { update: vi.fn(), uploadAvatar: vi.fn(), getAvatar: vi.fn() } }));
+vi.mock("../api/profile", () => ({ profileApi: { update: vi.fn(), uploadAvatar: vi.fn(), removeAvatar: vi.fn(), getAvatar: vi.fn() } }));
 
 const user = {
   id: "user-1",
@@ -30,6 +30,27 @@ describe("ProfilePage editors", () => {
     useAuthStore.setState({ token: "token", user, isHydrating: false });
     vi.mocked(profileApi.update).mockResolvedValue(user);
     vi.mocked(profileApi.getAvatar).mockResolvedValue(new Blob(["image"], { type: "image/png" }));
+  });
+
+  it("removes the photo and synchronizes the signed-in profile", async () => {
+    useAuthStore.setState({ user: { ...user, avatarUrl: "https://example.com/avatar.png" } });
+    vi.mocked(profileApi.removeAvatar).mockResolvedValue({ ...user, avatarUrl: undefined });
+    render(<MemoryRouter><ProfilePage /></MemoryRouter>);
+    await userEvent.click(screen.getByRole("button", { name: "Change profile photo" }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove photo" }));
+    await waitFor(() => expect(useAuthStore.getState().user?.avatarUrl).toBeUndefined());
+    expect(profileApi.removeAvatar).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the current photo and reports a failed removal", async () => {
+    useAuthStore.setState({ user: { ...user, avatarUrl: "https://example.com/avatar.png" } });
+    vi.mocked(profileApi.getAvatar).mockRejectedValue(new Error("preview unavailable"));
+    vi.mocked(profileApi.removeAvatar).mockRejectedValue(new Error("offline"));
+    render(<MemoryRouter><ProfilePage /></MemoryRouter>);
+    await userEvent.click(screen.getByRole("button", { name: "Change profile photo" }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove photo" }));
+    expect(await screen.findByText("Unable to remove your photo. Please try again.")).toBeInTheDocument();
+    expect(useAuthStore.getState().user?.avatarUrl).toBe("https://example.com/avatar.png");
   });
 
   it("allows a complete profile to dismiss progress and remembers it on remount", async () => {

@@ -3,7 +3,7 @@ import apiClient from '@/shared/api/client';
 
 export type AuctionStatus =
   | 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'ENDED'
-  | 'AWAITING_PAYMENT' | 'COMPLETED' | 'CANCELLED'
+  | 'AWAITING_BUYER_CONTACT' | 'COMPLETED' | 'CANCELLED'
   | 'BUYOUT_COMPLETED' | 'RESERVE_NOT_MET' | 'UNSOLD_NO_BIDS' | 'DEFAULTED';
 export type RequestStatus = 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
 export type StartMode = 'NOW' | 'SCHEDULED';
@@ -18,6 +18,7 @@ export interface AuctionInventory {
   cardNumber: string | null;
   rarity: string | null;
   condition: string;
+  language?: string;
   status: 'SHOW' | 'HIDE' | 'OUT_OF_STOCK';
   availableQuantity: number;
   collectionMatch: boolean;
@@ -51,6 +52,8 @@ export interface CancellationRequest {
 }
 
 export interface Auction {
+  language?: string;
+  quantity?: number;
   id: number;
   status: AuctionStatus;
   productId: number | null;
@@ -75,12 +78,16 @@ export interface Auction {
   highestBid: number | null;
   updatedAt: string;
   serverTime?: string;
+  winnerId?: number | null;
+  winningBid?: number | null;
+  orderId?: number | null;
   cancellationRequest: CancellationRequest | null;
 }
 
 // ─── Buyer-facing types (US-14, US-15, US-17, US-18) ───────────────────────
 
 export interface AuctionSummary {
+  quantity?: number;
   id: number;
   frontImageUrl: string | null;
   cardName: string | null;
@@ -99,6 +106,8 @@ export interface AuctionSummary {
 }
 
 export interface BuyerAuctionDetail {
+  language?: string;
+  quantity?: number;
   id: number;
   cardName: string | null;
   setName: string | null;
@@ -125,6 +134,9 @@ export interface BuyerAuctionDetail {
   sellerId: number;
   sellerRating: number | null;
   sellerCompletedAuctions: number;
+  winnerId?: number | null;
+  winningBid?: number | null;
+  orderId?: number | null;
 }
 
 export interface BidView {
@@ -153,6 +165,7 @@ export interface BuyoutResult {
 }
 
 export interface SecondChanceOffer {
+  quantity?: number;
   id: number;
   auctionId: number;
   cardName: string | null;
@@ -211,8 +224,8 @@ export interface BuyerPortfolio {
     orderNumber: string;
     orderStatus: string;
     cardName: string | null;
+    quantity: number;
     finalPrice: number;
-    paymentDeadline: string | null;
     isPaid: boolean;
   }>;
 }
@@ -298,14 +311,6 @@ export const buyerAuctionApi = {
   /** รายการ Watchlist ของฉัน */
   watchlist: async () => (await apiClient.get<AuctionSummary[]>(`${userPath}/watchlist`)).data,
 
-  submitPaymentProof: async (orderId: number, file: File) => {
-    const form = new FormData();
-    form.append('file', file);
-    await apiClient.post(`/orders/${orderId}/payment-proof`, form, { headers: multipart });
-  },
-  paymentProof: async (orderId: number | string) =>
-    (await apiClient.get<Blob>(`/orders/${orderId}/payment-proof`, { responseType: 'blob' })).data,
-
   secondChanceOffers: async () =>
     (await apiClient.get<SecondChanceOffer[]>(`${userPath}/auction-second-chance-offers`)).data,
 
@@ -321,3 +326,16 @@ export function auctionError(error: unknown, fallback: string): string {
   if (!isAxiosError<{ message?: string }>(error)) return fallback;
   return error.response?.data?.message || fallback;
 }
+
+export interface DefaultCaseHistory { action: string; reason: string; adminId: number; createdAt: string }
+export interface DefaultCase { id: number; auctionId: number; orderId: number; orderNumber?: string; buyerId: number; sellerId: number; reportReason: string; status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVERSED'; createdAt: string; decidedAt: string | null; decisionReason: string | null; history: DefaultCaseHistory[] }
+export interface CasePage { content: DefaultCase[]; number: number; totalPages: number; totalElements: number; size: number }
+export interface AuctionPenalty { activeStrikes: number; bannedUntil: string | null }
+export const defaultCaseApi = {
+  mine: async (page = 0) => (await apiClient.get<CasePage>('/auction-default-cases/me', { params: { page, size: 20 } })).data,
+  penalty: async () => (await apiClient.get<AuctionPenalty>('/auction-default-cases/penalty')).data,
+  admin: async (page = 0) => (await apiClient.get<CasePage>('/admin/auction-default-cases', { params: { page, size: 20 } })).data,
+  decide: async (id: number, action: 'approve' | 'reject' | 'reverse', reason: string) =>
+    (await apiClient.post<DefaultCase>(`/admin/auction-default-cases/${id}/${action}`, { reason })).data,
+};
+export const isAuctionBanned = (penalty: AuctionPenalty) => Boolean(penalty.bannedUntil && Date.parse(penalty.bannedUntil) > Date.now());

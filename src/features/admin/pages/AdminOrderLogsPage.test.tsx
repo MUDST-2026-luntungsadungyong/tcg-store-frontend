@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminOrderLogsPage } from './AdminOrderLogsPage';
 import apiClient from '@/shared/api/client';
 
-vi.mock('@/shared/api/client', () => ({ default: { get: vi.fn() } }));
+vi.mock('@/shared/api/client', () => ({ default: { get: vi.fn(), post: vi.fn() } }));
 
 const response = { data: { content: [{ id: '1', orderNumber: 'ORD-2026-001', buyerName: 'Misty Cerulean', buyerEmail: 'misty@example.com', status: 'PAID', totalAmount: 2500, createdAt: '2026-09-30T10:00:00Z', platformFee: 250, sellerNetAmount: 2250, items: [{ id: 'item-1', productName: 'Blastoise ex', cardId: '006/165', sellerName: 'Brock Slate', sellerEmail: 'brock@example.com', shopName: 'Pewter Cards', price: 2500, quantity: 1 }] }], number: 0, totalPages: 1, totalElements: 1 } };
 
@@ -42,5 +42,20 @@ describe('AdminOrderLogsPage', () => {
     await userEvent.click(refreshBtn);
 
     expect(apiClient.get).toHaveBeenCalledTimes(2);
+  });
+  it('requires a reason before confirming delivery for a sent auction', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: { ...response.data, content: [{ ...response.data.content[0], orderType: 'AUCTION', status: 'SENT' }] },
+    });
+    render(<AdminOrderLogsPage />);
+    await userEvent.click(await screen.findByRole('button', { name: /ORD-2026-001/i }));
+    const confirm = screen.getByRole('button', { name: 'Confirm auction delivery' });
+    expect(confirm).toBeDisabled();
+    await userEvent.type(screen.getByLabelText('Reason for resolving shipment'), 'Buyer acknowledged receipt');
+    await userEvent.click(confirm);
+    expect(apiClient.post).toHaveBeenCalledWith('/admin/orders/1/resolve-auction-shipment', {
+      outcome: 'DELIVERED',
+      reason: 'Buyer acknowledged receipt',
+    });
   });
 });

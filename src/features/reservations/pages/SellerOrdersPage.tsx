@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   CheckCircle2,
   Clock,
@@ -11,16 +12,19 @@ import {
   RefreshCw,
   User as UserIcon,
   AlertCircle,
+  BarChart3,
+  Download,
 } from 'lucide-react';
 
 import {
   fetchSellerOrders,
   fetchProfitSummary,
+  fetchMonthlyDashboard,
   updateSellerOrderStatus,
   type SellerOrder,
+  type SellerMonthlyDashboard,
   type SellerProfitSummary,
 } from '../api/sellerOrders';
-import { buyerAuctionApi } from '@/features/auctions/api/auctions';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { SearchField } from '@/shared/components/SearchField';
@@ -28,23 +32,19 @@ import { Modal } from '@/shared/components/Modal';
 import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 10
 import { ConditionLabel } from '@/shared/components/ConditionLabel';
 
+const money = (amount: number) => `฿${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+function emptyMonthlyDashboard(year: number, month: number): SellerMonthlyDashboard {
+  const selectedMonth = { year, month, grossSales: 0, platformFee: 0, netRevenue: 0, totalCost: 0, netProfit: 0, orderCount: 0 };
+  return { selectedMonth, lastTwelveMonths: [selectedMonth] };
+}
+
 export function SellerOrdersPage() {
-  const [proof, setProof] = useState<{ orderId: string | number; url: string }>();
-  useEffect(() => () => { if (proof) URL.revokeObjectURL(proof.url); }, [proof]);
-
-  async function viewProof(orderId: string | number) {
-    setError(null);
-    try {
-      const file = await buyerAuctionApi.paymentProof(orderId);
-      setProof({ orderId, url: URL.createObjectURL(file) });
-    } catch {
-      setError('Could not open the payment proof. The buyer may still need to upload it.');
-    }
-  }
-
+  const [searchParams] = useSearchParams();
   const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [summary, setSummary] = useState<SellerProfitSummary>({
     totalRevenue: 0,
+    totalPlatformFee: 0,
     totalCost: 0,
     netProfit: 0,
     totalOrders: 0,
@@ -55,6 +55,9 @@ export function SellerOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1);
+  const [monthlyDashboard, setMonthlyDashboard] = useState<SellerMonthlyDashboard>(() => emptyMonthlyDashboard(new Date().getFullYear(), new Date().getMonth() + 1));
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<SellerOrder | null>(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -65,43 +68,60 @@ export function SellerOrdersPage() {
   const [carrierNote, setCarrierNote] = useState('');
   const [showCancelPopup, setShowCancelPopup] = useState(false);
   const [cancelNote, setCancelNote] = useState('');
+  const [noBuyerContact, setNoBuyerContact] = useState(false);
   const [pendingOrderAction, setPendingOrderAction] = useState<{ orderId: string | number; status: string } | null>(null);
+  const pendingOrder = orders.find(order => order.id === pendingOrderAction?.orderId);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [orderRes, profitRes] = await Promise.all([
+      const [orderRes, profitRes, monthlyRes] = await Promise.all([
         fetchSellerOrders(0, 50, statusFilter),
         fetchProfitSummary(),
+        fetchMonthlyDashboard(selectedYear, selectedMonth),
       ]);
       setOrders(orderRes.orders);
       setSummary(profitRes);
+      setMonthlyDashboard(monthlyRes);
     } catch (err) {
       console.error('Failed to load seller orders data:', err);
       setError(err instanceof Error ? err.message : 'Unable to load seller orders.');
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [selectedMonth, selectedYear, statusFilter]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    const orderId = searchParams.get('orderId');
+    if (!orderId) return;
+    const order = orders.find(candidate => String(candidate.id) === orderId);
+    if (order) {
+      setSelectedOrder(order);
+      setIsContactModalOpen(true);
+    }
+  }, [orders, searchParams]);
+
   const handleStatusUpdate = async (
     orderId: string | number,
     newStatus: string,
     note?: string,
-    trackingNum?: string
+    trackingNum?: string,
+    cancelForNoContact?: boolean
   ) => {
     setActionLoadingId(orderId);
     try {
-      await updateSellerOrderStatus(orderId, newStatus, note, trackingNum);
+      await updateSellerOrderStatus(orderId, newStatus, note, trackingNum, cancelForNoContact);
       await loadData();
+      return true;
     } catch (err) {
       console.error('Failed to update status:', err);
       setError(err instanceof Error ? err.message : 'Unable to update order status.');
+      return false;
     } finally {
       setActionLoadingId(null);
     }
@@ -116,6 +136,26 @@ export function SellerOrdersPage() {
     return orderNum.includes(query) || buyerName.includes(query) || itemNames.includes(query);
   });
 
+  const selectedPeriodLabel = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' })
+    .format(new Date(selectedYear, selectedMonth - 1, 1));
+  const chartMaximum = Math.max(1, ...monthlyDashboard.lastTwelveMonths.map((point) => point.netRevenue));
+  const availableYears = Array.from({ length: 5 }, (_, index) => new Date().getFullYear() - index);
+
+  const exportMonthlyCsv = () => {
+    const point = monthlyDashboard.selectedMonth;
+    const rows = [
+      ['Period', 'Gross sales', 'Platform fee', 'Seller net revenue', 'Inventory cost', 'Net profit', 'Orders'],
+      [selectedPeriodLabel, point.grossSales, point.platformFee, point.netRevenue, point.totalCost, point.netProfit, point.orderCount],
+    ];
+    const csv = `\uFEFF${rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\r\n')}`;
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `seller-monthly-sales-${selectedYear}-${String(selectedMonth).padStart(2, '0')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status.toUpperCase()) {
       case 'PENDING':
@@ -129,6 +169,18 @@ export function SellerOrdersPage() {
         return (
           <Badge variant="warning" className="flex items-center gap-1">
             <Clock size={12} /> Confirmed
+          </Badge>
+        );
+      case 'AWAITING_BUYER_CONTACT':
+        return (
+          <Badge variant="warning" className="flex items-center gap-1">
+            <MessageSquare size={12} /> Awaiting buyer contact
+          </Badge>
+        );
+      case 'PENDING_SELLER_ACTION':
+        return (
+          <Badge variant="warning" className="flex items-center gap-1">
+            <Clock size={12} /> Ready to ship
           </Badge>
         );
       case 'SENT':
@@ -181,7 +233,7 @@ export function SellerOrdersPage() {
       )}
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
         {/* Total Revenue */}
         <div className="bg-bg-card border border-white/10 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-gray-400 text-sm">
@@ -192,6 +244,17 @@ export function SellerOrdersPage() {
             ฿{summary.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <p className="text-xs text-gray-400 mt-1">From all active sent & pending sales</p>
+        </div>
+
+        <div className="bg-bg-card border border-white/10 rounded-xl p-5 shadow-sm">
+          <div className="flex items-center justify-between text-gray-400 text-sm">
+            <span>Platform Fee</span>
+            <DollarSign className="text-brand-gold" size={18} />
+          </div>
+          <div className="text-2xl font-bold text-brand-gold mt-2">
+            {money(summary.totalPlatformFee)}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Deducted from direct-sale settlement</p>
         </div>
 
         {/* Total Cost */}
@@ -216,7 +279,7 @@ export function SellerOrdersPage() {
           <div className="text-2xl font-bold text-brand-gold mt-2">
             ฿{summary.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <p className="text-xs text-brand-gold/70 mt-1">Revenue minus inventory cost</p>
+          <p className="text-xs text-brand-gold/70 mt-1">After platform fee and inventory cost</p>
         </div>
 
         {/* Orders Breakdown */}
@@ -239,11 +302,49 @@ export function SellerOrdersPage() {
         </div>
       </div>
 
+      <section className="rounded-xl border border-white/10 bg-bg-card p-5 shadow-sm" aria-label="Monthly sales dashboard">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-lg font-bold text-white"><BarChart3 size={20} className="text-brand-blue" /> Monthly Sales Dashboard</div>
+            <p className="mt-1 text-sm text-gray-400">Review your selected month and the latest 12 months of seller net revenue.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <select aria-label="Select sales month" value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="rounded-lg border border-white/10 bg-bg-elevated px-3 py-2 text-sm text-white">
+              {Array.from({ length: 12 }, (_, index) => index + 1).map((month) => <option key={month} value={month}>{new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date(2026, month - 1, 1))}</option>)}
+            </select>
+            <select aria-label="Select sales year" value={selectedYear} onChange={(event) => setSelectedYear(Number(event.target.value))} className="rounded-lg border border-white/10 bg-bg-elevated px-3 py-2 text-sm text-white">
+              {availableYears.map((year) => <option key={year} value={year}>{year}</option>)}
+            </select>
+            <Button size="sm" variant="secondary" className="gap-2" onClick={exportMonthlyCsv}><Download size={15} /> Export CSV</Button>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-4">
+          {[
+            ['Gross sales', monthlyDashboard.selectedMonth.grossSales, 'text-white'],
+            ['Platform fee', monthlyDashboard.selectedMonth.platformFee, 'text-brand-gold'],
+            ['Seller net revenue', monthlyDashboard.selectedMonth.netRevenue, 'text-brand-blue'],
+            ['Net profit', monthlyDashboard.selectedMonth.netProfit, 'text-status-success'],
+          ].map(([label, value, colour]) => <div key={label as string} className="rounded-lg border border-white/10 bg-bg-elevated p-4"><p className="text-xs uppercase tracking-wide text-gray-400">{label}</p><p className={`mt-1 text-xl font-bold ${colour}`}>{money(value as number)}</p></div>)}
+        </div>
+
+        <div className="mt-5 rounded-lg border border-white/10 bg-bg-elevated p-4">
+          <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold text-white">12-month seller net revenue</h2><span className="text-xs text-gray-400">Selected: {selectedPeriodLabel}</span></div>
+          <div className="flex h-48 items-end gap-2" role="img" aria-label="12 month seller net revenue chart">
+            {monthlyDashboard.lastTwelveMonths.map((point) => {
+              const label = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(point.year, point.month - 1, 1));
+              const height = Math.max(point.netRevenue > 0 ? 4 : 0, (point.netRevenue / chartMaximum) * 100);
+              return <div key={`${point.year}-${point.month}`} className="flex h-full min-w-0 flex-1 flex-col justify-end text-center"><span className="mb-1 text-[10px] text-gray-400">{point.netRevenue > 0 ? `฿${Math.round(point.netRevenue).toLocaleString()}` : ''}</span><div title={`${label} ${point.year}: ${money(point.netRevenue)}`} className="rounded-t bg-brand-blue/80 transition-all" style={{ height: `${height}%` }} /><span className="mt-2 text-[10px] text-gray-400">{label}</span></div>;
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* Filter and Search Bar */}
       <div className="bg-bg-card border border-white/10 rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Status Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-          {['ALL', 'PENDING', 'SENT', 'CANCELLED'].map((tab) => (
+          {['ALL', 'PENDING', 'AWAITING_BUYER_CONTACT', 'SENT', 'CANCELLED'].map((tab) => (
             <button
               key={tab}
               type="button"
@@ -259,6 +360,8 @@ export function SellerOrdersPage() {
                 ? 'All Orders'
                 : tab === 'PENDING'
                   ? 'Pending'
+                  : tab === 'AWAITING_BUYER_CONTACT'
+                    ? 'Awaiting Contact'
                   : tab === 'SENT'
                     ? 'Sent'
                     : 'Cancelled'}
@@ -354,7 +457,7 @@ export function SellerOrdersPage() {
                                 )}
                               </div>
                               <div className="text-gray-400">
-                                {item.quantity}x @ ฿{item.unitPrice.toLocaleString()} (Cost: ฿{item.unitCost.toLocaleString()})
+                                {order.orderType === 'AUCTION' ? `${item.quantity} copies · whole lot ฿${item.itemTotal.toLocaleString()}` : `${item.quantity}x @ ฿${item.unitPrice.toLocaleString()} (Cost: ฿${item.unitCost.toLocaleString()})`}
                               </div>
                             </div>
                           ))}
@@ -382,14 +485,19 @@ export function SellerOrdersPage() {
                       {/* Actions */}
                       <td className="p-4 align-top text-right whitespace-nowrap">
                         <div className="flex flex-col gap-1.5 items-end">
-                          {order.orderType === 'AUCTION' && order.status !== 'CANCELLED' &&
-                            <Button size="sm" variant="secondary" onClick={() => void viewProof(order.id)}>View payment proof</Button>}
-                          {proof?.orderId === order.id && <div className="space-y-2">
-                            <img className="max-h-52 max-w-52 object-contain" src={proof.url} alt="Buyer payment proof" />
-                            <button type="button" className="underline" onClick={() => setProof(undefined)}>Close proof</button>
-                          </div>}
-                          {(order.status === 'PENDING' || order.status === 'CONFIRMED' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
+                          {(order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'AWAITING_BUYER_CONTACT' || order.status === 'PENDING_SELLER_ACTION' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
                             <>
+                              {order.orderType === 'AUCTION' && order.status === 'AWAITING_BUYER_CONTACT' && (
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  disabled={isActionLoading}
+                                  onClick={() => void handleStatusUpdate(order.id, 'PENDING_SELLER_ACTION', 'Buyer contact and payment arrangement confirmed')}
+                                  className="w-32 text-xs bg-brand-blue hover:bg-brand-blue/90 mb-1"
+                                >
+                                  Contact arranged
+                                </Button>
+                              )}
                               {(order.status === 'PENDING' || (order.status as string) === 'RESERVED' || (order.status as string) === 'PAID') && (
                                 <Button
                                   size="sm"
@@ -398,10 +506,10 @@ export function SellerOrdersPage() {
                                   onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'CONFIRMED' }); setShowPaymentConfirmPopup(true); }}
                                   className="w-28 text-xs bg-brand-blue hover:bg-brand-blue/90 mb-1"
                                 >
-                                  Confirm Payment
+                                  Confirm arrangement
                                 </Button>
                               )}
-                              {order.status === 'CONFIRMED' && (
+                              {(order.status === 'CONFIRMED' || order.status === 'PENDING_SELLER_ACTION') && (
                                 <Button
                                   size="sm"
                                   variant="primary"
@@ -417,15 +525,15 @@ export function SellerOrdersPage() {
                                   Mark as Sent
                                 </Button>
                               )}
-                              {order.orderType !== 'AUCTION' && <Button
+                              <Button
                                 size="sm"
                                 variant="danger"
                                 disabled={isActionLoading}
-                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'CANCELLED' }); setCancelNote(''); setShowCancelPopup(true); }}
+                                onClick={() => { setPendingOrderAction({ orderId: order.id, status: 'CANCELLED' }); setCancelNote(''); setNoBuyerContact(false); setShowCancelPopup(true); }}
                                 className="w-28 text-xs"
                               >
                                 Cancel Order
-                              </Button>}
+                              </Button>
                             </>
                           )}
                           {(order.status === 'SENT' || (order.status as string) === 'FULFILLED') && (
@@ -510,7 +618,7 @@ export function SellerOrdersPage() {
                         )}
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
-                        Qty: {item.quantity} × ฿{item.unitPrice.toLocaleString()} · Subtotal: ฿{item.itemTotal.toLocaleString()}
+                        {selectedOrder.orderType === 'AUCTION' ? `Qty: ${item.quantity} · Whole lot: ฿${item.itemTotal.toLocaleString()}` : `Qty: ${item.quantity} × ฿${item.unitPrice.toLocaleString()} · Subtotal: ฿${item.itemTotal.toLocaleString()}`}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
@@ -561,14 +669,13 @@ export function SellerOrdersPage() {
           </div>
         </Modal>
       )}
-      {/* CASE 10a: Confirm payment popup — Figma: Seller Orders → Payment */}
       <FeedbackPopup
         isOpen={showPaymentConfirmPopup}
         tone="confirm"
-        title="Confirm payment received?"
-        message="Only confirm after the buyer has paid you outside Mythix."
+        title="Confirm payment arrangement?"
+        message="Confirm only after you and the buyer have agreed on payment outside Mythix."
         meta={pendingOrderAction ? `Order ${String(pendingOrderAction.orderId)}` : undefined}
-        primaryAction={{ label: "Confirm payment", onClick: async () => {
+        primaryAction={{ label: "Confirm arrangement", onClick: async () => {
           if (pendingOrderAction) await handleStatusUpdate(pendingOrderAction.orderId, pendingOrderAction.status);
           setShowPaymentConfirmPopup(false);
           setPendingOrderAction(null);
@@ -667,22 +774,33 @@ export function SellerOrdersPage() {
             Please provide a reason for cancelling this order. This note will be recorded in the order timeline.
           </p>
           <textarea
+            aria-label="Reason for cancellation"
+            maxLength={2000}
             value={cancelNote}
             onChange={(e) => setCancelNote(e.target.value)}
             className="w-full h-24 p-3 rounded-lg border border-white/10 bg-bg-card text-white text-sm"
             placeholder="Reason for cancellation..."
           />
+          {pendingOrder?.orderType === 'AUCTION' && pendingOrder.status === 'AWAITING_BUYER_CONTACT' && (
+            <label className="flex items-start gap-2 text-sm text-gray-300">
+              <input type="checkbox" checked={noBuyerContact} onChange={event => setNoBuyerContact(event.target.checked)} />
+              The winner never contacted me and I received no payment. This creates a case for admin review and allows a second-chance offer. No penalty is applied until an admin approves the case.
+            </label>
+          )}
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="secondary" onClick={() => { setShowCancelPopup(false); setPendingOrderAction(null); }}>
               Back
             </Button>
             <Button
               variant="danger"
-              disabled={!cancelNote.trim()}
+              disabled={!cancelNote.trim() || actionLoadingId !== null}
               onClick={async () => {
-                if (pendingOrderAction) await handleStatusUpdate(pendingOrderAction.orderId, pendingOrderAction.status, cancelNote);
-                setShowCancelPopup(false);
-                setPendingOrderAction(null);
+                if (pendingOrderAction && await handleStatusUpdate(
+                  pendingOrderAction.orderId, pendingOrderAction.status, cancelNote, undefined, noBuyerContact,
+                )) {
+                  setShowCancelPopup(false);
+                  setPendingOrderAction(null);
+                }
               }}
             >
               Cancel Order

@@ -56,7 +56,8 @@ describe('US-06 & US-07: Public Store Browsing', () => {
     // Assert Shop Info
     cy.contains('Empty Shop').should('be.visible');
     cy.contains('Just opened, waiting for stock!').should('be.visible');
-    cy.contains('0812345678').should('be.visible');
+    // Seller contact details remain private until the buyer has an order.
+    cy.contains('0812345678').should('not.exist');
 
     // Assert 0 cards and empty state message
     cy.contains('0 cards').should('be.visible');

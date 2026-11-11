@@ -3,6 +3,8 @@ import type { CardListing } from '@/entities/card/model/types';
 export type ReservationStatus =
   | 'PENDING'
   | 'CONFIRMED'
+  | 'AWAITING_BUYER_CONTACT'
+  | 'PENDING_SELLER_ACTION'
   | 'RESERVED'
   | 'FULFILLED'
   | 'SENT'
@@ -11,7 +13,7 @@ export type ReservationStatus =
 /** Statuses accepted by the real backend order API. */
 export type BackendReservationStatus = Extract<
   ReservationStatus,
-  'PENDING' | 'CONFIRMED' | 'SENT' | 'FULFILLED' | 'CANCELLED'
+  'PENDING' | 'CONFIRMED' | 'AWAITING_BUYER_CONTACT' | 'PENDING_SELLER_ACTION' | 'SENT' | 'FULFILLED' | 'CANCELLED'
 >;
 
 /** Legacy statuses used only by the explicitly gated local mock adapter. */
@@ -41,6 +43,8 @@ export const RESERVATION_STATUS_TRANSITIONS: readonly ReservationStatusTransitio
   { from: 'PENDING', to: 'CONFIRMED', actor: 'SELLER' },
   { from: 'RESERVED', to: 'CONFIRMED', actor: 'SELLER' },
   { from: 'CONFIRMED', to: 'SENT', actor: 'SELLER' },
+  { from: 'AWAITING_BUYER_CONTACT', to: 'PENDING_SELLER_ACTION', actor: 'SELLER' },
+  { from: 'PENDING_SELLER_ACTION', to: 'SENT', actor: 'SELLER' },
   { from: 'RESERVED', to: 'CANCELLED', actor: 'SELLER' },
   { from: 'PENDING', to: 'CANCELLED', actor: 'SELLER' },
   { from: 'CONFIRMED', to: 'CANCELLED', actor: 'SELLER' },
@@ -74,6 +78,8 @@ export interface ReservationOrder {
   totalAmount: number;
   subtotalAmount?: number;
   discountAmount?: number;
+    platformFee?: number;
+    sellerNetAmount?: number;
   voucherCode?: string;
   status: ReservationStatus;
   createdAt: string;
@@ -85,6 +91,11 @@ export interface ReservationOrder {
   orderNumber?: string;
   orderType?: 'AUCTION' | 'DIRECT';
   sellerName?: string;
+  sellerEmail?: string;
+  sellerPhone?: string;
+  sellerLine?: string;
+  sellerFacebook?: string;
+  sellerOtherContact?: string;
   updatedAt?: string;
   cancellationReason?: string;
 }

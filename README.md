@@ -204,6 +204,28 @@ Repository นี้รองรับระบบ CI/CD อัตโนมั�
 
 ---
 
+## ☁️ Cloudflare Pages
+
+Frontend ใช้ Cloudflare Pages เป็นที่ deploy หลักเพียงแห่งเดียว ส่วน AKS ใช้รัน backend และ HTTPS API gateway:
+
+- Production Pages URL: `https://tcg-store-frontend.pages.dev/` (custom domain `tcgmihix.store` ผูกภายหลังเมื่อเข้าถึง GoDaddy DNS ได้)
+
+- Root directory: repository root (`/`)
+- Production branch: `main`
+- Build command: `npm ci --legacy-peer-deps && npm run build`
+- Build output directory: `dist`
+- Build variables ทั้ง Production และ Preview: `SKIP_DEPENDENCY_INSTALL=1`, `VITE_API_BASE_URL=/api`, `VITE_ENABLE_MOCK_API=false`
+- Pages Function runtime variable: `API_ORIGIN=https://tcgstore-demo-2026-11.malaysiawest.cloudapp.azure.com` โดยใส่เฉพาะ HTTPS origin ไม่มี `/api` ต่อท้าย; ตั้ง Preview ให้ชี้ staging API และ Production ให้ชี้ production API
+- Cloudflare Pages build ใช้ Node.js 22 จากไฟล์ `.node-version` ให้ตรงกับ CI และ Docker build
+- เมื่อทราบ URL `*.pages.dev` หรือ custom domain แล้ว ให้เพิ่ม origin นั้นใน `APP_CORS_ALLOWED_ORIGINS` ของ backend บน AKS ก่อนทดสอบ login, POST และ WebSocket จากหน้า Cloudflare
+- Git integration ของ Pages จะ build และ deploy เมื่อ `main` เปลี่ยน; workflow เดิมที่ deploy frontend ไป AKS ถูกปิดแล้ว
+
+`functions/api/[[path]].ts` proxy API requests รวมถึง WebSocket ของห้องประมูลไปยัง backend และ `public/_routes.json` จำกัดการเรียก Function ไว้ที่ `/api` เพื่อลดการใช้โควตาจาก static assets ห้ามใส่ secrets ในตัวแปร `VITE_*` เพราะค่าจะถูกฝังลงในไฟล์ frontend ที่ browser อ่านได้
+
+ค่าตัวอย่างอยู่ใน [.env.cloud.example](.env.cloud.example); ต้องใส่ `API_ORIGIN` ใน Cloudflare Pages dashboard เป็น runtime variable แยกจาก build variables
+
+---
+
 ## 📚 Related Documentation
 
 - [Architecture & Boundaries](docs/architecture.md)

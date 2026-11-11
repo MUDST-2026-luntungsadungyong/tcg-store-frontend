@@ -1,3 +1,5 @@
+import { Avatar } from '@/shared/components/Avatar';
+import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, ChevronLeft, ChevronRight, Layers, Medal, RefreshCw, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -224,6 +226,7 @@ function ExpensiveCards({ cards, loading, error, onRetry }: { cards: CardListing
 }
 
 function Leaderboard({ collectors, loading, error, onRetry }: { collectors: CollectorRanking[]; loading: boolean; error: string | null; onRetry: () => void }) {
+  const currentUser = useAuthStore((state) => state.user);
   return (
     <section className="bg-bg-surface py-16">
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
@@ -278,8 +281,9 @@ function Leaderboard({ collectors, loading, error, onRetry }: { collectors: Coll
                       {collector.rank > 3 && collector.rank}
                       <span className="sr-only">Rank {collector.rank}</span>
                     </span>
+                    <Avatar name={currentUser && String(currentUser.id) === String(collector.userId) ? currentUser.name : collector.displayName} src={currentUser && String(currentUser.id) === String(collector.userId) ? currentUser.avatarUrl : collector.avatarUrl} className="size-12 rounded-full text-lg" />
                     <div className="min-w-0">
-                      <h3 className="truncate text-lg font-bold text-gray-100">{collector.displayName}</h3>
+                      <h3 className="truncate text-lg font-bold text-gray-100">{currentUser && String(currentUser.id) === String(collector.userId) ? currentUser.name : collector.displayName}</h3>
                       <p className="text-xs text-gray-400">{collector.distinctRareCardCount} unique rare cards</p>
                     </div>
                   </div>

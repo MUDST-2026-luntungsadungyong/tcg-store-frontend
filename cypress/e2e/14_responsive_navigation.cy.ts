@@ -26,32 +26,51 @@ describe('Responsive marketplace navigation', () => {
     cy.get('dialog').should('have.css', 'display', 'none');
     cy.get('[aria-label="Open navigation menu"]').click();
     cy.get('dialog[open] nav a[href="/cards"]').should('have.attr', 'aria-current', 'page');
+    cy.get('dialog[open] nav a[href="/collections"]').click();
+    cy.location('pathname').should('eq', '/collections');
+    cy.contains('h1', 'Collector Showcases').should('be.visible');
+    cy.get('dialog').should('have.css', 'display', 'none');
+    cy.get('[aria-label="Open navigation menu"]').click();
+    cy.get('dialog[open] nav a[aria-current="page"]').should('have.attr', 'href', '/collections');
     cy.get('dialog[open] [aria-label="Close navigation menu"]').click();
     cy.window().then((win) => { expect(win.document.documentElement.scrollWidth).to.be.at.most(win.innerWidth); });
   });
 
-  it('keeps seller links in the drawer and a compact desktop avatar', () => {
-    cy.loginByMock('SELLER');
-    cy.reload();
-    cy.viewport(390, 844);
-    cy.get('[aria-label="Open account menu"]').should('not.be.visible');
-    cy.get('[aria-label="Open navigation menu"]').click();
-    cy.get('dialog[open]').within(() => {
-      cy.contains('SELLER').should('be.visible');
-      cy.contains('a', 'Profile').should('be.visible');
-      cy.contains('a', /^Listings$/).should('have.attr', 'href', '/workspace/listings');
-      cy.contains('a', /^Seller Orders$/).should('have.attr', 'href', '/workspace/orders');
+  for (const role of ['CUSTOMER', 'SELLER']) {
+    it(`keeps ${role.toLowerCase()} links in the same order on mobile and desktop`, () => {
+      const seller = role === 'SELLER';
+      const primary = ['/', '/cards', '/collections', '/auctions', '/vouchers', ...(seller ? ['/workspace/listings'] : []), '/cart'];
+      const account = ['/orders', '/profile/vouchers', '/collection', ...(seller ? ['/workspace/listings', '/workspace/orders'] : [])];
+      const expectLinks = (expected: string[]) => ($links: JQuery<HTMLAnchorElement>) => {
+        expect($links.toArray().map((link) => link.getAttribute('href'))).to.deep.equal(expected);
+      };
+      cy.loginByMock(role);
+      cy.reload();
+      cy.viewport(390, 844);
+      cy.get('[aria-label="Open account menu"]').should('not.be.visible');
+      cy.get('[aria-label="Open navigation menu"]').click();
+      cy.get('dialog[open]').within(() => {
+        cy.contains(seller ? 'SELLER' : 'COLLECTOR').should('be.visible');
+        cy.get('a[href="/profile"]').should('be.visible');
+        cy.get('nav[aria-label="Primary mobile"] a').should(expectLinks(primary));
+        cy.get('nav[aria-label="Account mobile"] a').should(expectLinks(account));
+        cy.get('a[href="/vouchers"]').should('have.length', 1).and('have.text', 'Voucher Center');
+        cy.get('button').contains(/^Logout$/).should('exist');
+      });
+      cy.viewport(1280, 900);
+      cy.get('dialog').should('not.have.attr', 'open');
+      cy.get('[aria-label="Open navigation menu"]').should('not.be.visible');
+      cy.get('nav[aria-label="Marketplace navigation"] > div > div > div > a:not([aria-label="Mythix home"]):not([href="/notifications"])').should(expectLinks(primary));
+      cy.get('[aria-label="Open account menu"]').should('be.visible').should('contain', seller ? 'SELLER' : 'COLLECTOR').should('not.contain', `Test ${role}`).click();
+      cy.get('[role="menu"]').should('be.visible');
+      cy.get('a[role="menuitem"]').should(expectLinks(['/profile', ...account]));
+      cy.get('[role="menu"]').contains('button', /^Logout$/).should('be.visible');
+      cy.get('body').type('{esc}');
+      cy.get('[role="menu"]').should('not.exist');
+      cy.viewport(768, 900);
+      cy.window().then((win) => { expect(win.document.documentElement.scrollWidth).to.be.at.most(win.innerWidth); });
     });
-    cy.viewport(1280, 900);
-    cy.get('dialog').should('not.have.attr', 'open');
-    cy.get('[aria-label="Open navigation menu"]').should('not.be.visible');
-    cy.get('[aria-label="Open account menu"]').should('be.visible').should('contain', 'SELLER').should('not.contain', 'Test SELLER').click();
-    cy.get('[role="menu"]').should('be.visible');
-    cy.get('body').type('{esc}');
-    cy.get('[role="menu"]').should('not.exist');
-    cy.viewport(768, 900);
-    cy.window().then((win) => { expect(win.document.documentElement.scrollWidth).to.be.at.most(win.innerWidth); });
-  });
+  }
 
   for (const role of ['CUSTOMER', 'SELLER', 'ADMIN']) {
     it(`opens the mobile profile card and logs out a ${role.toLowerCase()}`, () => {

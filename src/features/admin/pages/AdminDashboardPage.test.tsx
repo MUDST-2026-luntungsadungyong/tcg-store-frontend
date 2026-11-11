@@ -54,6 +54,7 @@ describe('AdminDashboardPage', () => {
 
     const reviewLink = screen.getByRole('link', { name: /Review applications/i });
     expect(reviewLink).toHaveAttribute('href', '/admin/seller-applications');
+    expect(screen.getByRole('link', { name: /Discounts & Vouchers/i })).toHaveAttribute('href', '/admin/vouchers');
   });
 
   it('displays empty queue message when there are no pending seller applications', async () => {

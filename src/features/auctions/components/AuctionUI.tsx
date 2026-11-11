@@ -17,7 +17,7 @@ export function AuctionPage({ children }: { children: ReactNode }) {
 export function AuctionStatusBadge({ status }: { status: AuctionStatus | RequestStatus }) {
   const positive = status === 'ACTIVE' || status === 'APPROVED' || status === 'COMPLETED';
   const negative = status === 'CANCELLED' || status === 'REJECTED';
-  const pending = status === 'PENDING_REVIEW' || status === 'AWAITING_PAYMENT';
+  const pending = status === 'PENDING_REVIEW' || status === 'AWAITING_BUYER_CONTACT';
   return <Badge variant={positive ? 'success' : negative ? 'danger' : pending ? 'warning' : 'default'}>{status.replaceAll('_', ' ')}</Badge>;
 }
 

@@ -2,6 +2,16 @@ import apiClient from '@/shared/api/client';
 import { ENV } from '@/shared/config/env';
 import { getStoredAccessToken } from '@/shared/api/authStorage';
 import type { UserVoucher, Voucher, VoucherValidationResult } from '../model/types';
+import {
+  USER_VOUCHER_STORAGE_KEY,
+  VOUCHER_CATALOG_STORAGE_KEY,
+  emitVoucherChangedEvent,
+  isVoucherCurrentlyUsable,
+} from '../model/voucherUtils';
+
+function offsetIsoFromNow(days: number): string {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+}
 
 export const INITIAL_MOCK_VOUCHERS: Voucher[] = [
   {
@@ -17,8 +27,8 @@ export const INITIAL_MOCK_VOUCHERS: Voucher[] = [
     usedQuota: 45,
     remainingQuota: 455,
     quotaPercentage: 9,
-    startTime: null,
-    endTime: null,
+    startTime: offsetIsoFromNow(-1),
+    endTime: offsetIsoFromNow(90),
     isActive: true,
   },
   {
@@ -34,8 +44,8 @@ export const INITIAL_MOCK_VOUCHERS: Voucher[] = [
     usedQuota: 120,
     remainingQuota: 180,
     quotaPercentage: 40,
-    startTime: null,
-    endTime: null,
+    startTime: offsetIsoFromNow(-1),
+    endTime: offsetIsoFromNow(60),
     isActive: true,
   },
   {
@@ -51,8 +61,8 @@ export const INITIAL_MOCK_VOUCHERS: Voucher[] = [
     usedQuota: 85,
     remainingQuota: 15,
     quotaPercentage: 85,
-    startTime: null,
-    endTime: null,
+    startTime: offsetIsoFromNow(-1),
+    endTime: offsetIsoFromNow(30),
     isActive: true,
   },
   {
@@ -68,66 +78,167 @@ export const INITIAL_MOCK_VOUCHERS: Voucher[] = [
     usedQuota: 30,
     remainingQuota: 170,
     quotaPercentage: 15,
-    startTime: null,
-    endTime: null,
+    startTime: offsetIsoFromNow(-1),
+    endTime: offsetIsoFromNow(45),
     isActive: true,
   },
 ];
 
-const LOCAL_STORAGE_KEY_USER_VOUCHERS = 'mythix_mock_user_vouchers_v1';
-
-function isMockSession(): boolean {
+export function isMockVoucherSession(): boolean {
   if (ENV.ENABLE_MOCK_API) return true;
   const token = getStoredAccessToken();
   return Boolean(token?.startsWith('mock-'));
 }
 
-export function getLocalUserVouchers(): UserVoucher[] {
+function normalizeVoucherMetrics(v: Voucher): Voucher {
+  const totalQuota = Math.max(1, Number(v.totalQuota) || 1);
+  const usedQuota = Math.max(0, Math.min(totalQuota, Number(v.usedQuota) || 0));
+  const remainingQuota = Math.max(0, totalQuota - usedQuota);
+  const quotaPercentage = Math.min(100, Math.round((usedQuota / totalQuota) * 100));
+  return {
+    ...v,
+    totalQuota,
+    usedQuota,
+    remainingQuota,
+    quotaPercentage,
+    isActive: v.isActive !== false,
+  };
+}
+
+export function getLocalMockCatalog(): Voucher[] {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY_USER_VOUCHERS);
+    const raw = localStorage.getItem(VOUCHER_CATALOG_STORAGE_KEY);
+    if (!raw) {
+      const seeded = INITIAL_MOCK_VOUCHERS.map(normalizeVoucherMetrics);
+      localStorage.setItem(VOUCHER_CATALOG_STORAGE_KEY, JSON.stringify(seeded));
+      return seeded;
+    }
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.map(normalizeVoucherMetrics);
+    }
+  } catch {
+    // Ignore storage read errors
+  }
+  return INITIAL_MOCK_VOUCHERS.map(normalizeVoucherMetrics);
+}
+
+export function saveLocalMockCatalog(vouchers: Voucher[], eventType = 'UPDATED', voucherId?: number): void {
+  const normalized = vouchers.map(normalizeVoucherMetrics);
+  try {
+    localStorage.setItem(VOUCHER_CATALOG_STORAGE_KEY, JSON.stringify(normalized));
+  } catch {
+    // Ignore storage write errors
+  }
+
+  // Keep claimed user vouchers in sync with admin catalog edits/deletes in Mock Mode
+  const byId = new Map(normalized.map((v) => [v.id, v]));
+  const currentWallet = getLocalUserVouchersRaw();
+  const syncedWallet = currentWallet
+    .filter((uv) => byId.has(uv.voucherId))
+    .map((uv) => {
+      const master = byId.get(uv.voucherId)!;
+      return {
+        ...uv,
+        code: master.code,
+        title: master.title,
+        description: master.description,
+        discountType: master.discountType,
+        discountValue: master.discountValue,
+        minSpend: master.minSpend,
+        maxDiscountAmount: master.maxDiscountAmount,
+        endTime: master.endTime,
+        startTime: master.startTime,
+        isActive: master.isActive,
+      };
+    });
+  try {
+    localStorage.setItem(USER_VOUCHER_STORAGE_KEY, JSON.stringify(syncedWallet));
+  } catch {
+    // Ignore storage write errors
+  }
+
+  emitVoucherChangedEvent(eventType, voucherId);
+}
+
+function getLocalUserVouchersRaw(): UserVoucher[] {
+  try {
+    const raw = localStorage.getItem(USER_VOUCHER_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
+export function getLocalUserVouchers(): UserVoucher[] {
+  const raw = getLocalUserVouchersRaw();
+  const catalogById = new Map(getLocalMockCatalog().map((v) => [v.id, v]));
+  return raw
+    .filter((uv) => !catalogById.size || catalogById.has(uv.voucherId))
+    .map((uv) => {
+      const master = catalogById.get(uv.voucherId);
+      if (!master) return uv;
+      return {
+        ...uv,
+        code: master.code,
+        title: master.title,
+        description: master.description,
+        discountType: master.discountType,
+        discountValue: master.discountValue,
+        minSpend: master.minSpend,
+        maxDiscountAmount: master.maxDiscountAmount,
+        endTime: master.endTime,
+        startTime: master.startTime,
+        isActive: master.isActive,
+      };
+    });
+}
+
 export function saveLocalUserVouchers(vouchers: UserVoucher[]): void {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY_USER_VOUCHERS, JSON.stringify(vouchers));
+    localStorage.setItem(USER_VOUCHER_STORAGE_KEY, JSON.stringify(vouchers));
   } catch {
     // Ignore storage errors
   }
 }
 
 function getAnnotatedMockVouchers(): Voucher[] {
+  const catalog = getLocalMockCatalog();
   const userVouchers = getLocalUserVouchers();
+  const claimedIds = new Set(userVouchers.map((uv) => uv.voucherId));
   const claimedCodes = new Set(userVouchers.map((uv) => uv.code.toUpperCase()));
+  const now = Date.now();
 
-  return INITIAL_MOCK_VOUCHERS.map((v) => ({
-    ...v,
-    isClaimed: claimedCodes.has(v.code.toUpperCase()),
-    canClaim: !claimedCodes.has(v.code.toUpperCase()) && v.remainingQuota > 0,
-  }));
+  return catalog
+    .filter((v) => isVoucherCurrentlyUsable(v, now))
+    .map((v) => {
+      const isClaimed = claimedIds.has(v.id) || claimedCodes.has(v.code.toUpperCase());
+      return {
+        ...v,
+        isClaimed,
+        canClaim: !isClaimed && v.remainingQuota > 0,
+      };
+    });
 }
 
 export async function fetchAvailableVouchers(): Promise<Voucher[]> {
-  if (isMockSession()) {
+  if (isMockVoucherSession()) {
     return getAnnotatedMockVouchers();
   }
 
-  try {
-    const response = await apiClient.get<Voucher[]>('/vouchers');
-    return response.data;
-  } catch {
-    return getAnnotatedMockVouchers();
-  }
+  const response = await apiClient.get<Voucher[]>('/vouchers');
+  return response.data;
 }
 
 function claimLocalVoucher(voucherId: number): UserVoucher {
-  const voucher = INITIAL_MOCK_VOUCHERS.find((v) => v.id === voucherId);
+  const catalog = getLocalMockCatalog();
+  const voucher = catalog.find((v) => v.id === voucherId);
   if (!voucher) throw new Error('ไม่พบคูปองส่วนลดนี้');
+  if (!voucher.isActive) throw new Error('โค้ดส่วนลดนี้ถูกปิดใช้งานชั่วคราว');
+  if (!isVoucherCurrentlyUsable(voucher)) throw new Error('โค้ดส่วนลดนี้ไม่อยู่ในช่วงเวลาที่เปิดใช้งาน');
+  if (voucher.remainingQuota <= 0) throw new Error('โควตาโค้ดส่วนลดนี้เต็มแล้ว');
 
-  const list = getLocalUserVouchers();
+  const list = getLocalUserVouchersRaw();
   if (list.some((uv) => uv.voucherId === voucherId)) {
     throw new Error('คุณได้เก็บโค้ดนี้ไปแล้ว');
   }
@@ -145,15 +256,18 @@ function claimLocalVoucher(voucherId: number): UserVoucher {
     status: 'CLAIMED',
     claimedAt: new Date().toISOString(),
     usedAt: null,
-    endTime: null,
+    endTime: voucher.endTime,
+    startTime: voucher.startTime,
+    isActive: voucher.isActive,
   };
   list.unshift(newUv);
   saveLocalUserVouchers(list);
+  emitVoucherChangedEvent('CLAIMED', voucher.id);
   return newUv;
 }
 
 export async function claimVoucherApi(voucherId: number): Promise<UserVoucher> {
-  if (isMockSession()) {
+  if (isMockVoucherSession()) {
     return claimLocalVoucher(voucherId);
   }
 
@@ -163,7 +277,7 @@ export async function claimVoucherApi(voucherId: number): Promise<UserVoucher> {
   } catch (err: any) {
     if (err?.response?.status === 401) {
       const token = getStoredAccessToken();
-      if (!token || token.startsWith('mock-')) {
+      if (token?.startsWith('mock-')) {
         return claimLocalVoucher(voucherId);
       }
       throw new Error('เซสชันการเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
@@ -177,7 +291,7 @@ export async function claimVoucherApi(voucherId: number): Promise<UserVoucher> {
 }
 
 export async function fetchMyVouchers(status?: string): Promise<UserVoucher[]> {
-  if (isMockSession()) {
+  if (isMockVoucherSession()) {
     const list = getLocalUserVouchers();
     if (status) {
       return list.filter((v) => v.status === status);
@@ -185,22 +299,14 @@ export async function fetchMyVouchers(status?: string): Promise<UserVoucher[]> {
     return list;
   }
 
-  try {
-    const params = status ? { status } : {};
-    const response = await apiClient.get<UserVoucher[]>('/vouchers/my-vouchers', { params });
-    return response.data;
-  } catch {
-    const list = getLocalUserVouchers();
-    if (status) {
-      return list.filter((v) => v.status === status);
-    }
-    return list;
-  }
+  const params = status ? { status } : {};
+  const response = await apiClient.get<UserVoucher[]>('/vouchers/my-vouchers', { params });
+  return response.data;
 }
 
 function calculateMockValidation(code: string, subtotal: number): VoucherValidationResult {
   const clean = code.trim().toUpperCase();
-  const matched = INITIAL_MOCK_VOUCHERS.find((v) => v.code.toUpperCase() === clean);
+  const matched = getLocalMockCatalog().find((v) => v.code.toUpperCase() === clean);
   if (!matched) {
     return {
       valid: false,
@@ -208,6 +314,42 @@ function calculateMockValidation(code: string, subtotal: number): VoucherValidat
       discountAmount: 0,
       finalTotal: subtotal,
       message: 'ไม่พบโค้ดส่วนลดนี้',
+    };
+  }
+  if (!matched.isActive || (matched.endTime && Date.now() > Date.parse(matched.endTime))) {
+    return {
+      valid: false,
+      code: matched.code,
+      discountType: matched.discountType,
+      discountValue: matched.discountValue,
+      discountAmount: 0,
+      subtotal,
+      finalTotal: subtotal,
+      message: 'โค้ดส่วนลดนี้ถูกปิดใช้งานหรือหมดอายุแล้ว',
+    };
+  }
+  if (matched.startTime && Date.now() < Date.parse(matched.startTime)) {
+    return {
+      valid: false,
+      code: matched.code,
+      discountType: matched.discountType,
+      discountValue: matched.discountValue,
+      discountAmount: 0,
+      subtotal,
+      finalTotal: subtotal,
+      message: 'แคมเปญโค้ดนี้ยังไม่เริ่มต้น',
+    };
+  }
+  if (matched.remainingQuota <= 0) {
+    return {
+      valid: false,
+      code: matched.code,
+      discountType: matched.discountType,
+      discountValue: matched.discountValue,
+      discountAmount: 0,
+      subtotal,
+      finalTotal: subtotal,
+      message: 'โค้ดส่วนลดนี้ถูกใช้สิทธิ์เต็มแล้ว',
     };
   }
   if (subtotal < matched.minSpend) {
@@ -247,25 +389,21 @@ function calculateMockValidation(code: string, subtotal: number): VoucherValidat
 }
 
 export async function validateVoucherApi(code: string, subtotal: number): Promise<VoucherValidationResult> {
-  if (isMockSession()) {
+  if (isMockVoucherSession()) {
     return calculateMockValidation(code, subtotal);
   }
 
-  try {
-    const response = await apiClient.post<VoucherValidationResult>('/vouchers/validate', {
-      code,
-      subtotal,
-    });
-    return response.data;
-  } catch {
-    return calculateMockValidation(code, subtotal);
-  }
+  const response = await apiClient.post<VoucherValidationResult>('/vouchers/validate', {
+    code,
+    subtotal,
+  });
+  return response.data;
 }
 
 export function calculateMockDiscount(code: string, subtotal: number): { discountAmount: number; finalTotal: number } {
   const clean = code.trim().toUpperCase();
-  const matched = INITIAL_MOCK_VOUCHERS.find((v) => v.code.toUpperCase() === clean);
-  if (!matched || subtotal < matched.minSpend) {
+  const matched = getLocalMockCatalog().find((v) => v.code.toUpperCase() === clean);
+  if (!matched || !isVoucherCurrentlyUsable(matched) || subtotal < matched.minSpend) {
     return { discountAmount: 0, finalTotal: subtotal };
   }
   let discount = 0;
@@ -286,11 +424,23 @@ export function calculateMockDiscount(code: string, subtotal: number): { discoun
 
 export function markLocalVoucherUsed(code: string): void {
   const clean = code.trim().toUpperCase();
-  const list = getLocalUserVouchers();
+  const list = getLocalUserVouchersRaw();
   const index = list.findIndex((uv) => uv.code.toUpperCase() === clean && uv.status === 'CLAIMED');
   if (index !== -1) {
     list[index].status = 'USED';
     list[index].usedAt = new Date().toISOString();
     saveLocalUserVouchers(list);
+  }
+
+  const catalog = getLocalMockCatalog();
+  const catalogIndex = catalog.findIndex((v) => v.code.toUpperCase() === clean);
+  if (catalogIndex !== -1) {
+    catalog[catalogIndex] = normalizeVoucherMetrics({
+      ...catalog[catalogIndex],
+      usedQuota: catalog[catalogIndex].usedQuota + 1,
+    });
+    saveLocalMockCatalog(catalog, 'REDEEMED', catalog[catalogIndex].id);
+  } else {
+    emitVoucherChangedEvent('REDEEMED');
   }
 }

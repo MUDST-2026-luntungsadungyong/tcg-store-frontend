@@ -8,7 +8,7 @@ import { Input } from '@/shared/components/Input';
 import { Modal } from '@/shared/components/Modal';
 import { PageContainer, PageHeader, Panel } from '@/shared/components/PageLayout';
 import { ENV } from '@/shared/config/env';
-import { auctionError, buyerAuctionApi } from '../api/auctions';
+import { auctionError, buyerAuctionApi, defaultCaseApi, isAuctionBanned } from '../api/auctions';
 import { AuctionCardSummary, AuctionLoading, AuctionStatusBadge, DetailRows } from '../components/AuctionUI';
 import { auctionDate, countdown, money } from '../model/auctionFormat';
 import { useAuctionClock, useAuctionResource } from '../model/useAuctionResource';
@@ -25,9 +25,9 @@ export function BuyerAuctionDetailPage() {
 function AuctionRoom({ id }: { id: number }) {
   const user = useAuthStore(state => state.user);
   const fetchRoom = useCallback(async () => {
-    const [auction, bids] = await Promise.all([buyerAuctionApi.detail(id), buyerAuctionApi.bids(id)]);
-    return { auction, bids, offset: Date.parse(auction.serverTime) - Date.now() };
-  }, [id]);
+    const [auction, bids, penalty] = await Promise.all([buyerAuctionApi.detail(id), buyerAuctionApi.bids(id), user ? defaultCaseApi.penalty() : Promise.resolve(null)]);
+    return { auction, bids, penalty, offset: Date.parse(auction.serverTime) - Date.now() };
+  }, [id, user]);
   const { data, error, loading, reload } = useAuctionResource(fetchRoom, 'โหลดห้องประมูลไม่สำเร็จ', 5000);
   const isLive = data?.auction.status === 'ACTIVE' || data?.auction.status === 'SCHEDULED';
   useEffect(() => {
@@ -65,7 +65,11 @@ function AuctionRoom({ id }: { id: number }) {
   const now = clock + offset;
   const open = auction.status === 'ACTIVE' && Boolean(auction.endAt && Date.parse(auction.endAt) > now);
   const owner = Boolean(user && String(user.id) === String(auction.sellerId));
-  const canBid = open && Boolean(user) && !owner && !error;
+  const banned = Boolean(data.penalty && isAuctionBanned(data.penalty));
+  const canBid = open && Boolean(user) && !owner && !error && !banned;
+  const isWinner = Boolean(user && auction.winnerId != null && Number(user.id) === Number(auction.winnerId));
+  const isEnded = !open && auction.status !== 'SCHEDULED' && auction.status !== 'DRAFT';
+  const showSellerOrderBtn = owner && (auction.orderId != null || auction.winnerId != null);
 
   async function transact(action: Action | { mode: 'watch' }) {
     setBusy(true);
@@ -85,7 +89,7 @@ function AuctionRoom({ id }: { id: number }) {
           break;
         case 'buyout':
           await buyerAuctionApi.buyout(id);
-          setMessage('ซื้อทันทีสำเร็จ ส่งหลักฐานได้ในพอร์ตการประมูล');
+          setMessage('ซื้อทันทีสำเร็จ กรุณาเปิดรายละเอียดออเดอร์เพื่อติดต่อร้านค้า');
           break;
         case 'watch':
           await buyerAuctionApi.toggleWatch(id);
@@ -104,8 +108,9 @@ function AuctionRoom({ id }: { id: number }) {
 
   const requestBid = (mode: 'bid' | 'proxy', value: string) => {
     const amount = Number(value);
-    if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(value) || amount < auction.nextMinimumBid) {
-      setActionError(`กรอกราคาอย่างน้อย ${money(auction.nextMinimumBid)} และใช้ทศนิยมไม่เกินสองตำแหน่ง`);
+    const minimum = mode === 'bid' ? auction.nextMinimumBid : 0.01;
+    if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(value) || amount < minimum) {
+      setActionError(`กรอกราคาอย่างน้อย ${money(minimum)} และใช้ทศนิยมไม่เกินสองตำแหน่ง`);
       return;
     }
     setActionError('');
@@ -139,14 +144,62 @@ function AuctionRoom({ id }: { id: number }) {
       </Panel>
       <Panel className="space-y-4">
         <AuctionStatusBadge status={auction.status} />
+        {isEnded && (
+          <div
+            data-testid="winning-result-banner"
+            className={`rounded-xl border p-4 text-center font-medium ${
+              isWinner
+                ? 'border-status-success/50 bg-status-success/15 text-status-success'
+                : 'border-white/10 bg-white/5 text-gray-200'
+            }`}
+          >
+            {isWinner ? (
+              <p className="text-base font-semibold">
+                Auction ended — You won at {money(auction.winningBid ?? auction.currentPrice)}
+              </p>
+            ) : auction.winnerId != null ? (
+              <p className="text-base font-semibold">
+                Auction ended — Won at {money(auction.winningBid ?? auction.currentPrice)}
+              </p>
+            ) : (
+              <p className="text-base font-semibold">Auction ended</p>
+            )}
+          </div>
+        )}
+        {auction.buyItNowPrice != null && (
+          <div data-testid="buy-it-now-display" className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-400">Buy It Now (ซื้อทันที)</p>
+              <p className="text-xl font-bold text-amber-200">{money(auction.buyItNowPrice)}</p>
+            </div>
+            {canBid && auction.buyItNowPrice > auction.currentPrice && (
+              <Button type="button" disabled={busy} variant="gold" onClick={() => setConfirm({ mode: 'buyout' })}>
+                ซื้อทันที {money(auction.buyItNowPrice)}
+              </Button>
+            )}
+          </div>
+        )}
         <DetailRows items={[
+          ['จำนวน', `${auction.quantity ?? 1} ใบ`],
+          ['ภาษา', auction.language ?? '—'],
           ['ราคาปัจจุบัน', money(auction.currentPrice)],
+          ['Buy It Now', auction.buyItNowPrice != null ? money(auction.buyItNowPrice) : 'ไม่มี (None)'],
           ['จำนวน bid', auction.bidCount],
           ['ราคาขั้นต่ำถัดไป', money(auction.nextMinimumBid)],
           ['Reserve', auction.isReserveMet ? 'ผ่านเงื่อนไขราคาแล้ว' : 'ยังไม่ถึงราคาสำรอง'],
           ['เวลาปิด', auctionDate(auction.endAt)],
           ['เวลาที่เหลือ', open ? countdown(auction.endAt, now) : '—'],
         ]} />
+        {showSellerOrderBtn && (
+          <ButtonLink
+            to={auction.orderId ? `/workspace/orders?orderId=${auction.orderId}` : '/workspace/orders'}
+            variant="primary"
+            className="w-full justify-center"
+          >
+            Seller Order Management
+          </ButtonLink>
+        )}
+        {banned && <p role="status">Auction participation is suspended until {auctionDate(data.penalty?.bannedUntil)}. <Link className="underline" to="/auctions/me">View your cases</Link></p>}
         {!user && <ButtonLink to="/login">เข้าสู่ระบบเพื่อร่วมประมูล</ButtonLink>}
         {user && <Button type="button" variant="secondary" disabled={busy} onClick={() => void transact({ mode: 'watch' })}>
           {auction.isWatching ? 'นำออกจาก Watchlist' : 'เพิ่มใน Watchlist'}
@@ -164,9 +217,6 @@ function AuctionRoom({ id }: { id: number }) {
             <Input label="ราคาสูงสุดสำหรับ Proxy Bid (บาท)" inputMode="decimal" value={proxy} onChange={event => setProxy(event.target.value)} />
             <Button type="submit" disabled={busy} variant="secondary">ตั้งราคาสูงสุด</Button>
           </form>
-          {auction.buyItNowPrice != null && auction.buyItNowPrice > auction.currentPrice && <Button type="button" disabled={busy} variant="gold" onClick={() => setConfirm({ mode: 'buyout' })}>
-            ซื้อทันที {money(auction.buyItNowPrice)}
-          </Button>}
         </>}
       </Panel>
     </div>

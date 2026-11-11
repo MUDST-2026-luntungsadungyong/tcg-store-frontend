@@ -96,7 +96,7 @@ export function NotificationsPage() {
   };
 
   const getAction = (notification: Notification): { label: string; destination: string } | null => {
-    if (notification.actionPath && /^\/(auctions|orders|workspace\/auctions)(\/|$)/.test(notification.actionPath)) {
+    if (notification.actionPath && /^\/(auctions|orders|workspace\/(?:auctions|orders))(?:\/|\?|$)/.test(notification.actionPath)) {
       return { label: 'View auction update', destination: notification.actionPath };
     }
     switch (notification.type) {

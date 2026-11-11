@@ -6,11 +6,13 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Download,
   ExternalLink,
   MessageCircle,
   Package,
   Phone,
   RefreshCw,
+  ShoppingCart,
   ShieldCheck,
   Store,
   Truck,
@@ -18,13 +20,19 @@ import {
 } from 'lucide-react';
 
 import type { ReservationOrder, ReservationStatus } from '@/entities/reservation/model/types';
-import { storesApi, type StoreProfile } from '@/features/stores/api/stores';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { ConditionLabel } from '@/shared/components/ConditionLabel';
 import { Modal } from '@/shared/components/Modal';
 import { Skeleton } from '@/shared/components/Skeleton';
-import { fetchBuyerOrderById, updateBuyerOrderStatus } from '../api/buyerOrders';
+import { toReservationCartItems } from '@/features/reservation-cart/api/cartApi';
+import { useReservationCartStore } from '@/features/reservation-cart/model/useReservationCartStore';
+import {
+  downloadBuyerOrderInvoice,
+  fetchBuyerOrderById,
+  reorderBuyerOrder,
+  updateBuyerOrderStatus,
+} from '../api/buyerOrders';
 
 interface StatusBannerConfig {
   title: string;
@@ -52,6 +60,24 @@ const STATUS_BANNER_CONFIGS: Record<ReservationStatus, StatusBannerConfig> = {
     badgeLabel: 'Confirmed',
     variant: 'warning',
     icon: Clock,
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/30',
+  },
+  AWAITING_BUYER_CONTACT: {
+    title: 'Contact the Seller to Arrange Payment',
+    description: 'Your auction was successful. Use the private seller contact details below to arrange payment and delivery.',
+    badgeLabel: 'Awaiting Contact',
+    variant: 'gold',
+    icon: MessageCircle,
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/30',
+  },
+  PENDING_SELLER_ACTION: {
+    title: 'Payment Arranged',
+    description: 'The seller has recorded the payment arrangement and will prepare shipment.',
+    badgeLabel: 'Preparing Shipment',
+    variant: 'warning',
+    icon: Package,
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/30',
   },
@@ -98,7 +124,6 @@ export function OrderDetailPage() {
   const navigate = useNavigate();
 
   const [order, setOrder] = useState<ReservationOrder | null>(null);
-  const [storeProfile, setStoreProfile] = useState<StoreProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,6 +132,12 @@ export function OrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+  const [orderActionMessage, setOrderActionMessage] = useState<{
+    tone: 'success' | 'warning' | 'error';
+    text: string;
+  } | null>(null);
 
   // Confirm Received state
   const [showConfirmReceivedModal, setShowConfirmReceivedModal] = useState(false);
@@ -125,16 +156,6 @@ export function OrderDetailPage() {
       const detailedOrder = await fetchBuyerOrderById(orderId);
       setOrder(detailedOrder);
 
-      // Fetch seller store profile for contact information
-      if (detailedOrder.sellerId) {
-        try {
-          const profile = await storesApi.public(detailedOrder.sellerId);
-          setStoreProfile(profile);
-        } catch {
-          // Gracefully continue without store profile
-          setStoreProfile(null);
-        }
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load order details.');
     } finally {
@@ -161,6 +182,59 @@ export function OrderDetailPage() {
       setError(err instanceof Error ? err.message : 'Failed to update order status.');
     } finally {
       setIsSubmittingAction(false);
+    }
+  };
+
+  const handleReorder = async () => {
+    if (!order || isReordering) return;
+    setIsReordering(true);
+    setOrderActionMessage(null);
+    try {
+      const result = await reorderBuyerOrder(order.id);
+      useReservationCartStore.setState({
+        items: toReservationCartItems(result.cart),
+        error: null,
+      });
+      if (result.totalAddedItems === 0) {
+        setOrderActionMessage({
+          tone: 'warning',
+          text: 'No cards were added because the current listings are unavailable or already at the stock limit.',
+        });
+      } else if (result.hasUnavailableItems) {
+        setOrderActionMessage({
+          tone: 'warning',
+          text: `${result.totalAddedItems} card(s) added. Some quantities were reduced to match current stock.`,
+        });
+      } else {
+        setOrderActionMessage({
+          tone: 'success',
+          text: `${result.totalAddedItems} card(s) added to your reservation cart.`,
+        });
+      }
+    } catch (err) {
+      setOrderActionMessage({
+        tone: 'error',
+        text: err instanceof Error ? err.message : 'Unable to reorder these cards.',
+      });
+    } finally {
+      setIsReordering(false);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!order || isDownloadingInvoice) return;
+    setIsDownloadingInvoice(true);
+    setOrderActionMessage(null);
+    try {
+      await downloadBuyerOrderInvoice(order.id);
+      setOrderActionMessage({ tone: 'success', text: 'PDF order summary downloaded.' });
+    } catch (err) {
+      setOrderActionMessage({
+        tone: 'error',
+        text: err instanceof Error ? err.message : 'Unable to download the PDF order summary.',
+      });
+    } finally {
+      setIsDownloadingInvoice(false);
     }
   };
 
@@ -223,8 +297,9 @@ export function OrderDetailPage() {
 
   const statusConfig = STATUS_BANNER_CONFIGS[order.status] ?? STATUS_BANNER_CONFIGS.PENDING;
   const StatusIcon = statusConfig.icon;
-  const canCancel = order.orderType !== 'AUCTION'
-    && (order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED');
+  const isAuction = order.orderType === 'AUCTION';
+  const canCancel = order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED'
+    || order.status === 'AWAITING_BUYER_CONTACT' || order.status === 'PENDING_SELLER_ACTION';
   const canMarkReceived = order.status === 'SENT';
 
   const orderDisplayNumber = order.orderNumber || order.id;
@@ -241,7 +316,8 @@ export function OrderDetailPage() {
             <ArrowLeft size={18} />
             Back to My Orders
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {isAuction && <Link className="text-sm text-brand-blue underline" to="/auctions/me#auction-participation">View auction cases</Link>}
             <Button
               variant="secondary"
               size="sm"
@@ -294,8 +370,7 @@ export function OrderDetailPage() {
           <ShieldCheck size={20} className="mt-0.5 shrink-0 text-brand-blue" />
           <div className="leading-relaxed">
             <span className="font-bold text-white">Mythix Marketplace Notice: </span>
-            Payment and physical delivery are arranged directly between the buyer and seller outside the Mythix platform.
-            Please coordinate fulfillment using the authorized seller contact information below.
+            กรุณาติดต่อร้านค้าเพื่อดำเนินการชำระเงินและจัดส่ง โดยใช้ช่องทางติดต่อของร้านค้าที่แสดงด้านล่าง
           </div>
         </div>
 
@@ -310,7 +385,7 @@ export function OrderDetailPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Seller / Store</p>
                 <div className="flex items-center gap-2">
                   <span className="text-base font-bold text-white">
-                    {storeProfile?.shopName || order.sellerName || `Seller ${order.sellerId}`}
+                    {order.sellerName || `Seller ${order.sellerId}`}
                   </span>
                   <Link
                     to={`/stores/${order.sellerId}`}
@@ -325,25 +400,36 @@ export function OrderDetailPage() {
 
             {/* Seller Contact Badges */}
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              {storeProfile?.phone && (
+              {order.sellerEmail && (
+                <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#111A29] px-3 py-1.5 text-gray-300">
+                  <MessageCircle size={14} className="text-sky-400" />
+                  <span>{order.sellerEmail}</span>
+                </div>
+              )}
+              {order.sellerPhone && (
                 <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#111A29] px-3 py-1.5 text-gray-300">
                   <Phone size={14} className="text-emerald-400" />
-                  <span>{storeProfile.phone}</span>
+                  <span>{order.sellerPhone}</span>
                 </div>
               )}
-              {storeProfile?.line && (
+              {order.sellerLine && (
                 <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#111A29] px-3 py-1.5 text-gray-300">
                   <MessageCircle size={14} className="text-green-400" />
-                  <span>Line: {storeProfile.line}</span>
+                  <span>Line: {order.sellerLine}</span>
                 </div>
               )}
-              {storeProfile?.facebook && (
+              {order.sellerFacebook && (
                 <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#111A29] px-3 py-1.5 text-gray-300">
                   <span className="font-semibold text-blue-400">f</span>
-                  <span>{storeProfile.facebook}</span>
+                  <span>{order.sellerFacebook}</span>
                 </div>
               )}
-              {!storeProfile?.phone && !storeProfile?.line && !storeProfile?.facebook && (
+              {order.sellerOtherContact && (
+                <div className="rounded-lg border border-white/10 bg-[#111A29] px-3 py-1.5 text-gray-300">
+                  {order.sellerOtherContact}
+                </div>
+              )}
+              {!order.sellerEmail && !order.sellerPhone && !order.sellerLine && !order.sellerFacebook && !order.sellerOtherContact && (
                 <span className="text-xs text-gray-400 italic">
                   Seller ID: {order.sellerId}
                 </span>
@@ -364,7 +450,7 @@ export function OrderDetailPage() {
           <div className="divide-y divide-white/5">
             {order.items && order.items.length > 0 ? (
               order.items.map((item, index) => {
-                const lineTotal = item.listing.price * item.quantity;
+                const lineTotal = isAuction ? order.subtotalAmount ?? order.totalAmount : item.listing.price * item.quantity;
                 return (
                   <div
                     key={index}
@@ -408,7 +494,7 @@ export function OrderDetailPage() {
                     <div className="flex items-center justify-between border-t border-white/5 pt-3 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
                       <div className="text-left sm:text-right">
                         <p className="text-xs text-gray-400">
-                          ฿{item.listing.price.toLocaleString()} × {item.quantity}
+                          {isAuction ? 'ราคาทั้งล็อต' : `฿${item.listing.price.toLocaleString()} × ${item.quantity}`}
                         </p>
                         <p className="text-base font-bold text-brand-blue">
                           ฿{lineTotal.toLocaleString()}
@@ -434,7 +520,9 @@ export function OrderDetailPage() {
               <div className="flex justify-between text-sm text-gray-400">
                 <span>Items Subtotal</span>
                 <span className="text-gray-200">
-                  ฿{order.items?.reduce((sum, it) => sum + it.listing.price * it.quantity, 0).toLocaleString()}
+                  ฿{(isAuction
+                    ? order.subtotalAmount ?? order.totalAmount
+                    : order.items?.reduce((sum, it) => sum + it.listing.price * it.quantity, 0) ?? 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-gray-400">
@@ -531,8 +619,48 @@ export function OrderDetailPage() {
         </section>
 
         {/* Contextual Action Bar */}
-        {(canCancel || canMarkReceived) && (
-          <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-white/10 bg-[#111A29]/95 p-4 shadow-2xl backdrop-blur-md">
+        {(canCancel || canMarkReceived || (order.items?.length ?? 0) > 0) && (
+          <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-[#111A29]/95 p-4 shadow-2xl backdrop-blur-md">
+            {orderActionMessage && (
+              <div
+                role="status"
+                className={`w-full rounded-lg border px-3 py-2 text-xs sm:mr-auto sm:w-auto ${
+                  orderActionMessage.tone === 'success'
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                    : orderActionMessage.tone === 'warning'
+                      ? 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                      : 'border-rose-500/30 bg-rose-500/10 text-rose-200'
+                }`}
+              >
+                {orderActionMessage.text}
+                {orderActionMessage.tone !== 'error' && orderActionMessage.text.includes('added') && (
+                  <Link to="/cart" className="ml-2 font-semibold underline hover:text-white">
+                    View Cart
+                  </Link>
+                )}
+              </div>
+            )}
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={isReordering || isDownloadingInvoice}
+                isLoading={isReordering}
+                onClick={() => void handleReorder()}
+              >
+                <ShoppingCart size={16} />
+                1-Click Reorder
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={isDownloadingInvoice || isReordering}
+                isLoading={isDownloadingInvoice}
+                onClick={() => void handleDownloadInvoice()}
+              >
+                <Download size={16} />
+                Download PDF Invoice
+              </Button>
             {canCancel && (
               <Button
                 variant="danger"
@@ -559,6 +687,7 @@ export function OrderDetailPage() {
                 Mark Received
               </Button>
             )}
+            </div>
           </div>
         )}
       </div>

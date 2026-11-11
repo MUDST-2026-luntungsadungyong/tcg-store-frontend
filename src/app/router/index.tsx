@@ -24,6 +24,7 @@ import { AdminAuditLogsPage } from '@/features/admin/pages/AdminAuditLogsPage';
 import { AdminOrderLogsPage } from '@/features/admin/pages/AdminOrderLogsPage';
 import { AdminUsersPage } from '@/features/admin/pages/AdminUsersPage';
 import { AdminWeeklyReportsPage } from '@/features/admin/pages/AdminWeeklyReportsPage';
+import { AdminVouchersPage } from '@/features/admin/pages/AdminVouchersPage';
 
 import { NotFoundPage } from './NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -60,6 +61,7 @@ const adminRoute: RouteObject = {
     element: <AdminLayout />,
     children: [
       { index: true, element: <AdminDashboardPage /> },
+      { path: 'vouchers', element: <AdminVouchersPage /> },
       { path: 'seller-applications', element: <AdminSellerApplicationsPage /> },
       { path: 'audit-logs', element: <AdminAuditLogsPage /> },
       { path: 'orders', element: <AdminOrderLogsPage /> },

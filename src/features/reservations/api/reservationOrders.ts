@@ -79,9 +79,17 @@ interface BackendOrderResponse {
   orderNumber?: string;
   buyerId?: string;
   sellerId?: string;
+  sellerName?: string;
+  sellerEmail?: string;
+  sellerPhone?: string;
+  sellerLine?: string;
+  sellerFacebook?: string;
+  sellerOtherContact?: string;
   status: string;
   totalAmount?: number;
   totalPrice?: number;
+  platformFee?: number;
+  sellerNetAmount?: number;
   items?: Array<CheckoutItemResponse | BackendOrderItemResponse>;
   createdAt?: string;
   updatedAt?: string;
@@ -283,6 +291,12 @@ function normalizeStatus(status: string): ReservationStatus {
   if (status === 'CONFIRMED') {
     return 'CONFIRMED';
   }
+  if (status === 'AWAITING_BUYER_CONTACT') {
+    return 'AWAITING_BUYER_CONTACT';
+  }
+  if (status === 'PENDING_SELLER_ACTION') {
+    return 'PENDING_SELLER_ACTION';
+  }
   if (status === 'SENT') {
     return 'SENT';
   }
@@ -356,6 +370,8 @@ export function normalizeReservationOrder(
     sellerId: firstSellerId,
     items: record.items.map((item) => toReservationItem(item, firstSellerId)),
     totalAmount: Number(record.totalAmount ?? record.totalPrice ?? 0),
+      platformFee: Number(record.platformFee ?? 0),
+      sellerNetAmount: Number(record.sellerNetAmount ?? record.totalAmount ?? record.totalPrice ?? 0),
     subtotalAmount: (record as any).subtotalAmount ? Number((record as any).subtotalAmount) : Number(record.totalAmount ?? record.totalPrice ?? 0),
     discountAmount: (record as any).discountAmount ? Number((record as any).discountAmount) : 0,
     voucherCode: (record as any).voucherCode ?? (record as any).voucherCodeSnapshot ?? undefined,
@@ -369,6 +385,11 @@ export function normalizeReservationOrder(
     orderNumber: (record as any).orderNumber ? String((record as any).orderNumber) : undefined,
     ...(record.orderType === 'AUCTION' ? { orderType: 'AUCTION' } : {}),
     sellerName: (record as any).sellerName ? String((record as any).sellerName) : undefined,
+    sellerEmail: record.sellerEmail ? String(record.sellerEmail) : undefined,
+    sellerPhone: record.sellerPhone ? String(record.sellerPhone) : undefined,
+    sellerLine: record.sellerLine ? String(record.sellerLine) : undefined,
+    sellerFacebook: record.sellerFacebook ? String(record.sellerFacebook) : undefined,
+    sellerOtherContact: record.sellerOtherContact ? String(record.sellerOtherContact) : undefined,
     cancellationReason: (record as any).cancellationReason ? String((record as any).cancellationReason) : undefined,
     logs: Array.isArray((record as any).logs) ? (record as any).logs : undefined,
   };

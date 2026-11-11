@@ -4,6 +4,9 @@ import { bangkokFields, bangkokStart, DURATIONS } from './auctionFormat';
 
 export interface DraftFields {
   productId: string;
+  cardId: string;
+  quantity: string;
+  language: string;
   condition: string;
   gradingCompany: string;
   grade: string;
@@ -28,6 +31,9 @@ export type DraftErrors = Partial<Record<keyof DraftFields | PhotoSide, string>>
 export function draftFields(auction?: Auction): DraftFields {
   return {
     productId: String(auction?.productId ?? ''),
+    cardId: auction?.productId ? '' : (auction?.cardId ?? ''),
+    quantity: '1',
+    language: auction?.language ?? 'EN',
     condition: auction?.condition ?? '',
     gradingCompany: auction?.gradingCompany ?? '',
     grade: auction?.grade ?? '',
@@ -50,7 +56,8 @@ function validPrice(value: string) {
 export function validateDraftStep(step: number, fields: DraftFields, hasStock: boolean, photos: DraftPhotos, urls: DraftPhotoUrls, now: number): DraftErrors {
   const errors: DraftErrors = {};
   if (step === 0) {
-    if (!hasStock) errors.productId = 'Choose an inventory item with available stock.';
+    if (!hasStock && !fields.cardId) errors.productId = 'Choose a card or available inventory item.';
+    if (fields.quantity !== '1' && Number(fields.quantity) !== 1) errors.quantity = 'Auctions can only contain exactly one card.';
     if (!Object.hasOwn(CONDITION_CODE_MAP, fields.condition)) errors.condition = 'Select a card condition.';
     if (!validPrice(fields.startPrice)) errors.startPrice = 'Enter a positive THB amount with up to two decimals.';
     if (fields.gradingCompany && !fields.grade.trim()) errors.grade = 'Enter the grade.';
@@ -84,6 +91,9 @@ export function draftMultipart(fields: DraftFields, photos: DraftPhotos) {
   const body = new FormData();
   const values = {
     productId: fields.productId,
+    cardId: fields.productId ? '' : fields.cardId,
+    quantity: '1',
+    language: fields.productId ? '' : fields.language,
     condition: fields.condition,
     gradingCompany: fields.gradingCompany,
     grade: fields.gradingCompany && fields.grade.trim(),

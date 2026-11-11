@@ -192,7 +192,11 @@ describe('US-10: Collection and Leaderboard', () => {
     // Verify navigation to Public Collection Page
     cy.url().should('include', '/collections/');
     
-    // Verify Public Collection Album
-    cy.get('main').contains('Public collection showcase').should('be.visible'); // Should have the word Collection (e.g. "John's Collection")
+    // Verify the selected collector's public showcase and binder.
+    cy.get('main').within(() => {
+      cy.contains('Collector Showcase').should('be.visible');
+      cy.contains('h1', /^Ash Ketchum$/).should('be.visible');
+      cy.contains('h2', 'Collection Gallery').should('be.visible');
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ButtonLink } from '@/shared/components/ButtonLink';
 import { AlertCircle, ArrowLeft, LockKeyhole, Tag, ChevronRight, Check } from 'lucide-react';
@@ -7,8 +7,17 @@ import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { checkoutReservationCart } from '@/features/reservation-cart/api/reservationCart';
 import { useReservationCartStore } from '@/features/reservation-cart/model/useReservationCartStore';
 import { previewReservationOrders } from '@/features/reservations/api/reservationOrders';
+import { fetchMyVouchers, validateVoucherApi } from '@/features/vouchers/api/vouchers';
 import { CheckoutVoucherModal } from '@/features/vouchers/components/CheckoutVoucherModal';
 import type { Voucher } from '@/features/vouchers/model/types';
+import { useVoucherLiveUpdates } from '@/features/vouchers/model/useVoucherLiveUpdates';
+import { isUserVoucherCurrentlyUsable } from '@/features/vouchers/model/voucherUtils';
+import {
+  calculatePlatformFee,
+  DEFAULT_PLATFORM_FEE_POLICY,
+  fetchPlatformFeePolicy,
+  type PlatformFeePolicy,
+} from '@/features/checkout/api/platformFee';
 
 const money = (value: number) => `฿${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 
@@ -20,6 +29,7 @@ export function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
   const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
+  const [feePolicy, setFeePolicy] = useState<PlatformFeePolicy>(DEFAULT_PLATFORM_FEE_POLICY);
 
   const preview = useMemo(() => {
     try {
@@ -28,6 +38,50 @@ export function CheckoutPage() {
       return null;
     }
   }, [items]);
+
+  const revalidateSelectedVoucher = useCallback(async () => {
+    if (!selectedVoucher || !preview) return;
+    try {
+      const validation = await validateVoucherApi(selectedVoucher.code, preview.totalAmount);
+      if (!validation.valid) {
+        setSelectedVoucher(null);
+        setError(`โค้ดส่วนลด ${selectedVoucher.code} ไม่สามารถใช้งานได้แล้ว: ${validation.message}`);
+        return;
+      }
+      const wallet = await fetchMyVouchers('CLAIMED');
+      const matched = wallet.find((uv) => uv.code.toUpperCase() === selectedVoucher.code.toUpperCase());
+      if (matched) {
+        if (!isUserVoucherCurrentlyUsable(matched)) {
+          setSelectedVoucher(null);
+          setError(`โค้ดส่วนลด ${selectedVoucher.code} ถูกปิดใช้งานหรือหมดอายุแล้ว`);
+          return;
+        }
+        setSelectedVoucher((prev) =>
+          prev
+            ? {
+                ...prev,
+                title: matched.title,
+                description: matched.description,
+                discountType: matched.discountType,
+                discountValue: Number(matched.discountValue),
+                minSpend: Number(matched.minSpend || 0),
+                maxDiscountAmount: matched.maxDiscountAmount != null ? Number(matched.maxDiscountAmount) : null,
+                startTime: matched.startTime ?? prev.startTime,
+                endTime: matched.endTime,
+                isActive: matched.isActive !== false,
+              }
+            : null
+        );
+      }
+    } catch {
+      // Keep current state on transient network glitch
+    }
+  }, [selectedVoucher, preview]);
+
+  useVoucherLiveUpdates({
+    enabled: Boolean(selectedVoucher),
+    onRefresh: revalidateSelectedVoucher,
+  });
 
   const discountAmount = useMemo(() => {
     if (!selectedVoucher || !preview) return 0;
@@ -44,6 +98,18 @@ export function CheckoutPage() {
     if (!preview) return 0;
     return Math.max(0, preview.totalAmount - discountAmount);
   }, [preview, discountAmount]);
+
+  const platformFee = useMemo(
+    () => calculatePlatformFee(preview?.totalAmount ?? 0, feePolicy),
+    [preview, feePolicy],
+  );
+
+  useEffect(() => {
+    void fetchPlatformFeePolicy().then(setFeePolicy).catch(() => {
+      // Keep the published default visible if the public policy endpoint is temporarily unavailable.
+      setFeePolicy(DEFAULT_PLATFORM_FEE_POLICY);
+    });
+  }, []);
 
   if (!preview || items.length === 0) {
     return (
@@ -150,6 +216,13 @@ export function CheckoutPage() {
                   <span>-{money(discountAmount)}</span>
                 </div>
               )}
+              <div className="flex items-center justify-between text-gray-400">
+                <span>Platform service fee (seller)</span>
+                <span className="text-brand-gold">{money(platformFee)}</span>
+              </div>
+              <p className="-mt-1 text-[11px] leading-4 text-gray-500">
+                {`${(feePolicy.rate * 100).toFixed(0)}% (minimum ${money(feePolicy.minimumFee)}) is deducted from the seller settlement; your total is unchanged.`}
+              </p>
               <div className="pt-2 flex items-center justify-between text-base font-bold text-white border-t border-white/5">
                 <span>ยอดชำระสุทธิ</span>
                 <span className="text-xl text-brand-blue">{money(finalTotal)}</span>

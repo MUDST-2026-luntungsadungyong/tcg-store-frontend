@@ -21,6 +21,8 @@ describe('AdminSidebar', () => {
     const view = within(desktopSidebar);
 
     expect(view.getByRole('link', { name: 'Overview' })).toBeInTheDocument();
+    expect(view.getByRole('link', { name: 'Discounts & Vouchers' })).toHaveAttribute('href', '/admin/vouchers');
+    expect(view.getByRole('link', { name: 'Voucher Center' })).toHaveAttribute('href', '/vouchers');
     expect(view.getByRole('link', { name: 'Seller approvals' })).toBeInTheDocument();
     expect(view.getByRole('link', { name: 'Order monitoring' })).toBeInTheDocument();
     expect(view.getByRole('link', { name: 'Admin management' })).toHaveAttribute('aria-current', 'page');

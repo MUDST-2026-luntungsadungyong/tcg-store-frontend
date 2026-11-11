@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Boxes, CalendarDays, CheckCircle2, ClipboardCheck, Info, RefreshCw, ShoppingBag, Store } from 'lucide-react';
+import { ArrowRight, Boxes, CalendarDays, CheckCircle2, ClipboardCheck, Info, RefreshCw, ShoppingBag, Store, Tag, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import apiClient from '@/shared/api/client';
 
@@ -19,6 +19,7 @@ type Dashboard = {
   listedCards: number;
   totalOrders: number;
   totalOrderAmount: number;
+  totalPlatformFee: number;
   trends?: DailyTrend[];
 };
 
@@ -329,6 +330,13 @@ export function AdminDashboardPage() {
           color: 'text-brand-gold',
         },
         {
+          label: 'Platform fee revenue',
+          value: money(data.totalPlatformFee),
+          note: 'Collected from active marketplace and auction orders',
+          icon: Wallet,
+          color: 'text-emerald-300',
+        },
+        {
           label: 'Pending approvals',
           value: String(data.pendingSellerApplications),
           note: data.pendingSellerApplications ? 'Needs a decision' : 'Approval queue is clear',
@@ -353,6 +361,13 @@ export function AdminDashboardPage() {
           <p className="mt-1 text-sm text-slate-400">Here&apos;s what&apos;s happening on your marketplace today.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/admin/vouchers"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-brand-blue/30 bg-brand-blue/10 px-3.5 text-sm font-medium text-brand-blue transition hover:bg-brand-blue/20 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+          >
+            <Tag size={16} aria-hidden="true" />
+            Discounts &amp; Vouchers
+          </Link>
           <button
             type="button"
             disabled

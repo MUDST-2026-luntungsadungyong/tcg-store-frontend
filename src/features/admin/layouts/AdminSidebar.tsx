@@ -1,3 +1,4 @@
+import { Avatar } from '@/shared/components/Avatar';
 import {
   ChevronLeft,
   ClipboardList,
@@ -10,6 +11,7 @@ import {
   ReceiptText,
   ShieldCheck,
   Store,
+  Tag,
   UsersRound,
   X,
 } from 'lucide-react';
@@ -28,8 +30,10 @@ type NavItem = {
 
 const mainLinks: NavItem[] = [
   { name: 'Overview', to: '/admin', icon: LayoutDashboard },
+  { name: 'Discounts & Vouchers', to: '/admin/vouchers', icon: Tag },
   { name: 'Seller approvals', to: '/admin/seller-applications', icon: ShieldCheck },
   { name: 'Admin management', to: '/admin/users', icon: UsersRound },
+  { name: 'Default cases', to: '/admin/auction-default-cases', icon: Gavel },
   { name: 'Auction commission', to: '/admin/auction-commission', icon: Gavel },
   { name: 'Cancellation requests', to: '/admin/auction-cancellation-requests', icon: Gavel },
 ];
@@ -222,8 +226,8 @@ function SidebarFooter({
 
   return (
     <div className="border-t border-white/10 p-3">
-      {/* Marketplace link */}
-      <div className="mb-2">
+      {/* Marketplace & normal Voucher Center links */}
+      <div className="mb-2 space-y-1">
         <Link
           to="/cards"
           title={collapsed ? 'View Marketplace' : undefined}
@@ -235,6 +239,17 @@ function SidebarFooter({
           <Store size={16} className="shrink-0 text-slate-400" />
           <span className={cn(collapsed && 'sr-only')}>Public Marketplace</span>
         </Link>
+        <Link
+          to="/vouchers"
+          title={collapsed ? 'Voucher Center' : undefined}
+          className={cn(
+            'flex h-10 items-center gap-2.5 rounded-xl text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-white',
+            collapsed ? 'justify-center px-0' : 'px-3'
+          )}
+        >
+          <Tag size={16} className="shrink-0 text-amber-400" />
+          <span className={cn(collapsed && 'sr-only')}>Voucher Center</span>
+        </Link>
       </div>
 
       {collapsed ? (
@@ -242,17 +257,7 @@ function SidebarFooter({
         <div className="flex flex-col items-center gap-2">
           {/* User Avatar with Floating Tooltip */}
           <div className="group relative flex justify-center py-0.5">
-            {user?.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
-                alt=""
-                className="size-9 shrink-0 rounded-full object-cover ring-1 ring-white/20"
-              />
-            ) : (
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/30">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
-              </span>
-            )}
+            <Avatar name={user?.name || 'Administrator'} src={user?.avatarUrl} className="size-9 rounded-full text-xs ring-1 ring-white/20" />
             <div
               role="tooltip"
               className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 scale-95 rounded-lg border border-white/15 bg-bg-surface px-3 py-1.5 text-xs text-white opacity-0 shadow-2xl backdrop-blur transition-all duration-150 group-hover:scale-100 group-hover:opacity-100 whitespace-nowrap"
@@ -279,17 +284,7 @@ function SidebarFooter({
         /* Expanded Mode: Full Card + Collapse Button */
         <>
           <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
-            {user?.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
-                alt=""
-                className="size-9 shrink-0 rounded-full object-cover ring-1 ring-white/20"
-              />
-            ) : (
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-blue/20 text-xs font-bold text-brand-blue ring-1 ring-brand-blue/30">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
-              </span>
-            )}
+            <Avatar name={user?.name || 'Administrator'} src={user?.avatarUrl} className="size-9 rounded-full text-xs ring-1 ring-white/20" />
 
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-white">

@@ -480,10 +480,10 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
       // Seller offers header & badge count
       cy.contains('p', 'Compare listings').should('be.visible');
       cy.contains('h2', 'Seller offers').should('be.visible');
-      cy.contains('3 offers').should('be.visible');
+      cy.contains('2 offers').should('be.visible');
 
-      // Should have 3 offer articles
-      cy.get('section[aria-labelledby="seller-offers-heading"] article').should('have.length', 3);
+      // Should have 2 offer articles
+      cy.get('section[aria-labelledby="seller-offers-heading"] article').should('have.length', 2);
 
       // Offer 1 (Lowest price: ฿3,200.00 by Brock Pewter)
       cy.get('section[aria-labelledby="seller-offers-heading"] article').eq(0).within(() => {
@@ -502,23 +502,13 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
         cy.contains('฿3,500.00').should('be.visible');
         cy.contains('of 2').should('be.visible');
       });
-
-      // Offer 3 (Highest price: ฿4,000.00 by Gary Oak - Out of Stock)
-      cy.get('section[aria-labelledby="seller-offers-heading"] article').eq(2).within(() => {
-        cy.contains('a', 'Gary Oak').should('have.attr', 'href', '/stores/usr-gary');
-        cy.contains('Mint · English').should('be.visible');
-        cy.contains('฿4,000.00').should('be.visible');
-        cy.contains('Out of stock').should('be.visible');
-        cy.contains('of 0').should('be.visible');
-      });
     });
 
-    it('disables actions and quantity dropdown for out-of-stock seller offer', () => {
-      // Check Offer 3 (Gary Oak - Out of stock)
-      cy.get('section[aria-labelledby="seller-offers-heading"] article').eq(2).within(() => {
-        cy.get('[data-testid="quantity-select-offer-chz-03"]').should('be.disabled').and('have.value', '0');
-        cy.get('button').contains('Add to reservation cart').should('be.disabled');
-        cy.get('button').contains('Reserve now').should('be.disabled');
+    it('excludes out-of-stock seller offers from the list', () => {
+      // Check that Offer 3 (Gary Oak - Out of stock) is not rendered
+      cy.get('section[aria-labelledby="seller-offers-heading"]').within(() => {
+        cy.contains('Gary Oak').should('not.exist');
+        cy.get('[data-testid="quantity-select-offer-chz-03"]').should('not.exist');
       });
     });
 

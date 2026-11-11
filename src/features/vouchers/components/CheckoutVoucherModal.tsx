@@ -1,8 +1,34 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { X, Tag, AlertCircle, Check } from 'lucide-react';
-import type { Voucher } from '../model/types';
-import { fetchAvailableVouchers, validateVoucherApi } from '../api/vouchers';
+import type { UserVoucher, Voucher } from '../model/types';
+import { fetchMyVouchers, validateVoucherApi } from '../api/vouchers';
+import { useVoucherLiveUpdates } from '../model/useVoucherLiveUpdates';
+import {
+  getUserVoucherAvailabilityReason,
+  isUserVoucherCurrentlyUsable,
+} from '../model/voucherUtils';
 import { VoucherTicket } from './VoucherTicket';
+
+function mapUserVoucherToVoucher(uv: UserVoucher): Voucher {
+  return {
+    id: uv.voucherId ?? uv.id,
+    code: uv.code,
+    title: uv.title,
+    description: uv.description,
+    discountType: uv.discountType,
+    discountValue: Number(uv.discountValue),
+    minSpend: Number(uv.minSpend || 0),
+    maxDiscountAmount: uv.maxDiscountAmount != null ? Number(uv.maxDiscountAmount) : null,
+    totalQuota: 1,
+    usedQuota: 0,
+    remainingQuota: 1,
+    quotaPercentage: 100,
+    startTime: uv.startTime ?? null,
+    endTime: uv.endTime,
+    isActive: uv.isActive !== false,
+    isClaimed: true,
+  };
+}
 
 interface CheckoutVoucherModalProps {
   isOpen: boolean;
@@ -19,32 +45,49 @@ export function CheckoutVoucherModal({
   selectedVoucher,
   onApplyVoucher,
 }: CheckoutVoucherModalProps) {
-  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [userVouchers, setUserVouchers] = useState<UserVoucher[]>([]);
   const [loading, setLoading] = useState(false);
   const [customCode, setCustomCode] = useState('');
   const [customError, setCustomError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
   const [tempSelected, setTempSelected] = useState<Voucher | null>(selectedVoucher);
 
+  const loadClaimedVouchers = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+    }
+    try {
+      const data = await fetchMyVouchers('CLAIMED');
+      setUserVouchers(data);
+    } catch {
+      if (!silent) {
+        setUserVouchers([]);
+      }
+    } finally {
+      if (!silent) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       setTempSelected(selectedVoucher);
       setCustomError(null);
-      setLoading(true);
-      fetchAvailableVouchers()
-        .then((data) => {
-          setVouchers(data);
-        })
-        .catch(() => {
-          setVouchers([]);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+      void loadClaimedVouchers(false);
     }
-  }, [isOpen, selectedVoucher]);
+  }, [isOpen, selectedVoucher, loadClaimedVouchers]);
+
+  useVoucherLiveUpdates({
+    enabled: isOpen,
+    onRefresh: () => loadClaimedVouchers(true),
+  });
 
   if (!isOpen) return null;
+
+  const usableVouchers = userVouchers.filter((uv) => isUserVoucherCurrentlyUsable(uv)).map(mapUserVoucherToVoucher);
+  const unavailableUserVouchers = userVouchers.filter((uv) => !isUserVoucherCurrentlyUsable(uv));
+  const vouchers = usableVouchers;
 
   const handleApplyCustomCode = async (e: FormEvent) => {
     e.preventDefault();
@@ -183,7 +226,11 @@ export function CheckoutVoucherModal({
                   โค้ดส่วนลดที่ใช้ได้ ({eligibleVouchers.length})
                 </h3>
                 {eligibleVouchers.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic py-2">ไม่มีโค้ดส่วนลดที่ตรงตามยอดซื้อปัจจุบัน</p>
+                  <p className="text-sm text-gray-500 italic py-2">
+                    {vouchers.length === 0
+                      ? 'คุณยังไม่มีโค้ดส่วนลดที่เก็บไว้'
+                      : 'ไม่มีโค้ดส่วนลดที่ตรงตามยอดซื้อปัจจุบัน'}
+                  </p>
                 ) : (
                   <div className="space-y-3">
                     {eligibleVouchers.map((v) => (
@@ -215,6 +262,34 @@ export function CheckoutVoucherModal({
                         subtotal={subtotal}
                         selected={false}
                       />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Temporarily Disabled / Expired Claimed Vouchers */}
+              {unavailableUserVouchers.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                    โค้ดที่ไม่พร้อมใช้งานในขณะนี้ ({unavailableUserVouchers.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {unavailableUserVouchers.map((uv) => (
+                      <div
+                        key={uv.id}
+                        className="rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 flex items-center justify-between gap-3 opacity-60"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-gray-300">{uv.code}</span>
+                            <span className="text-xs font-medium text-gray-400 truncate">{uv.title}</span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 truncate">{uv.description}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] font-semibold text-gray-400">
+                          {getUserVoucherAvailabilityReason(uv) || 'ไม่สามารถใช้งานได้'}
+                        </span>
+                      </div>
                     ))}
                   </div>
                 </div>

@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: tcg-store-aks-demo
+
+resources:
+  - caddy-data-pvc.yaml
+  - deployment.yaml
+  - service.yaml
+
+images:
+  - name: tcg-store-frontend
+    newName: tcgstorecimah2026.azurecr.io/tcg-store-frontend
+    digest: sha256:9e00e3756520f357f21394796b8304b44eea0130770b1260ecd3d9c35e4a5cae

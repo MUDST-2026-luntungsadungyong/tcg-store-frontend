@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { Layers } from 'lucide-react';
 import type { CardListing } from '@/entities/card/model/types';
 import { CardListingCard } from '@/features/discovery/components/CardListingCard';
 import { Skeleton } from '@/shared/components/Skeleton';
@@ -62,10 +63,16 @@ export function PublicStorePage() {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold">Seller storefront</p>
         <h1 className="mt-2 text-3xl font-bold md:text-4xl">{store.shopName}</h1>
         {store.shopDescription && <p className="mt-4 max-w-3xl text-gray-300">{store.shopDescription}</p>}
-        <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-300">
-          {store.phone && <p>Phone: {store.phone}</p>}
-          {store.line && <p>Line: {store.line}</p>}
-          {store.facebook && <p>Facebook: {store.facebook}</p>}
+        
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4 text-sm text-gray-300">
+          <p className="max-w-xl text-xs text-gray-400">ช่องทางติดต่อร้านค้าจะแสดงในรายละเอียดออเดอร์หลังซื้อหรือชนะการประมูลสำเร็จ</p>
+          <Link
+            to={`/collections/${sellerId}`}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-bg-surface px-4 py-2 text-xs font-semibold text-gray-200 transition-colors hover:bg-bg-elevated hover:text-white"
+          >
+            <Layers size={14} className="text-brand-blue" />
+            View Collector Showcase
+          </Link>
         </div>
       </section>
 

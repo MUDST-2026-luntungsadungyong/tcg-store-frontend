@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -61,10 +61,39 @@ const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
         },
       ],
     },
+    {
+      id: 3,
+      orderNumber: 'AUC-2026-003',
+      orderType: 'AUCTION',
+      status: 'AWAITING_BUYER_CONTACT',
+      buyerId: 103,
+      buyerName: 'Nattapong Auction Buyer',
+      buyerEmail: 'nattapong@example.com',
+      buyerPhone: '082-555-0199',
+      buyerContactLine: 'nattapong_cards',
+      sellerRevenue: 3200,
+      sellerCost: 1800,
+      sellerProfit: 1400,
+      createdAt: '2026-09-09T18:45:00Z',
+      items: [
+        {
+          itemId: 3,
+          cardId: 'sv04-223',
+          productName: 'Charizard ex - Special Illustration Rare',
+          unitPrice: 3200,
+          unitCost: 1800,
+          itemProfit: 1400,
+          quantity: 1,
+          itemTotal: 3200,
+          condition: 'MP',
+        },
+      ],
+    },
   ];
 
   const mockSummary = {
     totalRevenue: 3650,
+    totalPlatformFee: 182.5,
     totalCost: 2150,
     netProfit: 1500,
     totalOrders: 2,
@@ -95,10 +124,27 @@ vi.mock('../api/sellerOrders', () => ({
     };
   }),
   fetchProfitSummary: vi.fn().mockResolvedValue(mockSummary),
+  fetchMonthlyDashboard: vi.fn().mockResolvedValue({
+    selectedMonth: { year: 2026, month: 9, grossSales: 3650, platformFee: 182.5, netRevenue: 3467.5, totalCost: 2150, netProfit: 1317.5, orderCount: 2 },
+    lastTwelveMonths: [{ year: 2026, month: 9, grossSales: 3650, platformFee: 182.5, netRevenue: 3467.5, totalCost: 2150, netProfit: 1317.5, orderCount: 2 }],
+  }),
   updateSellerOrderStatus: (...args: unknown[]) => mockUpdateStatus(...args),
 }));
 
 describe('SellerOrdersPage (SCRUM-27)', () => {
+  it('shows an auction order and opens it from the orderId deep link', async () => {
+    render(
+      <MemoryRouter initialEntries={['/workspace/orders?orderId=3']}>
+        <SellerOrdersPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('AUC-2026-003')).toBeInTheDocument();
+    expect(screen.getAllByText('Charizard ex - Special Illustration Rare').length).toBeGreaterThanOrEqual(1);
+    expect(await screen.findByText('Order Details - AUC-2026-003')).toBeInTheDocument();
+    expect(screen.getByText('Awaiting buyer contact')).toBeInTheDocument();
+  });
+
   it('renders dashboard title and metrics overview cards', async () => {
     render(
       <MemoryRouter>
@@ -115,7 +161,9 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
       expect(screen.getByText('Total Cost')).toBeInTheDocument();
       expect(screen.getByText(/^Net Profit/)).toBeInTheDocument();
       expect(screen.getByText('Orders Overview')).toBeInTheDocument();
-      expect(screen.getByText(/3,650\.00/)).toBeInTheDocument();
+      expect(screen.getByText('Monthly Sales Dashboard')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Export CSV/i })).toBeInTheDocument();
+      expect(screen.getAllByText(/3,650\.00/).length).toBeGreaterThan(0);
       expect(screen.getByText(/1,500\.00/)).toBeInTheDocument();
     });
   });
@@ -175,7 +223,19 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
 
     await user.click(confirmBtn);
 
-    expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT', undefined, 'TAX-9928102');
+    expect(mockUpdateStatus).toHaveBeenCalledWith(1, 'SENT', undefined, 'TAX-9928102', undefined);
+  });
+
+  it('lets the seller explicitly cancel an awaiting-contact auction and enable second chance', async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><SellerOrdersPage /></MemoryRouter>);
+    const row = (await screen.findByText('AUC-2026-003')).closest('tr')!;
+    await user.click(within(row).getByRole('button', { name: 'Cancel Order' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Cancel Order' });
+    await user.type(within(dialog).getByPlaceholderText('Reason for cancellation...'), 'No response from winner');
+    await user.click(within(dialog).getByRole('checkbox', { name: /never contacted me/i }));
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel Order' }));
+    expect(mockUpdateStatus).toHaveBeenCalledWith(3, 'CANCELLED', 'No response from winner', undefined, true);
   });
 
   it('displays card condition badge in items list and inside Order Details modal', async () => {

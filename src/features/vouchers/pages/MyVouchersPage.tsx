@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Ticket, ArrowLeft, ShoppingBag, Clock } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import type { UserVoucher } from '../model/types';
 import { fetchMyVouchers } from '../api/vouchers';
+import { useVoucherLiveUpdates } from '../model/useVoucherLiveUpdates';
+import { getUserVoucherAvailabilityReason, isTimestampExpired } from '../model/voucherUtils';
 
 export function MyVouchersPage() {
   const user = useAuthStore((s) => s.user);
@@ -11,25 +13,36 @@ export function MyVouchersPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'CLAIMED' | 'USED' | 'EXPIRED'>('CLAIMED');
 
-  const loadUserVouchers = async () => {
+  const loadUserVouchers = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const data = await fetchMyVouchers();
       setVouchers(data);
     } catch {
-      setVouchers([]);
+      if (!silent) setVouchers([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (user) {
-      void loadUserVouchers();
+      void loadUserVouchers(false);
     }
-  }, [user]);
+  }, [user, loadUserVouchers]);
 
-  const filteredVouchers = vouchers.filter((v) => v.status === activeTab);
+  useVoucherLiveUpdates({
+    enabled: Boolean(user),
+    onRefresh: () => loadUserVouchers(true),
+  });
+
+  const getTabCategory = (uv: UserVoucher): 'CLAIMED' | 'USED' | 'EXPIRED' => {
+    if (uv.status === 'USED') return 'USED';
+    if (uv.status === 'EXPIRED' || isTimestampExpired(uv.endTime)) return 'EXPIRED';
+    return 'CLAIMED';
+  };
+
+  const filteredVouchers = vouchers.filter((v) => getTabCategory(v) === activeTab);
 
   return (
     <main className="min-h-[calc(100vh-64px)] bg-[#0f172a] text-white px-4 py-8 md:px-8">
@@ -67,7 +80,7 @@ export function MyVouchersPage() {
               activeTab === 'CLAIMED' ? 'text-amber-400 font-bold' : 'text-gray-400 hover:text-white'
             }`}
           >
-            พร้อมใช้งาน ({vouchers.filter((v) => v.status === 'CLAIMED').length})
+            พร้อมใช้งาน ({vouchers.filter((v) => getTabCategory(v) === 'CLAIMED').length})
             {activeTab === 'CLAIMED' && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />
             )}
@@ -78,7 +91,7 @@ export function MyVouchersPage() {
               activeTab === 'USED' ? 'text-amber-400 font-bold' : 'text-gray-400 hover:text-white'
             }`}
           >
-            ใช้แล้ว ({vouchers.filter((v) => v.status === 'USED').length})
+            ใช้แล้ว ({vouchers.filter((v) => getTabCategory(v) === 'USED').length})
             {activeTab === 'USED' && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />
             )}
@@ -89,7 +102,7 @@ export function MyVouchersPage() {
               activeTab === 'EXPIRED' ? 'text-amber-400 font-bold' : 'text-gray-400 hover:text-white'
             }`}
           >
-            หมดอายุ ({vouchers.filter((v) => v.status === 'EXPIRED').length})
+            หมดอายุ ({vouchers.filter((v) => getTabCategory(v) === 'EXPIRED').length})
             {activeTab === 'EXPIRED' && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />
             )}
@@ -113,51 +126,58 @@ export function MyVouchersPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {filteredVouchers.map((uv) => (
-              <div
-                key={uv.id}
-                className="rounded-2xl border border-white/10 bg-[#161f36] p-5 flex flex-col justify-between shadow-lg"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-blue/20 text-brand-blue border border-brand-blue/30">
-                      {uv.code}
-                    </span>
-                    <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                        uv.status === 'CLAIMED'
-                          ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
-                          : uv.status === 'USED'
-                          ? 'bg-gray-500/10 text-gray-400 border border-gray-500/20'
-                          : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
-                      }`}
-                    >
-                      {uv.status === 'CLAIMED' ? 'พร้อมใช้งาน' : uv.status === 'USED' ? 'ใช้แล้ว' : 'หมดอายุ'}
-                    </span>
+            {filteredVouchers.map((uv) => {
+              const unavailableReason = getUserVoucherAvailabilityReason(uv);
+              const isUsable = !unavailableReason;
+              const badgeLabel = unavailableReason ?? 'พร้อมใช้งาน';
+              const badgeClasses = isUsable
+                ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                : uv.status === 'USED'
+                ? 'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                : uv.isActive === false
+                ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
+                : 'bg-rose-500/10 text-rose-300 border border-rose-500/20';
+
+              return (
+                <div
+                  key={uv.id}
+                  className={`rounded-2xl border border-white/10 bg-[#161f36] p-5 flex flex-col justify-between shadow-lg ${
+                    !isUsable && uv.status === 'CLAIMED' ? 'opacity-75' : ''
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-blue/20 text-brand-blue border border-brand-blue/30">
+                        {uv.code}
+                      </span>
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeClasses}`}>
+                        {badgeLabel}
+                      </span>
+                    </div>
+
+                    <h3 className="font-bold text-white text-base mb-1">{uv.title}</h3>
+                    <p className="text-xs text-gray-300 mb-3">{uv.description}</p>
                   </div>
 
-                  <h3 className="font-bold text-white text-base mb-1">{uv.title}</h3>
-                  <p className="text-xs text-gray-300 mb-3">{uv.description}</p>
-                </div>
-
-                <div className="border-t border-white/10 pt-3 flex items-center justify-between text-xs text-gray-400">
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    {uv.endTime
-                      ? `หมดอายุ ${new Date(uv.endTime).toLocaleDateString('th-TH')}`
-                      : 'ไม่มีกำหนดหมดอายุ'}
+                  <div className="border-t border-white/10 pt-3 flex items-center justify-between text-xs text-gray-400">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {uv.endTime
+                        ? `หมดอายุ ${new Date(uv.endTime).toLocaleDateString('th-TH')}`
+                        : 'ไม่มีกำหนดหมดอายุ'}
+                    </div>
+                    {isUsable && (
+                      <Link
+                        to="/cart"
+                        className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1"
+                      >
+                        ใช้ในการสั่งซื้อ →
+                      </Link>
+                    )}
                   </div>
-                  {uv.status === 'CLAIMED' && (
-                    <Link
-                      to="/cart"
-                      className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1"
-                    >
-                      ใช้ในการสั่งซื้อ →
-                    </Link>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

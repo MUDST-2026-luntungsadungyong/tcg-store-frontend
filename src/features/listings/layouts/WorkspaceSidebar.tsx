@@ -5,6 +5,8 @@ import {
   ClipboardList,
   Gavel,
   Layers3,
+  Layers,
+  Library,
   Menu,
   Store,
   Tag,
@@ -37,7 +39,10 @@ const workspaceLinks = [
     to: '/notifications',
     icon: Bell,
   },
+  { name: 'Default cases', to: '/workspace/auctions/default-cases', icon: Gavel },
   { name: 'My Auctions', to: '/workspace/auctions', icon: Gavel },
+  { name: 'My Collection', to: '/collection', icon: Library },
+  { name: 'Public Collections', to: '/collections', icon: Layers },
 ] as const;
 
 export function WorkspaceSidebar() {

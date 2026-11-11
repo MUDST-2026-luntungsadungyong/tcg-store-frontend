@@ -28,8 +28,8 @@ import { Skeleton } from '@/shared/components/Skeleton';
 import { toReservationCartItems } from '@/features/reservation-cart/api/cartApi';
 import { useReservationCartStore } from '@/features/reservation-cart/model/useReservationCartStore';
 import {
-  downloadBuyerOrderInvoice,
   fetchBuyerOrderById,
+  previewBuyerOrderInvoice,
   reorderBuyerOrder,
   updateBuyerOrderStatus,
 } from '../api/buyerOrders';
@@ -226,8 +226,8 @@ export function OrderDetailPage() {
     setIsDownloadingInvoice(true);
     setOrderActionMessage(null);
     try {
-      await downloadBuyerOrderInvoice(order.id);
-      setOrderActionMessage({ tone: 'success', text: 'PDF order summary downloaded.' });
+      await previewBuyerOrderInvoice(order.id);
+      setOrderActionMessage({ tone: 'success', text: 'PDF order summary opened in a new tab.' });
     } catch (err) {
       setOrderActionMessage({
         tone: 'error',
@@ -667,7 +667,7 @@ export function OrderDetailPage() {
                 onClick={() => void handleDownloadInvoice()}
               >
                 <Download size={16} />
-                Download PDF Invoice
+                Preview PDF Invoice
               </Button>
             {canCancel && (
               <Button

@@ -212,7 +212,7 @@ Frontend ใช้ Cloudflare Pages เป็นที่ deploy หลักเ
 - Production branch: `main`
 - Build command: `npm ci --legacy-peer-deps && npm run build`
 - Build output directory: `dist`
-- Build variables ทั้ง Production และ Preview: `VITE_API_BASE_URL=/api`, `VITE_ENABLE_MOCK_API=false`
+- Build variables ทั้ง Production และ Preview: `SKIP_DEPENDENCY_INSTALL=1`, `VITE_API_BASE_URL=/api`, `VITE_ENABLE_MOCK_API=false`
 - Pages Function runtime variable: `API_ORIGIN=https://tcgstore-demo-2026-11.malaysiawest.cloudapp.azure.com` โดยใส่เฉพาะ HTTPS origin ไม่มี `/api` ต่อท้าย; ตั้ง Preview ให้ชี้ staging API และ Production ให้ชี้ production API
 - Cloudflare Pages build ใช้ Node.js 22 จากไฟล์ `.node-version` ให้ตรงกับ CI และ Docker build
 - เมื่อทราบ URL `*.pages.dev` หรือ custom domain แล้ว ให้เพิ่ม origin นั้นใน `APP_CORS_ALLOWED_ORIGINS` ของ backend บน AKS ก่อนทดสอบ login, POST และ WebSocket จากหน้า Cloudflare

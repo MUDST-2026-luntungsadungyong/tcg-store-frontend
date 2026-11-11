@@ -1,26 +1,42 @@
-import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import { Lock, Eye, EyeOff, AlertCircle, Check, X } from 'lucide-react';
 import { AuthLayout } from '@/features/auth/layouts/AuthLayout';
 import { Input } from '@/shared/components/Input';
 import { Button } from '@/shared/components/Button';
-import { authApi, getAuthErrorMessage, hasPendingDemoReset } from '@/features/auth/api/auth';
+import { authApi, getAuthErrorMessage } from '@/features/auth/api/auth';
 import { PASSWORD_RULES } from '@/features/auth/lib/passwordRules';
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const queryToken = searchParams.get('token');
+  const [token] = useState(() => queryToken ?? (location.state as { resetToken?: string } | null)?.resetToken ?? '');
+  useEffect(() => {
+    if (queryToken) navigate(location.pathname, { replace: true, state: { resetToken: queryToken } });
+  }, [location.pathname, navigate, queryToken]);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  // Capture entry permission once; the API clears it after a successful reset.
-  const [resetStarted] = useState(hasPendingDemoReset);
+  const [invalidLink, setInvalidLink] = useState(false);
   const passwordValid = PASSWORD_RULES.every((rule) => rule.test(password));
   const passwordsMatch = confirmPassword.length === 0 || confirmPassword === password;
 
-  if (!resetStarted) return <Navigate to="/forgot-password" replace />;
+  if (!token || invalidLink) return (
+    <AuthLayout title="Reset Link Unavailable">
+      <p role="alert" className="mt-3 text-center text-sm text-gray-400">
+        This reset link is invalid, expired, or has already been used. Request a new link to continue.
+      </p>
+      <p className="mt-6 text-center text-sm">
+        <Link to="/forgot-password" className="font-medium text-brand-blue hover:underline">Request a new link</Link>
+      </p>
+    </AuthLayout>
+  );
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -38,10 +54,14 @@ export function ResetPasswordPage() {
 
     setIsLoading(true);
     try {
-      await authApi.resetPassword(password);
-      navigate('/reset-success');
+      await authApi.resetPassword(token, password);
+      navigate('/reset-success', { replace: true });
     } catch (err) {
-      setError(getAuthErrorMessage(err, 'Could not reset password. Please try again.'));
+      if (axios.isAxiosError(err) && err.response?.status === 400 && !err.response.data?.fieldErrors?.newPassword) {
+        setInvalidLink(true);
+      } else {
+        setError(getAuthErrorMessage(err, 'Could not reset password. Please try again.'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +69,7 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout title="Reset Password">
-      <p className="mt-3 text-center text-sm text-gray-400">Demo flow: this changes the account password without email verification.</p>
+      <p className="mt-3 text-center text-sm text-gray-400">Choose a new password for your account.</p>
       <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
         <div className="relative">
           <Input

@@ -4,7 +4,7 @@ import { Mail, AlertCircle } from 'lucide-react';
 import { AuthLayout } from '@/features/auth/layouts/AuthLayout';
 import { Input } from '@/shared/components/Input';
 import { Button } from '@/shared/components/Button';
-import { authApi } from '@/features/auth/api/auth';
+import { authApi, getAuthErrorMessage } from '@/features/auth/api/auth';
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -15,13 +15,16 @@ export function ForgotPasswordPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Please enter a valid email address.');
+      return;
+    }
     setIsLoading(true);
     try {
-      const found = await authApi.forgotPassword(email);
-      if (found) navigate('/reset-password');
-      else setError('No account found for this email.');
+      await authApi.forgotPassword(email);
+      navigate('/check-email', { state: { email: email.trim(), sentAt: Date.now() } });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(getAuthErrorMessage(err, 'Could not request a reset. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -30,7 +33,7 @@ export function ForgotPasswordPage() {
   return (
     <AuthLayout title="Forgot Password">
       <p className="mt-3 text-center text-sm text-gray-400">
-        Demo flow: enter an existing account email to change its password. No email will be sent.
+        Enter your email address and we'll send you a link to reset your password if an account exists.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
@@ -58,7 +61,7 @@ export function ForgotPasswordPage() {
         )}
 
         <Button type="submit" variant="primary" size="lg" className="w-full font-semibold" isLoading={isLoading}>
-          {isLoading ? 'Checking…' : 'Continue'}
+          {isLoading ? 'Sending…' : 'Send Reset Link'}
         </Button>
       </form>
 

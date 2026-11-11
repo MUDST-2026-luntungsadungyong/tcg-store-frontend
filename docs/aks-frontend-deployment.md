@@ -1,45 +1,22 @@
-# Azure AKS demo frontend
+# Frontend deployment: Cloudflare Pages (11 November 2026)
 
-On 11 November 2026, the frontend and backend run on the same Azure Kubernetes
-Service cluster. The temporary HTTPS URL is
-<https://tcgstore-demo-2026-11.malaysiawest.cloudapp.azure.com/>. Azure assigns
-the DNS label to the Kubernetes `LoadBalancer` Service. Caddy serves the Vite
-build and proxies `/api/*` to the backend `ClusterIP` Service. The browser uses
-the same origin for pages and API requests. The purchased `tcgmihix.store`
-domain can replace the temporary host after GoDaddy access is restored.
+The live frontend is React/Vite on Cloudflare Pages at <https://tcg-store-frontend.pages.dev/>. The production branch is `main`. It is no longer served from AKS. The AKS `tcg-store-frontend` Kubernetes Deployment is a legacy-named **Caddy API gateway**; its `/` returns 404 and it proxies `/api/*` to the backend.
 
-The bootstrap image is in the private Azure Container Registry at
-`tcgstorecimah2026.azurecr.io/tcg-store-frontend`, pinned by digest in the
-Kustomization. The AKS managed identity pulls it without a registry password.
-The Caddy container obtained a public Let's Encrypt certificate. Its
-certificate storage uses a `managed-csi` persistent volume so subsequent pod
-replacements reuse the certificate. The first rollout after adding the volume
-will obtain a certificate once more. The deployment workflow retries transient
-TLS failures while certificate issuance completes. The disk adds a small Azure
-charge and is deleted with the demo resource group.
+## How release works
 
-The `deploy-aks-demo.yml` GitHub workflow is prepared to run after the
-main-branch `CI Pipeline` succeeds. It uses GitHub OIDC, builds the same commit
-to ACR, pins the resulting digest, deploys the manifests, and checks the public
-frontend and API. Its first run must be verified after merge. The identity
-`id-tcg-frontend-github-aks-demo` has `AcrPush` on the demo registry and AKS
-cluster admin credential access scoped to this demo cluster. No Azure client
-secret is stored in GitHub.
+A merge to frontend `main` triggers Cloudflare Pages Git integration. The configured build command is `npm ci --legacy-peer-deps && npm run build`, and the output directory is `dist`. Set build variables `VITE_API_BASE_URL=/api` and `VITE_ENABLE_MOCK_API=false`. Set the **Production runtime** variable `API_ORIGIN=https://tcgstore-demo-2026-11.malaysiawest.cloudapp.azure.com`. The Pages Function in `functions/api/[[path]].ts` forwards same-origin `/api` calls and WebSocket upgrades to that AKS HTTPS origin. The backend AKS deployment is handled by the backend repository's `.github/workflows/deploy-aks-demo.yml`, not by the frontend workflow.
 
-## Verify
+## Custom domain
+
+The actual GoDaddy domain is `tcgmythix.store`. Its nameservers are being moved to Cloudflare. Once the Cloudflare zone becomes Active, add `tcgmythix.store` and `www.tcgmythix.store` in Workers & Pages → `tcg-store-frontend` → Custom domains. Cloudflare Pages creates the correct DNS target. Do not point the apex to the AKS Load Balancer IP. Keep email MX/TXT records in Cloudflare DNS when email service is configured. Verify HTTPS home page, a deep SPA route, and `/api/health` at the custom host.
+
+The backend's `APP_CORS_ALLOWED_ORIGINS` must include the actual apex and www origins. See the backend `docs/aks-operator-guide-th.md` for complete AKS operation, CI/CD, monitoring, secrets and cost guidance.
+
+## Quick checks
 
 ```powershell
-kubectl get deployment,pods,service -n tcg-store-aks-demo -o wide
-Invoke-WebRequest https://tcgstore-demo-2026-11.malaysiawest.cloudapp.azure.com/
-Invoke-RestMethod https://tcgstore-demo-2026-11.malaysiawest.cloudapp.azure.com/api/health
+Invoke-WebRequest https://tcg-store-frontend.pages.dev/
+Invoke-RestMethod https://tcg-store-frontend.pages.dev/api/health
 ```
 
-The bootstrap checks returned HTTP 200 for `/` and a SPA route, and the API
-reported `UP`, database `Connected`, and 2,002 cards. A request to the login
-API with invalid test credentials returned `401 INVALID_CREDENTIALS`, confirming
-that the frontend origin can reach the backend through the proxy.
-
-The public Load Balancer and IP add Azure charges. The AKS worker, disk, and
-ACR also consume the Azure for Students credit. The Azure budget sends alerts
-but is not a hard cap. Delete the dedicated demo resource group after the
-submission when the service is no longer needed.
+In Cloudflare Pages → Deployments, check the latest `main` deployment and build log. In Settings → Variables and secrets, check `API_ORIGIN` under Production. In Custom domains, check that each host is Active. A 503 saying `API origin is not configured` means the Pages Function did not receive `API_ORIGIN`; a 502 means the upstream request failed. Check the AKS API gateway and backend next.

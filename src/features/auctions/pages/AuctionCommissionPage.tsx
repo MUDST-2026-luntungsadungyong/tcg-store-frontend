@@ -45,7 +45,13 @@ function readLocalMockCommissionPolicy(): AuctionCommissionPolicy {
       const parsed = JSON.parse(raw) as Partial<AuctionCommissionPolicy>;
       const rate = Number(parsed.rate);
       const minimumFee = Number(parsed.minimumFee);
-      if (Number.isFinite(rate) && rate >= 0 && rate <= 1 && Number.isFinite(minimumFee) && minimumFee >= 0) {
+      if (
+        Number.isFinite(rate) &&
+        rate >= 0 &&
+        rate <= 1 &&
+        Number.isFinite(minimumFee) &&
+        minimumFee >= 0
+      ) {
         return { rate, minimumFee };
       }
     }
@@ -172,67 +178,87 @@ function CommissionPolicyWorkspace({
 
   return (
     <>
-      {/* Summary KPI Cards */}
+      {/* Summary KPI Cards — 2-col on mobile/tablet, 4-col on xl */}
       <section
         aria-label="Commission policy metrics"
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"
       >
-        <article className="rounded-2xl border border-white/10 bg-bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-400">Active commission rate</p>
-            <Percent size={18} className="text-brand-gold" aria-hidden="true" />
+        <article className="min-w-0 rounded-2xl border border-white/10 bg-bg-surface p-3.5 sm:p-5">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-xs sm:text-sm font-medium text-slate-400 break-words">
+              Active commission rate
+            </p>
+            <Percent size={17} className="shrink-0 text-brand-gold" aria-hidden="true" />
           </div>
-          <p className="mt-3 text-3xl font-bold text-white tabular-nums">{activePercent}%</p>
-          <p className="mt-1 text-xs text-slate-400">Deducted from final winning bid</p>
+          <p className="mt-2 sm:mt-3 text-xl sm:text-3xl font-bold text-white tabular-nums break-words">
+            {activePercent}%
+          </p>
+          <p className="mt-1 text-[11px] sm:text-xs text-slate-400">
+            Deducted from final winning bid
+          </p>
         </article>
 
-        <article className="rounded-2xl border border-white/10 bg-bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-400">Minimum fee floor</p>
-            <Coins size={18} className="text-brand-blue" aria-hidden="true" />
+        <article className="min-w-0 rounded-2xl border border-white/10 bg-bg-surface p-3.5 sm:p-5">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-xs sm:text-sm font-medium text-slate-400 break-words">
+              Minimum fee floor
+            </p>
+            <Coins size={17} className="shrink-0 text-brand-blue" aria-hidden="true" />
           </div>
-          <p className="mt-3 text-3xl font-bold text-white tabular-nums">{money(activeMinFee)}</p>
-          <p className="mt-1 text-xs text-slate-400">Applied when % fee is below floor</p>
+          <p className="mt-2 sm:mt-3 text-xl sm:text-3xl font-bold text-white tabular-nums break-words">
+            {money(activeMinFee)}
+          </p>
+          <p className="mt-1 text-[11px] sm:text-xs text-slate-400">
+            Applied when % fee is below floor
+          </p>
         </article>
 
-        <article className="rounded-2xl border border-white/10 bg-bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-400">Floor break-even bid</p>
-            <Calculator size={18} className="text-violet-300" aria-hidden="true" />
+        <article className="min-w-0 rounded-2xl border border-white/10 bg-bg-surface p-3.5 sm:p-5">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-xs sm:text-sm font-medium text-slate-400 break-words">
+              Floor break-even bid
+            </p>
+            <Calculator size={17} className="shrink-0 text-violet-300" aria-hidden="true" />
           </div>
-          <p className="mt-3 text-3xl font-bold text-white tabular-nums">
+          <p className="mt-2 sm:mt-3 text-xl sm:text-3xl font-bold text-white tabular-nums break-words">
             {breakEvenBid > 0 ? money(breakEvenBid) : '—'}
           </p>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-[11px] sm:text-xs text-slate-400">
             Bids above this use the {draftPercent}% rate
           </p>
         </article>
 
-        <article className="rounded-2xl border border-white/10 bg-bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-400">Settlement stage</p>
-            <ShieldCheck size={18} className="text-status-success" aria-hidden="true" />
+        <article className="min-w-0 rounded-2xl border border-white/10 bg-bg-surface p-3.5 sm:p-5">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-xs sm:text-sm font-medium text-slate-400 break-words">
+              Settlement stage
+            </p>
+            <ShieldCheck size={17} className="shrink-0 text-status-success" aria-hidden="true" />
           </div>
-          <p className="mt-3 text-2xl font-bold text-white">FULFILLED</p>
-          <p className="mt-1 text-xs text-slate-400">Snapshot locked at checkout &amp; payout</p>
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl font-bold text-white break-words">
+            FULFILLED
+          </p>
+          <p className="mt-1 text-[11px] sm:text-xs text-slate-400">
+            Snapshot locked at checkout &amp; payout
+          </p>
         </article>
       </section>
 
       {/* Main Two-Column Workspace */}
-      <div className="grid gap-6 lg:grid-cols-12">
+      <div className="grid gap-5 sm:gap-6 lg:grid-cols-12">
         {/* Left Column: Policy Configuration Form */}
-        <Panel className="lg:col-span-7 space-y-6 bg-bg-surface p-6">
+        <Panel className="min-w-0 lg:col-span-7 space-y-5 sm:space-y-6 bg-bg-surface p-4 sm:p-6">
           <div className="flex flex-col gap-2 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Gavel size={18} className="text-brand-gold" aria-hidden="true" />
-                Commission Policy Configuration
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <Gavel size={18} className="shrink-0 text-brand-gold" aria-hidden="true" />
+                <span className="break-words">Commission Policy Configuration</span>
               </h2>
               <p className="mt-1 text-xs text-gray-400">
                 Set the platform fee rate and minimum THB deduction for completed auctions.
               </p>
             </div>
-            <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-brand-gold/30 bg-brand-gold/10 px-2.5 py-1 text-xs font-semibold text-brand-gold">
+            <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-brand-gold/30 bg-brand-gold/10 px-2.5 py-1 text-xs font-semibold text-brand-gold">
               <Sparkles size={13} aria-hidden="true" />
               US-18-2 Policy Engine
             </span>
@@ -252,13 +278,15 @@ function CommissionPolicyWorkspace({
                     type="button"
                     onClick={() => setPercentInput(preset.value)}
                     className={cn(
-                      'flex flex-col items-start rounded-xl border px-3.5 py-2.5 text-left transition-all focus:outline-none focus:ring-2 focus:ring-brand-blue',
+                      'flex flex-col items-start rounded-xl border px-3 py-2.5 text-left transition-all focus:outline-none focus:ring-2 focus:ring-brand-blue',
                       isSelected
                         ? 'border-brand-gold bg-brand-gold/15 text-white shadow-sm'
                         : 'border-white/10 bg-bg-elevated text-gray-300 hover:border-white/25 hover:text-white'
                     )}
                   >
-                    <span className="text-base font-bold tabular-nums">{preset.label}</span>
+                    <span className="text-sm sm:text-base font-bold tabular-nums">
+                      {preset.label}
+                    </span>
                     <span className="text-[11px] text-gray-400">{preset.tag}</span>
                   </button>
                 );
@@ -306,9 +334,9 @@ function CommissionPolicyWorkspace({
             </div>
 
             {/* Formula Callout */}
-            <div className="rounded-xl border border-white/10 bg-bg-elevated p-4 text-xs text-gray-300 space-y-1.5">
+            <div className="rounded-xl border border-white/10 bg-bg-elevated p-3.5 sm:p-4 text-xs text-gray-300 space-y-1.5">
               <p className="font-semibold text-white">Auto-Deduction Formula</p>
-              <p className="font-mono text-[11px] text-brand-gold">
+              <p className="font-mono text-[11px] text-brand-gold break-words">
                 Fee = min(Winning Bid, max(Winning Bid × {draftPercent}%, {money(draftMinFee)}))
               </p>
               <p className="text-gray-400">
@@ -323,7 +351,7 @@ function CommissionPolicyWorkspace({
                 className="flex items-center gap-2 rounded-xl border border-status-success/30 bg-status-success/10 px-4 py-3 text-sm font-medium text-status-success"
               >
                 <CheckCircle2 size={16} className="shrink-0" aria-hidden="true" />
-                {message}
+                <span className="break-words">{message}</span>
               </p>
             )}
 
@@ -337,22 +365,28 @@ function CommissionPolicyWorkspace({
                   className="shrink-0 text-status-danger"
                   aria-hidden="true"
                 />
-                {failure}
+                <span className="break-words">{failure}</span>
               </p>
             )}
 
-            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-white/10 pt-4">
+            <div className="flex flex-wrap items-center justify-end gap-2.5 sm:gap-3 border-t border-white/10 pt-4">
               <Button
                 type="button"
                 variant="secondary"
                 disabled={saving}
                 onClick={handleResetDraft}
-                className="gap-1.5"
+                className="flex-1 sm:flex-initial justify-center gap-1.5"
               >
                 <RotateCcw size={15} aria-hidden="true" />
                 Reset
               </Button>
-              <Button type="submit" variant="gold" disabled={saving} isLoading={saving}>
+              <Button
+                type="submit"
+                variant="gold"
+                disabled={saving}
+                isLoading={saving}
+                className="flex-1 sm:flex-initial justify-center"
+              >
                 Save policy
               </Button>
             </div>
@@ -360,12 +394,12 @@ function CommissionPolicyWorkspace({
         </Panel>
 
         {/* Right Column: Live Settlement Simulator */}
-        <div className="lg:col-span-5 space-y-6">
-          <Panel className="space-y-4 bg-bg-surface p-6">
+        <div className="min-w-0 lg:col-span-5 space-y-5 sm:space-y-6">
+          <Panel className="space-y-4 bg-bg-surface p-4 sm:p-6">
             <div className="border-b border-white/10 pb-3">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Calculator size={17} className="text-brand-blue" aria-hidden="true" />
-                Live Settlement Simulator
+                <Calculator size={17} className="shrink-0 text-brand-blue" aria-hidden="true" />
+                <span>Live Settlement Simulator</span>
               </h2>
               <p className="mt-1 text-xs text-gray-400">
                 Preview how the configured policy affects seller payout on any winning bid.
@@ -388,14 +422,14 @@ function CommissionPolicyWorkspace({
                 onChange={(e) => setSampleBidInput(e.target.value)}
                 className="block h-10 w-full rounded-xl border border-white/15 bg-bg-input px-3.5 text-sm font-semibold text-white tabular-nums focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue"
               />
-              <div className="flex flex-wrap gap-1.5 pt-1">
+              <div className="grid grid-cols-2 gap-1.5 pt-1 sm:flex sm:flex-wrap">
                 {SAMPLE_BIDS.map((sample) => (
                   <button
                     key={sample}
                     type="button"
                     onClick={() => setSampleBidInput(String(sample))}
                     className={cn(
-                      'rounded-lg border px-2.5 py-1 text-xs font-medium tabular-nums transition',
+                      'rounded-lg border px-2.5 py-1.5 sm:py-1 text-xs font-medium tabular-nums transition text-center',
                       Number(sampleBidInput) === sample
                         ? 'border-brand-blue bg-brand-blue/20 text-brand-blue'
                         : 'border-white/10 bg-bg-elevated text-gray-400 hover:border-white/20 hover:text-white'
@@ -407,25 +441,25 @@ function CommissionPolicyWorkspace({
               </div>
             </div>
 
-            <div className="space-y-2.5 rounded-xl border border-white/10 bg-bg-elevated p-4 text-sm">
-              <div className="flex items-center justify-between text-gray-300">
+            <div className="space-y-2.5 rounded-xl border border-white/10 bg-bg-elevated p-3.5 sm:p-4 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-gray-300">
                 <span>Final winning bid</span>
                 <span className="font-semibold text-white tabular-nums">
                   {money(simulation.bid)}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs text-gray-400">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
                 <span>Percentage calculation ({draftPercent}%)</span>
                 <span className="tabular-nums">{money(simulation.rawPercentFee)}</span>
               </div>
-              <div className="flex items-center justify-between text-xs text-gray-400">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
                 <span>Minimum fee floor</span>
                 <span className="tabular-nums">{money(draftMinFee)}</span>
               </div>
 
-              <div className="border-t border-white/10 pt-2.5 flex items-center justify-between">
-                <span className="text-gray-300 flex items-center gap-2">
-                  Platform commission
+              <div className="border-t border-white/10 pt-2.5 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-gray-300 flex flex-wrap items-center gap-1.5 min-w-0">
+                  <span>Platform commission</span>
                   <span
                     className={cn(
                       'rounded-full border px-2 py-0.5 text-[10px] font-semibold',
@@ -442,7 +476,7 @@ function CommissionPolicyWorkspace({
                 </span>
               </div>
 
-              <div className="border-t border-white/10 pt-2.5 flex items-center justify-between">
+              <div className="border-t border-white/10 pt-2.5 flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold text-white">Seller net payout</span>
                 <span className="text-base font-bold text-status-success tabular-nums">
                   {money(simulation.sellerNet)}
@@ -451,20 +485,20 @@ function CommissionPolicyWorkspace({
             </div>
           </Panel>
 
-          <Panel className="space-y-3 bg-bg-surface p-5 text-xs text-gray-300">
+          <Panel className="space-y-3 bg-bg-surface p-4 sm:p-5 text-xs text-gray-300">
             <p className="font-semibold uppercase tracking-wider text-brand-gold">
               Escrow &amp; Settlement Lifecycle
             </p>
             <ul className="space-y-2 text-gray-400">
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-brand-gold" />
+                <span className="mt-1 size-1.5 shrink-0 rounded-full bg-brand-gold" />
                 <span>
                   <strong className="text-gray-200">1. Winner Checkout:</strong> Buyer funds are
                   held in platform escrow while the commission snapshot is recorded.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-brand-blue" />
+                <span className="mt-1 size-1.5 shrink-0 rounded-full bg-brand-blue" />
                 <span>
                   <strong className="text-gray-200">2. Floor Comparison:</strong> If the percentage
                   fee is lower than {money(draftMinFee)}, the minimum fee floor is applied
@@ -472,7 +506,7 @@ function CommissionPolicyWorkspace({
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-status-success" />
+                <span className="mt-1 size-1.5 shrink-0 rounded-full bg-status-success" />
                 <span>
                   <strong className="text-gray-200">3. Fulfilled Payout:</strong> Once delivery is
                   confirmed, net proceeds are released to the seller and platform revenue is
@@ -504,20 +538,20 @@ export function AuctionCommissionPage() {
 
   return (
     <main id="main-content">
-      <PageContainer className="space-y-6">
+      <PageContainer className="space-y-5 sm:space-y-6">
         <PageHeader
           eyebrow={<span className="text-brand-gold">Platform administration</span>}
           title="Auction Commission"
           description="Changes apply to future auction orders. Configure the percentage commission rate and minimum fee floor automatically deducted upon settlement."
           actions={
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-status-success/30 bg-status-success/10 px-3 py-1.5 text-xs font-semibold text-status-success">
                 <span className="size-2 rounded-full bg-status-success animate-pulse" />
                 Escrow auto-deduction active
               </span>
               <Link
                 to="/admin/orders"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-bg-elevated px-4 py-2 text-sm font-medium text-gray-200 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue shrink-0"
+                className="inline-flex min-h-10 sm:min-h-11 flex-1 sm:flex-initial items-center justify-center gap-2 rounded-xl border border-white/10 bg-bg-elevated px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-200 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue shrink-0"
               >
                 <ReceiptText size={16} className="text-brand-gold" aria-hidden="true" />
                 Order monitoring
@@ -541,9 +575,9 @@ export function AuctionCommissionPage() {
             role="alert"
             className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-status-danger/40 bg-status-danger/10 px-4 py-3 text-sm text-red-100"
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
               <AlertCircle size={18} className="shrink-0 text-status-danger" aria-hidden="true" />
-              <span>{error}</span>
+              <span className="break-words">{error}</span>
             </div>
             <Button type="button" variant="secondary" size="sm" onClick={() => void reload()}>
               Retry

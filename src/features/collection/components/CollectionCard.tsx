@@ -34,13 +34,13 @@ export function CollectionCard({
         />
       </Link>
 
-      <div className="flex min-w-0 w-full flex-1 items-start justify-between gap-3 py-1 sm:w-auto sm:self-stretch">
+      <div className="flex min-w-0 w-full flex-1 items-start justify-between gap-3 py-1 pb-8 sm:w-auto sm:self-stretch sm:pb-1 sm:pr-12">
         <Link
           to={`/cards/${card.id}`}
           className="min-w-0 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-card"
           title={`View details of ${card.name}`}
         >
-          <h3 className="truncate pr-7 text-xs font-semibold text-gray-100 transition-colors group-hover:text-brand-blue sm:pr-0 sm:text-xl">
+          <h3 className="truncate pr-7 text-sm font-semibold text-gray-100 transition-colors group-hover:text-brand-blue sm:pr-0 sm:text-xl">
             {card.name}
           </h3>
           <p className="mt-1 truncate text-xs text-gray-400 sm:text-sm">

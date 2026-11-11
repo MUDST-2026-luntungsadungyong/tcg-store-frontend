@@ -6,11 +6,13 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Download,
   ExternalLink,
   MessageCircle,
   Package,
   Phone,
   RefreshCw,
+  ShoppingCart,
   ShieldCheck,
   Store,
   Truck,
@@ -23,7 +25,14 @@ import { Button } from '@/shared/components/Button';
 import { ConditionLabel } from '@/shared/components/ConditionLabel';
 import { Modal } from '@/shared/components/Modal';
 import { Skeleton } from '@/shared/components/Skeleton';
-import { fetchBuyerOrderById, updateBuyerOrderStatus } from '../api/buyerOrders';
+import { toReservationCartItems } from '@/features/reservation-cart/api/cartApi';
+import { useReservationCartStore } from '@/features/reservation-cart/model/useReservationCartStore';
+import {
+  downloadBuyerOrderInvoice,
+  fetchBuyerOrderById,
+  reorderBuyerOrder,
+  updateBuyerOrderStatus,
+} from '../api/buyerOrders';
 
 interface StatusBannerConfig {
   title: string;
@@ -123,6 +132,12 @@ export function OrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+  const [orderActionMessage, setOrderActionMessage] = useState<{
+    tone: 'success' | 'warning' | 'error';
+    text: string;
+  } | null>(null);
 
   // Confirm Received state
   const [showConfirmReceivedModal, setShowConfirmReceivedModal] = useState(false);
@@ -167,6 +182,59 @@ export function OrderDetailPage() {
       setError(err instanceof Error ? err.message : 'Failed to update order status.');
     } finally {
       setIsSubmittingAction(false);
+    }
+  };
+
+  const handleReorder = async () => {
+    if (!order || isReordering) return;
+    setIsReordering(true);
+    setOrderActionMessage(null);
+    try {
+      const result = await reorderBuyerOrder(order.id);
+      useReservationCartStore.setState({
+        items: toReservationCartItems(result.cart),
+        error: null,
+      });
+      if (result.totalAddedItems === 0) {
+        setOrderActionMessage({
+          tone: 'warning',
+          text: 'No cards were added because the current listings are unavailable or already at the stock limit.',
+        });
+      } else if (result.hasUnavailableItems) {
+        setOrderActionMessage({
+          tone: 'warning',
+          text: `${result.totalAddedItems} card(s) added. Some quantities were reduced to match current stock.`,
+        });
+      } else {
+        setOrderActionMessage({
+          tone: 'success',
+          text: `${result.totalAddedItems} card(s) added to your reservation cart.`,
+        });
+      }
+    } catch (err) {
+      setOrderActionMessage({
+        tone: 'error',
+        text: err instanceof Error ? err.message : 'Unable to reorder these cards.',
+      });
+    } finally {
+      setIsReordering(false);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!order || isDownloadingInvoice) return;
+    setIsDownloadingInvoice(true);
+    setOrderActionMessage(null);
+    try {
+      await downloadBuyerOrderInvoice(order.id);
+      setOrderActionMessage({ tone: 'success', text: 'PDF order summary downloaded.' });
+    } catch (err) {
+      setOrderActionMessage({
+        tone: 'error',
+        text: err instanceof Error ? err.message : 'Unable to download the PDF order summary.',
+      });
+    } finally {
+      setIsDownloadingInvoice(false);
     }
   };
 
@@ -550,8 +618,48 @@ export function OrderDetailPage() {
         </section>
 
         {/* Contextual Action Bar */}
-        {(canCancel || canMarkReceived) && (
-          <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-white/10 bg-[#111A29]/95 p-4 shadow-2xl backdrop-blur-md">
+        {(canCancel || canMarkReceived || (order.items?.length ?? 0) > 0) && (
+          <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-[#111A29]/95 p-4 shadow-2xl backdrop-blur-md">
+            {orderActionMessage && (
+              <div
+                role="status"
+                className={`w-full rounded-lg border px-3 py-2 text-xs sm:mr-auto sm:w-auto ${
+                  orderActionMessage.tone === 'success'
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                    : orderActionMessage.tone === 'warning'
+                      ? 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                      : 'border-rose-500/30 bg-rose-500/10 text-rose-200'
+                }`}
+              >
+                {orderActionMessage.text}
+                {orderActionMessage.tone !== 'error' && orderActionMessage.text.includes('added') && (
+                  <Link to="/cart" className="ml-2 font-semibold underline hover:text-white">
+                    View Cart
+                  </Link>
+                )}
+              </div>
+            )}
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={isReordering || isDownloadingInvoice}
+                isLoading={isReordering}
+                onClick={() => void handleReorder()}
+              >
+                <ShoppingCart size={16} />
+                1-Click Reorder
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={isDownloadingInvoice || isReordering}
+                isLoading={isDownloadingInvoice}
+                onClick={() => void handleDownloadInvoice()}
+              >
+                <Download size={16} />
+                Download PDF Invoice
+              </Button>
             {canCancel && (
               <Button
                 variant="danger"
@@ -578,6 +686,7 @@ export function OrderDetailPage() {
                 Mark Received
               </Button>
             )}
+            </div>
           </div>
         )}
       </div>

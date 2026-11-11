@@ -182,6 +182,41 @@ describe('Navbar', () => {
     expect(notificationsApi.getUnreadCount).not.toHaveBeenCalled();
   });
 
+  it('keeps the same buyer marketplace navigation for admins and exposes Discounts & Vouchers manager', async () => {
+    const user = userEvent.setup();
+    useAuthStore.setState({
+      token: 'admin-token',
+      user: {
+        id: 'admin-1',
+        name: 'Platform Administrator',
+        email: 'admin@mythix.com',
+        role: 'ADMIN',
+        isSeller: false,
+      },
+      isHydrating: false,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/admin']}>
+        <Navbar />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Cards' })).toHaveAttribute('href', '/cards');
+    expect(screen.getByRole('link', { name: 'Collections' })).toHaveAttribute('href', '/collections');
+    expect(screen.getByRole('link', { name: 'Auctions' })).toHaveAttribute('href', '/auctions');
+    expect(screen.getByRole('link', { name: 'Voucher Center' })).toHaveAttribute('href', '/vouchers');
+    expect(screen.getByRole('link', { name: 'Reservation cart' })).toHaveAttribute('href', '/cart');
+    expect(screen.getByRole('link', { name: 'Notifications' })).toHaveAttribute('href', '/notifications');
+
+    await user.click(screen.getByRole('button', { name: 'Open account menu' }));
+
+    expect(screen.getByRole('menuitem', { name: 'Admin dashboard' })).toHaveAttribute('href', '/admin');
+    expect(screen.getByRole('menuitem', { name: 'Discounts & Vouchers' })).toHaveAttribute('href', '/admin/vouchers');
+    expect(screen.getByRole('menuitem', { name: 'My Vouchers' })).toHaveAttribute('href', '/profile/vouchers');
+  });
+
   it('refreshes unread count for authenticated users and shows an accessible capped badge', async () => {
     vi.mocked(notificationsApi.getUnreadCount).mockResolvedValue(120);
     render(

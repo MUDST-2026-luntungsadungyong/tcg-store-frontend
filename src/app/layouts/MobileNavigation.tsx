@@ -1,7 +1,7 @@
 import { Avatar } from '@/shared/components/Avatar';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, X, LogOut, ShieldCheck, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Menu, X, LogOut, ShieldCheck, ChevronRight, Tag } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { isSellerUser } from '@/entities/account/model/types';
 import { useReservationCartStore } from '@/features/reservation-cart';
@@ -82,7 +82,10 @@ export function MobileNavigation() {
                 <span>{label}</span>
               </NavLink>
             ))}
-            {user.role === 'ADMIN' && <NavLink to="/admin" onClick={close} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-brand-blue hover:bg-white/5"><ShieldCheck size={18} /><span>Admin Area</span></NavLink>}
+            {user.role === 'ADMIN' && <>
+              <NavLink to="/admin" onClick={close} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-brand-blue hover:bg-white/5"><ShieldCheck size={18} /><span>Admin Area</span></NavLink>
+              <NavLink to="/admin/vouchers" onClick={close} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-brand-gold hover:bg-white/5"><Tag size={18} /><span>Discounts &amp; Vouchers</span></NavLink>
+            </>}
           </div>
         </nav>}
         <div className="mt-auto border-t border-white/10 pt-4">

@@ -11,6 +11,7 @@ import {
   Layers3,
   ClipboardList,
   ReceiptText,
+  Tag,
   UsersRound,
 } from 'lucide-react';
 import { MobileNavigation } from './MobileNavigation';
@@ -254,6 +255,7 @@ export function Navbar() {
                     {user.role === 'ADMIN' && <>
                       <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">Administration</p>
                       <Link to="/admin" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><Layers3 size={16} />Admin dashboard</Link>
+                      <Link to="/admin/vouchers" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><Tag size={16} className="text-brand-gold" />Discounts &amp; Vouchers</Link>
                       <Link to="/admin/seller-applications" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><UserIcon size={16} />Seller approvals</Link>
                       <Link to="/admin/orders" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><ReceiptText size={16} />Order monitoring</Link>
                       <Link to="/admin/users" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"><UsersRound size={16} />Admin management</Link>

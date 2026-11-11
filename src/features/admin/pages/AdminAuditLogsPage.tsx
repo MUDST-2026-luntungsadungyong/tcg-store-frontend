@@ -6,7 +6,16 @@ import { Modal } from '@/shared/components/Modal';
 import { SearchField } from '@/shared/components/SearchField';
 import { cn } from '@/shared/lib';
 
-const ACTIONS = ['APPROVE_SELLER', 'REJECT_SELLER', 'UPDATE_STOCK', 'UPDATE_GLOBAL_CARD'] as const;
+const ACTIONS = [
+  'APPROVE_SELLER',
+  'REJECT_SELLER',
+  'UPDATE_STOCK',
+  'UPDATE_GLOBAL_CARD',
+  'CREATE_VOUCHER',
+  'UPDATE_VOUCHER',
+  'TOGGLE_VOUCHER',
+  'DELETE_VOUCHER',
+] as const;
 type ActionType = typeof ACTIONS[number] | string;
 type SearchBy = 'ALL' | 'ACTOR' | 'TARGET' | 'DETAILS';
 
@@ -36,6 +45,10 @@ const actionTone: Record<string, string> = {
   REJECT_SELLER: 'border-status-danger/30 bg-status-danger/10 text-status-danger',
   UPDATE_STOCK: 'border-brand-blue/30 bg-brand-blue/10 text-brand-blue',
   UPDATE_GLOBAL_CARD: 'border-brand-gold/30 bg-brand-gold/10 text-brand-gold',
+  CREATE_VOUCHER: 'border-status-success/30 bg-status-success/10 text-status-success',
+  UPDATE_VOUCHER: 'border-brand-blue/30 bg-brand-blue/10 text-brand-blue',
+  TOGGLE_VOUCHER: 'border-status-warning/30 bg-status-warning/10 text-status-warning',
+  DELETE_VOUCHER: 'border-status-danger/30 bg-status-danger/10 text-status-danger',
 };
 
 const roleTone: Record<string, string> = {

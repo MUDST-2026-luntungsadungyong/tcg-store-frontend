@@ -69,7 +69,7 @@ const routingCases: Array<{
   type: Notification['type'];
   title: string;
   message: string;
-  destination: '/workspace/orders?orderId=19' | '/orders/19' | '/profile' | '/admin/seller-applications?applicationId=app%2F1';
+  destination: '/workspace/orders?orderId=19' | '/orders/19' | '/profile' | '/admin/seller-applications?applicationId=app%2F1' | '/auction-disputes?disputeId=42';
 }> = [
   {
     name: 'a seller reservation',
@@ -94,6 +94,9 @@ const routingCases: Array<{
   { name: 'a submitted seller application', type: 'SELLER_APPLICATION_SUBMITTED', title: 'Application submitted', message: 'Review this application.', destination: '/admin/seller-applications?applicationId=app%2F1' },
   { name: 'an approved seller application', type: 'SELLER_APPLICATION_APPROVED', title: 'Application approved', message: 'You are approved.', destination: '/profile' },
   { name: 'a rejected seller application', type: 'SELLER_APPLICATION_REJECTED', title: 'Application rejected', message: 'Please review your profile.', destination: '/profile' },
+  { name: 'an opened auction dispute', type: 'AUCTION_DISPUTE_OPENED', title: 'Dispute opened', message: 'A dispute was opened.', destination: '/auction-disputes?disputeId=42' },
+  { name: 'new dispute evidence', type: 'AUCTION_DISPUTE_EVIDENCE_ADDED', title: 'Evidence added', message: 'New evidence was added.', destination: '/auction-disputes?disputeId=42' },
+  { name: 'a dispute decision', type: 'AUCTION_DISPUTE_DECIDED', title: 'Dispute decided', message: 'A decision was recorded.', destination: '/auction-disputes?disputeId=42' },
 ];
 
 describe('NotificationsPage', () => {
@@ -133,6 +136,7 @@ describe('NotificationsPage', () => {
       message,
       orderId: type.startsWith('ORDER_') ? '19' : null,
       sellerApplicationId: type === 'SELLER_APPLICATION_SUBMITTED' ? 'app/1' : null,
+      actionPath: type.startsWith('AUCTION_DISPUTE_') ? '/auction-disputes?disputeId=42' : null,
     };
     const readRequest = deferred<Notification>();
     list.mockResolvedValue(page([currentNotification]));
@@ -140,7 +144,8 @@ describe('NotificationsPage', () => {
     renderPage();
 
     const user = userEvent.setup();
-    const actionName = type === 'SELLER_APPLICATION_SUBMITTED' ? 'Review application'
+    const actionName = type.startsWith('AUCTION_DISPUTE_') ? 'View dispute update'
+      : type === 'SELLER_APPLICATION_SUBMITTED' ? 'Review application'
       : type === 'SELLER_APPLICATION_APPROVED' || type === 'SELLER_APPLICATION_REJECTED' ? 'View profile'
         : 'View order';
     await user.click(await screen.findByRole('button', { name: actionName }));
@@ -175,6 +180,7 @@ describe('NotificationsPage', () => {
     { type: 'ORDER_RESERVED', orderId: null, sellerApplicationId: null },
     { type: 'ORDER_STATUS_CHANGED', orderId: undefined, sellerApplicationId: null },
     { type: 'SELLER_APPLICATION_SUBMITTED', orderId: null, sellerApplicationId: null },
+    { type: 'AUCTION_DISPUTE_OPENED', orderId: null, sellerApplicationId: null, actionPath: '/auction-disputes?disputeId=42&next=/admin' },
   ] as const)('renders $type without a CTA when its required reference is missing', async (values) => {
     list.mockResolvedValue(page([{ ...notification, ...values }]));
     renderPage();

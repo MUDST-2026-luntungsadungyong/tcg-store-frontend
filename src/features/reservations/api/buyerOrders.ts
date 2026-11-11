@@ -3,10 +3,27 @@ import { ENV } from '@/shared/config/env';
 import type { ReservationOrder } from '@/entities/reservation/model/types';
 import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
 import { normalizeReservationOrder } from './reservationOrders';
+import type { BackendCartResponse } from '@/features/reservation-cart/api/cartApi';
 
 type BuyerOrdersResponse = ReservationOrder[] | { content?: ReservationOrder[] };
 
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
+
+export interface ReorderItemResult {
+  listingId: string | null;
+  productName: string;
+  requestedQuantity: number;
+  addedQuantity: number;
+  availableQuantity: number;
+  outcome: 'ADDED' | 'PARTIALLY_ADDED' | 'UNAVAILABLE' | 'STOCK_LIMIT_REACHED';
+}
+
+export interface ReorderResult {
+  cart: BackendCartResponse;
+  items: ReorderItemResult[];
+  totalAddedItems: number;
+  hasUnavailableItems: boolean;
+}
 
 export async function updateBuyerOrderStatus(
   orderId: string,
@@ -58,6 +75,34 @@ export async function fetchBuyerOrderById(orderId: string): Promise<ReservationO
     throw new Error('Empty response received for order details.');
   }
   return normalizeReservationOrder(response.data, buyerId);
+}
+
+export async function reorderBuyerOrder(orderId: string): Promise<ReorderResult> {
+  const response = await apiClient.post<ReorderResult>(`/orders/${encodeURIComponent(orderId)}/reorder`);
+  if (!response.data) throw new Error('The server returned an empty reorder response.');
+  return response.data;
+}
+
+function invoiceFilename(contentDisposition: string | undefined, orderId: string): string {
+  const match = contentDisposition?.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
+  return match?.[1] ? decodeURIComponent(match[1].trim()) : `mythix-order-${orderId}.pdf`;
+}
+
+export async function downloadBuyerOrderInvoice(orderId: string): Promise<string> {
+  const response = await apiClient.get<Blob>(`/orders/${encodeURIComponent(orderId)}/invoice-pdf`, {
+    responseType: 'blob',
+  });
+  const filename = invoiceFilename(response.headers['content-disposition'], orderId);
+  const url = URL.createObjectURL(response.data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  return filename;
 }
 
 

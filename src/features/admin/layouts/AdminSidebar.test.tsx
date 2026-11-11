@@ -27,6 +27,7 @@ describe('AdminSidebar', () => {
     expect(view.getByRole('link', { name: 'Order monitoring' })).toBeInTheDocument();
     expect(view.getByRole('link', { name: 'Admin management' })).toHaveAttribute('aria-current', 'page');
     expect(view.getByRole('link', { name: 'Audit trail' })).toBeInTheDocument();
+    expect(view.getByRole('link', { name: 'Weekly reports' })).toHaveAttribute('href', '/admin/reports/weekly');
   });
 
   it('collapses and expands on desktop when toggle button is clicked', async () => {

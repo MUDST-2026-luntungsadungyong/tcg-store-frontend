@@ -2,6 +2,7 @@ import { Avatar } from '@/shared/components/Avatar';
 import {
   ChevronLeft,
   ClipboardList,
+  ChartNoAxesCombined,
   Gavel,
   LayoutDashboard,
   Menu,
@@ -38,6 +39,7 @@ const mainLinks: NavItem[] = [
 ];
 
 const monitoringLinks: NavItem[] = [
+  { name: 'Weekly reports', to: '/admin/reports/weekly', icon: ChartNoAxesCombined },
   { name: 'Auction disputes', to: '/admin/auction-disputes', icon: Gavel },
   { name: 'Auction monitoring', to: '/admin/auctions', icon: Gavel },
   { name: 'Order monitoring', to: '/admin/orders', icon: ReceiptText },

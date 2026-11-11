@@ -20,5 +20,6 @@ dist-ssr/
 Thumbs.db
 
 cypress/screenshots
+cypress/downloads/
 .tmp-tests/
 public/e2e-release-contract.json

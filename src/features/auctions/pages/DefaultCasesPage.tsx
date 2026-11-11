@@ -28,7 +28,7 @@ function DefaultCases({ admin }: { admin: boolean }) {
   }
   return <main className="mx-auto max-w-5xl space-y-5 p-5">
     <h1 className="text-2xl font-bold">Default cases</h1>
-    <p className="text-text-secondary">Review reports and decisions under the auction strike policy.</p>
+    <p className="text-text-secondary">{admin ? 'Review reports and decisions under the auction strike policy.' : 'Reports are reviewed by an administrator before any penalty is applied.'}</p>
     {loading && <p role="status">Loading cases…</p>}
     {error && <p role="alert">{error} <button className="underline" onClick={() => void reload()}>Try again</button></p>}
     {data && !loading && !error && !data.content.length && <Panel className="flex min-h-[260px] flex-col items-center justify-center px-6 py-12 text-center sm:min-h-[340px]"><ShieldCheck aria-hidden="true" size={36} className="mb-5 text-brand-gold" /><h2 className="text-xl font-semibold">All clear</h2><p className="mt-2 text-sm font-medium">No default cases yet</p><p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-text-secondary">{admin ? 'New reports appear here automatically. No penalty is applied without review.' : 'Your reports and their review history will appear here automatically. No penalty is applied without review.'}</p>{admin && <Link to="/admin/auctions" className="mt-5 text-sm font-semibold text-brand-blue underline underline-offset-4">View auction monitoring</Link>}</Panel>}

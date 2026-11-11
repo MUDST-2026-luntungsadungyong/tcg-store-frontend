@@ -180,9 +180,9 @@ export function CardDetailPage() {
 
   return (
     <main className="w-full bg-bg-card text-white">
-      <div className="mx-auto max-w-[1440px] px-6 py-8 pb-20 md:px-12">
+      <div className="mx-auto max-w-[1440px] px-4 py-6 pb-20 sm:px-6 sm:py-8 md:px-12">
         <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 text-sm"><Link to="/cards" className="text-[#8FB3E2] hover:underline">Cards</Link><span aria-hidden="true" className="text-gray-500">/</span><span className="truncate">{card.name}</span></nav>
-        <h1 className="mb-8 text-3xl font-bold md:text-[32px]">{card.name}</h1>
+        <h1 className="mb-6 break-words text-2xl font-bold sm:mb-8 sm:text-3xl md:text-[32px]">{card.name}</h1>
 
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-14">
           <div className="flex justify-center lg:col-span-5"><CardPhotoMagnifierViewer key={card.cardId || card.id} officialImage={officialCardImage(card)} name={card.name} offers={offers} /></div>

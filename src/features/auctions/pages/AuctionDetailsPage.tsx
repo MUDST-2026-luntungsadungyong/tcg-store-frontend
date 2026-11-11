@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatCondition } from '@/entities/card/model/condition';
 import { Button } from '@/shared/components/Button';
 import { ButtonLink } from '@/shared/components/ButtonLink';
@@ -70,6 +70,7 @@ function AuctionDetails({ id }: { id: number }) {
   };
 
   if (!auction) return <AuctionPage>
+    <Link to="/auction-disputes" className="text-sm text-brand-blue underline">View my disputes</Link>
     <PageHeader eyebrow="Seller auctions" title="Auction Details" />
     {loading ? <AuctionLoading label="Loading auction details" /> : <ErrorState message={error} onRetry={() => reload()} />}
     <ButtonLink to={AUCTIONS_PATH} variant="secondary">Back to My Auctions</ButtonLink>
@@ -79,6 +80,7 @@ function AuctionDetails({ id }: { id: number }) {
   const request = auction.cancellationRequest;
   const deleted = confirm === 'delete';
   if (requestForm && canRequest) return <AuctionPage>
+    <Link to="/auction-disputes" className="text-sm text-brand-blue underline">View my disputes</Link>
     <PageHeader eyebrow="Seller auctions" title="Request Cancellation"
       description={`Auction #${id} · Exceptional circumstances require administrator review.`} />
     <Notice title={`${auction.bidCount} bids received`} tone="warning">Submit a request with evidence. The auction continues until an administrator approves the cancellation.</Notice>
@@ -93,6 +95,7 @@ function AuctionDetails({ id }: { id: number }) {
     </div>
   </AuctionPage>;
   return <AuctionPage>
+    <Link to="/auction-disputes" className="text-sm text-brand-blue underline">View my disputes</Link>
     <PageHeader eyebrow="Seller auctions" title={status === 'CANCELLED' ? 'Auction Cancelled' : 'Auction Details'}
       description={`${status === 'DRAFT' ? 'Draft' : 'Auction'} #${id} · ${auction.cardName || 'Untitled draft'}`}
       actions={<RefreshButton busy={loading} onClick={() => { setMessage(''); void reload(); }} />} />

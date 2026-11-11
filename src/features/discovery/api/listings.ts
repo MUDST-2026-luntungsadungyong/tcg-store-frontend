@@ -3,6 +3,7 @@ import { ENV } from '@/shared/config/env';
 import type { CardListing } from '@/entities/card/model/types';
 import { normalizeConditionToCode } from '@/entities/card/model/condition';
 import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
+import { findFuzzySuggestion } from '@/features/discovery/lib/fuzzyMatch';
 
 export interface ListingFilterParams {
   search?: string;
@@ -17,6 +18,8 @@ export interface ListingFilterParams {
   size?: number;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
+  fuzzy?: boolean;
+  exact?: boolean;
 }
 
 export interface ListingPageResult {
@@ -26,6 +29,24 @@ export interface ListingPageResult {
   totalElements: number;
   totalPages: number;
   last: boolean;
+  didYouMean?: string;
+  originalQuery?: string;
+  fuzzyMatched?: boolean;
+}
+
+interface ApiResponseEnvelope {
+  items?: CardListing[];
+  content?: CardListing[];
+  pageNumber?: number;
+  number?: number;
+  pageSize?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+  last?: boolean;
+  didYouMean?: string;
+  originalQuery?: string;
+  fuzzyMatched?: boolean;
 }
 
 export const listingDiscoveryApi = {
@@ -36,11 +57,35 @@ export const listingDiscoveryApi = {
       await new Promise(resolve => setTimeout(resolve, 200));
 
       let all = storage.getListings().filter((listing) => listing.status === 'SHOW');
+      let didYouMean: string | undefined;
+      let fuzzyMatched = false;
 
       if (params?.search && params.search.trim()) {
-        const q = params.search.trim().toLowerCase();
-        all = all.filter(l => l.name.toLowerCase().includes(q));
+        const rawQuery = params.search.trim();
+        const q = rawQuery.toLowerCase();
+        const exactMatches = all.filter(l => l.name.toLowerCase().includes(q));
+
+        if (exactMatches.length > 0 || params.exact) {
+          all = exactMatches;
+        } else {
+          // Attempt typo fuzzy search
+          const names = storage.getListings().map(l => l.name);
+          const suggestion = findFuzzySuggestion(rawQuery, names);
+          if (suggestion) {
+            const fuzzyMatches = all.filter(l => l.name.toLowerCase().includes(suggestion.suggested.toLowerCase()));
+            if (fuzzyMatches.length > 0) {
+              all = fuzzyMatches;
+              didYouMean = suggestion.suggested;
+              fuzzyMatched = true;
+            } else {
+              all = [];
+            }
+          } else {
+            all = [];
+          }
+        }
       }
+
       if (params?.rarity && params.rarity.trim()) {
         const r = params.rarity.trim().toLowerCase();
         all = all.filter(l => l.rarity?.toLowerCase() === r);
@@ -81,6 +126,9 @@ export const listingDiscoveryApi = {
         totalElements,
         totalPages,
         last: page >= totalPages - 1,
+        didYouMean,
+        originalQuery: params?.search?.trim(),
+        fuzzyMatched,
       };
     }
 
@@ -90,7 +138,7 @@ export const listingDiscoveryApi = {
     }
 
     const response = await apiClient.get('/products', { params: queryParams });
-    const data = response.data;
+    const data = response.data as ApiResponseEnvelope | CardListing[];
 
     // Handle raw array
     if (Array.isArray(data)) {
@@ -114,6 +162,9 @@ export const listingDiscoveryApi = {
         totalElements: data.totalElements ?? data.items.length,
         totalPages: data.totalPages ?? 1,
         last: data.last ?? true,
+        didYouMean: data.didYouMean,
+        originalQuery: data.originalQuery ?? params?.search,
+        fuzzyMatched: data.fuzzyMatched,
       };
     }
 
@@ -126,6 +177,9 @@ export const listingDiscoveryApi = {
         totalElements: data.totalElements ?? data.content.length,
         totalPages: data.totalPages ?? 1,
         last: data.last ?? true,
+        didYouMean: data.didYouMean,
+        originalQuery: data.originalQuery ?? params?.search,
+        fuzzyMatched: data.fuzzyMatched,
       };
     }
 
@@ -136,6 +190,9 @@ export const listingDiscoveryApi = {
       totalElements: 0,
       totalPages: 1,
       last: true,
+      didYouMean: (data as ApiResponseEnvelope)?.didYouMean,
+      originalQuery: (data as ApiResponseEnvelope)?.originalQuery ?? params?.search,
+      fuzzyMatched: (data as ApiResponseEnvelope)?.fuzzyMatched,
     };
   },
 

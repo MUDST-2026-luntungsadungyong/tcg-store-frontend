@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, X, AlertCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, X, AlertCircle, RefreshCw, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
 import type { CardListing } from '@/entities/card/model/types';
 import { CardListingCard } from '@/features/discovery/components/CardListingCard';
@@ -50,6 +50,8 @@ export function CardDiscoveryPage() {
   const [appliedCondition, setAppliedCondition] = useState<string[]>([]);
   const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, MAX_PRICE_LIMIT]);
   const [appliedInStockOnly, setAppliedInStockOnly] = useState(false);
+  const [suggestion, setSuggestion] = useState<{ didYouMean: string; originalQuery: string } | null>(null);
+  const [exactSearch, setExactSearch] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
@@ -66,6 +68,7 @@ export function CardDiscoveryPage() {
         maxPrice: maxP,
         page: 0,
         size: 100,
+        exact: exactSearch || undefined,
       };
       const firstPage = await listingDiscoveryApi.getListings(params);
       const otherPages = await Promise.all(Array.from(
@@ -73,13 +76,21 @@ export function CardDiscoveryPage() {
         (_, index) => listingDiscoveryApi.getListings({ ...params, page: index + 1 }),
       ));
       setProducts([...firstPage.items, ...otherPages.flatMap(result => result.items)]);
+      if (firstPage.didYouMean && firstPage.fuzzyMatched && !exactSearch) {
+        setSuggestion({
+          didYouMean: firstPage.didYouMean,
+          originalQuery: firstPage.originalQuery || appliedSearch.trim(),
+        });
+      } else {
+        setSuggestion(null);
+      }
     } catch (err: unknown) {
       console.error('Failed to fetch products', err);
       setError('Unable to load cards from the server. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
-  }, [appliedSearch, appliedRarity, appliedStage, appliedCondition, appliedPriceRange]);
+  }, [appliedSearch, appliedRarity, appliedStage, appliedCondition, appliedPriceRange, exactSearch]);
 
   useEffect(() => {
     void fetchProducts();
@@ -126,6 +137,7 @@ export function CardDiscoveryPage() {
     const min = localMin ? parseInt(localMin, 10) : 0;
     const max = localMax ? parseInt(localMax, 10) : MAX_PRICE_LIMIT;
 
+    setExactSearch(false);
     setAppliedSearch(searchInput.trim());
     setAppliedRarity([...selectedRarity]);
     setAppliedStage([...selectedStage]);
@@ -133,6 +145,17 @@ export function CardDiscoveryPage() {
     setAppliedPriceRange([min, max]);
     setAppliedInStockOnly(inStockOnly);
     setPage(0);
+  };
+
+  const handleSearchOriginal = () => {
+    if (suggestion) {
+      const orig = suggestion.originalQuery;
+      setExactSearch(true);
+      setSearchInput(orig);
+      setAppliedSearch(orig);
+      setSuggestion(null);
+      setPage(0);
+    }
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -150,6 +173,8 @@ export function CardDiscoveryPage() {
     setLocalMax('');
     setPriceError(null);
 
+    setSuggestion(null);
+    setExactSearch(false);
     setAppliedSearch('');
     setAppliedRarity([]);
     setAppliedStage([]);
@@ -354,6 +379,37 @@ export function CardDiscoveryPage() {
           </button>
         )}
       </div>
+
+      {/* US-28-1: Search Suggestion Banner */}
+      {suggestion && (
+        <div
+          data-testid="search-suggestion-banner"
+          role="status"
+          aria-live="polite"
+          className="w-full max-w-[1440px] px-4 md:px-8 mb-4"
+        >
+          <div className="bg-brand-blue/10 border border-brand-blue/30 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-sm">
+            <div className="flex items-center gap-2.5 text-gray-200">
+              <Sparkles className="w-5 h-5 text-brand-blue shrink-0" />
+              <span>
+                แสดงผลลัพธ์สำหรับ:{' '}
+                <strong className="text-white font-semibold">{suggestion.didYouMean}</strong>{' '}
+                <span className="text-gray-400">
+                  (แทนคำค้นหาเดิม '{suggestion.originalQuery}')
+                </span>
+              </span>
+            </div>
+            <button
+              type="button"
+              data-testid="search-original-query-btn"
+              onClick={handleSearchOriginal}
+              className="text-xs text-brand-blue hover:underline font-medium transition-colors"
+            >
+              ค้นหาคำเดิม "{suggestion.originalQuery}"
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Active Filter Chips */}
       <div className="w-full max-w-[1440px] px-4 md:px-8 mb-6 flex flex-wrap justify-start items-center gap-2">

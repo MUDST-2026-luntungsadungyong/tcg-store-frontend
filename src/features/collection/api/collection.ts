@@ -30,6 +30,7 @@ export interface CollectionEntryResponse {
   id: string;
   ownerId: string;
   quantity?: number;
+  visitorOwnedQuantity?: number;
   cardId?: string;
   cardName?: string;
   game?: string;
@@ -48,14 +49,34 @@ export interface PublicCollectionOwner {
   userId: string;
   displayName: string;
   avatarUrl?: string | null;
+  totalCardsCount?: number;
   rareCardCount?: number;
   distinctRareCardCount?: number;
+  secretRareCount?: number;
+  badges?: string[];
   role?: string;
   sellerStatus?: string;
   collectionPrivacy?: 'PUBLIC' | 'PRIVATE';
   isSeller?: boolean;
 }
 
+export interface CollectionComparisonEntry {
+  cardId: string;
+  cardName: string;
+  targetQuantity: number;
+  visitorQuantity: number;
+  owned: boolean;
+}
+
+export interface CollectionComparisonResponse {
+  targetUserId: string;
+  visitorUserId?: string | null;
+  totalTargetDistinctCards: number;
+  sharedDistinctCards: number;
+  missingDistinctCards: number;
+  ownedQuantities: Record<string, number>;
+  items: CollectionComparisonEntry[];
+}
 
 export interface PublicRareCardHighlight {
   cardId: string;
@@ -98,6 +119,7 @@ export interface PublicCollectionResponse {
   avatarUrl?: string | null;
   items?: CollectionEntryResponse[];
   page?: CollectionPageMetadata;
+  comparison?: CollectionComparisonResponse;
 }
 
 function normalizeCollectionEntry(value: CollectionEntryResponse): CollectionEntry {
@@ -151,6 +173,66 @@ function getCurrentUserId(): string {
   if (token?.includes('admin')) return 'usr-2';
   if (token?.includes('seller')) return 'usr-3';
   return 'usr-1';
+}
+
+function buildComparisonFromEntries(
+  targetUserId: string,
+  visitorUserId: string | null,
+  targetEntries: CollectionEntry[],
+  visitorEntries: CollectionEntry[],
+): CollectionComparisonResponse {
+  const visitorOwnedByCardId: Record<string, number> = {};
+  for (const item of visitorEntries) {
+    const cardId = String(item.listing?.id ?? item.id);
+    visitorOwnedByCardId[cardId] = (visitorOwnedByCardId[cardId] ?? 0) + (item.quantity || 1);
+  }
+
+  const targetQtyByCardId = new Map<string, { name: string; quantity: number }>();
+  for (const item of targetEntries) {
+    const cardId = String(item.listing?.id ?? item.id);
+    const existing = targetQtyByCardId.get(cardId);
+    if (existing) {
+      existing.quantity += item.quantity || 1;
+    } else {
+      targetQtyByCardId.set(cardId, {
+        name: item.listing?.name || cardId,
+        quantity: item.quantity || 1,
+      });
+    }
+  }
+
+  const ownedQuantities: Record<string, number> = {};
+  const items: CollectionComparisonEntry[] = [];
+  let sharedDistinctCards = 0;
+
+  for (const [cardId, info] of targetQtyByCardId.entries()) {
+    const visitorQuantity = visitorOwnedByCardId[cardId] ?? 0;
+    const owned = visitorQuantity > 0;
+    if (owned) {
+      sharedDistinctCards += 1;
+    }
+    ownedQuantities[cardId] = visitorQuantity;
+    items.push({
+      cardId,
+      cardName: info.name,
+      targetQuantity: info.quantity,
+      visitorQuantity,
+      owned,
+    });
+  }
+
+  const totalTargetDistinctCards = targetQtyByCardId.size;
+  const missingDistinctCards = Math.max(0, totalTargetDistinctCards - sharedDistinctCards);
+
+  return {
+    targetUserId,
+    visitorUserId,
+    totalTargetDistinctCards,
+    sharedDistinctCards,
+    missingDistinctCards,
+    ownedQuantities,
+    items,
+  };
 }
 
 export const collectionApi = {
@@ -285,6 +367,7 @@ export const collectionApi = {
     owner: PublicCollectionOwner;
     items: CollectionEntry[];
     page?: CollectionPageMetadata;
+    comparison?: CollectionComparisonResponse;
   }> => {
     if (ENV.ENABLE_MOCK_API) {
       await new Promise((resolve) => setTimeout(resolve, 300));
@@ -318,6 +401,10 @@ export const collectionApi = {
         throw error;
       }
 
+      const ownerItems = storage.getCollection().filter((item) => String(item.ownerId) === String(userId)) || [];
+      const visitorItems = storage.getCollection().filter((item) => String(item.ownerId) === String(currentUserId)) || [];
+      const comparison = buildComparisonFromEntries(userId, currentUserId, ownerItems, visitorItems);
+
       return {
         owner: {
           userId,
@@ -328,7 +415,8 @@ export const collectionApi = {
           collectionPrivacy: privacy,
           isSeller: targetUser?.isSeller || userId === 'usr-3',
         },
-        items: storage.getCollection().filter((item) => String(item.ownerId) === String(userId)) || [],
+        items: ownerItems,
+        comparison,
       };
     }
 
@@ -347,8 +435,11 @@ export const collectionApi = {
         userId: String(owner.userId ?? userId),
         displayName: String(owner.displayName ?? 'Public collection'),
         avatarUrl: owner.avatarUrl ?? null,
+        totalCardsCount: owner.totalCardsCount,
         rareCardCount: owner.rareCardCount,
         distinctRareCardCount: owner.distinctRareCardCount,
+        secretRareCount: owner.secretRareCount,
+        badges: owner.badges,
         role: owner.role,
         sellerStatus: owner.sellerStatus,
         collectionPrivacy: owner.collectionPrivacy ?? 'PUBLIC',
@@ -356,7 +447,23 @@ export const collectionApi = {
       },
       items: (data.items ?? []).map(normalizeCollectionEntry),
       page: data.page,
+      comparison: data.comparison,
     };
+  },
+
+  comparePublicCollection: async (userId: string): Promise<CollectionComparisonResponse> => {
+    if (ENV.ENABLE_MOCK_API) {
+      const currentUserId = getCurrentUserId();
+      const all = storage.getCollection();
+      const targetItems = all.filter((item) => String(item.ownerId) === String(userId));
+      const visitorItems = all.filter((item) => String(item.ownerId) === String(currentUserId));
+      return buildComparisonFromEntries(userId, currentUserId, targetItems, visitorItems);
+    }
+
+    const response = await apiClient.get<CollectionComparisonResponse>(
+      `/collections/${encodeURIComponent(userId)}/compare`,
+    );
+    return response.data;
   },
 
   getPublicCollections: async (params: GetPublicCollectionsParams = {}): Promise<PublicCollectionsResponse> => {

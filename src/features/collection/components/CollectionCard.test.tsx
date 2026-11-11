@@ -92,6 +92,7 @@ describe('CollectionCard', () => {
     await user.click(deleteBtn);
     expect(onDelete).toHaveBeenCalledWith('col-1');
   });
+
   it('renders clear owned quantity badge with "× [qty]" and accessible label', () => {
     const entry = createMockEntry('NM');
     render(
@@ -102,5 +103,28 @@ describe('CollectionCard', () => {
 
     expect(screen.getByText('× 2')).toBeInTheDocument();
     expect(screen.getByLabelText('2 cards owned')).toBeInTheDocument();
+  });
+
+  it('renders Card Comparison Helper badge when visitor owns or is missing the card (US-22-2)', () => {
+    const entry = createMockEntry('NM');
+    const { rerender } = render(
+      <BrowserRouter>
+        <CollectionCard entry={entry} visitorOwnedQuantity={3} />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByTestId('card-comparison-badge')).toHaveTextContent(
+      'คุณครอบครองการ์ดใบนี้แล้ว 3 ใบ'
+    );
+
+    rerender(
+      <BrowserRouter>
+        <CollectionCard entry={entry} visitorOwnedQuantity={0} />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByTestId('card-comparison-badge')).toHaveTextContent(
+      'คุณยังไม่มีการ์ดใบนี้'
+    );
   });
 });

@@ -59,5 +59,23 @@ describe('collection API adapter', () => {
     expect(post).toHaveBeenCalledWith('/collection', { cardId: 'card-1', quantity: 3 });
     expect(result).toMatchObject({ id: 'col-new' });
   });
-});
 
+  it('calls GET /collections/:userId/compare when comparing a public collection (US-22-2)', async () => {
+    get.mockResolvedValueOnce({
+      data: {
+        targetUserId: 'usr-10',
+        visitorUserId: 'usr-1',
+        totalTargetDistinctCards: 2,
+        sharedDistinctCards: 1,
+        missingDistinctCards: 1,
+        ownedQuantities: { 'card-1': 2, 'card-2': 0 },
+        items: [],
+      },
+    });
+
+    const res = await collectionApi.comparePublicCollection('usr-10');
+    expect(get).toHaveBeenCalledWith('/collections/usr-10/compare');
+    expect(res.sharedDistinctCards).toBe(1);
+    expect(res.ownedQuantities['card-1']).toBe(2);
+  });
+});

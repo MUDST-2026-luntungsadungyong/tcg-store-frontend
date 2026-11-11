@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Trash2, Trophy } from 'lucide-react';
+import { CheckCircle2, CircleDashed, Trash2, Trophy } from 'lucide-react';
 import type { CollectionEntry } from '@/entities/card/model/types';
 import { ConditionLabel } from '@/shared/components/ConditionLabel';
 
@@ -7,10 +7,18 @@ interface CollectionCardProps {
   entry: CollectionEntry;
   onDelete?: (id: string) => void;
   isDeleting?: boolean;
+  visitorOwnedQuantity?: number | null;
 }
 
-export function CollectionCard({ entry, onDelete, isDeleting }: CollectionCardProps) {
+export function CollectionCard({
+  entry,
+  onDelete,
+  isDeleting,
+  visitorOwnedQuantity,
+}: CollectionCardProps) {
   const card = entry.listing;
+  const showComparison = typeof visitorOwnedQuantity === 'number';
+  const visitorOwnsCard = showComparison && visitorOwnedQuantity > 0;
 
   return (
     <article className="group relative flex flex-col gap-2 overflow-hidden rounded-xl border border-white/10 bg-bg-card p-2 shadow-[0_16px_34px_rgba(0,0,0,0.16)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-brand-blue/45 hover:shadow-[0_20px_42px_rgba(0,0,0,0.26)] sm:flex-row sm:items-center sm:gap-4 sm:rounded-2xl sm:p-4">
@@ -26,13 +34,13 @@ export function CollectionCard({ entry, onDelete, isDeleting }: CollectionCardPr
         />
       </Link>
 
-      <div className="flex min-w-0 w-full flex-1 items-start justify-between gap-3 py-1 sm:w-auto sm:self-stretch">
+      <div className="flex min-w-0 w-full flex-1 items-start justify-between gap-3 py-1 pb-8 sm:w-auto sm:self-stretch sm:pb-1 sm:pr-12">
         <Link
           to={`/cards/${card.id}`}
           className="min-w-0 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-card"
           title={`View details of ${card.name}`}
         >
-          <h3 className="truncate pr-7 text-xs font-semibold text-gray-100 transition-colors group-hover:text-brand-blue sm:pr-0 sm:text-xl">
+          <h3 className="truncate pr-7 text-sm font-semibold text-gray-100 transition-colors group-hover:text-brand-blue sm:pr-0 sm:text-xl">
             {card.name}
           </h3>
           <p className="mt-1 truncate text-xs text-gray-400 sm:text-sm">
@@ -49,6 +57,31 @@ export function CollectionCard({ entry, onDelete, isDeleting }: CollectionCardPr
               <span className="truncate text-[11px] text-gray-400 sm:text-xs">· {card.tournament}</span>
             )}
           </div>
+
+          {showComparison && (
+            <div className="mt-2.5">
+              <span
+                data-testid="card-comparison-badge"
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${
+                  visitorOwnsCard
+                    ? 'border-status-success/40 bg-status-success/15 text-status-success'
+                    : 'border-brand-gold/30 bg-brand-gold/10 text-brand-gold'
+                }`}
+              >
+                {visitorOwnsCard ? (
+                  <>
+                    <CheckCircle2 size={12} aria-hidden="true" />
+                    {`คุณครอบครองการ์ดใบนี้แล้ว ${visitorOwnedQuantity} ใบ`}
+                  </>
+                ) : (
+                  <>
+                    <CircleDashed size={12} aria-hidden="true" />
+                    คุณยังไม่มีการ์ดใบนี้
+                  </>
+                )}
+              </span>
+            </div>
+          )}
         </Link>
 
         {onDelete && (

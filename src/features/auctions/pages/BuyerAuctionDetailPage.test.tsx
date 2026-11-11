@@ -66,6 +66,18 @@ describe('BuyerAuctionDetailPage (Person 1: Auction Rules & Bid Flow)', () => {
     mockCurrentUser = null;
   });
 
+  it('shows the frozen countdown and prevents bids while paused', async () => {
+    mockCurrentUser = { id: '77', fullName: 'Buyer' };
+    const pausedAt = new Date(Date.now() - 3600000);
+    vi.spyOn(buyerAuctionApi, 'detail').mockResolvedValue({ ...baseAuction, status: 'PAUSED', pausedAt: pausedAt.toISOString(), endAt: new Date(pausedAt.getTime() + 7200000).toISOString() });
+    renderPage();
+    expect(await screen.findByText(/This auction is paused for review/)).toBeInTheDocument();
+    expect(screen.getByText('2h 0m')).toBeInTheDocument();
+    expect(screen.queryByTestId('winning-result-banner')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'เสนอราคา' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /ซื้อทันที/ })).not.toBeInTheDocument();
+  });
+
   it('blocks bidding and buyout when the buyer is banned', async () => {
     mockCurrentUser = { id: '99', fullName: 'Buyer' };
     vi.mocked(defaultCaseApi.penalty).mockResolvedValue({ activeStrikes: 2, bannedUntil: new Date(Date.now() + 86400000).toISOString() });

@@ -80,6 +80,8 @@ export interface ReservationOrder {
   discountAmount?: number;
   voucherCode?: string;
   status: ReservationStatus;
+  trackingNumber?: string;
+  shippingCarrier?: string;
   createdAt: string;
   paymentConfirmedAt?: string;
   sentAt?: string;

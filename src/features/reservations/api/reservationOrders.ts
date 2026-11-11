@@ -86,6 +86,8 @@ interface BackendOrderResponse {
   sellerFacebook?: string;
   sellerOtherContact?: string;
   status: string;
+  trackingNumber?: string;
+  shippingCarrier?: string;
   totalAmount?: number;
   totalPrice?: number;
   platformFee?: number;
@@ -376,6 +378,8 @@ export function normalizeReservationOrder(
     discountAmount: (record as any).discountAmount ? Number((record as any).discountAmount) : 0,
     voucherCode: (record as any).voucherCode ?? (record as any).voucherCodeSnapshot ?? undefined,
     status: normalizeStatus(record.status),
+    trackingNumber: record.trackingNumber || undefined,
+    shippingCarrier: record.shippingCarrier || undefined,
     createdAt: String(record.createdAt ?? new Date(0).toISOString()),
     updatedAt: (record as any).updatedAt ? String((record as any).updatedAt) : undefined,
     paymentConfirmedAt: record.paymentConfirmedAt,
@@ -474,6 +478,8 @@ function transitionMockOrder(
   orderId: string,
   sellerId: string,
   status: Extract<MockReservationStatus, 'FULFILLED' | 'SENT'>,
+  trackingNumber?: string,
+  shippingCarrier?: string,
 ): ReservationOrder {
   initMockStorage();
   const reservations = storage.getReservations();
@@ -497,6 +503,8 @@ function transitionMockOrder(
           ...order,
           status,
           sentAt: timestamp,
+          trackingNumber,
+          shippingCarrier,
           ownershipTransferredAt: timestamp,
         };
 
@@ -514,7 +522,7 @@ function transitionMockOrder(
         recipientId: order.buyerId,
         type: 'ORDER_STATUS_CHANGED',
         title: 'Reservation shipped',
-        message: 'The seller marked your reservation as sent. It is now in your collection.',
+        message: `The seller marked your reservation as sent.${trackingNumber ? ` Tracking number: ${trackingNumber}.` : ''}${shippingCarrier ? ` Carrier: ${shippingCarrier}.` : ''}`,
         orderId: order.id,
         createdAt: timestamp,
       },
@@ -582,6 +590,8 @@ export function confirmSellerPayment(
 export function markOrderSent(
   orderId: string,
   sellerId: string,
+  trackingNumber?: string,
+  shippingCarrier?: string,
 ): Promise<ReservationOrder> {
   if (!ENV.ENABLE_MOCK_API) {
     return Promise.reject(
@@ -591,7 +601,7 @@ export function markOrderSent(
       ),
     );
   }
-  return Promise.resolve().then(() => transitionMockOrder(orderId, sellerId, 'SENT'));
+  return Promise.resolve().then(() => transitionMockOrder(orderId, sellerId, 'SENT', trackingNumber, shippingCarrier));
 }
 
 export const reservationOrdersApi = {

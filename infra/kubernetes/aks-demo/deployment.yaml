@@ -57,7 +57,8 @@ spec:
               mountPath: /tmp
       volumes:
         - name: caddy-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: tcg-store-frontend-caddy-data
         - name: caddy-config
           emptyDir: {}
         - name: tmp

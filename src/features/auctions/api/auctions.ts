@@ -326,3 +326,16 @@ export function auctionError(error: unknown, fallback: string): string {
   if (!isAxiosError<{ message?: string }>(error)) return fallback;
   return error.response?.data?.message || fallback;
 }
+
+export interface DefaultCaseHistory { action: string; reason: string; adminId: number; createdAt: string }
+export interface DefaultCase { id: number; auctionId: number; orderId: number; orderNumber?: string; buyerId: number; sellerId: number; reportReason: string; status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVERSED'; createdAt: string; decidedAt: string | null; decisionReason: string | null; history: DefaultCaseHistory[] }
+export interface CasePage { content: DefaultCase[]; number: number; totalPages: number; totalElements: number; size: number }
+export interface AuctionPenalty { activeStrikes: number; bannedUntil: string | null }
+export const defaultCaseApi = {
+  mine: async (page = 0) => (await apiClient.get<CasePage>('/auction-default-cases/me', { params: { page, size: 20 } })).data,
+  penalty: async () => (await apiClient.get<AuctionPenalty>('/auction-default-cases/penalty')).data,
+  admin: async (page = 0) => (await apiClient.get<CasePage>('/admin/auction-default-cases', { params: { page, size: 20 } })).data,
+  decide: async (id: number, action: 'approve' | 'reject' | 'reverse', reason: string) =>
+    (await apiClient.post<DefaultCase>(`/admin/auction-default-cases/${id}/${action}`, { reason })).data,
+};
+export const isAuctionBanned = (penalty: AuctionPenalty) => Boolean(penalty.bannedUntil && Date.parse(penalty.bannedUntil) > Date.now());

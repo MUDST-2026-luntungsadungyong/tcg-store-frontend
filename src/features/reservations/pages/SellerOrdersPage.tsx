@@ -688,6 +688,8 @@ export function SellerOrdersPage() {
             Please provide a reason for cancelling this order. This note will be recorded in the order timeline.
           </p>
           <textarea
+            aria-label="Reason for cancellation"
+            maxLength={2000}
             value={cancelNote}
             onChange={(e) => setCancelNote(e.target.value)}
             className="w-full h-24 p-3 rounded-lg border border-white/10 bg-bg-card text-white text-sm"
@@ -696,7 +698,7 @@ export function SellerOrdersPage() {
           {pendingOrder?.orderType === 'AUCTION' && pendingOrder.status === 'AWAITING_BUYER_CONTACT' && (
             <label className="flex items-start gap-2 text-sm text-gray-300">
               <input type="checkbox" checked={noBuyerContact} onChange={event => setNoBuyerContact(event.target.checked)} />
-              The winner never contacted me and I received no payment. Allow a second-chance offer for this auction.
+              The winner never contacted me and I received no payment. This creates a case for admin review and allows a second-chance offer. No penalty is applied until an admin approves the case.
             </label>
           )}
           <div className="flex justify-end gap-2 pt-4">

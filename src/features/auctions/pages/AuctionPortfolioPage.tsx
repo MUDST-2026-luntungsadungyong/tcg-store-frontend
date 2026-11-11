@@ -3,9 +3,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { Button } from '@/shared/components/Button';
-import { auctionError, buyerAuctionApi } from '../api/auctions';
+import { auctionError, buyerAuctionApi, defaultCaseApi, isAuctionBanned } from '../api/auctions';
 import { auctionDate, money } from '../model/auctionFormat';
-import { useAuctionResource } from '../model/useAuctionResource';
+import { useAuctionClock, useAuctionResource } from '../model/useAuctionResource';
 
 export function AuctionPortfolioPage() {
   const user = useAuthStore(state => state.user);
@@ -16,12 +16,14 @@ export function AuctionPortfolioPage() {
 }
 
 function AuctionPortfolio() {
+  const [casePage, setCasePage] = useState(0);
+  useAuctionClock(30000);
   const fetchPortfolio = useCallback(async () => {
-    const [portfolio, watchlist, offers] = await Promise.all([
-      buyerAuctionApi.portfolio(), buyerAuctionApi.watchlist(), buyerAuctionApi.secondChanceOffers(),
+    const [portfolio, watchlist, offers, penalty, cases] = await Promise.all([
+      buyerAuctionApi.portfolio(), buyerAuctionApi.watchlist(), buyerAuctionApi.secondChanceOffers(), defaultCaseApi.penalty(), defaultCaseApi.mine(casePage),
     ]);
-    return { portfolio, watchlist, offers };
-  }, []);
+    return { portfolio, watchlist, offers, penalty, cases };
+  }, [casePage]);
   const { data, error, loading, reload } = useAuctionResource(fetchPortfolio, 'โหลดพอร์ตการประมูลไม่สำเร็จ');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -29,7 +31,7 @@ function AuctionPortfolio() {
   const { hash } = useLocation();
 
   useEffect(() => {
-    if (data && hash.startsWith('#auction-order-')) {
+    if (data && (hash.startsWith('#auction-order-') || hash === '#auction-participation')) {
       document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' });
     }
   }, [data, hash]);
@@ -59,6 +61,14 @@ function AuctionPortfolio() {
     {message && <p role="status">{message}</p>}
     {loading && <p role="status">กำลังโหลด…</p>}
     {data && <>
+      <section id="auction-participation" className="scroll-mt-24 break-words space-y-2 rounded-lg bg-bg-elevated p-4" aria-label="Auction participation">
+        <h2 className="text-lg font-semibold">Auction participation</h2>
+        <p>Active strikes: {data.penalty.activeStrikes}</p>
+        <p>{isAuctionBanned(data.penalty) ? `Banned until ${auctionDate(data.penalty.bannedUntil)} (Thai time)` : 'You can participate in auctions.'}</p>
+        <p>First approved case: warning; second: 7-day ban; third and later: 30-day ban.</p>
+        {data.cases.content.length === 0 ? <p>No reported cases.</p> : data.cases.content.map(item => <div key={item.id} className="space-y-1 border-t border-white/10 pt-2"><p>Case #{item.id} · {item.status} · {auctionDate(item.createdAt)}</p><p>Report reason: {item.reportReason}</p>{item.decisionReason && <p>Decision reason: {item.decisionReason}</p>}<p><Link className="underline" to={`/orders/${item.orderId}`}>Order #{item.orderId}</Link> · <Link className="underline" to={`/auctions/${item.auctionId}`}>Auction #{item.auctionId}</Link></p>{item.history?.length > 0 && <details><summary>Review history</summary><ul>{item.history.map((entry, index) => <li key={index}>{entry.action} · {auctionDate(entry.createdAt)} · Admin #{entry.adminId}: {entry.reason}</li>)}</ul></details>}</div>)}
+        {data.cases.totalPages > 1 && <div className="flex items-center gap-3"><Button variant="secondary" disabled={casePage === 0} onClick={() => setCasePage(casePage - 1)}>Previous cases</Button><span>Page {casePage + 1} of {data.cases.totalPages}</span><Button variant="secondary" disabled={casePage + 1 >= data.cases.totalPages} onClick={() => setCasePage(casePage + 1)}>Next cases</Button></div>}
+      </section>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           ['การเสนอราคา', data.portfolio.bidsPlaced],
@@ -109,7 +119,7 @@ function AuctionPortfolio() {
           <Link to={`/auctions/${offer.auctionId}`} className="font-semibold underline">{offer.cardName}</Link>
           <p>{offer.quantity ?? 1} ใบ · {money(offer.offerPrice)} ทั้งล็อต · ตอบภายใน {auctionDate(offer.expiresAt)} (เวลาไทย)</p>
           <div className="flex gap-2">
-            <Button disabled={busy} onClick={() => void run(
+            <Button disabled={busy || isAuctionBanned(data.penalty)} onClick={() => void run(
               () => buyerAuctionApi.respondSecondChance(offer.id, true), 'รับข้อเสนอและสร้างออเดอร์แล้ว',
             )}>รับข้อเสนอ</Button>
             <Button disabled={busy} variant="secondary" onClick={() => void run(

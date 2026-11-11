@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ShieldCheck } from 'lucide-react';
 import { Button } from '@/shared/components/Button';
 import { Modal } from '@/shared/components/Modal';
+import { Panel } from '@/shared/components/PageLayout';
 import { auctionDate } from '../model/auctionFormat';
 import { useAuctionResource } from '../model/useAuctionResource';
 import { auctionError, defaultCaseApi, type DefaultCase } from '../api/auctions';
@@ -26,10 +28,10 @@ function DefaultCases({ admin }: { admin: boolean }) {
   }
   return <main className="mx-auto max-w-5xl space-y-5 p-5">
     <h1 className="text-2xl font-bold">Default cases</h1>
-    <p className="text-text-secondary">Reports are reviewed by an administrator before any penalty. Approved cases: first warning, second 7-day ban, third and later 30-day ban.</p>
+    <p className="text-text-secondary">Review reports and decisions under the auction strike policy.</p>
     {loading && <p role="status">Loading cases…</p>}
     {error && <p role="alert">{error} <button className="underline" onClick={() => void reload()}>Try again</button></p>}
-    {data && !data.content.length && <p>No default cases yet.</p>}
+    {data && !loading && !error && !data.content.length && <Panel className="flex min-h-[260px] flex-col items-center justify-center px-6 py-12 text-center sm:min-h-[340px]"><ShieldCheck aria-hidden="true" size={36} className="mb-5 text-brand-gold" /><h2 className="text-xl font-semibold">All clear</h2><p className="mt-2 text-sm font-medium">No default cases yet</p><p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-text-secondary">{admin ? 'New reports appear here automatically. No penalty is applied without review.' : 'Your reports and their review history will appear here automatically. No penalty is applied without review.'}</p>{admin && <Link to="/admin/auctions" className="mt-5 text-sm font-semibold text-brand-blue underline underline-offset-4">View auction monitoring</Link>}</Panel>}
     <div className="space-y-3">{data?.content.map(item => <article key={item.id} className="break-words space-y-2 rounded-xl border border-white/10 bg-bg-elevated p-4" data-testid={`default-case-${item.id}`}>
       <h2 className="font-semibold">Case #{item.id} · {item.status}</h2>
       <p><Link className="underline" to={`/auctions/${item.auctionId}`}>Auction #{item.auctionId}</Link> · <Link className="underline" to={admin ? `/admin/orders?orderNumber=${encodeURIComponent(item.orderNumber || String(item.orderId))}` : `/workspace/orders?orderId=${item.orderId}`}>{item.orderNumber || `Order #${item.orderId}`}</Link>{admin && ` · Buyer #${item.buyerId} · Seller #${item.sellerId}`}</p>

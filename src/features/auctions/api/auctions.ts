@@ -2,7 +2,7 @@ import { isAxiosError } from 'axios';
 import apiClient from '@/shared/api/client';
 
 export type AuctionStatus =
-  | 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'ENDED'
+  | 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'PAUSED' | 'ENDED'
   | 'AWAITING_BUYER_CONTACT' | 'COMPLETED' | 'CANCELLED'
   | 'BUYOUT_COMPLETED' | 'RESERVE_NOT_MET' | 'UNSOLD_NO_BIDS' | 'DEFAULTED';
 export type RequestStatus = 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
@@ -106,6 +106,7 @@ export interface AuctionSummary {
 }
 
 export interface BuyerAuctionDetail {
+  pausedAt?: string | null;
   language?: string;
   quantity?: number;
   id: number;

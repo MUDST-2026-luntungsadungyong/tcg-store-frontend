@@ -38,6 +38,8 @@ const mainLinks: NavItem[] = [
 ];
 
 const monitoringLinks: NavItem[] = [
+  { name: 'Auction disputes', to: '/admin/auction-disputes', icon: Gavel },
+  { name: 'Auction monitoring', to: '/admin/auctions', icon: Gavel },
   { name: 'Order monitoring', to: '/admin/orders', icon: ReceiptText },
   { name: 'Audit trail', to: '/admin/audit-logs', icon: ClipboardList },
 ];

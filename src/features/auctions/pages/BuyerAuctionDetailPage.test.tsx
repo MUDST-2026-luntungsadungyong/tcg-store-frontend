@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BuyerAuctionDetail } from '../api/auctions';
-import { buyerAuctionApi } from '../api/auctions';
+import { buyerAuctionApi, defaultCaseApi } from '../api/auctions';
 import { BuyerAuctionDetailPage } from './BuyerAuctionDetailPage';
 
 let mockCurrentUser: { id: string; fullName: string } | null = null;
@@ -57,12 +57,24 @@ function renderPage(auctionId = 42) {
 
 describe('BuyerAuctionDetailPage (Person 1: Auction Rules & Bid Flow)', () => {
   beforeEach(() => {
+    vi.spyOn(defaultCaseApi, 'penalty').mockResolvedValue({ activeStrikes: 0, bannedUntil: null });
     vi.spyOn(buyerAuctionApi, 'bids').mockResolvedValue([]);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     mockCurrentUser = null;
+  });
+
+  it('blocks bidding and buyout when the buyer is banned', async () => {
+    mockCurrentUser = { id: '99', fullName: 'Buyer' };
+    vi.mocked(defaultCaseApi.penalty).mockResolvedValue({ activeStrikes: 2, bannedUntil: new Date(Date.now() + 86400000).toISOString() });
+    vi.spyOn(buyerAuctionApi, 'detail').mockResolvedValue({ ...baseAuction, status: 'ACTIVE', currentPrice: 3000, endAt: new Date(Date.now() + 3600000).toISOString() });
+    renderPage();
+    expect(await screen.findByText(/Auction participation is suspended/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /ซื้อทันที/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'เสนอราคา' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'ตั้งราคาสูงสุด' })).not.toBeInTheDocument();
   });
 
   it('displays Buy It Now price clearly', async () => {

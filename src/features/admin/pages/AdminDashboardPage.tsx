@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Boxes, CalendarDays, CheckCircle2, ClipboardCheck, Info, RefreshCw, ShoppingBag, Store, Tag } from 'lucide-react';
+import { ArrowRight, Boxes, CalendarDays, CheckCircle2, ClipboardCheck, Info, RefreshCw, ShoppingBag, Store, Tag, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import apiClient from '@/shared/api/client';
 
@@ -19,6 +19,7 @@ type Dashboard = {
   listedCards: number;
   totalOrders: number;
   totalOrderAmount: number;
+  totalPlatformFee: number;
   trends?: DailyTrend[];
 };
 
@@ -327,6 +328,13 @@ export function AdminDashboardPage() {
           note: data.totalOrders ? `${data.totalOrders} completed order${data.totalOrders === 1 ? '' : 's'}` : 'No comparison data',
           icon: ShoppingBag,
           color: 'text-brand-gold',
+        },
+        {
+          label: 'Platform fee revenue',
+          value: money(data.totalPlatformFee),
+          note: 'Collected from active marketplace and auction orders',
+          icon: Wallet,
+          color: 'text-emerald-300',
         },
         {
           label: 'Pending approvals',

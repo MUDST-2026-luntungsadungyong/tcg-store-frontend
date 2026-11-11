@@ -93,6 +93,7 @@ const { mockOrdersList, mockSummary, mockUpdateStatus } = vi.hoisted(() => {
 
   const mockSummary = {
     totalRevenue: 3650,
+    totalPlatformFee: 182.5,
     totalCost: 2150,
     netProfit: 1500,
     totalOrders: 2,
@@ -123,6 +124,10 @@ vi.mock('../api/sellerOrders', () => ({
     };
   }),
   fetchProfitSummary: vi.fn().mockResolvedValue(mockSummary),
+  fetchMonthlyDashboard: vi.fn().mockResolvedValue({
+    selectedMonth: { year: 2026, month: 9, grossSales: 3650, platformFee: 182.5, netRevenue: 3467.5, totalCost: 2150, netProfit: 1317.5, orderCount: 2 },
+    lastTwelveMonths: [{ year: 2026, month: 9, grossSales: 3650, platformFee: 182.5, netRevenue: 3467.5, totalCost: 2150, netProfit: 1317.5, orderCount: 2 }],
+  }),
   updateSellerOrderStatus: (...args: unknown[]) => mockUpdateStatus(...args),
 }));
 
@@ -156,7 +161,9 @@ describe('SellerOrdersPage (SCRUM-27)', () => {
       expect(screen.getByText('Total Cost')).toBeInTheDocument();
       expect(screen.getByText(/^Net Profit/)).toBeInTheDocument();
       expect(screen.getByText('Orders Overview')).toBeInTheDocument();
-      expect(screen.getByText(/3,650\.00/)).toBeInTheDocument();
+      expect(screen.getByText('Monthly Sales Dashboard')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Export CSV/i })).toBeInTheDocument();
+      expect(screen.getAllByText(/3,650\.00/).length).toBeGreaterThan(0);
       expect(screen.getByText(/1,500\.00/)).toBeInTheDocument();
     });
   });

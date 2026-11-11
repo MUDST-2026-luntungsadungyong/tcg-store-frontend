@@ -8,7 +8,7 @@ import { Input } from '@/shared/components/Input';
 import { Modal } from '@/shared/components/Modal';
 import { PageContainer, PageHeader, Panel } from '@/shared/components/PageLayout';
 import { ENV } from '@/shared/config/env';
-import { auctionError, buyerAuctionApi } from '../api/auctions';
+import { auctionError, buyerAuctionApi, defaultCaseApi, isAuctionBanned } from '../api/auctions';
 import { AuctionCardSummary, AuctionLoading, AuctionStatusBadge, DetailRows } from '../components/AuctionUI';
 import { auctionDate, countdown, money } from '../model/auctionFormat';
 import { useAuctionClock, useAuctionResource } from '../model/useAuctionResource';
@@ -25,9 +25,9 @@ export function BuyerAuctionDetailPage() {
 function AuctionRoom({ id }: { id: number }) {
   const user = useAuthStore(state => state.user);
   const fetchRoom = useCallback(async () => {
-    const [auction, bids] = await Promise.all([buyerAuctionApi.detail(id), buyerAuctionApi.bids(id)]);
-    return { auction, bids, offset: Date.parse(auction.serverTime) - Date.now() };
-  }, [id]);
+    const [auction, bids, penalty] = await Promise.all([buyerAuctionApi.detail(id), buyerAuctionApi.bids(id), user ? defaultCaseApi.penalty() : Promise.resolve(null)]);
+    return { auction, bids, penalty, offset: Date.parse(auction.serverTime) - Date.now() };
+  }, [id, user]);
   const { data, error, loading, reload } = useAuctionResource(fetchRoom, 'โหลดห้องประมูลไม่สำเร็จ', 5000);
   const isLive = data?.auction.status === 'ACTIVE' || data?.auction.status === 'SCHEDULED';
   useEffect(() => {
@@ -65,7 +65,8 @@ function AuctionRoom({ id }: { id: number }) {
   const now = clock + offset;
   const open = auction.status === 'ACTIVE' && Boolean(auction.endAt && Date.parse(auction.endAt) > now);
   const owner = Boolean(user && String(user.id) === String(auction.sellerId));
-  const canBid = open && Boolean(user) && !owner && !error;
+  const banned = Boolean(data.penalty && isAuctionBanned(data.penalty));
+  const canBid = open && Boolean(user) && !owner && !error && !banned;
   const isWinner = Boolean(user && auction.winnerId != null && Number(user.id) === Number(auction.winnerId));
   const isEnded = !open && auction.status !== 'SCHEDULED' && auction.status !== 'DRAFT';
   const showSellerOrderBtn = owner && (auction.orderId != null || auction.winnerId != null);
@@ -198,6 +199,7 @@ function AuctionRoom({ id }: { id: number }) {
             Seller Order Management
           </ButtonLink>
         )}
+        {banned && <p role="status">Auction participation is suspended until {auctionDate(data.penalty?.bannedUntil)}. <Link className="underline" to="/auctions/me">View your cases</Link></p>}
         {!user && <ButtonLink to="/login">เข้าสู่ระบบเพื่อร่วมประมูล</ButtonLink>}
         {user && <Button type="button" variant="secondary" disabled={busy} onClick={() => void transact({ mode: 'watch' })}>
           {auction.isWatching ? 'นำออกจาก Watchlist' : 'เพิ่มใน Watchlist'}

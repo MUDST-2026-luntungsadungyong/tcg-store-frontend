@@ -3,9 +3,11 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  Gavel,
   Layers3,
   Menu,
   Store,
+  Tag,
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -24,12 +26,18 @@ const workspaceLinks = [
     to: '/workspace/orders',
     icon: ClipboardList,
   },
+  {
+    name: 'Vouchers',
+    to: '/vouchers',
+    icon: Tag,
+  },
   { name: 'Store profile', to: '/workspace/store-settings', icon: Store },
   {
     name: 'Notifications',
     to: '/notifications',
     icon: Bell,
   },
+  { name: 'My Auctions', to: '/workspace/auctions', icon: Gavel },
 ] as const;
 
 export function WorkspaceSidebar() {

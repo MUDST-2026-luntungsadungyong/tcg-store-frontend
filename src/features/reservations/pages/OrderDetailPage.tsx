@@ -223,7 +223,8 @@ export function OrderDetailPage() {
 
   const statusConfig = STATUS_BANNER_CONFIGS[order.status] ?? STATUS_BANNER_CONFIGS.PENDING;
   const StatusIcon = statusConfig.icon;
-  const canCancel = order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED';
+  const canCancel = order.orderType !== 'AUCTION'
+    && (order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'RESERVED');
   const canMarkReceived = order.status === 'SENT';
 
   const orderDisplayNumber = order.orderNumber || order.id;
@@ -440,6 +441,12 @@ export function OrderDetailPage() {
                 <span>Platform Reservation Fee</span>
                 <span className="text-emerald-400">Free</span>
               </div>
+              {order.discountAmount && order.discountAmount > 0 ? (
+                <div className="flex justify-between text-sm text-emerald-400 font-semibold">
+                  <span>Voucher Discount {order.voucherCode ? `(${order.voucherCode})` : ''}</span>
+                  <span>-฿{order.discountAmount.toLocaleString()}</span>
+                </div>
+              ) : null}
               <div className="my-1 border-t border-white/10" />
               <div className="flex items-baseline justify-between">
                 <span className="text-base font-bold text-white">Total Order Amount</span>

@@ -18,10 +18,11 @@ export interface ReservationCartCheckoutResult {
  */
 export async function checkoutReservationCart(
   buyerId: string,
+  voucherCode?: string,
 ): Promise<ReservationCartCheckoutResult> {
   const items = useReservationCartStore.getState().items;
   const preview = previewReservationOrders(items);
-  const orders = await createReservationOrders({ buyerId, items });
+  const orders = await createReservationOrders({ buyerId, items, voucherCode });
   useReservationCartStore.getState().clearCart();
   return { orders, preview };
 }

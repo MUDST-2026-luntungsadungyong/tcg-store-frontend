@@ -28,6 +28,25 @@ function login(email: string, password: string) {
   cy.get('button[aria-label="Open account menu"]', { timeout: 15000 }).should('be.visible');
 }
 
+type SellerListing = {
+  id: string;
+  name: string;
+  actualImageFrontUrl: string | null;
+  actualImageBackUrl: string | null;
+};
+
+function readSellerListings(apiBaseUrl: string) {
+  return cy.window().then((win) => {
+    const token = win.sessionStorage.getItem('token') ?? win.localStorage.getItem('token');
+    if (!token) throw new Error('Seller session is missing');
+    return cy.request<SellerListing[]>({
+      url: `${apiBaseUrl}/seller/listings`,
+      headers: { Authorization: `Bearer ${token}` },
+      log: false,
+    }).its('body', { log: false });
+  });
+}
+
 (liveE2EEnabled ? describe : describe.skip)('Live staging reservation journey', () => {
   let sellerEmail: string;
   let sellerPassword: string;
@@ -65,9 +84,13 @@ function login(email: string, password: string) {
   });
 
   it('logs in, creates a seller listing, reserves it as a buyer, and enforces seller authorization', () => {
+    const previousListingIds = new Set<string>();
     login(sellerEmail, sellerPassword);
     cy.visit('/workspace/listings');
     cy.contains('h1', 'Listing Management').should('be.visible');
+    readSellerListings(apiBaseUrl).then(listings => {
+      listings.forEach(listing => previousListingIds.add(String(listing.id)));
+    });
 
     cy.contains('button', 'Add Listing').click();
     cy.get('#seller-listing-card-search').clear().type(cardQuery);
@@ -85,16 +108,18 @@ function login(email: string, password: string) {
     // alone does not make an unknown/special rarity optional under US-20.
     uploadCardPhoto('front', 'staging-card-front.png');
     uploadCardPhoto('back', 'staging-card-back.png');
-    cy.intercept('POST', '**/seller/listings').as('createListing');
+    // Leave the multipart request untouched so the browser sends the original image bytes.
     cy.get('[role="dialog"]').contains('button', 'Add Listing').click();
-    cy.wait('@createListing').then(({ response }) => {
-      expect(response?.statusCode).to.eq(201);
-      const body = response?.body;
-      const listing = body.listing ?? body.data?.listing ?? body.data ?? body;
-      expect(listing.id).to.exist;
-      cy.wrap(String(listing.id)).as('createdListingId');
-    });
     cy.contains('Listing added', { timeout: 15000 }).should('be.visible');
+    cy.get('@listedCardName').then((cardName) => {
+      readSellerListings(apiBaseUrl).then(listings => {
+        const created = listings.filter(listing => listing.name === cardName && !previousListingIds.has(String(listing.id)));
+        expect(created, 'newly persisted seller listing').to.have.length(1);
+        expect(created[0].actualImageFrontUrl).to.be.a('string').and.have.length.greaterThan(0);
+        expect(created[0].actualImageBackUrl).to.be.a('string').and.have.length.greaterThan(0);
+        cy.wrap(String(created[0].id)).as('createdListingId');
+      });
+    });
 
     cy.get('button[aria-label="Open account menu"]').click();
     cy.get('[role="menuitem"]').contains('Logout').click();

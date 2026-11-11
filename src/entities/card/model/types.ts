@@ -39,6 +39,10 @@ export interface CardListing {
 }
 
 export interface CollectionEntry {
+  auctionWon?: boolean;
+  provenance?: string;
+  gradingCompany?: string;
+  grade?: string;
   id: string;
   ownerId: string;
   listing: CardListing;

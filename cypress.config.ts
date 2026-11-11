@@ -4,6 +4,8 @@ import { execFileSync } from 'node:child_process';
 export default defineConfig({
   expose: {
     LIVE_E2E: process.env.CYPRESS_LIVE_E2E,
+    AUCTION_LIVE_E2E: process.env.CYPRESS_AUCTION_LIVE_E2E,
+    E2E_AUCTION_CARD_NAME: process.env.CYPRESS_E2E_AUCTION_CARD_NAME,
     API_BASE_URL: process.env.CYPRESS_API_BASE_URL,
     BACKEND_DIGEST: process.env.CYPRESS_BACKEND_DIGEST,
     E2E_CARD_QUERY: process.env.CYPRESS_E2E_CARD_QUERY,

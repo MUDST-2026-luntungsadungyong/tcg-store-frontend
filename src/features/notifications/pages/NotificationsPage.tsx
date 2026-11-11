@@ -97,13 +97,22 @@ export function NotificationsPage() {
 
   const getAction = (notification: Notification): { label: string; destination: string } | null => {
     if (notification.actionPath && /^\/(auctions|orders|workspace\/(?:auctions|orders))(?:\/|\?|$)/.test(notification.actionPath)) {
-      return { label: 'View auction update', destination: notification.actionPath };
+      return {
+        label: notification.type.startsWith('AUCTION_') ? 'View auction update' : 'View order',
+        destination: notification.actionPath,
+      };
     }
     switch (notification.type) {
       case 'ORDER_RESERVED':
-        return notification.orderId ? { label: 'View order', destination: '/workspace/orders' } : null;
+      case 'ORDER_CANCELLED_BUYER':
+      case 'ORDER_FULFILLED_SELLER':
+        return notification.orderId ? { label: 'View order', destination: `/workspace/orders?orderId=${encodeURIComponent(notification.orderId)}` } : null;
+      case 'ORDER_PLACED_BUYER':
+      case 'ORDER_CONFIRMED_BUYER':
+      case 'ORDER_CANCELLED_SELLER':
+      case 'ORDER_SENT_BUYER':
       case 'ORDER_STATUS_CHANGED':
-        return notification.orderId ? { label: 'View order', destination: '/orders' } : null;
+        return notification.orderId ? { label: 'View order', destination: `/orders/${encodeURIComponent(notification.orderId)}` } : null;
       case 'SELLER_APPLICATION_SUBMITTED':
         return notification.sellerApplicationId ? { label: 'Review application', destination: `/admin/seller-applications?applicationId=${encodeURIComponent(notification.sellerApplicationId)}` } : null;
       case 'SELLER_APPLICATION_APPROVED':

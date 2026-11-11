@@ -32,6 +32,8 @@ export interface SellerOrder {
   id: number | string;
   orderNumber: string;
   status: SellerOrderStatus;
+  trackingNumber?: string;
+  shippingCarrier?: string;
   orderType?: 'AUCTION' | 'DIRECT';
   buyerId?: number | string;
   buyerName?: string;
@@ -94,6 +96,8 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     id: order.id,
     orderNumber: order.orderNumber ?? String(order.id).toUpperCase(),
     status,
+    trackingNumber: order.trackingNumber,
+    shippingCarrier: order.shippingCarrier,
     buyerId: order.buyerId,
     buyerName: buyer?.name ?? `Buyer ${order.buyerId}`,
     buyerEmail: buyer?.email,
@@ -189,10 +193,12 @@ export async function updateSellerOrderStatus(
       const timestamp = new Date().toISOString();
       if (normalizedStatus === 'SENT' || normalizedStatus === 'FULFILLED') {
         const sellerId = useAuthStore.getState().user?.id ?? 'usr-3';
-        const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId);
+        const updated = await reservationOrdersApi.markOrderSent(String(orderId), sellerId, trackingNumber?.trim(), note?.trim());
         const storedReservations = storage.getReservations();
         const storedOrder = storedReservations.find((candidate) => String(candidate.id) === String(orderId));
         if (storedOrder) {
+          storedOrder.trackingNumber = trackingNumber?.trim();
+          storedOrder.shippingCarrier = note?.trim();
           storedOrder.logs = [
             ...(storedOrder.logs || []),
             {
@@ -200,8 +206,8 @@ export async function updateSellerOrderStatus(
               toStatus: 'SENT',
               changedByRole: 'SELLER',
               note: note
-                ? `${note} (Tracking / TAX: ${trackingNumber})`
-                : (trackingNumber ? `Tracking / TAX: ${trackingNumber}` : null),
+                ? `${note} (Tracking: ${trackingNumber})`
+                : (trackingNumber ? `Tracking: ${trackingNumber}` : null),
               createdAt: timestamp,
             },
           ];

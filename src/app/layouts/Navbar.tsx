@@ -51,7 +51,17 @@ export function Navbar() {
       resetNotifications();
       return;
     }
-    void refreshUnreadCount(`${userId}:${token}`);
+    const sessionKey = `${userId}:${token}`;
+    const refresh = () => void refreshUnreadCount(sessionKey);
+    refresh();
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refresh();
+    }, 60_000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, [isHydrating, token, userId, refreshUnreadCount, resetNotifications]);
 
   useEffect(() => {

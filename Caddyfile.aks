@@ -1,0 +1,13 @@
+tcgstore-demo-2026-11.malaysiawest.cloudapp.azure.com {
+    encode gzip
+
+    handle /api/* {
+        reverse_proxy tcg-store-backend.tcg-store-aks-demo.svc.cluster.local:80
+    }
+
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+}

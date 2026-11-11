@@ -208,6 +208,8 @@ Repository นี้รองรับระบบ CI/CD อัตโนมั�
 
 Frontend ใช้ Cloudflare Pages เป็นที่ deploy หลักเพียงแห่งเดียว ส่วน AKS ใช้รัน backend และ HTTPS API gateway:
 
+- Production Pages URL: `https://tcg-store-frontend.pages.dev/` (custom domain `tcgmihix.store` ผูกภายหลังเมื่อเข้าถึง GoDaddy DNS ได้)
+
 - Root directory: repository root (`/`)
 - Production branch: `main`
 - Build command: `npm ci --legacy-peer-deps && npm run build`

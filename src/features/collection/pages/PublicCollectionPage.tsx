@@ -397,16 +397,16 @@ export function PublicCollectionPage() {
 
         {/* Storefront-style Collector Header Section */}
         {!loading && owner && (
-          <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[.03] p-6 md:p-8 shadow-xl">
+          <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[.03] p-4 sm:p-6 md:p-8 shadow-xl">
             <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
               
-              <div className="flex items-start gap-5">
+              <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
                 {/* Collector Avatar */}
-                <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-brand-blue/20 to-brand-gold/20 text-2xl font-bold text-white shadow-md md:size-24 md:text-3xl">
+                <div className="relative flex size-16 sm:size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-brand-blue/20 to-brand-gold/20 text-xl sm:text-2xl font-bold text-white shadow-md md:size-24 md:text-3xl">
                   <Avatar name={isOwner ? currentUser?.name : owner.displayName} src={isOwner ? currentUser?.avatarUrl : owner.avatarUrl} className="size-full" />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold">
                       Collector Showcase
@@ -429,7 +429,7 @@ export function PublicCollectionPage() {
                       ))}
                   </div>
 
-                  <h1 className="mt-1 text-3xl font-bold tracking-tight text-white md:text-4xl">
+                  <h1 className="mt-1 break-words text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
                     {isOwner ? currentUser?.name : owner.displayName}
                   </h1>
 
@@ -438,7 +438,7 @@ export function PublicCollectionPage() {
                   </p>
 
                   {/* Badges / Stats Bar */}
-                  <div className="mt-4 flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-300">
+                  <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:gap-4 text-xs md:text-sm text-gray-300">
                     <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-bg-surface px-3 py-1.5">
                       <Layers size={14} className="text-brand-blue" />
                       <span><strong>{totalCardsCount}</strong> cards owned</span>
@@ -616,7 +616,7 @@ export function PublicCollectionPage() {
                 />
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid grid-cols-1 gap-2 xs:grid-cols-3 sm:flex sm:flex-wrap sm:items-center">
                 <Filter size={16} className="text-gray-400 ml-1 hidden sm:block" />
 
                 {/* Card Set Filter */}
@@ -624,7 +624,7 @@ export function PublicCollectionPage() {
                   value={selectedSet}
                   onChange={(e) => setSelectedSet(e.target.value)}
                   aria-label="Filter by card set"
-                  className="rounded-xl border border-white/10 bg-bg-card px-3 py-2 text-xs font-medium text-gray-300 focus:border-brand-blue focus:outline-none"
+                  className="w-full sm:w-auto rounded-xl border border-white/10 bg-bg-card px-3 py-2 text-xs font-medium text-gray-300 focus:border-brand-blue focus:outline-none"
                 >
                   <option value="ALL">All Sets</option>
                   {availableSets.map((setName) => (
@@ -639,7 +639,7 @@ export function PublicCollectionPage() {
                   value={selectedRarity}
                   onChange={(e) => setSelectedRarity(e.target.value)}
                   aria-label="Filter by rarity"
-                  className="rounded-xl border border-white/10 bg-bg-card px-3 py-2 text-xs font-medium text-gray-300 focus:border-brand-blue focus:outline-none"
+                  className="w-full sm:w-auto rounded-xl border border-white/10 bg-bg-card px-3 py-2 text-xs font-medium text-gray-300 focus:border-brand-blue focus:outline-none"
                 >
                   <option value="ALL">All Rarities</option>
                   <option value="Secret Rare">Secret Rare</option>
@@ -654,7 +654,7 @@ export function PublicCollectionPage() {
                   value={selectedCondition}
                   onChange={(e) => setSelectedCondition(e.target.value)}
                   aria-label="Filter by condition"
-                  className="rounded-xl border border-white/10 bg-bg-card px-3 py-2 text-xs font-medium text-gray-300 focus:border-brand-blue focus:outline-none"
+                  className="w-full sm:w-auto rounded-xl border border-white/10 bg-bg-card px-3 py-2 text-xs font-medium text-gray-300 focus:border-brand-blue focus:outline-none"
                 >
                   <option value="ALL">All Conditions</option>
                   <option value="NM">Near Mint (NM)</option>

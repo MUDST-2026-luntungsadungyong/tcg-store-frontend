@@ -263,7 +263,7 @@ export function MyCollectionPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
             {activeView === 'collection' ? (
               <button
                 type="button"
@@ -525,7 +525,7 @@ export function MyCollectionPage() {
 
         {/* Collection cards */}
         {activeView === 'collection' && !loading && !error && collection.length > 0 && (
-          <div id="seller-inventory-panel" role={isSeller ? 'tabpanel' : undefined} className="grid grid-cols-3 gap-3 pt-2 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+          <div id="seller-inventory-panel" role={isSeller ? 'tabpanel' : undefined} className="grid grid-cols-1 gap-3.5 pt-2 xs:grid-cols-2 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
             {collection.map((entry) => (
               <CollectionCard
                 key={entry.id}

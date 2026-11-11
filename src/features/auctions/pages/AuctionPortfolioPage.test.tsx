@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buyerAuctionApi } from '../api/auctions';
+import { buyerAuctionApi, defaultCaseApi } from '../api/auctions';
 import { AuctionPortfolioPage } from './AuctionPortfolioPage';
 
 let mockUser: { id: string } | null = { id: 'buyer' };
@@ -15,6 +15,8 @@ describe('AuctionPortfolioPage (US-18-3)', () => {
   beforeEach(() => {
     mockUser = { id: 'buyer' };
     vi.clearAllMocks();
+    vi.spyOn(defaultCaseApi, 'penalty').mockResolvedValue({ activeStrikes: 0, bannedUntil: null });
+    vi.spyOn(defaultCaseApi, 'mine').mockResolvedValue({ content: [], number: 0, size: 20, totalElements: 0, totalPages: 0 });
   });
 
   afterEach(() => {
@@ -31,6 +33,20 @@ describe('AuctionPortfolioPage (US-18-3)', () => {
 
     expect(screen.getByText('พอร์ตการประมูลของฉัน')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'เข้าสู่ระบบเพื่อดูพอร์ตและ Watchlist' })).toHaveAttribute('href', '/login');
+  });
+
+  it('shows case reasons and prevents accepting offers during a ban', async () => {
+    vi.mocked(defaultCaseApi.penalty).mockResolvedValue({ activeStrikes: 2, bannedUntil: new Date(Date.now() + 86400000).toISOString() });
+    vi.mocked(defaultCaseApi.mine).mockResolvedValue({ content: [{ id: 7, auctionId: 12, orderId: 42, buyerId: 1, sellerId: 2, reportReason: 'No contact', status: 'APPROVED', createdAt: '2026-11-11T00:00:00Z', decidedAt: null, decisionReason: 'Reviewed', history: [] }], number: 0, size: 20, totalElements: 1, totalPages: 1 });
+    vi.spyOn(buyerAuctionApi, 'portfolio').mockResolvedValue({ bidsPlaced: 1, auctionsWon: 0, winRatePercent: 0, totalInvested: 0, badges: [], wonItems: [] });
+    vi.spyOn(buyerAuctionApi, 'watchlist').mockResolvedValue([]);
+    vi.spyOn(buyerAuctionApi, 'secondChanceOffers').mockResolvedValue([{ id: 8, auctionId: 12, cardName: 'Card', imageUrl: null, offerPrice: 100, status: 'PENDING', expiresAt: '2027-01-01T00:00:00Z', createdAt: '2026-11-11T00:00:00Z' }]);
+    render(<MemoryRouter><AuctionPortfolioPage /></MemoryRouter>);
+    expect(await screen.findByText('Report reason: No contact')).toBeInTheDocument();
+    expect(screen.getByText('Decision reason: Reviewed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Order #42' })).toHaveAttribute('href', '/orders/42');
+    expect(screen.getByRole('button', { name: 'รับข้อเสนอ' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'ปฏิเสธ' })).toBeEnabled();
   });
 
   it('directs a winning buyer to contact the seller and does not expose a payment-proof upload', async () => {

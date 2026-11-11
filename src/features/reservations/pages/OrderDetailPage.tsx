@@ -316,7 +316,8 @@ export function OrderDetailPage() {
             <ArrowLeft size={18} />
             Back to My Orders
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {isAuction && <Link className="text-sm text-brand-blue underline" to="/auctions/me#auction-participation">View auction cases</Link>}
             <Button
               variant="secondary"
               size="sm"

@@ -65,7 +65,7 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
 }
 
 export function AdminOrderLogsPage() {
- const [orders, setOrders] = useState<Order[]>([]); const [query, setQuery] = useState(''); const [searchBy, setSearchBy] = useState<SearchBy>('ORDER_NUMBER'); const [statuses, setStatuses] = useState<Status[]>([]); const [from, setFrom] = useState(''); const [to, setTo] = useState(''); const [page, setPage] = useState(0); const [info, setInfo] = useState<Page>({ content: [], number: 0, totalPages: 0, totalElements: 0 }); const [loading, setLoading] = useState(true); const [viewing, setViewing] = useState<Order | null>(null);
+ const [orders, setOrders] = useState<Order[]>([]); const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('orderNumber') || ''); const [searchBy, setSearchBy] = useState<SearchBy>('ORDER_NUMBER'); const [statuses, setStatuses] = useState<Status[]>([]); const [from, setFrom] = useState(''); const [to, setTo] = useState(''); const [page, setPage] = useState(0); const [info, setInfo] = useState<Page>({ content: [], number: 0, totalPages: 0, totalElements: 0 }); const [loading, setLoading] = useState(true); const [viewing, setViewing] = useState<Order | null>(null);
  useEffect(() => setPage(0), [query, searchBy, statuses, from, to]);
  const [deliveryReason, setDeliveryReason] = useState('');
  const [confirmingDelivery, setConfirmingDelivery] = useState(false);

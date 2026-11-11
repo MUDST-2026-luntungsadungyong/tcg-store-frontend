@@ -278,9 +278,9 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
       cy.contains('Total Cost').should('be.visible');
       cy.contains('฿2,200.00').should('be.visible');
 
-      // 3. Net Profit - 5000 - 2200 = 2800
+      // 3. Net Profit - 5000 - 250 platform fee - 2200 = 2550
       cy.contains('Net Profit (กำไรสุทธิ)').should('be.visible');
-      cy.contains('฿2,800.00').should('be.visible');
+      cy.contains('฿2,550.00').should('be.visible');
 
       // 4. Orders Overview - 4 total, 2 pending (1 pending + 1 confirmed), 1 sent, 1 cancelled
       cy.contains('Orders Overview').should('be.visible');
@@ -312,7 +312,8 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
         cy.contains('Near Mint').should('be.visible');
         cy.contains('฿3,500').should('be.visible');
         cy.contains('Cost: ฿1,500').should('be.visible');
-        cy.contains('Profit: +฿2,000').should('be.visible');
+        // Direct sales deduct the 5% platform fee (฿175) from the seller's settlement.
+        cy.contains('Profit: +฿1,825').should('be.visible');
         cy.contains('Pending').should('be.visible');
         cy.contains('button', 'Confirm arrangement').should('be.visible');
         cy.contains('button', 'Cancel Order').should('be.visible');

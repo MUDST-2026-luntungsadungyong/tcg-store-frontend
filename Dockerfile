@@ -7,6 +7,8 @@ WORKDIR /app
 
 ARG VITE_API_BASE_URL=http://localhost:8080/api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ARG VITE_ENABLE_MOCK_API=false
+ENV VITE_ENABLE_MOCK_API=${VITE_ENABLE_MOCK_API}
 
 # Copy package manifests and install dependencies
 COPY package.json package-lock.json ./

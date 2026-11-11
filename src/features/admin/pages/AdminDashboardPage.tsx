@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Boxes, CalendarDays, CheckCircle2, ClipboardCheck, Info, RefreshCw, ShoppingBag, Store, Wallet } from 'lucide-react';
+import { ArrowRight, Boxes, CalendarDays, CheckCircle2, ClipboardCheck, Info, RefreshCw, ShoppingBag, Store, Tag, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import apiClient from '@/shared/api/client';
 
@@ -361,6 +361,13 @@ export function AdminDashboardPage() {
           <p className="mt-1 text-sm text-slate-400">Here&apos;s what&apos;s happening on your marketplace today.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/admin/vouchers"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-brand-blue/30 bg-brand-blue/10 px-3.5 text-sm font-medium text-brand-blue transition hover:bg-brand-blue/20 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+          >
+            <Tag size={16} aria-hidden="true" />
+            Discounts &amp; Vouchers
+          </Link>
           <button
             type="button"
             disabled

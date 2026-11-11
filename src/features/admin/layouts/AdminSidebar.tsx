@@ -10,6 +10,7 @@ import {
   ReceiptText,
   ShieldCheck,
   Store,
+  Tag,
   UsersRound,
   X,
 } from 'lucide-react';
@@ -28,6 +29,7 @@ type NavItem = {
 
 const mainLinks: NavItem[] = [
   { name: 'Overview', to: '/admin', icon: LayoutDashboard },
+  { name: 'Discounts & Vouchers', to: '/admin/vouchers', icon: Tag },
   { name: 'Seller approvals', to: '/admin/seller-applications', icon: ShieldCheck },
   { name: 'Admin management', to: '/admin/users', icon: UsersRound },
   { name: 'Default cases', to: '/admin/auction-default-cases', icon: Gavel },
@@ -222,8 +224,8 @@ function SidebarFooter({
 
   return (
     <div className="border-t border-white/10 p-3">
-      {/* Marketplace link */}
-      <div className="mb-2">
+      {/* Marketplace & normal Voucher Center links */}
+      <div className="mb-2 space-y-1">
         <Link
           to="/cards"
           title={collapsed ? 'View Marketplace' : undefined}
@@ -234,6 +236,17 @@ function SidebarFooter({
         >
           <Store size={16} className="shrink-0 text-slate-400" />
           <span className={cn(collapsed && 'sr-only')}>Public Marketplace</span>
+        </Link>
+        <Link
+          to="/vouchers"
+          title={collapsed ? 'Voucher Center' : undefined}
+          className={cn(
+            'flex h-10 items-center gap-2.5 rounded-xl text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-white',
+            collapsed ? 'justify-center px-0' : 'px-3'
+          )}
+        >
+          <Tag size={16} className="shrink-0 text-amber-400" />
+          <span className={cn(collapsed && 'sr-only')}>Voucher Center</span>
         </Link>
       </div>
 

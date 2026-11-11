@@ -8,7 +8,7 @@ interface VoucherTicketProps {
   onSelect?: (voucher: Voucher) => void;
   isClaiming?: boolean;
   selected?: boolean;
-  mode?: 'center' | 'checkout';
+  mode?: 'center' | 'checkout' | 'preview';
   subtotal?: number;
 }
 
@@ -99,8 +99,8 @@ export function VoucherTicket({
           </div>
         </div>
 
-        {/* Quota Progress Bar (for voucher center) */}
-        {mode === 'center' && (
+        {/* Quota Progress Bar (for voucher center or admin preview) */}
+        {(mode === 'center' || mode === 'preview') && (
           <div className="mt-3">
             <div className="flex items-center justify-between text-[11px] text-gray-400 mb-1">
               <span>โควตาคงเหลือ</span>
@@ -127,7 +127,17 @@ export function VoucherTicket({
 
       {/* Right: Actions */}
       <div className="p-4 flex items-center justify-center sm:border-l sm:border-white/10 sm:w-32 bg-white/[0.02]">
-        {mode === 'center' ? (
+        {mode === 'preview' ? (
+          <span
+            className={`w-full py-2 px-3 rounded-xl text-center text-xs font-semibold border ${
+              voucher.isActive !== false
+                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                : 'bg-white/5 border-white/15 text-gray-400'
+            }`}
+          >
+            {voucher.isActive !== false ? 'ตัวอย่างคูปอง' : 'ปิดใช้งาน'}
+          </span>
+        ) : mode === 'center' ? (
           voucher.isClaimed ? (
             <button
               disabled

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Tag, Sparkles, Ticket, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import type { Voucher } from '../model/types';
 import { fetchAvailableVouchers, claimVoucherApi } from '../api/vouchers';
+import { useVoucherLiveUpdates } from '../model/useVoucherLiveUpdates';
 import { VoucherTicket } from '../components/VoucherTicket';
 
 export function VoucherCenterPage() {
@@ -15,21 +16,27 @@ export function VoucherCenterPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'percent' | 'fixed'>('all');
 
-  const loadVouchers = async () => {
+  const loadVouchers = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const data = await fetchAvailableVouchers();
       setVouchers(data);
-    } catch (err: any) {
-      setErrorMessage('ไม่สามารถโหลดข้อมูลคูปองส่วนลดได้');
+    } catch {
+      if (!silent) {
+        setErrorMessage('ไม่สามารถโหลดข้อมูลคูปองส่วนลดได้');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    void loadVouchers();
-  }, []);
+    void loadVouchers(false);
+  }, [loadVouchers, user?.id]);
+
+  useVoucherLiveUpdates({
+    onRefresh: () => loadVouchers(true),
+  });
 
   const handleClaim = async (voucherId: number) => {
     if (!user) {
@@ -43,7 +50,7 @@ export function VoucherCenterPage() {
     try {
       await claimVoucherApi(voucherId);
       setSuccessMessage('🎉 เก็บโค้ดส่วนลดสำเร็จ! โค้ดถูกเพิ่มในกระเป๋าของคุณแล้ว');
-      // Update local state to claimed
+      // Update local state to claimed and sync latest quota
       setVouchers((prev) =>
         prev.map((v) =>
           v.id === voucherId
@@ -51,10 +58,12 @@ export function VoucherCenterPage() {
             : v
         )
       );
+      void loadVouchers(true);
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'ไม่สามารถเก็บโค้ดส่วนลดได้';
       setErrorMessage(msg);
+      void loadVouchers(true);
       setTimeout(() => setErrorMessage(null), 4000);
     } finally {
       setClaimingId(null);

@@ -12,9 +12,11 @@ The bootstrap image is in the private Azure Container Registry at
 `tcgstorecimah2026.azurecr.io/tcg-store-frontend`, pinned by digest in the
 Kustomization. The AKS managed identity pulls it without a registry password.
 The Caddy container obtained a public Let's Encrypt certificate. Its
-certificate storage is an `emptyDir`, suitable for this short demo; a
-longer-lived deployment should persist certificates or use cert-manager before
-frequent pod replacements.
+certificate storage uses a `managed-csi` persistent volume so subsequent pod
+replacements reuse the certificate. The first rollout after adding the volume
+will obtain a certificate once more. The deployment workflow retries transient
+TLS failures while certificate issuance completes. The disk adds a small Azure
+charge and is deleted with the demo resource group.
 
 The `deploy-aks-demo.yml` GitHub workflow is prepared to run after the
 main-branch `CI Pipeline` succeeds. It uses GitHub OIDC, builds the same commit

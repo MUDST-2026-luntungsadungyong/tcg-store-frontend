@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: tcg-store-aks-demo
 
 resources:
+  - caddy-data-pvc.yaml
   - deployment.yaml
   - service.yaml
 

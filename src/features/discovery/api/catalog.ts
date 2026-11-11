@@ -1,6 +1,7 @@
 import apiClient from '@/shared/api/client';
 import { ENV } from '@/shared/config/env';
 import { initMockStorage, storage } from '@/infrastructure/mock-db/storage';
+import { findFuzzySuggestion } from '@/features/discovery/lib/fuzzyMatch';
 
 export interface CatalogCard {
   id: string;
@@ -35,8 +36,8 @@ function unwrapCatalogCards(value: unknown): CatalogCard[] {
 
   if (!Array.isArray(rows)) return [];
   return rows.filter((card): card is CatalogCard => {
-    const record = asRecord(card);
-    return typeof record.id === 'string' && typeof record.name === 'string';
+    const r = asRecord(card);
+    return typeof r.id === 'string' && typeof r.name === 'string';
   });
 }
 
@@ -45,7 +46,7 @@ function mockCatalogSearch(query: string): CatalogCard[] {
   const normalizedQuery = query.trim().toLowerCase();
   const seen = new Set<string>();
 
-  return storage
+  let matches = storage
     .getListings()
     .filter((listing) => {
       const key = [listing.name, listing.set, listing.rarity, listing.cardNumber]
@@ -58,19 +59,43 @@ function mockCatalogSearch(query: string): CatalogCard[] {
       return [listing.name, listing.set, listing.rarity, listing.cardNumber]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(normalizedQuery));
-    })
-    .slice(0, 8)
-    .map((listing) => ({
-      id: listing.id,
-      name: listing.name,
-      game: listing.game,
-      rarity: listing.rarity,
-      setName: listing.set,
-      cardNumber: listing.cardNumber,
-      imageLarge: listing.image,
-      marketPrice: listing.marketPrice ?? listing.price,
-      supertype: listing.stage,
-    }));
+    });
+
+  // If no exact substring match, try fuzzy typo tolerance
+  if (matches.length === 0) {
+    seen.clear();
+    const suggestion = findFuzzySuggestion(
+      normalizedQuery,
+      storage.getListings().map((l) => l.name)
+    );
+    if (suggestion) {
+      const suggestedNorm = suggestion.suggested.toLowerCase();
+      matches = storage.getListings().filter((listing) => {
+        const key = [listing.name, listing.set, listing.rarity, listing.cardNumber]
+          .filter(Boolean)
+          .join('|')
+          .toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+
+        return [listing.name, listing.set, listing.rarity, listing.cardNumber]
+          .filter(Boolean)
+          .some((value) => value!.toLowerCase().includes(suggestedNorm));
+      });
+    }
+  }
+
+  return matches.slice(0, 8).map((listing) => ({
+    id: listing.id,
+    name: listing.name,
+    game: listing.game,
+    rarity: listing.rarity,
+    setName: listing.set,
+    cardNumber: listing.cardNumber,
+    imageLarge: listing.image,
+    marketPrice: listing.marketPrice ?? listing.price,
+    supertype: listing.stage,
+  }));
 }
 
 export const catalogApi = {

@@ -425,4 +425,75 @@ describe('CardDiscoveryPage', () => {
       expect(screen.getByText('Pikachu Illustrator')).toBeInTheDocument();
     });
   });
+
+  it('displays typo suggestion banner when didYouMean is returned for US-28-1', async () => {
+    vi.mocked(listingDiscoveryApi.getListings).mockResolvedValue({
+      items: [mockItems[1]],
+      pageNumber: 0,
+      pageSize: 12,
+      totalElements: 1,
+      totalPages: 1,
+      last: true,
+      didYouMean: 'Charizard',
+      originalQuery: 'chairzard',
+      fuzzyMatched: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <CardDiscoveryPage />
+      </MemoryRouter>
+    );
+
+    const banner = await screen.findByTestId('search-suggestion-banner');
+    expect(banner).toBeInTheDocument();
+    expect(banner).toHaveTextContent('แสดงผลลัพธ์สำหรับ:');
+    expect(banner).toHaveTextContent('Charizard');
+    expect(banner).toHaveTextContent("แทนคำค้นหาเดิม 'chairzard'");
+
+    const originalBtn = screen.getByTestId('search-original-query-btn');
+    expect(originalBtn).toBeInTheDocument();
+  });
+
+  it('allows clicking search original query button to perform exact search', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listingDiscoveryApi.getListings)
+      .mockResolvedValueOnce({
+        items: [mockItems[1]],
+        pageNumber: 0,
+        pageSize: 12,
+        totalElements: 1,
+        totalPages: 1,
+        last: true,
+        didYouMean: 'Charizard',
+        originalQuery: 'chairzard',
+        fuzzyMatched: true,
+      })
+      .mockResolvedValueOnce({
+        items: [],
+        pageNumber: 0,
+        pageSize: 12,
+        totalElements: 0,
+        totalPages: 1,
+        last: true,
+      });
+
+    render(
+      <MemoryRouter>
+        <CardDiscoveryPage />
+      </MemoryRouter>
+    );
+
+    const originalBtn = await screen.findByTestId('search-original-query-btn');
+    await user.click(originalBtn);
+
+    await waitFor(() => {
+      expect(listingDiscoveryApi.getListings).toHaveBeenCalledWith(
+        expect.objectContaining({
+          search: 'chairzard',
+          exact: true,
+        })
+      );
+    });
+  });
 });

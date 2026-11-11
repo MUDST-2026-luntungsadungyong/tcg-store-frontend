@@ -99,6 +99,7 @@ describe('AdminWeeklyReportsPage', () => {
     vi.mocked(weeklyReports.get).mockReturnValueOnce(new Promise(r => { resolve = r; }));
     const { unmount } = render(<AdminWeeklyReportsPage />);
     await screen.findByText('Loading saved report…');
+    await waitFor(() => expect(weeklyReports.get).toHaveBeenCalled());
     const signal = vi.mocked(weeklyReports.get).mock.calls[0][1]!;
     unmount(); resolve(report);
     expect(signal.aborted).toBe(true);

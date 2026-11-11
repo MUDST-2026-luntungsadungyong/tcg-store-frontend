@@ -31,7 +31,7 @@ describe('AuctionCommissionPage (US-18-2)', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/Loading policy/i);
   });
 
-  it('displays commission rate and minimum fee once loaded', async () => {
+  it('displays commission rate, minimum fee, KPI summary cards, and live simulator once loaded', async () => {
     vi.spyOn(auctionCommissionApi, 'get').mockResolvedValue(mockPolicy);
 
     render(
@@ -43,6 +43,8 @@ describe('AuctionCommissionPage (US-18-2)', () => {
     expect(await screen.findByRole('heading', { name: /Auction Commission/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Commission rate \(%\)/i)).toHaveValue(5);
     expect(screen.getByLabelText(/Minimum fee \(THB\)/i)).toHaveValue(20);
+    expect(screen.getByText(/Live Settlement Simulator/i)).toBeInTheDocument();
+    expect(screen.getByText(/Seller net payout/i)).toBeInTheDocument();
   });
 
   it('updates policy on submit and displays confirmation message', async () => {
@@ -74,6 +76,26 @@ describe('AuctionCommissionPage (US-18-2)', () => {
       minimumFee: 30,
     });
     expect(await screen.findByText('Commission policy saved.')).toBeInTheDocument();
+  });
+
+  it('supports quick rate presets and resets unsaved draft changes', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(auctionCommissionApi, 'get').mockResolvedValue(mockPolicy);
+
+    render(
+      <MemoryRouter>
+        <AuctionCommissionPage />
+      </MemoryRouter>
+    );
+
+    const rateInput = await screen.findByLabelText(/Commission rate \(%\)/i);
+    expect(rateInput).toHaveValue(5);
+
+    await user.click(screen.getByRole('button', { name: /3%/i }));
+    expect(rateInput).toHaveValue(3);
+
+    await user.click(screen.getByRole('button', { name: /Reset/i }));
+    expect(rateInput).toHaveValue(5);
   });
 
   it('shows error message when loading policy fails with a retry option', async () => {

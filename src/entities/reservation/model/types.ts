@@ -78,6 +78,8 @@ export interface ReservationOrder {
   totalAmount: number;
   subtotalAmount?: number;
   discountAmount?: number;
+    platformFee?: number;
+    sellerNetAmount?: number;
   voucherCode?: string;
   status: ReservationStatus;
   createdAt: string;

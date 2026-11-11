@@ -41,6 +41,8 @@ export interface SellerOrder {
   buyerContactFacebook?: string;
   logs?: OrderStatusLog[];
   sellerRevenue: number;
+  sellerPlatformFee: number;
+  sellerNetRevenue: number;
   sellerCost: number;
   sellerProfit: number;
   items: SellerOrderItem[];
@@ -50,12 +52,29 @@ export interface SellerOrder {
 
 export interface SellerProfitSummary {
   totalRevenue: number;
+  totalPlatformFee: number;
   totalCost: number;
   netProfit: number;
   totalOrders: number;
   pendingOrders: number;
   fulfilledOrders: number;
   cancelledOrders: number;
+}
+
+export interface SellerMonthlyPoint {
+  year: number;
+  month: number;
+  grossSales: number;
+  platformFee: number;
+  netRevenue: number;
+  totalCost: number;
+  netProfit: number;
+  orderCount: number;
+}
+
+export interface SellerMonthlyDashboard {
+  selectedMonth: SellerMonthlyPoint;
+  lastTwelveMonths: SellerMonthlyPoint[];
 }
 
 export interface SellerOrdersPageResponse {
@@ -81,6 +100,7 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
   }));
   // Platform absorbs voucher discount; seller always receives the full item subtotal
   const sellerRevenue = order.subtotalAmount ?? items.reduce((sum, item) => sum + item.itemTotal, 0);
+  const sellerPlatformFee = order.platformFee ?? Math.min(sellerRevenue, Math.max(Math.round(sellerRevenue * 0.05 * 100) / 100, 20));
   const sellerCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
   const status: SellerOrderStatus = order.status === 'SENT' || order.status === 'FULFILLED'
     ? 'SENT'
@@ -102,8 +122,10 @@ function mapReservationOrder(order: ReservationOrder): SellerOrder {
     buyerContactFacebook: buyer?.facebook,
     logs: order.logs ?? [],
     sellerRevenue,
+    sellerPlatformFee,
+    sellerNetRevenue: sellerRevenue - sellerPlatformFee,
     sellerCost,
-    sellerProfit: sellerRevenue - sellerCost,
+    sellerProfit: sellerRevenue - sellerPlatformFee - sellerCost,
     items,
     createdAt: order.createdAt,
     updatedAt: order.sentAt ?? order.paymentConfirmedAt ?? order.cancelledAt ?? order.createdAt,
@@ -254,8 +276,9 @@ export async function fetchProfitSummary(): Promise<SellerProfitSummary> {
     const totalCost = active.reduce((sum, order) => sum + order.sellerCost, 0);
     return {
       totalRevenue,
+      totalPlatformFee: active.reduce((sum, order) => sum + order.sellerPlatformFee, 0),
       totalCost,
-      netProfit: totalRevenue - totalCost,
+      netProfit: totalRevenue - active.reduce((sum, order) => sum + order.sellerPlatformFee, 0) - totalCost,
       totalOrders: orders.length,
       pendingOrders: orders.filter((order) => order.status === 'PENDING' || order.status === 'CONFIRMED').length,
       fulfilledOrders: orders.filter((order) => order.status === 'SENT' || order.status === 'FULFILLED').length,
@@ -266,6 +289,40 @@ export async function fetchProfitSummary(): Promise<SellerProfitSummary> {
   const response = await apiClient.get('/seller/orders/profit');
   if (!response.data) throw new Error('The server returned an empty seller profit response.');
   return response.data as SellerProfitSummary;
+}
+
+function emptyMonthlyPoint(year: number, month: number): SellerMonthlyPoint {
+  return { year, month, grossSales: 0, platformFee: 0, netRevenue: 0, totalCost: 0, netProfit: 0, orderCount: 0 };
+}
+
+function mockMonthlyDashboard(year: number, month: number): SellerMonthlyDashboard {
+  const selected = new Date(year, month - 1, 1);
+  const orders = getMockSellerOrders();
+  const points = Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(selected.getFullYear(), selected.getMonth() - 11 + index, 1);
+    const point = emptyMonthlyPoint(date.getFullYear(), date.getMonth() + 1);
+    for (const order of orders) {
+      const created = new Date(order.createdAt);
+      if (created.getFullYear() !== point.year || created.getMonth() + 1 !== point.month || order.status === 'CANCELLED') continue;
+      point.grossSales += order.sellerRevenue;
+      point.platformFee += order.sellerPlatformFee;
+      point.totalCost += order.sellerCost;
+      point.orderCount += 1;
+    }
+    point.netRevenue = point.grossSales - point.platformFee;
+    point.netProfit = point.netRevenue - point.totalCost;
+    return point;
+  });
+  return { selectedMonth: points.at(-1) ?? emptyMonthlyPoint(year, month), lastTwelveMonths: points };
+}
+
+export async function fetchMonthlyDashboard(year: number, month: number): Promise<SellerMonthlyDashboard> {
+  if (ENV.ENABLE_MOCK_API) return mockMonthlyDashboard(year, month);
+  const response = await apiClient.get<SellerMonthlyDashboard>('/seller/orders/dashboard/monthly', { params: { year, month } });
+  if (!response.data?.selectedMonth || !Array.isArray(response.data.lastTwelveMonths)) {
+    throw new Error('The server returned an invalid monthly dashboard response.');
+  }
+  return response.data;
 }
 
 

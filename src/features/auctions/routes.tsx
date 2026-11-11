@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router-dom';
 const auctionWizard = async () => ({ Component: (await import('./pages/AuctionWizardPage')).AuctionWizardPage });
 
 export const buyerAuctionRoutes: RouteObject[] = [
+  { path: 'auction-disputes', lazy: async () => ({ Component: (await import('./pages/ParticipantDisputesPage')).ParticipantDisputesPage }) },
   { path: 'auctions', lazy: async () => ({ Component: (await import('./pages/BuyerAuctionsPage')).BuyerAuctionsPage }) },
   { path: 'auctions/:auctionId', lazy: async () => ({ Component: (await import('./pages/BuyerAuctionDetailPage')).BuyerAuctionDetailPage }) },
   { path: 'auctions/me', lazy: async () => ({ Component: (await import('./pages/AuctionPortfolioPage')).AuctionPortfolioPage }) },
@@ -17,6 +18,8 @@ export const sellerAuctionRoutes: RouteObject[] = [
 ];
 
 export const adminAuctionRoutes: RouteObject[] = [
+  { path: 'auction-disputes', lazy: async () => ({ Component: (await import('./pages/AdminAuctionDisputesPage')).AdminAuctionDisputesPage }) },
+  { path: 'auctions', lazy: async () => ({ Component: (await import('./pages/AdminAuctionMonitorPage')).AdminAuctionMonitorPage }) },
   { path: 'auction-default-cases', lazy: async () => ({ Component: (await import('./pages/DefaultCasesPage')).AdminDefaultCasesPage }) },
   { path: 'auction-commission', lazy: async () => ({ Component: (await import('./pages/AuctionCommissionPage')).AuctionCommissionPage }) },
   {

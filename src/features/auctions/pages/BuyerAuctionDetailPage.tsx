@@ -9,6 +9,7 @@ import { Modal } from '@/shared/components/Modal';
 import { PageContainer, PageHeader, Panel } from '@/shared/components/PageLayout';
 import { ENV } from '@/shared/config/env';
 import { auctionError, buyerAuctionApi, defaultCaseApi, isAuctionBanned } from '../api/auctions';
+import { OpenAuctionDispute } from '../components/OpenAuctionDispute';
 import { AuctionCardSummary, AuctionLoading, AuctionStatusBadge, DetailRows } from '../components/AuctionUI';
 import { auctionDate, countdown, money } from '../model/auctionFormat';
 import { useAuctionClock, useAuctionResource } from '../model/useAuctionResource';
@@ -93,7 +94,7 @@ function AuctionRoom({ id }: { id: number }) {
   const isWinner = Boolean(
     user && auction.winnerId != null && Number(user.id) === Number(auction.winnerId)
   );
-  const isEnded = !open && auction.status !== 'SCHEDULED' && auction.status !== 'DRAFT';
+  const isEnded = !open && auction.status !== 'SCHEDULED' && auction.status !== 'DRAFT' && auction.status !== 'PAUSED';
   const showSellerOrderBtn = owner && (auction.orderId != null || auction.winnerId != null);
 
   async function transact(action: Action | { mode: 'watch' }) {
@@ -149,6 +150,7 @@ function AuctionRoom({ id }: { id: number }) {
           ← กลับไปหน้าประมูล
         </Link>
         <PageHeader title={auction.cardName || `ประมูล #${id}`} eyebrow="Auctions" />
+        {isWinner && auction.status === 'COMPLETED' && <OpenAuctionDispute auctionId={id} />}
         {error && <ErrorState message={error} onRetry={() => reload()} />}
         {actionError && (
           <p role="alert" className="text-sm text-status-danger break-words">
@@ -216,6 +218,7 @@ function AuctionRoom({ id }: { id: number }) {
           </Panel>
           <Panel className="min-w-0 space-y-4">
             <AuctionStatusBadge status={auction.status} />
+            {auction.status === 'PAUSED' && <p role="status" className="rounded-xl border border-status-warning/30 bg-status-warning/10 p-4 text-sm text-status-warning">This auction is paused for review. Bidding and the countdown are suspended until it resumes.</p>}
             {isEnded && (
               <div
                 data-testid="winning-result-banner"
@@ -277,7 +280,7 @@ function AuctionRoom({ id }: { id: number }) {
                 ['ราคาขั้นต่ำถัดไป', money(auction.nextMinimumBid)],
                 ['Reserve', auction.isReserveMet ? 'ผ่านเงื่อนไขราคาแล้ว' : 'ยังไม่ถึงราคาสำรอง'],
                 ['เวลาปิด', auctionDate(auction.endAt)],
-                ['เวลาที่เหลือ', open ? countdown(auction.endAt, now) : '—'],
+                ['เวลาที่เหลือ', open ? countdown(auction.endAt, now) : auction.status === 'PAUSED' && auction.pausedAt && Number.isFinite(Date.parse(auction.pausedAt)) ? countdown(auction.endAt, Date.parse(auction.pausedAt)) : '—'],
               ]}
             />
             {showSellerOrderBtn && (

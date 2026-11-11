@@ -130,14 +130,14 @@ const mockOrderSpecial: ReservationOrder = {
 const mockFetchBuyerOrderById = vi.fn();
 const mockUpdateBuyerOrderStatus = vi.fn();
 const mockReorderBuyerOrder = vi.fn();
-const mockDownloadBuyerOrderInvoice = vi.fn();
+const mockPreviewBuyerOrderInvoice = vi.fn();
 const mockSetCartState = vi.fn();
 
 vi.mock('../api/buyerOrders', () => ({
   fetchBuyerOrderById: (...args: unknown[]) => mockFetchBuyerOrderById(...args),
   updateBuyerOrderStatus: (...args: unknown[]) => mockUpdateBuyerOrderStatus(...args),
   reorderBuyerOrder: (...args: unknown[]) => mockReorderBuyerOrder(...args),
-  downloadBuyerOrderInvoice: (...args: unknown[]) => mockDownloadBuyerOrderInvoice(...args),
+  previewBuyerOrderInvoice: (...args: unknown[]) => mockPreviewBuyerOrderInvoice(...args),
 }));
 
 vi.mock('@/features/reservation-cart/model/useReservationCartStore', () => ({
@@ -376,16 +376,16 @@ describe('OrderDetailPage (SCRUM-80)', () => {
     expect(screen.getByRole('link', { name: /View Cart/i })).toHaveAttribute('href', '/cart');
   });
 
-  it('downloads the PDF invoice from order detail', async () => {
+  it('opens a PDF invoice preview from order detail', async () => {
     const user = userEvent.setup();
     mockFetchBuyerOrderById.mockResolvedValue(mockOrderPending);
-    mockDownloadBuyerOrderInvoice.mockResolvedValue('mythix-order-ORD-2026-101.pdf');
+    mockPreviewBuyerOrderInvoice.mockResolvedValue('mythix-order-ORD-2026-101.pdf');
 
     renderOrderDetailPage('ord-101');
-    await user.click(await screen.findByRole('button', { name: /Download PDF Invoice/i }));
+    await user.click(await screen.findByRole('button', { name: /Preview PDF Invoice/i }));
 
-    expect(mockDownloadBuyerOrderInvoice).toHaveBeenCalledWith('ord-101');
-    expect(await screen.findByText('PDF order summary downloaded.')).toBeInTheDocument();
+    expect(mockPreviewBuyerOrderInvoice).toHaveBeenCalledWith('ord-101');
+    expect(await screen.findByText('PDF order summary opened in a new tab.')).toBeInTheDocument();
   });
 
   it('displays error state when order fetching fails', async () => {

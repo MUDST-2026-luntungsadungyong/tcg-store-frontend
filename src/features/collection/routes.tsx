@@ -5,6 +5,10 @@ export const collectionRoutes: RouteObject[] = [
     path: 'collection',
     lazy: async () => ({ Component: (await import('./pages/MyCollectionPage')).MyCollectionPage }),
   },
+  {
+    path: 'my-collection',
+    lazy: async () => ({ Component: (await import('./pages/MyCollectionPage')).MyCollectionPage }),
+  },
 ];
 
 export const publicCollectionRoutes: RouteObject[] = [

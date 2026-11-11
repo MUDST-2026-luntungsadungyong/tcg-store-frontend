@@ -6,10 +6,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { collectionApi } from '../api/collection';
 import { PublicCollectionPage } from './PublicCollectionPage';
 import type { CollectionEntry } from '@/entities/card/model/types';
+import { useAuthStore } from '@/features/auth/model/useAuthStore';
 
 vi.mock('../api/collection', () => ({
   collectionApi: {
     getPublicCollection: vi.fn(),
+    comparePublicCollection: vi.fn(),
+    getMyCollection: vi.fn(),
   },
 }));
 
@@ -26,7 +29,7 @@ const mockEntry: CollectionEntry = {
     cost: 5000,
     stock: 1,
     status: 'SHOW',
-    rarity: 'Rare Holo',
+    rarity: 'Secret Rare',
     condition: 'NM',
     set: 'Base Set',
   },
@@ -41,6 +44,8 @@ const mockOwner = {
   avatarUrl: null,
   rareCardCount: 15,
   distinctRareCardCount: 8,
+  secretRareCount: 2,
+  badges: ['Master Collector', 'Secret Rare Hunter'],
   collectionPrivacy: 'PUBLIC' as const,
   isSeller: true,
 };
@@ -48,9 +53,10 @@ const mockOwner = {
 describe('PublicCollectionPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useAuthStore.setState({ user: null, isAuthenticated: false } as any);
   });
 
-  it('renders storefront-style showcase for a public collection', async () => {
+  it('renders storefront-style showcase for a public collection including Secret Rare and collector badges', async () => {
     vi.mocked(collectionApi.getPublicCollection).mockResolvedValue({
       owner: mockOwner,
       items: [mockEntry],
@@ -70,6 +76,8 @@ describe('PublicCollectionPage', () => {
     expect(screen.getByText('rare cards')).toBeInTheDocument();
     expect(screen.getByText('8')).toBeInTheDocument();
     expect(screen.getByText('unique rare cards')).toBeInTheDocument();
+    expect(screen.getAllByText('Secret Rare').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Secret Rare Hunter')).toBeInTheDocument();
     expect(screen.getByText('Charizard Base Set')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Visit Seller's Store/ })).toHaveAttribute(
       'href',
@@ -106,6 +114,7 @@ describe('PublicCollectionPage', () => {
 
     expect(await screen.findByText('403 — Private Collection')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'This collection is private' })).toBeInTheDocument();
+    expect(screen.getByText(/This collection is set to private by the owner/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to homepage' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Explore marketplace' })).toHaveAttribute('href', '/cards');
   });
@@ -128,7 +137,7 @@ describe('PublicCollectionPage', () => {
     expect(screen.getByRole('heading', { name: "This collector doesn't exist" })).toBeInTheDocument();
   });
 
-  it('filters cards by search query in the showcase gallery', async () => {
+  it('filters cards by search query and card set in the showcase gallery', async () => {
     const user = userEvent.setup();
     const secondEntry: CollectionEntry = {
       ...mockEntry,
@@ -136,7 +145,8 @@ describe('PublicCollectionPage', () => {
       listing: {
         ...mockEntry.listing,
         id: 'card-blastoise',
-        name: 'Blastoise Base Set',
+        name: 'Blastoise Jungle',
+        set: 'Jungle',
       },
     };
 
@@ -154,12 +164,72 @@ describe('PublicCollectionPage', () => {
     );
 
     expect(await screen.findByText('Charizard Base Set')).toBeInTheDocument();
-    expect(screen.getByText('Blastoise Base Set')).toBeInTheDocument();
+    expect(screen.getByText('Blastoise Jungle')).toBeInTheDocument();
 
+    const setFilter = screen.getByLabelText('Filter by card set');
+    await user.selectOptions(setFilter, 'Jungle');
+
+    expect(screen.queryByText('Charizard Base Set')).not.toBeInTheDocument();
+    expect(screen.getByText('Blastoise Jungle')).toBeInTheDocument();
+
+    await user.selectOptions(setFilter, 'ALL');
     const searchInput = screen.getByPlaceholderText('Search cards in this collection...');
     await user.type(searchInput, 'Charizard');
 
     expect(screen.getByText('Charizard Base Set')).toBeInTheDocument();
-    expect(screen.queryByText('Blastoise Base Set')).not.toBeInTheDocument();
+    expect(screen.queryByText('Blastoise Jungle')).not.toBeInTheDocument();
+  });
+
+  it('displays Card Comparison Helper badges and ownership filter when visitor is logged in (US-22-2)', async () => {
+    const user = userEvent.setup();
+    useAuthStore.setState({
+      user: { id: 'usr-visitor', name: 'Visitor Buyer', email: 'v@example.com' } as any,
+      isAuthenticated: true,
+    } as any);
+
+    const missingEntry: CollectionEntry = {
+      ...mockEntry,
+      id: 'col-2',
+      listing: {
+        ...mockEntry.listing,
+        id: 'card-lugia',
+        name: 'Lugia Neo Genesis',
+        set: 'Neo Genesis',
+      },
+    };
+
+    vi.mocked(collectionApi.getPublicCollection).mockResolvedValue({
+      owner: mockOwner,
+      items: [mockEntry, missingEntry],
+      comparison: {
+        targetUserId: 'usr-100',
+        visitorUserId: 'usr-visitor',
+        totalTargetDistinctCards: 2,
+        sharedDistinctCards: 1,
+        missingDistinctCards: 1,
+        ownedQuantities: {
+          'card-charizard': 3,
+          'card-lugia': 0,
+        },
+        items: [],
+      },
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/collections/usr-100']}>
+        <Routes>
+          <Route path="/collections/:userId" element={<PublicCollectionPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByTestId('collection-comparison-summary')).toBeInTheDocument();
+    expect(screen.getByText('คุณครอบครองการ์ดใบนี้แล้ว 3 ใบ')).toBeInTheDocument();
+    expect(screen.getByText('คุณยังไม่มีการ์ดใบนี้')).toBeInTheDocument();
+
+    // Filter to only missing cards
+    await user.click(screen.getByRole('button', { name: /ที่ยังไม่มี \(1\)/i }));
+    expect(screen.queryByText('Charizard Base Set')).not.toBeInTheDocument();
+    expect(screen.getByText('Lugia Neo Genesis')).toBeInTheDocument();
   });
 });

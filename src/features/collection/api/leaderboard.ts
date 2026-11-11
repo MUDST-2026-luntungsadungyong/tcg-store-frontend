@@ -60,12 +60,12 @@ function normalizeCollector(value: unknown, index: number): CollectorRanking {
 /** Reads the public, backend-owned collection leaderboard. */
 export async function getTopCollectors(limit = 5): Promise<CollectorRanking[]> {
   const safeLimit = Math.min(10, Math.max(1, Math.trunc(limit)));
-  
+
   if (ENV.ENABLE_MOCK_API) {
     await new Promise((resolve) => setTimeout(resolve, 300));
-    
+
     // Fallback static mock data for Cypress and local dev if storage is empty
-    return [
+    const mockCollectors: CollectorRanking[] = [
       {
         rank: 1,
         userId: 'usr-4',
@@ -74,8 +74,8 @@ export async function getTopCollectors(limit = 5): Promise<CollectorRanking[]> {
         rareCardCount: 15,
         distinctRareCardCount: 12,
         highlights: [
-          { cardId: 'mock1', name: 'Pikachu Illustrator', imageUrl: '', rarity: 'Promo', quantity: 1 }
-        ]
+          { cardId: 'mock1', name: 'Pikachu Illustrator', imageUrl: '', rarity: 'Promo', quantity: 1 },
+        ],
       },
       {
         rank: 2,
@@ -84,9 +84,22 @@ export async function getTopCollectors(limit = 5): Promise<CollectorRanking[]> {
         avatarUrl: null,
         rareCardCount: 5,
         distinctRareCardCount: 4,
-        highlights: []
-      }
-    ].slice(0, safeLimit);
+        highlights: [],
+      },
+    ];
+
+    const isPublicCollector = (userId: string) => {
+      if (typeof window === 'undefined') return true;
+      const privacy =
+        localStorage.getItem(`mythix_collection_privacy_${userId}`) ??
+        (userId === 'usr-1' ? localStorage.getItem('mythix_collection_privacy_current') : null);
+      return privacy !== 'PRIVATE';
+    };
+
+    return mockCollectors
+      .filter((collector) => isPublicCollector(collector.userId))
+      .map((collector, idx) => ({ ...collector, rank: idx + 1 }))
+      .slice(0, safeLimit);
   }
 
   const response = await apiClient.get<LeaderboardResponse | unknown[]>('/collections/leaderboard', {

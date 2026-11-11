@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReservationOrder } from '@/entities/reservation/model/types';
 import { MyOrdersPage } from './MyOrdersPage';
@@ -80,13 +80,11 @@ const mockOrder2: ReservationOrder = {
 };
 
 const mockFetchBuyerOrders = vi.fn();
-const mockFetchBuyerOrderById = vi.fn();
 const mockUpdateBuyerOrderStatus = vi.fn();
 let currentBuyerOrders: ReservationOrder[];
 
 vi.mock('../api/buyerOrders', () => ({
   fetchBuyerOrders: (...args: unknown[]) => mockFetchBuyerOrders(...args),
-  fetchBuyerOrderById: (...args: unknown[]) => mockFetchBuyerOrderById(...args),
   updateBuyerOrderStatus: (...args: unknown[]) => mockUpdateBuyerOrderStatus(...args),
 }));
 
@@ -95,16 +93,16 @@ vi.mock('@/features/auth/model/useAuthStore', () => ({
     selector({ user: { id: 'usr-buyer', name: 'Ash Ketchum' } }),
 }));
 
+function LocationDisplay() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname}</output>;
+}
+
 describe('MyOrdersPage (SCRUM-80)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     currentBuyerOrders = [mockOrder1, mockOrder2];
     mockFetchBuyerOrders.mockImplementation(async () => currentBuyerOrders);
-    mockFetchBuyerOrderById.mockImplementation(async (id: string) => {
-      if (id === 'ord-101') return mockOrder1;
-      if (id === 'ord-102') return mockOrder2;
-      throw new Error(`Order #${id} was not found.`);
-    });
   });
 
   it('renders order list with primary items and condition badges', async () => {
@@ -159,12 +157,13 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     });
   });
 
-  it('opens Order Details modal when clicking Order Details button', async () => {
+  it('navigates to the US-25 order details page when clicking Order Details', async () => {
     const user = userEvent.setup();
 
     render(
       <MemoryRouter>
         <MyOrdersPage />
+        <LocationDisplay />
       </MemoryRouter>
     );
 
@@ -176,12 +175,8 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     await user.click(orderDetailsButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Order Details - #ORD-101')).toBeInTheDocument();
+      expect(screen.getByTestId('location')).toHaveTextContent('/orders/ord-101');
     });
-
-    expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-101');
-    expect(screen.getAllByText('Mew - POP Series 4').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('Near Mint').length).toBeGreaterThanOrEqual(1);
   });
 
   it('allows marking order as received from Sent order', async () => {
@@ -215,12 +210,13 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     });
   });
 
-  it('opens Order Details modal when clicking the entire order row', async () => {
+  it('navigates to the US-25 order details page when clicking the entire order row', async () => {
     const user = userEvent.setup();
 
     render(
       <MemoryRouter>
         <MyOrdersPage />
+        <LocationDisplay />
       </MemoryRouter>
     );
 
@@ -232,11 +228,7 @@ describe('MyOrdersPage (SCRUM-80)', () => {
     await user.click(orderRow);
 
     await waitFor(() => {
-      expect(screen.getByText('Order Details - #ORD-102')).toBeInTheDocument();
+      expect(screen.getByTestId('location')).toHaveTextContent('/orders/ord-102');
     });
-
-    expect(mockFetchBuyerOrderById).toHaveBeenCalledWith('ord-102');
-    expect(screen.getAllByText('Charizard Base Set 2').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('Lightly Played').length).toBeGreaterThanOrEqual(1);
   });
 });

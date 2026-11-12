@@ -69,7 +69,7 @@ const routingCases: Array<{
   type: Notification['type'];
   title: string;
   message: string;
-  destination: '/workspace/orders?orderId=19' | '/orders/19' | '/profile' | '/admin/seller-applications?applicationId=app%2F1' | '/auction-disputes?disputeId=42';
+  destination: string;
 }> = [
   {
     name: 'a seller reservation',
@@ -97,6 +97,10 @@ const routingCases: Array<{
   { name: 'an opened auction dispute', type: 'AUCTION_DISPUTE_OPENED', title: 'Dispute opened', message: 'A dispute was opened.', destination: '/auction-disputes?disputeId=42' },
   { name: 'new dispute evidence', type: 'AUCTION_DISPUTE_EVIDENCE_ADDED', title: 'Evidence added', message: 'New evidence was added.', destination: '/auction-disputes?disputeId=42' },
   { name: 'a dispute decision', type: 'AUCTION_DISPUTE_DECIDED', title: 'Dispute decided', message: 'A decision was recorded.', destination: '/auction-disputes?disputeId=42' },
+  { name: 'a restocked card', type: 'STOCK_AVAILABLE', title: 'Charizard is available', message: 'A card you follow is back in stock.', destination: '/cards/base1-4' },
+  { name: 'a low stock alert', type: 'SELLER_STOCK_LOW', title: 'Charizard', message: 'Stock is low.', destination: '/workspace/stock-forecast?search=Charizard' },
+  { name: 'a critical stock alert', type: 'SELLER_STOCK_CRITICAL', title: 'Charizard', message: 'Stock is critical.', destination: '/workspace/stock-forecast?search=Charizard' },
+  { name: 'an out of stock alert', type: 'SELLER_OUT_OF_STOCK', title: 'Charizard', message: 'This listing is out of stock.', destination: '/workspace/listings?search=Charizard' },
 ];
 
 describe('NotificationsPage', () => {
@@ -136,6 +140,8 @@ describe('NotificationsPage', () => {
       message,
       orderId: type.startsWith('ORDER_') ? '19' : null,
       sellerApplicationId: type === 'SELLER_APPLICATION_SUBMITTED' ? 'app/1' : null,
+      globalCardId: type === 'STOCK_AVAILABLE' ? 'base1-4' : null,
+      cardName: type.startsWith('SELLER_STOCK_') || type === 'SELLER_OUT_OF_STOCK' ? 'Charizard' : null,
       actionPath: type.startsWith('AUCTION_DISPUTE_') ? '/auction-disputes?disputeId=42' : null,
     };
     const readRequest = deferred<Notification>();
@@ -145,6 +151,9 @@ describe('NotificationsPage', () => {
 
     const user = userEvent.setup();
     const actionName = type.startsWith('AUCTION_DISPUTE_') ? 'View dispute update'
+      : type === 'STOCK_AVAILABLE' ? 'View card'
+        : type === 'SELLER_STOCK_LOW' || type === 'SELLER_STOCK_CRITICAL' ? 'View stock forecast'
+          : type === 'SELLER_OUT_OF_STOCK' ? 'Manage listing'
       : type === 'SELLER_APPLICATION_SUBMITTED' ? 'Review application'
       : type === 'SELLER_APPLICATION_APPROVED' || type === 'SELLER_APPLICATION_REJECTED' ? 'View profile'
         : 'View order';

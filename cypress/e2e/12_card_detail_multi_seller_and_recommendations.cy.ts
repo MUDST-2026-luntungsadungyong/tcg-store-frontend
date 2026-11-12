@@ -707,6 +707,9 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
 
       // Collect card panel should still be available
       cy.contains('button', 'Collect Mew Ancient Promo').should('be.visible');
+
+      cy.contains('button', 'Notify Me When Available').click();
+      cy.contains('Log in to collect, reserve, or follow cards for restock notifications').should('be.visible');
     });
   });
 });

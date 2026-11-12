@@ -11,6 +11,7 @@ import {
   type FormEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useInRouterContext } from 'react-router-dom';
 import {
   AlertTriangle,
   ChevronLeft,
@@ -22,6 +23,7 @@ import {
   Plus,
   RefreshCw,
   Trash2,
+  TrendingDown,
   X,
 } from 'lucide-react';
 
@@ -39,6 +41,7 @@ import {
 import type { CatalogCard } from '@/features/discovery/api/catalog';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
+import { ButtonLink } from '@/shared/components/ButtonLink';
 import { PageContainer, PageHeader, Panel, Toolbar } from '@/shared/components/PageLayout';
 import { trapDialogFocus } from '@/shared/lib/trapDialogFocus';
 import { SearchField } from '@/shared/components/SearchField';
@@ -142,6 +145,7 @@ function validateForm(
 export function ListingManagementPage() {
   const addToast = useToastStore((state) => state.addToast);
   const editorDialogRef = useRef<HTMLDivElement>(null);
+  const inRouter = useInRouterContext();
 
   const {
     listings,
@@ -181,8 +185,12 @@ export function ListingManagementPage() {
   const [showDeleteListingPopup, setShowDeleteListingPopup] = useState(false); // CASE 11
 
   useEffect(() => {
+    const initialSearch = new URLSearchParams(window.location.search).get('search');
+    if (initialSearch) {
+      setSearchQuery(initialSearch);
+    }
     void fetchListings().catch(() => undefined);
-  }, [fetchListings]);
+  }, [fetchListings, setSearchQuery]);
 
   // Keep the Add/Edit Listing dialog local to this page so changing its
   // position does not affect shared Modal usage elsewhere.
@@ -386,10 +394,18 @@ export function ListingManagementPage() {
   return (
     <PageContainer className="space-y-6 px-0 py-0 sm:px-0 lg:px-0">
       <PageHeader title="Listing Management" eyebrow="Seller Inventory" description="Add, edit, hide, restock, and remove your card listings." actions={
-        <Button type="button" className="gap-2 self-start" onClick={openAddModal}>
-          <Plus size={18} />
-          Add Listing
-        </Button>
+        <>
+          {inRouter && (
+            <ButtonLink to="/workspace/stock-forecast" variant="secondary" className="gap-2 self-start">
+              <TrendingDown size={17} />
+              Stock Forecast
+            </ButtonLink>
+          )}
+          <Button type="button" className="gap-2 self-start" onClick={openAddModal}>
+            <Plus size={18} />
+            Add Listing
+          </Button>
+        </>
       } />
 
       {error && (

@@ -9,4 +9,10 @@ export const listingWorkspaceRoutes: RouteObject[] = [
         .ListingManagementPage,
     }),
   },
+  {
+    path: 'stock-forecast',
+    lazy: async () => ({
+      Component: (await import('./pages/StockForecastPage')).StockForecastPage,
+    }),
+  },
 ];

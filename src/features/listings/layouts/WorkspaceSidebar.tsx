@@ -10,6 +10,7 @@ import {
   Menu,
   Store,
   Tag,
+  TrendingDown,
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -22,6 +23,11 @@ const workspaceLinks = [
     name: 'Card listings',
     to: '/workspace/listings',
     icon: Layers3,
+  },
+  {
+    name: 'Stock forecast',
+    to: '/workspace/stock-forecast',
+    icon: TrendingDown,
   },
   {
     name: 'Reservation orders',

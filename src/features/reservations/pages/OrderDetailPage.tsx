@@ -628,7 +628,7 @@ export function OrderDetailPage() {
 
         {/* Contextual Action Bar */}
         {(canCancel || canMarkReceived || (order.items?.length ?? 0) > 0) && (
-          <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-[#111A29]/95 p-4 shadow-2xl backdrop-blur-md">
+          <div className="relative z-10 flex flex-col items-stretch gap-3 rounded-2xl border border-white/10 bg-[#111A29]/95 p-3 shadow-2xl backdrop-blur-md sm:sticky sm:bottom-4 sm:flex-row sm:flex-wrap sm:items-center sm:p-4">
             {orderActionMessage && (
               <div
                 role="status"
@@ -648,13 +648,14 @@ export function OrderDetailPage() {
                 )}
               </div>
             )}
-            <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
+            <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
               <Button
                 variant="secondary"
                 size="sm"
                 disabled={isReordering || isDownloadingInvoice}
                 isLoading={isReordering}
                 onClick={() => void handleReorder()}
+                className="w-full justify-center whitespace-nowrap sm:w-auto"
               >
                 <ShoppingCart size={16} />
                 1-Click Reorder
@@ -665,6 +666,7 @@ export function OrderDetailPage() {
                 disabled={isDownloadingInvoice || isReordering}
                 isLoading={isDownloadingInvoice}
                 onClick={() => void handleDownloadInvoice()}
+                className="w-full justify-center whitespace-nowrap sm:w-auto"
               >
                 <Download size={16} />
                 Preview PDF Invoice
@@ -678,6 +680,7 @@ export function OrderDetailPage() {
                   setCancelReason('');
                   setShowCancelModal(true);
                 }}
+                className="w-full justify-center whitespace-nowrap sm:w-auto"
               >
                 Cancel Order
               </Button>
@@ -689,7 +692,7 @@ export function OrderDetailPage() {
                 size="sm"
                 disabled={isSubmittingAction}
                 onClick={() => setShowConfirmReceivedModal(true)}
-                className="bg-status-success hover:bg-status-success/90"
+                className="w-full justify-center whitespace-nowrap bg-status-success hover:bg-status-success/90 sm:w-auto"
               >
                 <CheckCircle2 size={16} />
                 Mark Received

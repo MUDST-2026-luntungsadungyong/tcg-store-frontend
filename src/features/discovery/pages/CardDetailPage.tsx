@@ -29,6 +29,7 @@ export function CardDetailPage() {
   const [loadingOfferId, setLoadingOfferId] = useState<string | null>(null);
   const [isCollecting, setIsCollecting] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginMessage, setLoginMessage] = useState('Log in to collect or reserve cards');
   const [showCollectSuccessPopup, setShowCollectSuccessPopup] = useState(false); // CASE 7
   const [isStockSubscribed, setIsStockSubscribed] = useState(false);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
@@ -131,7 +132,7 @@ export function CardDetailPage() {
   }, [addToast, globalCardId, offers.length, token]);
 
   const addOfferToCart = async (offer: CardListing, quantity: number) => {
-    if (!token) { setShowLoginModal(true); return; }
+    if (!token) { setLoginMessage('Log in to collect or reserve cards'); setShowLoginModal(true); return; }
     setLoadingOfferId(offer.id);
     try {
       const success = await addItem(offer, quantity);
@@ -142,7 +143,7 @@ export function CardDetailPage() {
   };
 
   const reserveOfferNow = async (offer: CardListing, quantity: number) => {
-    if (!token) { setShowLoginModal(true); return; }
+    if (!token) { setLoginMessage('Log in to collect or reserve cards'); setShowLoginModal(true); return; }
     setLoadingOfferId(offer.id);
     try {
       if (await addItem(offer, quantity)) navigate('/cart');
@@ -151,7 +152,7 @@ export function CardDetailPage() {
   };
 
   const collectCard = async () => {
-    if (!token) { setShowLoginModal(true); return; }
+    if (!token) { setLoginMessage('Log in to collect or reserve cards'); setShowLoginModal(true); return; }
     if (!card) return;
     setIsCollecting(true);
     try {
@@ -163,7 +164,7 @@ export function CardDetailPage() {
   };
 
   const toggleStockSubscription = async () => {
-    if (!token) { setShowLoginModal(true); return; }
+    if (!token) { setLoginMessage('Log in to follow cards for restock notifications'); setShowLoginModal(true); return; }
     if (!globalCardId || isSubscriptionSaving) return;
     setIsSubscriptionSaving(true);
     try {
@@ -281,7 +282,7 @@ export function CardDetailPage() {
         )}
         <SimilarCardsSection card={card} />
       </div>
-      <ContextualLoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} message="Log in to collect, reserve, or follow cards for restock notifications" />
+      <ContextualLoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} message={loginMessage} />
       {/* CASE 7: Collect success popup — Figma: Card Detail → Collect success */}
       <FeedbackPopup
         isOpen={showCollectSuccessPopup}

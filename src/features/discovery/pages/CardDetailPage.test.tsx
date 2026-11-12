@@ -84,7 +84,7 @@ describe('CardDetailPage stock notifications', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Notify Me When Available' }));
 
-    expect(await screen.findByRole('dialog')).toHaveTextContent('Log in to collect, reserve, or follow cards for restock notifications');
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Log in to follow cards for restock notifications');
     expect(subscribe).not.toHaveBeenCalled();
     expect(getSubscription).not.toHaveBeenCalled();
   });

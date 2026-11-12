@@ -7,11 +7,13 @@ type NotificationDto = {
     | 'ORDER_STATUS_CHANGED'
     | 'SELLER_APPLICATION_SUBMITTED'
     | 'SELLER_APPLICATION_APPROVED'
-    | 'SELLER_APPLICATION_REJECTED';
+    | 'SELLER_APPLICATION_REJECTED'
+    | 'STOCK_AVAILABLE';
   title: string;
   message: string;
   orderId?: number | null;
   sellerApplicationId?: string | null;
+  globalCardId?: string | null;
   readAt: string | null;
   createdAt: string;
 };
@@ -195,6 +197,30 @@ describe('Core Journey 5: In-App Notification Center (US-11)', () => {
       cy.contains('button', 'View order').should('be.visible').click();
       cy.wait('@markRead');
       cy.url().should('include', '/orders');
+    });
+
+    it('opens the card detail page from a STOCK_AVAILABLE notification', () => {
+      const stockNotification: NotificationDto = {
+        id: 15,
+        type: 'STOCK_AVAILABLE',
+        title: 'Charizard is available again',
+        message: 'A card you follow has available stock.',
+        globalCardId: 'base1-4',
+        readAt: null,
+        createdAt: '2026-11-12T10:00:00',
+      };
+
+      cy.intercept('GET', '**/api/notifications*', page([stockNotification])).as('listStockNotifications');
+      cy.intercept('PATCH', '**/api/notifications/15/read', {
+        ...stockNotification,
+        readAt: '2026-11-12T10:05:00',
+      }).as('markStockNotificationRead');
+
+      cy.get('a[aria-label^="Notifications"]').click({ force: true });
+      cy.wait('@listStockNotifications');
+      cy.contains('button', 'View card').click();
+      cy.wait('@markStockNotificationRead');
+      cy.url().should('include', '/cards/base1-4');
     });
 
     it('displays SELLER_APPLICATION_SUBMITTED notification with action button', () => {

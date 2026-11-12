@@ -11,10 +11,11 @@ export interface NotificationsPage {
   last: boolean;
 }
 
-interface NotificationDto extends Omit<Notification, 'id' | 'orderId' | 'sellerApplicationId' | 'recipientId'> {
+interface NotificationDto extends Omit<Notification, 'id' | 'orderId' | 'sellerApplicationId' | 'recipientId' | 'globalCardId'> {
   id: number | string;
   orderId?: number | string | null;
   sellerApplicationId?: number | string | null;
+  globalCardId?: number | string | null;
   type: NotificationType;
 }
 
@@ -40,6 +41,7 @@ function normalizeNotification(dto: NotificationDto): Notification {
     sellerApplicationId: dto.sellerApplicationId == null
       ? null
       : String(dto.sellerApplicationId),
+    globalCardId: dto.globalCardId == null ? null : String(dto.globalCardId),
   };
 }
 

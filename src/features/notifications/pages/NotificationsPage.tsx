@@ -100,9 +100,13 @@ export function NotificationsPage() {
       const match = notification.actionPath?.match(/^\/auction-disputes\?disputeId=(\d+)$/);
       return match ? { label: 'View dispute update', destination: `/auction-disputes?disputeId=${match[1]}` } : null;
     }
-    if (notification.actionPath && /^\/(auctions|orders|workspace\/(?:auctions|orders))(?:\/|\?|$)/.test(notification.actionPath)) {
+    if (notification.actionPath && /^\/(?:auctions|orders|cards|workspace\/(?:auctions|orders|listings|stock-forecast))(?:\/|\?|$)/.test(notification.actionPath)) {
       return {
-        label: notification.type.startsWith('AUCTION_') ? 'View auction update' : 'View order',
+        label: notification.type.startsWith('AUCTION_') ? 'View auction update'
+          : notification.type === 'STOCK_AVAILABLE' ? 'View card'
+            : notification.type === 'SELLER_STOCK_LOW' || notification.type === 'SELLER_STOCK_CRITICAL' ? 'View stock forecast'
+              : notification.type === 'SELLER_OUT_OF_STOCK' ? 'Manage listing'
+                : 'View order',
         destination: notification.actionPath,
       };
     }
@@ -122,6 +126,15 @@ export function NotificationsPage() {
       case 'SELLER_APPLICATION_APPROVED':
       case 'SELLER_APPLICATION_REJECTED':
         return { label: 'View profile', destination: '/profile' };
+      case 'STOCK_AVAILABLE':
+        return notification.globalCardId
+          ? { label: 'View card', destination: `/cards/${encodeURIComponent(notification.globalCardId)}` }
+          : null;
+      case 'SELLER_STOCK_LOW':
+      case 'SELLER_STOCK_CRITICAL':
+        return { label: 'View stock forecast', destination: `/workspace/stock-forecast?search=${encodeURIComponent(notification.cardName || notification.title)}` };
+      case 'SELLER_OUT_OF_STOCK':
+        return { label: 'Manage listing', destination: `/workspace/listings?search=${encodeURIComponent(notification.cardName || notification.title)}` };
       default:
         return null;
     }

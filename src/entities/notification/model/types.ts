@@ -20,7 +20,11 @@ export type NotificationType =
   | 'AUCTION_DEFAULTED_WARNING'
   | 'AUCTION_DISPUTE_OPENED'
   | 'AUCTION_DISPUTE_EVIDENCE_ADDED'
-  | 'AUCTION_DISPUTE_DECIDED';
+  | 'AUCTION_DISPUTE_DECIDED'
+  | 'STOCK_AVAILABLE'
+  | 'SELLER_STOCK_LOW'
+  | 'SELLER_STOCK_CRITICAL'
+  | 'SELLER_OUT_OF_STOCK';
 
 export interface Notification {
   id: string;
@@ -30,6 +34,8 @@ export interface Notification {
   message: string;
   orderId?: string | null;
   sellerApplicationId?: string | null;
+  globalCardId?: string | null;
+  cardName?: string | null;
   actionPath?: string | null;
   readAt?: string | null;
   createdAt: string;

@@ -12,6 +12,7 @@ import { SellerOffersSection } from '@/features/discovery/components/SellerOffer
 import { SimilarCardsSection } from '@/features/discovery/components/SimilarCardsSection';
 import { catalogApi, type CatalogCard } from '@/features/discovery/api/catalog';
 import { listingDiscoveryApi } from '@/features/discovery/api/listings';
+import { isStockAlreadyAvailable, stockSubscriptionsApi } from '@/features/discovery/api/stockSubscriptions';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { useToastStore } from '@/shared/model/useToastStore';
 import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 7: success popup
@@ -29,10 +30,14 @@ export function CardDetailPage() {
   const [isCollecting, setIsCollecting] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCollectSuccessPopup, setShowCollectSuccessPopup] = useState(false); // CASE 7
+  const [isStockSubscribed, setIsStockSubscribed] = useState(false);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
+  const [isSubscriptionSaving, setIsSubscriptionSaving] = useState(false);
 
   const addToast = useToastStore(state => state.addToast);
   const addItem = useReservationCartStore(state => state.addItem);
   const token = useAuthStore(state => state.token);
+  const globalCardId = card?.cardId || catalogCard?.id || card?.id || '';
 
   const fetchCard = useCallback(async () => {
     if (!id) return;
@@ -110,6 +115,21 @@ export function CardDetailPage() {
 
   useEffect(() => { void fetchCard(); }, [fetchCard]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setIsStockSubscribed(false);
+    if (!token || !globalCardId || offers.length > 0) return () => { cancelled = true; };
+
+    setIsSubscriptionLoading(true);
+    void stockSubscriptionsApi.get(globalCardId)
+      .then(subscription => { if (!cancelled) setIsStockSubscribed(subscription.subscribed); })
+      .catch(() => {
+        if (!cancelled) addToast({ type: 'error', message: 'Unable to check your stock notification. Please try again.' });
+      })
+      .finally(() => { if (!cancelled) setIsSubscriptionLoading(false); });
+    return () => { cancelled = true; };
+  }, [addToast, globalCardId, offers.length, token]);
+
   const addOfferToCart = async (offer: CardListing, quantity: number) => {
     if (!token) { setShowLoginModal(true); return; }
     setLoadingOfferId(offer.id);
@@ -140,6 +160,36 @@ export function CardDetailPage() {
       setShowCollectSuccessPopup(true); // CASE 7: show success popup
     } catch { addToast({ type: 'error', message: 'Failed to add card to collection.' }); }
     finally { setIsCollecting(false); }
+  };
+
+  const toggleStockSubscription = async () => {
+    if (!token) { setShowLoginModal(true); return; }
+    if (!globalCardId || isSubscriptionSaving) return;
+    setIsSubscriptionSaving(true);
+    try {
+      if (isStockSubscribed) {
+        await stockSubscriptionsApi.unsubscribe(globalCardId);
+        setIsStockSubscribed(false);
+        addToast({ type: 'success', message: 'Stock notification cancelled.' });
+      } else {
+        await stockSubscriptionsApi.subscribe(globalCardId);
+        setIsStockSubscribed(true);
+        addToast({ type: 'success', message: 'You’ll be notified when this card is available.' });
+      }
+    } catch (cause) {
+      if (isStockAlreadyAvailable(cause)) {
+        await fetchCard();
+        const subscription = await stockSubscriptionsApi.get(globalCardId).catch(() => null);
+        setIsStockSubscribed(Boolean(subscription?.subscribed));
+        addToast({ type: 'info', message: 'This card is available now. We refreshed the offers.' });
+      } else {
+        addToast({ type: 'error', message: isStockSubscribed
+          ? 'Unable to cancel this notification. Please try again.'
+          : 'Unable to set this notification. Please try again.' });
+      }
+    } finally {
+      setIsSubscriptionSaving(false);
+    }
   };
 
   if (isLoading) return <main className="mx-auto max-w-[1440px] px-6 py-10 md:px-12"><Skeleton className="mb-8 h-5 w-48" /><div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"><Skeleton className="aspect-[421/533] w-full rounded-2xl" /><div className="space-y-5"><Skeleton className="h-10 w-3/4" /><Skeleton className="h-40 w-full" /><Skeleton className="h-24 w-full" /></div></div></main>;
@@ -207,9 +257,31 @@ export function CardDetailPage() {
         </div>
 
         <SellerOffersSection offers={offers} loadingOfferId={loadingOfferId} onAddToCart={addOfferToCart} onReserveNow={reserveOfferNow} />
+        {offers.length === 0 && globalCardId && (
+          <section aria-labelledby="stock-notification-heading" className="mt-6 rounded-2xl border border-white/10 bg-bg-surface p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <div>
+              <h2 id="stock-notification-heading" className="font-semibold text-white">No offers available right now</h2>
+              <p className="mt-1 text-sm text-gray-400">Get notified when a seller lists this card with available stock.</p>
+            </div>
+            <div className="mt-4 shrink-0 sm:mt-0">
+              {isStockSubscribed ? (
+                <div className="flex flex-col gap-2 sm:items-end">
+                  <p role="status" className="text-sm font-medium text-status-success">You’ll be notified</p>
+                  <button type="button" onClick={() => void toggleStockSubscription()} disabled={isSubscriptionSaving} className="text-sm font-semibold text-gray-300 underline decoration-white/30 underline-offset-4 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-blue disabled:cursor-not-allowed disabled:opacity-60">
+                    {isSubscriptionSaving ? 'Cancelling…' : 'Cancel notification'}
+                  </button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => void toggleStockSubscription()} disabled={isSubscriptionLoading || isSubscriptionSaving} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-blue px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-blue/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
+                  {isSubscriptionLoading ? 'Checking…' : isSubscriptionSaving ? 'Saving…' : 'Notify Me When Available'}
+                </button>
+              )}
+            </div>
+          </section>
+        )}
         <SimilarCardsSection card={card} />
       </div>
-      <ContextualLoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} message="Log in to collect or reserve cards" />
+      <ContextualLoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} message="Log in to collect, reserve, or follow cards for restock notifications" />
       {/* CASE 7: Collect success popup — Figma: Card Detail → Collect success */}
       <FeedbackPopup
         isOpen={showCollectSuccessPopup}

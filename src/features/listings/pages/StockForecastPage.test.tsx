@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -10,6 +10,11 @@ import {
 } from '@/features/listings/api/stockForecast';
 
 import { StockForecastPage } from './StockForecastPage';
+
+function ForecastSearchSwitcher() {
+  const navigate = useNavigate();
+  return <button type="button" onClick={() => navigate('/workspace/stock-forecast?search=Mewtwo')}>Search Mewtwo</button>;
+}
 
 vi.mock('@/features/listings/api/stockForecast', async () => {
   const actual = await vi.importActual<typeof import('@/features/listings/api/stockForecast')>(
@@ -121,6 +126,31 @@ describe('StockForecastPage', () => {
     await user.click(screen.getByRole('button', { name: 'Explain calculation for Charizard' }));
     expect(screen.getByText('Forecast Formula: Charizard')).toBeInTheDocument();
     expect(screen.getByText(/On Hand \(5\)/)).toBeInTheDocument();
+  });
+
+  it('loads and syncs notification search terms and shows stock alert help', async () => {
+    vi.mocked(stockForecastApi.getForecast).mockResolvedValue(sampleResponse);
+
+    render(
+      <MemoryRouter initialEntries={['/workspace/stock-forecast?search=Charizard'] }>
+        <Routes>
+          <Route path="/workspace/stock-forecast" element={<><ForecastSearchSwitcher /><StockForecastPage /></>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findAllByText('Charizard')).not.toHaveLength(0);
+    expect(screen.getByLabelText('Search stock forecast')).toHaveValue('Charizard');
+    expect(screen.getByRole('note')).toHaveTextContent('Automatic stock alerts');
+    await waitFor(() => {
+      expect(vi.mocked(stockForecastApi.getForecast).mock.calls.some(([query]) => query.search === 'Charizard')).toBe(true);
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Search Mewtwo' }));
+    await waitFor(() => expect(screen.getByLabelText('Search stock forecast')).toHaveValue('Mewtwo'));
+    await waitFor(() => {
+      expect(vi.mocked(stockForecastApi.getForecast).mock.calls.some(([query]) => query.search === 'Mewtwo')).toBe(true);
+    });
   });
 
   it('shows inline validation error and blocks API call when lead time is invalid', async () => {

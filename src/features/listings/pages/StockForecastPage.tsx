@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
+  Bell,
   Calculator,
   CheckCircle2,
   Clock,
@@ -36,6 +37,7 @@ import { SearchField } from '@/shared/components/SearchField';
 import { Select } from '@/shared/components/Select';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { useToastStore } from '@/shared/model/useToastStore';
+import { useSearchParams } from 'react-router-dom';
 
 const WINDOW_OPTIONS = [
   { value: '7', label: 'Last 7 days' },
@@ -114,6 +116,8 @@ function parseIntField(raw: string): number {
 
 export function StockForecastPage() {
   const addToast = useToastStore((s) => s.addToast);
+  const [searchParams] = useSearchParams();
+  const querySearch = searchParams.get('search') ?? '';
 
   const [windowDays, setWindowDays] = useState<number>(30);
   const [method, setMethod] = useState<ForecastMethod>('WEIGHTED');
@@ -121,8 +125,8 @@ export function StockForecastPage() {
   const [safetyDaysInput, setSafetyDaysInput] = useState('3');
   const [targetCoverInput, setTargetCoverInput] = useState('30');
   const [includeHidden, setIncludeHidden] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchInput, setSearchInput] = useState(querySearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(querySearch);
   const [debouncedLeadTime, setDebouncedLeadTime] = useState('7');
   const [debouncedSafetyDays, setDebouncedSafetyDays] = useState('3');
   const [debouncedTargetCover, setDebouncedTargetCover] = useState('30');
@@ -136,6 +140,11 @@ export function StockForecastPage() {
   const [reloadNonce, setReloadNonce] = useState(0);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    setSearchInput(querySearch);
+    setDebouncedSearch(querySearch);
+  }, [querySearch]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -387,6 +396,11 @@ export function StockForecastPage() {
           </>
         }
       />
+
+      <div role="note" className="flex items-start gap-3 rounded-xl border border-brand-blue/25 bg-brand-blue/5 p-4 text-sm text-gray-300">
+        <Bell className="mt-0.5 h-4 w-4 shrink-0 text-brand-blue" aria-hidden="true" />
+        <p><span className="font-semibold text-white">Automatic stock alerts.</span> When enabled by the platform, Mythix notifies sellers when listings reach low, critical, or out-of-stock status. Use the cards below to review the matching forecast and listing.</p>
+      </div>
 
       {refreshError && (
         <div

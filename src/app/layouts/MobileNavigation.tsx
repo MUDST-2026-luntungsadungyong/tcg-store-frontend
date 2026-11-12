@@ -19,7 +19,7 @@ export function MobileNavigation() {
   const trigger = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const authRoute = /^\/(login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
+  const authRoute = /^\/(login|register|forgot-password|check-email|reset-password|reset-success)\/?$/.test(location.pathname);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const count = useReservationCartStore((s) => s.getTotalItems());

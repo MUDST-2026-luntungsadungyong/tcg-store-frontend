@@ -6,26 +6,23 @@ describe('Auth Journey 3: Forgot Password & Password Reset Flow', () => {
     window.sessionStorage.clear();
   });
 
-  it('renders forgot password page with email input and continue button', () => {
+  it('renders forgot password page with email input and submit button', () => {
     cy.visit('/forgot-password');
     cy.contains('Forgot Password').should('be.visible');
     cy.get('#email').should('be.visible').and('have.attr', 'type', 'email');
-    cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Continue');
+    cy.get('button[type="submit"]').should('be.visible').and('contain.text', 'Send Reset Link');
     cy.contains('Remember your password?').should('be.visible');
     cy.get('main').contains('a', /^Login$/).should('be.visible').and('have.attr', 'href', '/login');
   });
 
-  it('redirects user to /forgot-password when visiting /reset-password without prior initiation', () => {
-    // Attempting direct entry without demo reset session token
+  it('offers a new link when the reset link has no token', () => {
     cy.visit('/reset-password');
-    cy.url().should('include', '/forgot-password');
-    cy.contains('Forgot Password').should('be.visible');
+    cy.contains('Reset Link Unavailable').should('be.visible');
+    cy.contains('a', 'Request a new link').should('have.attr', 'href', '/forgot-password');
   });
 
-  it('renders reset password form when reset session is active', () => {
-    // Establish pending demo reset session
-    window.sessionStorage.setItem('mythix_demo_reset_email', 'buyer@mythix.com');
-    cy.visit('/reset-password');
+  it('renders reset password form when the URL contains a token', () => {
+    cy.visit('/reset-password?token=test-token');
     cy.url().should('include', '/reset-password');
     cy.contains('Reset Password').should('be.visible');
     cy.get('#new-password').should('be.visible');
@@ -34,8 +31,7 @@ describe('Auth Journey 3: Forgot Password & Password Reset Flow', () => {
   });
 
   it('validates password mismatch on reset password page', () => {
-    window.sessionStorage.setItem('mythix_demo_reset_email', 'buyer@mythix.com');
-    cy.visit('/reset-password');
+    cy.visit('/reset-password?token=test-token');
 
     cy.get('#new-password').type('NewStrongPass123!');
     cy.get('#confirm-password').type('MismatchPass123!');

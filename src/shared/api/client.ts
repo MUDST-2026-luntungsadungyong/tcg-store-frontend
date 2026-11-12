@@ -24,10 +24,14 @@ const apiClient = axios.create({
   },
 });
 
+// Recovery must work even when this browser still holds an expired access token.
+const isPasswordRecoveryRequest = (url?: string) =>
+  url === '/auth/forgot-password' || url === '/auth/reset-password';
+
 apiClient.interceptors.request.use(
   (config) => {
     const token = authHooks.getAccessToken();
-    if (token && config.headers) {
+    if (token && config.headers && !isPasswordRecoveryRequest(config.url)) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -44,7 +48,7 @@ apiClient.interceptors.response.use(
   (error) => {
     const token = authHooks.getAccessToken();
     const isMockToken = Boolean(token?.startsWith('mock-'));
-    if (error.response?.status === 401 && !ENV.ENABLE_MOCK_API && !isMockToken) {
+    if (error.response?.status === 401 && !isPasswordRecoveryRequest(error.config?.url) && !ENV.ENABLE_MOCK_API && !isMockToken) {
       authHooks.onUnauthorized();
     }
     return Promise.reject(error);

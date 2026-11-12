@@ -19,6 +19,8 @@
     "test:e2e:order": "cypress run --spec \"cypress/e2e/04_order_fastforward_lifecycle.cy.ts\"",
     "test:e2e:seller-orders": "cypress run --spec \"cypress/e2e/11_seller_order_management.cy.ts\"",
     "test:e2e:card-detail": "cypress run --spec \"cypress/e2e/12_card_detail_multi_seller_and_recommendations.cy.ts\"",
+    "test:e2e:vouchers": "cypress run --spec \"cypress/e2e/13_buyer_vouchers_and_checkout.cy.ts,cypress/e2e/admin/08_admin_vouchers_management.cy.ts,cypress/e2e/19_voucher_admin_buyer_sync.cy.ts\"",
+    "test:e2e:vouchers:http": "cypress run --config baseUrl=http://localhost:3001 --spec \"cypress/e2e/design/08_vouchers_http.cy.ts\"",
     "test:e2e:notifications": "cypress run --spec \"cypress/e2e/05_notifications_inbox.cy.ts\"",
     "test:e2e:staging": "cypress run --spec \"cypress/e2e/11_live_staging_reservation_journey.cy.ts\"",
     "test:e2e:open": "cypress open",

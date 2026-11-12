@@ -28,8 +28,8 @@ import { Skeleton } from '@/shared/components/Skeleton';
 import { toReservationCartItems } from '@/features/reservation-cart/api/cartApi';
 import { useReservationCartStore } from '@/features/reservation-cart/model/useReservationCartStore';
 import {
-  downloadBuyerOrderInvoice,
   fetchBuyerOrderById,
+  previewBuyerOrderInvoice,
   reorderBuyerOrder,
   updateBuyerOrderStatus,
 } from '../api/buyerOrders';
@@ -226,8 +226,8 @@ export function OrderDetailPage() {
     setIsDownloadingInvoice(true);
     setOrderActionMessage(null);
     try {
-      await downloadBuyerOrderInvoice(order.id);
-      setOrderActionMessage({ tone: 'success', text: 'PDF order summary downloaded.' });
+      await previewBuyerOrderInvoice(order.id);
+      setOrderActionMessage({ tone: 'success', text: 'PDF order summary opened in a new tab.' });
     } catch (err) {
       setOrderActionMessage({
         tone: 'error',
@@ -546,6 +546,14 @@ export function OrderDetailPage() {
           </div>
         </section>
 
+        {order.trackingNumber && (
+          <section aria-label="Shipping details" className="rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card p-6 text-white">
+            <h2 className="text-base font-bold">Shipping details</h2>
+            <p className="mt-2 text-sm">Tracking number: <span className="font-mono">{order.trackingNumber}</span></p>
+            {order.shippingCarrier && <p className="mt-1 text-sm">Carrier: {order.shippingCarrier}</p>}
+          </section>
+        )}
+
         {/* Order Timeline (Status History) */}
         <section aria-label="Order Timeline" className="rounded-2xl border border-[rgba(143,179,226,0.15)] bg-bg-card p-6 shadow-md">
           <h2 className="mb-4 text-base font-bold text-white flex items-center gap-2">
@@ -659,7 +667,7 @@ export function OrderDetailPage() {
                 onClick={() => void handleDownloadInvoice()}
               >
                 <Download size={16} />
-                Download PDF Invoice
+                Preview PDF Invoice
               </Button>
             {canCancel && (
               <Button

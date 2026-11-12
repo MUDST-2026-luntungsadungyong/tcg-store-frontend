@@ -1,11 +1,16 @@
 import type { RouteObject } from 'react-router-dom';
 import { MyOrdersPage } from './pages/MyOrdersPage';
 import { OrderDetailPage } from './pages/OrderDetailPage';
+import { OrderVerificationPage } from './pages/OrderVerificationPage';
 import { SellerOrdersPage } from './pages/SellerOrdersPage';
 
 export const buyerReservationRoutes: RouteObject[] = [
   { path: 'orders', element: <MyOrdersPage /> },
   { path: 'orders/:orderId', element: <OrderDetailPage /> },
+];
+
+export const publicOrderVerificationRoutes: RouteObject[] = [
+  { path: 'orders/verify/:orderNumber', element: <OrderVerificationPage /> },
 ];
 
 export const sellerReservationRoutes: RouteObject[] = [

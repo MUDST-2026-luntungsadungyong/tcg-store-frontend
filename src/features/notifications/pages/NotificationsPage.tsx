@@ -96,14 +96,27 @@ export function NotificationsPage() {
   };
 
   const getAction = (notification: Notification): { label: string; destination: string } | null => {
+    if (notification.type.startsWith('AUCTION_DISPUTE_')) {
+      const match = notification.actionPath?.match(/^\/auction-disputes\?disputeId=(\d+)$/);
+      return match ? { label: 'View dispute update', destination: `/auction-disputes?disputeId=${match[1]}` } : null;
+    }
     if (notification.actionPath && /^\/(auctions|orders|workspace\/(?:auctions|orders))(?:\/|\?|$)/.test(notification.actionPath)) {
-      return { label: 'View auction update', destination: notification.actionPath };
+      return {
+        label: notification.type.startsWith('AUCTION_') ? 'View auction update' : 'View order',
+        destination: notification.actionPath,
+      };
     }
     switch (notification.type) {
       case 'ORDER_RESERVED':
-        return notification.orderId ? { label: 'View order', destination: '/workspace/orders' } : null;
+      case 'ORDER_CANCELLED_BUYER':
+      case 'ORDER_FULFILLED_SELLER':
+        return notification.orderId ? { label: 'View order', destination: `/workspace/orders?orderId=${encodeURIComponent(notification.orderId)}` } : null;
+      case 'ORDER_PLACED_BUYER':
+      case 'ORDER_CONFIRMED_BUYER':
+      case 'ORDER_CANCELLED_SELLER':
+      case 'ORDER_SENT_BUYER':
       case 'ORDER_STATUS_CHANGED':
-        return notification.orderId ? { label: 'View order', destination: '/orders' } : null;
+        return notification.orderId ? { label: 'View order', destination: `/orders/${encodeURIComponent(notification.orderId)}` } : null;
       case 'SELLER_APPLICATION_SUBMITTED':
         return notification.sellerApplicationId ? { label: 'Review application', destination: `/admin/seller-applications?applicationId=${encodeURIComponent(notification.sellerApplicationId)}` } : null;
       case 'SELLER_APPLICATION_APPROVED':
@@ -123,7 +136,7 @@ export function NotificationsPage() {
             <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
           </div>
           <p className="mt-2 text-sm text-gray-400">
-            Updates about card orders and seller applications.
+            Updates about card orders, seller applications and auction disputes.
           </p>
         </header>
 
@@ -152,7 +165,7 @@ export function NotificationsPage() {
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-bg-card px-6 py-16 text-center text-gray-100 shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
             <Bell className="size-12 text-[#8A94A8]" aria-hidden="true" />
             <h2 className="text-xl font-semibold text-gray-100">You’re all caught up</h2>
-            <p className="text-sm text-gray-400">New reservation and order updates will appear here.</p>
+            <p className="text-sm text-gray-400">New order, auction and dispute updates will appear here.</p>
           </div>
         )}
 

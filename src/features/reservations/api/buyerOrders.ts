@@ -25,6 +25,21 @@ export interface ReorderResult {
   hasUnavailableItems: boolean;
 }
 
+export interface PublicOrderVerification {
+  orderNumber: string;
+  status: string;
+  orderType: string;
+  updatedAt: string;
+}
+
+export async function fetchPublicOrderVerification(orderNumber: string): Promise<PublicOrderVerification> {
+  const response = await apiClient.get<PublicOrderVerification>(
+    `/orders/verify/${encodeURIComponent(orderNumber)}`,
+  );
+  if (!response.data) throw new Error('The order verification response was empty.');
+  return response.data;
+}
+
 export async function updateBuyerOrderStatus(
   orderId: string,
   newStatus: string,
@@ -102,6 +117,24 @@ export async function downloadBuyerOrderInvoice(orderId: string): Promise<string
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+  return filename;
+}
+
+export async function previewBuyerOrderInvoice(orderId: string): Promise<string> {
+  const response = await apiClient.get<Blob>(`/orders/${encodeURIComponent(orderId)}/invoice-pdf`, {
+    responseType: 'blob',
+  });
+  const filename = invoiceFilename(response.headers['content-disposition'], orderId);
+  const url = URL.createObjectURL(response.data);
+  const previewLink = document.createElement('a');
+  previewLink.href = url;
+  previewLink.target = '_blank';
+  previewLink.rel = 'noopener';
+  previewLink.style.display = 'none';
+  document.body.appendChild(previewLink);
+  previewLink.click();
+  previewLink.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   return filename;
 }
 

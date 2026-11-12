@@ -82,6 +82,8 @@ export interface ReservationOrder {
     sellerNetAmount?: number;
   voucherCode?: string;
   status: ReservationStatus;
+  trackingNumber?: string;
+  shippingCarrier?: string;
   createdAt: string;
   paymentConfirmedAt?: string;
   sentAt?: string;

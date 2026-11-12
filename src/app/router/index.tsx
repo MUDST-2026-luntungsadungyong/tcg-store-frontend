@@ -13,6 +13,7 @@ import { profileRoutes } from '@/features/profile/routes';
 import { reservationCartRoutes } from '@/features/reservation-cart/routes';
 import {
   buyerReservationRoutes,
+  publicOrderVerificationRoutes,
   sellerReservationRoutes,
 } from '@/features/reservations/routes';
 import { listingWorkspaceRoutes } from '@/features/listings/routes';
@@ -84,6 +85,7 @@ export const router = createBrowserRouter([
       ...publicStoreRoutes,
       ...publicCollectionRoutes,
       ...publicVoucherRoutes,
+      ...publicOrderVerificationRoutes,
       accountRoutes,
       { path: '*', element: <NotFoundPage /> },
     ],

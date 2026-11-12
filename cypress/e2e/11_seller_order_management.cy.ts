@@ -515,7 +515,9 @@ describe('US-07-1 & US-07-2: Seller Order Management & Profit Dashboard', () => 
         const orders = JSON.parse(win.localStorage.getItem('mythix_mock_reservations_v1')!);
         const order = orders.find((candidate: { id: string }) => candidate.id === 'ord-test-02');
         expect(order.status).to.equal('SENT');
-        expect(order.logs.at(-1).note).to.equal(`${carrierNote} (Tracking / TAX: ${trackingNumber})`);
+        expect(order.logs.at(-1).note).to.equal(`${carrierNote} (Tracking: ${trackingNumber})`);
+        expect(order.trackingNumber).to.equal(trackingNumber);
+        expect(order.shippingCarrier).to.equal(carrierNote);
       });
 
       // Status badge should update to Sent

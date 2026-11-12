@@ -69,25 +69,34 @@ const routingCases: Array<{
   type: Notification['type'];
   title: string;
   message: string;
-  destination: '/workspace/orders' | '/orders' | '/profile' | '/admin/seller-applications?applicationId=app%2F1';
+  destination: '/workspace/orders?orderId=19' | '/orders/19' | '/profile' | '/admin/seller-applications?applicationId=app%2F1' | '/auction-disputes?disputeId=42';
 }> = [
   {
     name: 'a seller reservation',
     type: 'ORDER_RESERVED',
     title: 'New card reservation',
     message: 'A buyer reserved cards from your listings.',
-    destination: '/workspace/orders',
+    destination: '/workspace/orders?orderId=19',
   },
   {
-    name: 'a seller buying a card as a normal buyer',
+    name: 'a legacy buyer order update',
     type: 'ORDER_STATUS_CHANGED',
     title: 'Your order status changed',
     message: 'Your card purchase is ready for pickup.',
-    destination: '/orders',
+    destination: '/orders/19',
   },
+  { name: 'a buyer checkout success', type: 'ORDER_PLACED_BUYER', title: 'Order placed', message: 'Your order was placed.', destination: '/orders/19' },
+  { name: 'a seller order confirmation', type: 'ORDER_CONFIRMED_BUYER', title: 'Order confirmed', message: 'The seller confirmed your order.', destination: '/orders/19' },
+  { name: 'a buyer order cancellation', type: 'ORDER_CANCELLED_BUYER', title: 'Order cancelled', message: 'The buyer cancelled the order.', destination: '/workspace/orders?orderId=19' },
+  { name: 'a seller order cancellation', type: 'ORDER_CANCELLED_SELLER', title: 'Order cancelled', message: 'The seller cancelled your order.', destination: '/orders/19' },
+  { name: 'a buyer fulfillment update', type: 'ORDER_FULFILLED_SELLER', title: 'Order received', message: 'The buyer received the order.', destination: '/workspace/orders?orderId=19' },
+  { name: 'an order sent update', type: 'ORDER_SENT_BUYER', title: 'Order sent', message: 'The seller sent your order.', destination: '/orders/19' },
   { name: 'a submitted seller application', type: 'SELLER_APPLICATION_SUBMITTED', title: 'Application submitted', message: 'Review this application.', destination: '/admin/seller-applications?applicationId=app%2F1' },
   { name: 'an approved seller application', type: 'SELLER_APPLICATION_APPROVED', title: 'Application approved', message: 'You are approved.', destination: '/profile' },
   { name: 'a rejected seller application', type: 'SELLER_APPLICATION_REJECTED', title: 'Application rejected', message: 'Please review your profile.', destination: '/profile' },
+  { name: 'an opened auction dispute', type: 'AUCTION_DISPUTE_OPENED', title: 'Dispute opened', message: 'A dispute was opened.', destination: '/auction-disputes?disputeId=42' },
+  { name: 'new dispute evidence', type: 'AUCTION_DISPUTE_EVIDENCE_ADDED', title: 'Evidence added', message: 'New evidence was added.', destination: '/auction-disputes?disputeId=42' },
+  { name: 'a dispute decision', type: 'AUCTION_DISPUTE_DECIDED', title: 'Dispute decided', message: 'A decision was recorded.', destination: '/auction-disputes?disputeId=42' },
 ];
 
 describe('NotificationsPage', () => {
@@ -125,8 +134,9 @@ describe('NotificationsPage', () => {
       type,
       title,
       message,
-      orderId: type === 'ORDER_RESERVED' || type === 'ORDER_STATUS_CHANGED' ? '19' : null,
+      orderId: type.startsWith('ORDER_') ? '19' : null,
       sellerApplicationId: type === 'SELLER_APPLICATION_SUBMITTED' ? 'app/1' : null,
+      actionPath: type.startsWith('AUCTION_DISPUTE_') ? '/auction-disputes?disputeId=42' : null,
     };
     const readRequest = deferred<Notification>();
     list.mockResolvedValue(page([currentNotification]));
@@ -134,7 +144,8 @@ describe('NotificationsPage', () => {
     renderPage();
 
     const user = userEvent.setup();
-    const actionName = type === 'SELLER_APPLICATION_SUBMITTED' ? 'Review application'
+    const actionName = type.startsWith('AUCTION_DISPUTE_') ? 'View dispute update'
+      : type === 'SELLER_APPLICATION_SUBMITTED' ? 'Review application'
       : type === 'SELLER_APPLICATION_APPROVED' || type === 'SELLER_APPLICATION_REJECTED' ? 'View profile'
         : 'View order';
     await user.click(await screen.findByRole('button', { name: actionName }));
@@ -169,6 +180,7 @@ describe('NotificationsPage', () => {
     { type: 'ORDER_RESERVED', orderId: null, sellerApplicationId: null },
     { type: 'ORDER_STATUS_CHANGED', orderId: undefined, sellerApplicationId: null },
     { type: 'SELLER_APPLICATION_SUBMITTED', orderId: null, sellerApplicationId: null },
+    { type: 'AUCTION_DISPUTE_OPENED', orderId: null, sellerApplicationId: null, actionPath: '/auction-disputes?disputeId=42&next=/admin' },
   ] as const)('renders $type without a CTA when its required reference is missing', async (values) => {
     list.mockResolvedValue(page([{ ...notification, ...values }]));
     renderPage();

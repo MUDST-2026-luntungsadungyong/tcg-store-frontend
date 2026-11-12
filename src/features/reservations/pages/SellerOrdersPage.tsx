@@ -682,7 +682,7 @@ export function SellerOrdersPage() {
         } }}
         secondaryAction={{ label: "Back", onClick: () => { setShowPaymentConfirmPopup(false); setPendingOrderAction(null); } }}
       />
-      {/* CASE 10b: Mark sent & enter parcel tracking / TAX number modal */}
+      {/* CASE 10b: Mark sent & enter parcel tracking number modal */}
       <Modal
         isOpen={showMarkSentPopup}
         onClose={() => {
@@ -695,19 +695,20 @@ export function SellerOrdersPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-300">
-            กรุณากรอกเลข TAX หรือเลขพัสดุ (Tax Invoice / Parcel Tracking No.) สำหรับการจัดส่งออเดอร์นี้ ผู้ซื้อยืนยันการรับการ์ดได้หลังอัปเดตสถานะเป็น Sent
+            กรุณากรอกเลขพัสดุสำหรับการจัดส่งออเดอร์นี้ ผู้ซื้อยืนยันการรับการ์ดได้หลังอัปเดตสถานะเป็น Sent
           </p>
 
           <div>
             <label htmlFor="tracking-number-input" className="block text-xs font-semibold text-gray-300 uppercase mb-1">
-              เลข TAX / เลขพัสดุ (Tax & Tracking No.) <span className="text-status-danger">*</span>
+              เลขพัสดุ (Tracking Number) <span className="text-status-danger">*</span>
             </label>
             <input
               id="tracking-number-input"
               type="text"
               value={trackingNumber}
+              maxLength={120}
               onChange={(e) => setTrackingNumber(e.target.value)}
-              placeholder="เช่น TAX-994821, FLASH77261902, EMS-TH88291038"
+              placeholder="เช่น FLASH77261902, EMS-TH88291038"
               className="w-full p-2.5 rounded-lg border border-white/10 bg-bg-card text-white text-sm focus:outline-none focus:border-brand-blue"
               autoFocus
             />
@@ -715,12 +716,13 @@ export function SellerOrdersPage() {
 
           <div>
             <label htmlFor="carrier-note-input" className="block text-xs font-semibold text-gray-300 uppercase mb-1">
-              ผู้ให้บริการขนส่ง / หมายเหตุ (Carrier / Note) (Optional)
+              ผู้ให้บริการขนส่ง (Carrier) (Optional)
             </label>
             <input
               id="carrier-note-input"
               type="text"
               value={carrierNote}
+              maxLength={120}
               onChange={(e) => setCarrierNote(e.target.value)}
               placeholder="เช่น Flash Express, Kerry Express, ไปรษณีย์ไทย"
               className="w-full p-2.5 rounded-lg border border-white/10 bg-bg-card text-white text-sm focus:outline-none focus:border-brand-blue"

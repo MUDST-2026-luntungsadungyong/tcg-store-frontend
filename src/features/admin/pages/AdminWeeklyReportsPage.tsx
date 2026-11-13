@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/Button';
 import { weeklyReports, type WeeklyHistory, type WeeklyReport, type CardPerformance } from '../api/weeklyReports';
 
 const money = (value: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(value);
+const metric = (value: number | null, format: (value: number) => string = value => value.toLocaleString()) => value == null ? 'Unavailable' : format(value);
 const utc = (value: string) => `${value.replace('T', ' ')} UTC`;
 const panel = 'rounded-2xl border border-white/10 bg-bg-elevated p-5';
 function errorMessage(error: unknown) {
@@ -103,7 +104,7 @@ export function AdminWeeklyReportsPage() {
     {history && history.content.length > 0 && <section className={panel} aria-label="Report history">
       <label className="block text-sm font-semibold text-white" htmlFor="report-week">Saved reporting period (UTC)</label>
       <select id="report-week" value={selected} onChange={e => selectWeek(e.target.value)} className="mt-2 w-full max-w-md rounded-lg border border-white/20 bg-bg-input p-3 text-white">
-        {history.content.map(item => <option key={item.weekEndDate} value={item.weekEndDate}>Week ending {item.weekEndDate} at 23:59 UTC</option>)}
+        {history.content.map(item => <option key={item.weekEndDate} value={item.weekEndDate}>Week ending {item.weekEndDate} at 23:59 UTC{item.reportType === 'RECONSTRUCTED_SALES_ONLY' ? ' · reconstructed sales only' : ''}</option>)}
       </select>
       <div className="mt-4 flex items-center gap-4 text-sm">
         <Button variant="secondary" disabled={page === 0} onClick={() => reloadHistory(page - 1)}>Newer reports</Button>
@@ -116,19 +117,28 @@ export function AdminWeeklyReportsPage() {
     {exportError && <p role="alert" className={panel}>{exportError}</p>}
     {!loading && report && <>
       <p className="text-sm text-slate-400">{utc(report.periodStart)} → {utc(report.periodEnd)} (end exclusive). Generated {utc(report.generatedAt)}.</p>
+      {report.reportType === 'RECONSTRUCTED_SALES_ONLY' && <section role="status" className={`${panel} border-amber-400/30`}>
+        <h2 className="font-bold text-amber-300">Historical reconstruction · sales data only</h2>
+        <p className="mt-2 text-sm text-slate-300">Sales metrics use recorded fulfilled-order history and purchase snapshots. Stock history was not captured for this period, so stock metrics are unavailable and are not estimated.</p>
+      </section>}
       <section aria-label="Weekly metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          ['Stock added', report.stockAdded.toLocaleString()], ['Stock removed', report.stockRemoved.toLocaleString()],
-          ['Fulfilled units sold', report.unitsSold.toLocaleString()], ['Closing inventory units', report.inventoryUnits.toLocaleString()],
-          ['Inventory retail value', money(report.totalInventoryValue)], ['Inventory cost value', money(report.inventoryCost)],
+          ['Stock added', metric(report.stockAdded)], ['Stock removed', metric(report.stockRemoved)],
+          ['Fulfilled units sold', report.unitsSold.toLocaleString()], ['Closing inventory units', metric(report.inventoryUnits)],
+          ['Inventory retail value', metric(report.totalInventoryValue, money)], ['Inventory cost value', metric(report.inventoryCost, money)],
           ['Fulfilled sales revenue', money(report.revenue)], ['Gross profit before fees', money(report.grossProfit)],
-          ['Recorded platform fees', money(report.totalFeesCollected)], ['Stagnant listings', report.stagnantListings.toLocaleString()],
-          ['Stagnant units', report.stagnantUnits.toLocaleString()], ['Stagnant retail value', money(report.stagnantValue)],
+          ['Recorded platform fees', money(report.totalFeesCollected)], ['Stagnant listings', metric(report.stagnantListings)],
+          ['Stagnant units', metric(report.stagnantUnits)], ['Stagnant retail value', metric(report.stagnantValue, money)],
         ].map(([label, value]) => <div key={label} className={panel}><h2 className="text-sm text-slate-400">{label}</h2><p className="mt-2 text-2xl font-bold text-white">{value}</p></div>)}
       </section>
-      <p className="text-sm text-slate-400">Added stock includes new listings and restocks. Removed stock includes shipments and seller adjustments. Sales, gross profit and recorded fees count FULFILLED orders only; this is not payment-provider settlement confirmation. Inventory values include reserved and hidden stock.</p>
+      <p className="text-sm text-slate-400">{report.reportType === 'RECONSTRUCTED_SALES_ONLY'
+        ? 'Sales, gross profit and recorded fees count FULFILLED orders only; recorded fees are not payment-provider settlement confirmation.'
+        : 'Added stock includes new listings and restocks. Removed stock includes shipments and seller adjustments. Sales, gross profit and recorded fees count FULFILLED orders only; this is not payment-provider settlement confirmation. Inventory values include reserved and hidden stock.'}</p>
       <div className="grid gap-6 xl:grid-cols-2"><Ranking title="Top 10 cards by revenue" cards={report.topByRevenue} /><Ranking title="Top 10 cards by gross profit" cards={report.topByProfit} /></div>
-      <section className={panel}>
+      {report.reportType === 'RECONSTRUCTED_SALES_ONLY' ? <section className={panel}>
+        <h2 className="text-lg font-bold text-white">Historical inventory details unavailable</h2>
+        <p className="mt-2 text-sm text-slate-400">The database did not preserve stock quantity and price changes before weekly tracking started.</p>
+      </section> : <section className={panel}>
         <h2 className="text-lg font-bold text-white">Stagnant inventory · over 60 days</h2>
         <p className="mb-4 mt-1 text-sm text-slate-400">Listings older than 60 days with stock remaining and no SENT or FULFILLED activity during the last 60 days.</p>
         {!report.stagnantInventory.length ? <p className="text-sm text-slate-400">No stagnant inventory in this period.</p> : <>
@@ -140,7 +150,7 @@ export function AdminWeeklyReportsPage() {
           </table></div>
           <div className="mt-4 flex items-center gap-4 text-sm"><Button variant="secondary" disabled={stockPage === 0} onClick={() => setStockPage(p => p - 1)}>Previous listings</Button><span>{stockPage + 1} / {Math.ceil(report.stagnantInventory.length / 20)}</span><Button variant="secondary" disabled={(stockPage + 1) * 20 >= report.stagnantInventory.length} onClick={() => setStockPage(p => p + 1)}>Next listings</Button></div>
         </>}
-      </section>
+      </section>}
     </>}
   </main>;
 }

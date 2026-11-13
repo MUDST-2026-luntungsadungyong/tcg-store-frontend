@@ -4,13 +4,14 @@ export type CardPerformance = { cardId: string; name: string; unitsSold: number;
 export type StagnantListing = { productId: number; sellerId: number; cardId: string; name: string; onHand: number; inventoryValue: number; listedAt: string };
 export type WeeklyReport = {
   weekEndDate: string; periodStart: string; periodEnd: string; generatedAt: string;
-  stockAdded: number; stockRemoved: number; unitsSold: number; inventoryUnits: number;
-  totalInventoryValue: number; inventoryCost: number; revenue: number; grossProfit: number;
+  stockAdded: number | null; stockRemoved: number | null; unitsSold: number; inventoryUnits: number | null;
+  totalInventoryValue: number | null; inventoryCost: number | null; revenue: number; grossProfit: number;
   totalFeesCollected: number; topByRevenue: CardPerformance[]; topByProfit: CardPerformance[];
-  stagnantListings: number; stagnantUnits: number; stagnantValue: number; stagnantInventory: StagnantListing[];
+  stagnantListings: number | null; stagnantUnits: number | null; stagnantValue: number | null;
+  stagnantInventory: StagnantListing[]; reportType?: 'TRACKED' | 'RECONSTRUCTED_SALES_ONLY';
 };
 export type WeeklyHistory = {
-  content: { weekEndDate: string; generatedAt: string; totalInventoryValue: number; totalFeesCollected: number }[];
+  content: { weekEndDate: string; generatedAt: string; totalInventoryValue: number | null; totalFeesCollected: number; reportType?: 'TRACKED' | 'RECONSTRUCTED_SALES_ONLY' }[];
   number: number; size: number; totalElements: number; totalPages: number; trackingSince: string;
 };
 const path = '/admin/reports/weekly-summary';

@@ -711,5 +711,36 @@ describe('US-02-2 & US-02-3: Card Detail Multi-Seller Comparison & Recommendatio
       cy.contains('button', 'Notify Me When Available').click();
       cy.contains('Log in to follow cards for restock notifications').should('be.visible');
     });
+
+    it('lets an authenticated buyer subscribe and unsubscribe on an out-of-stock card', () => {
+      let subscribed = false;
+      cy.intercept('GET', 'http://localhost:8080/api/stock-subscriptions/crd-mew-promo', (request) => {
+        request.reply({ statusCode: 200, body: { globalCardId: 'crd-mew-promo', subscribed, subscribedAt: null } });
+      }).as('getMewSubscription');
+      cy.intercept('PUT', 'http://localhost:8080/api/stock-subscriptions/crd-mew-promo', (request) => {
+        subscribed = true;
+        request.reply({ statusCode: 200, body: { globalCardId: 'crd-mew-promo', subscribed: true, subscribedAt: '2026-11-13T10:00:00Z' } });
+      }).as('subscribeMew');
+      cy.intercept('DELETE', 'http://localhost:8080/api/stock-subscriptions/crd-mew-promo', (request) => {
+        subscribed = false;
+        request.reply({ statusCode: 204, body: '' });
+      }).as('unsubscribeMew');
+
+      cy.visit('/cards/crd-mew-promo', {
+        onBeforeLoad(win) {
+          seedMockStorage(win, 'CUSTOMER');
+        },
+      });
+
+      cy.contains('h1', 'Mew Ancient Promo').should('be.visible');
+      cy.wait('@getMewSubscription');
+      cy.contains('button', 'Notify Me When Available').should('be.enabled').click();
+      cy.wait('@subscribeMew');
+      cy.contains('You’ll be notified when this card is available.').should('be.visible');
+      cy.contains('button', 'Cancel notification').should('be.visible').click();
+      cy.wait('@unsubscribeMew');
+      cy.contains('Stock notification cancelled.').should('be.visible');
+      cy.contains('button', 'Notify Me When Available').should('be.visible');
+    });
   });
 });

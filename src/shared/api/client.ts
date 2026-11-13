@@ -30,6 +30,11 @@ const isPasswordRecoveryRequest = (url?: string) =>
 
 apiClient.interceptors.request.use(
   (config) => {
+    // Preserve files instead of Axios serializing FormData with the JSON default.
+    // The browser adapter supplies the multipart boundary when sending the body.
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      config.headers.setContentType('multipart/form-data');
+    }
     const token = authHooks.getAccessToken();
     if (token && config.headers && !isPasswordRecoveryRequest(config.url)) {
       config.headers.Authorization = `Bearer ${token}`;

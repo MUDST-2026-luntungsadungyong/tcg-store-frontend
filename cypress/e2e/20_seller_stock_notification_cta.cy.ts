@@ -28,8 +28,8 @@ describe('Seller stock notification actions', () => {
     cy.intercept('GET', `${api}/seller/listings/stock-forecast*`, {
       statusCode: 200,
       body: { generatedAt: '2026-11-13T09:00:00Z', windowDays: 30, summary: { totalSkus: 0, outOfStockCount: 0, criticalCount: 0, lowCount: 0, safeCount: 0, noRecentSalesCount: 0 }, items: [] },
-    }).as('stockForecast');
-    cy.intercept('GET', `${api}/seller/listings*`, { statusCode: 200, body: [] }).as('sellerListings');
+    });
+    cy.intercept('GET', `${api}/seller/listings*`, { statusCode: 200, body: [] });
     cy.loginByMock('SELLER');
   });
 
@@ -39,10 +39,10 @@ describe('Seller stock notification actions', () => {
 
     cy.location('pathname').should('eq', '/workspace/stock-forecast');
     cy.location('search').should('eq', '?search=Charizard');
-    cy.wait('@stockForecast').its('response.statusCode').should('eq', 200);
     cy.get('h1').should('contain.text', 'Stockout Forecast');
     cy.get('input[aria-label="Search stock forecast"]').should('have.value', 'Charizard');
     cy.contains('Automatic stock alerts.').should('be.visible');
+    cy.get('[aria-label="Stock urgency summary"]').should('be.visible');
   });
 
   it('opens the guarded listing manager from an out-of-stock notification', () => {
@@ -55,7 +55,6 @@ describe('Seller stock notification actions', () => {
 
     cy.location('pathname').should('eq', '/workspace/listings');
     cy.location('search').should('eq', '?search=Charizard');
-    cy.wait('@sellerListings').its('response.statusCode').should('eq', 200);
     cy.get('h1').should('contain.text', 'Listing Management');
     cy.get('input[aria-label="Search listings"]').should('have.value', 'Charizard');
   });

@@ -29,6 +29,18 @@ function Ranking({ title, cards }: { title: string; cards: CardPerformance[] }) 
   </section>;
 }
 
+function MetricGroup({ title, items }: { title: string; items: [string, string][] }) {
+  return <section aria-label={title}>
+    <h2 className="mb-3 text-lg font-bold text-white">{title}</h2>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {items.map(([label, value]) => <div key={label} className={panel}>
+        <h3 className="text-sm text-slate-400">{label}</h3>
+        <p className="mt-2 text-2xl font-bold text-white">{value}</p>
+      </div>)}
+    </div>
+  </section>;
+}
+
 export function AdminWeeklyReportsPage() {
   const [page, setPage] = useState(0);
   const [refresh, setRefresh] = useState(0);
@@ -121,16 +133,19 @@ export function AdminWeeklyReportsPage() {
         <h2 className="font-bold text-amber-300">Historical reconstruction · sales data only</h2>
         <p className="mt-2 text-sm text-slate-300">Sales metrics use recorded fulfilled-order history and purchase snapshots. Stock history was not captured for this period, so stock metrics are unavailable and are not estimated.</p>
       </section>}
-      <section aria-label="Weekly metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
+      <div className="space-y-6" aria-label="Weekly metrics">
+        <MetricGroup title="Stock & inventory" items={[
           ['Stock added', metric(report.stockAdded)], ['Stock removed', metric(report.stockRemoved)],
-          ['Fulfilled units sold', report.unitsSold.toLocaleString()], ['Closing inventory units', metric(report.inventoryUnits)],
-          ['Inventory retail value', metric(report.totalInventoryValue, money)], ['Inventory cost value', metric(report.inventoryCost, money)],
-          ['Fulfilled sales revenue', money(report.revenue)], ['Gross profit before fees', money(report.grossProfit)],
-          ['Recorded platform fees', money(report.totalFeesCollected)], ['Stagnant listings', metric(report.stagnantListings)],
+          ['Closing inventory units', metric(report.inventoryUnits)], ['Inventory retail value', metric(report.totalInventoryValue, money)],
+          ['Inventory cost value', metric(report.inventoryCost, money)], ['Stagnant listings', metric(report.stagnantListings)],
           ['Stagnant units', metric(report.stagnantUnits)], ['Stagnant retail value', metric(report.stagnantValue, money)],
-        ].map(([label, value]) => <div key={label} className={panel}><h2 className="text-sm text-slate-400">{label}</h2><p className="mt-2 text-2xl font-bold text-white">{value}</p></div>)}
-      </section>
+        ]} />
+        {report.reportType === 'RECONSTRUCTED_SALES_ONLY' && <p className="-mt-4 text-sm text-slate-400">Unavailable means historical stock was not captured; it does not mean zero stock.</p>}
+        <MetricGroup title="Sales & platform fees" items={[
+          ['Fulfilled units sold', report.unitsSold.toLocaleString()], ['Fulfilled sales revenue', money(report.revenue)],
+          ['Gross profit before fees', money(report.grossProfit)], ['Recorded platform fees', money(report.totalFeesCollected)],
+        ]} />
+      </div>
       <p className="text-sm text-slate-400">{report.reportType === 'RECONSTRUCTED_SALES_ONLY'
         ? 'Sales, gross profit and recorded fees count FULFILLED orders only; recorded fees are not payment-provider settlement confirmation.'
         : 'Added stock includes new listings and restocks. Removed stock includes shipments and seller adjustments. Sales, gross profit and recorded fees count FULFILLED orders only; this is not payment-provider settlement confirmation. Inventory values include reserved and hidden stock.'}</p>

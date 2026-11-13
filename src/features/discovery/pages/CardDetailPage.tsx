@@ -16,6 +16,7 @@ import { isStockAlreadyAvailable, stockSubscriptionsApi } from '@/features/disco
 import { Skeleton } from '@/shared/components/Skeleton';
 import { useToastStore } from '@/shared/model/useToastStore';
 import { FeedbackPopup } from '@/shared/components/FeedbackPopup'; // CASE 7: success popup
+import { usePageMetadata } from '@/shared/seo/usePageMetadata';
 
 
 export function CardDetailPage() {
@@ -39,6 +40,15 @@ export function CardDetailPage() {
   const addItem = useReservationCartStore(state => state.addItem);
   const token = useAuthStore(state => state.token);
   const globalCardId = card?.cardId || catalogCard?.id || card?.id || '';
+  usePageMetadata({
+    title: card ? `${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} | Mythix` : 'Trading Card | Mythix',
+    description: card
+      ? `${[card.name, card.set, card.cardNumber, card.rarity].filter(Boolean).join(' · ')}. Explore card details and seller listings on Mythix. ดูข้อมูลการ์ดและรายการขายจากร้านค้า`
+      : 'Explore trading card details and seller listings on Mythix.',
+    path: `/cards/${encodeURIComponent(globalCardId || id)}`,
+    image: card ? officialCardImage(card) : undefined,
+    noindex: isLoading || Boolean(error) || !card,
+  });
 
   const fetchCard = useCallback(async () => {
     if (!id) return;

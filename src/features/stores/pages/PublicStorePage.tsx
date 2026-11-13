@@ -7,6 +7,7 @@ import { Skeleton } from '@/shared/components/Skeleton';
 import { ErrorState } from '@/shared/components/ErrorState';
 import { storesApi, type StoreProfile } from '../api/stores';
 import { groupListingsByCard } from '@/features/discovery/lib/groupListings';
+import { usePageMetadata } from '@/shared/seo/usePageMetadata';
 
 export function PublicStorePage() {
   const { sellerId = '' } = useParams();
@@ -15,6 +16,12 @@ export function PublicStorePage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const cards = useMemo(() => groupListingsByCard(listings), [listings]);
+  usePageMetadata({
+    title: store ? `${store.shopName} | Seller Store | Mythix` : 'Seller Store | Mythix',
+    description: store?.shopDescription || 'Browse this seller’s available trading cards on Mythix. ดูการ์ดที่ร้านค้าเปิดขายบน Mythix',
+    path: `/stores/${encodeURIComponent(sellerId)}`,
+    noindex: isLoading || Boolean(error) || !store,
+  });
 
   const loadStoreData = useCallback(async () => {
     setIsLoading(true);

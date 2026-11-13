@@ -29,6 +29,7 @@ import { AdminVouchersPage } from '@/features/admin/pages/AdminVouchersPage';
 
 import { NotFoundPage } from './NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
+import { applyMetadata, routeMetadata } from '@/shared/seo/metadata';
 import { RouteErrorBoundary } from '@/shared/components/ErrorBoundary';
 
 const accountRoutes: RouteObject = {
@@ -93,3 +94,16 @@ export const router = createBrowserRouter([
   workspaceRoute,
   adminRoute,
 ]);
+
+// Subscribe before React mounts so route defaults reset stale detail metadata
+// before the destination page supplies its successfully loaded public data.
+let metadataLocation = '';
+function syncRouteMetadata() {
+  const { pathname, search } = router.state.location;
+  const key = pathname + (pathname === '/cards' || pathname === '/marketplace' ? search : '');
+  if (key === metadataLocation) return;
+  metadataLocation = key;
+  applyMetadata(routeMetadata(pathname, search));
+}
+syncRouteMetadata();
+router.subscribe(syncRouteMetadata);

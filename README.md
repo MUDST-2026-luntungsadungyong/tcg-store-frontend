@@ -170,7 +170,10 @@ npm run audit
 # รัน Unit & Component Tests ทั้งหมด
 npm run test
 
-# รัน Cypress E2E Tests (โหมด Headless)
+# Run the full CI-equivalent Cypress regression (starts and stops both Vite modes)
+npm run test:e2e:full
+
+# Run Cypress directly against a manually started Vite server
 npm run test:e2e
 
 # เปิดหน้าต่าง Cypress GUI เพื่อทดสอบทีละตัว

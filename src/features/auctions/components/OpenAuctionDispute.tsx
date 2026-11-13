@@ -54,7 +54,7 @@ export function OpenAuctionDispute({ auctionId }: { auctionId: number }) {
 
     try { await apiClient.post(`/auctions/${auctionId}/disputes`, body); setOpen(false); setSuccess(true); }
 
-    catch (failure) { setError(auctionError(failure, 'Could not open the dispute. Disputes must be submitted within three days after receipt.')); }
+    catch (failure) { setError(auctionError(failure, 'Could not open the dispute. Please try again. If the problem continues, contact support.')); }
 
     finally { setBusy(false); }
 

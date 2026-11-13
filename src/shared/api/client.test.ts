@@ -19,3 +19,32 @@ describe('password recovery requests', () => {
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
 });
+
+describe('multipart evidence requests', () => {
+  afterEach(() => { delete client.defaults.adapter; });
+
+  it('keeps ordinary request bodies as JSON', async () => {
+    client.defaults.adapter = async (config) => {
+      expect(config.data).toBe('{"reason":"Review requested"}');
+      expect(config.headers.get('Content-Type')).toBe('application/json');
+      return { data: null, status: 200, statusText: 'OK', headers: {}, config };
+    };
+    await client.post('/example', { reason: 'Review requested' });
+  });
+
+  it.each(['/auctions/6/disputes', '/auction-disputes/1/evidence'])(
+    'preserves evidence files as FormData for %s', async (url) => {
+      const body = new FormData();
+      const evidence = new File(['image'], 'evidence.png', { type: 'image/png' });
+      body.append('reason', 'Wrong card received');
+      body.append('evidence', evidence);
+      client.defaults.adapter = async (config) => {
+        expect(config.data).toBe(body);
+        expect(config.data.get('evidence')).toBe(evidence);
+        expect(config.headers.get('Content-Type')).not.toContain('application/json');
+        return { data: null, status: 201, statusText: 'Created', headers: {}, config };
+      };
+      await client.post(url, body);
+    }
+  );
+});

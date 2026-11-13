@@ -61,9 +61,14 @@ async function waitForVite(server, port, name) {
       throw new Error(`Vite server for ${name} exited before becoming ready (port ${port}).`);
     }
 
+    // Vite prints its Local URL only after the HTTP listener is accepting work.
+    // Prefer that signal so a cold dependency-optimizer response is not repeatedly
+    // aborted by the readiness probe on slower CI runners.
+    if (server.viteReady) return;
+
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(1000) });
-      if (response.ok && server.viteReady) return;
+      const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      if (response.ok) return;
     } catch {
       // The server is still starting; poll its readiness endpoint again.
     }
